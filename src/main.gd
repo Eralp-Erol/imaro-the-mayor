@@ -49,6 +49,9 @@ func _ready() -> void:
 	if "--capture-gameplay" in OS.get_cmdline_user_args():
 		capture_runner = load("res://tests/gameplay_capture.gd").new()
 		capture_runner.run.call_deferred(self)
+	if "--test-touch" in OS.get_cmdline_user_args():
+		capture_runner = load("res://tests/touch_input_test.gd").new()
+		capture_runner.run.call_deferred(self)
 
 func _process(delta: float) -> void:
 	clock.advance(delta, sim)
@@ -111,11 +114,13 @@ func load_game() -> void:
 func capture_visuals() -> void:
 	DirAccess.make_dir_recursive_absolute("res://artifacts/screenshots")
 	await get_tree().create_timer(1.0).timeout
+	RenderingServer.force_draw.call_deferred()
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://artifacts/screenshots/01-world-gate.png")
 	rig.focus(Vector3(-22, 0, 21))
 	rig.yaw = 0.25
 	await get_tree().create_timer(1.0).timeout
+	RenderingServer.force_draw.call_deferred()
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png("res://artifacts/screenshots/02-neighborhood-gate.png")
 	print("VISUAL_CAPTURE_COMPLETE")

@@ -98,7 +98,8 @@ func rich(parent: Node) -> RichTextLabel:
 func button(parent: Node, text: String, callback: Callable, width: int = 0) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.custom_minimum_size = Vector2(width, 48)
+	# 64 logical units remain >=44 screen units at the 1024-wide tablet fixture.
+	b.custom_minimum_size = Vector2(maxi(width, 64), 64)
 	b.pressed.connect(callback)
 	parent.add_child(b)
 	return b
@@ -113,11 +114,11 @@ func build_header() -> void:
 	var row := HBoxContainer.new()
 	header.add_child(row)
 	var brand := VBoxContainer.new()
-	brand.custom_minimum_size.x = 240
+	brand.custom_minimum_size.x = 272
 	brand.add_theme_constant_override("separation", 0)
 	row.add_child(brand)
-	label(brand, "ILGIN BELEDİYESİ", 24)
-	label(brand, "Kıyı Mahallesi · Başkanlık", 14)
+	label(brand, "Imaro: The Mayor", 24)
+	label(brand, "Ilgın Belediyesi · Kıyı Mahallesi", 14)
 	var finances := VBoxContainer.new()
 	finances.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	finances.add_theme_constant_override("separation", 0)
@@ -174,7 +175,7 @@ func build_panel() -> void:
 		pages.append(page)
 	detail = rich(pages[0])
 	zones = OptionButton.new()
-	zones.custom_minimum_size.y = 48
+	zones.custom_minimum_size.y = 64
 	for zone in ["housing", "mixed", "commerce", "green"]: zones.add_item(CityModel.ZONES[zone])
 	zones.select(1)
 	zones.item_selected.connect(func(_index: int): refresh())

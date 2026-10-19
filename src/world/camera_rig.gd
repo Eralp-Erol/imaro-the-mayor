@@ -19,7 +19,18 @@ func _ready() -> void:
 	camera.near = 0.2
 	camera.far = 600
 	camera.current = true
+	get_viewport().size_changed.connect(reset_gestures)
 	apply_pose()
+
+func reset_gestures() -> void:
+	pressed = false
+	dragged = false
+	touches.clear()
+	touch_consumed = true
+
+func _notification(what: int) -> void:
+	if what in [NOTIFICATION_WM_WINDOW_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]:
+		reset_gestures()
 
 func _process(delta: float) -> void:
 	zoom = lerpf(zoom, desired_zoom, 1.0 - exp(-12.0 * delta))
@@ -73,6 +84,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventPanGesture:
 		pan(event.position, event.position + event.delta * 12)
 	elif event is InputEventScreenTouch:
+		if event.canceled:
+			touches.erase(event.index)
+			touch_consumed = true
+			return
 		if event.pressed:
 			touches[event.index] = event.position
 			if touches.size() == 1:

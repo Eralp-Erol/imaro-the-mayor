@@ -1,4 +1,6 @@
-# Ilgın Belediyesi · sanat yönü
+# Imaro: The Mayor · sanat yönü
+
+Oyun markası Imaro: The Mayor; kurgusal yerleşim Ilgın Belediyesi.
 
 Kaynaklar tek tek incelendi; görseller yalnızca yön referansı, oyun varlığı değil.
 
@@ -25,4 +27,4 @@ Kaynaklar tek tek incelendi; görseller yalnızca yön referansı, oyun varlığ
 9. Görsel kaliteyi doğrulamadan kapsamı büyütmek.
 
 ## Kamera ve kompozisyon
-Genel: ortografik, yaklaşık 52° eğim; dört ada ve soldaki kıyı, ön planda seçilebilir boş parsel. Üstte dar belediye/zaman şeridi, altta yönetim sekmeleri. Yakın: aynı kamera 2–3 apartman ve seçili parseli kapsar; balkon, tente ve insan ölçeği okunur. Sağdaki dar karar paneli açılıp kapanabilir. Pan, zoom ve açı koruyan dönüş her iki ölçekte de çalışır.
+Genel: ortografik, yaklaşık 37° eğim; dört ada ve soldaki kıyı, ön planda seçilebilir boş parsel. Üstte belediye/zaman şeridi, altta yönetim sekmeleri. Yakın: aynı kamera 2–3 apartman ve seçili parseli kapsar; balkon, tente ve insan ölçeği okunur. Sağdaki dar karar paneli açılıp kapanabilir. Pan, zoom ve açı koruyan dönüş her iki ölçekte de çalışır.
