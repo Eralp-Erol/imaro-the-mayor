@@ -1,0 +1,35 @@
+#!/usr/bin/env python3.14
+"""Apply this project's Codex settings without writing global configuration."""
+import json
+import os
+from pathlib import Path
+import sys
+import tomllib
+
+project = Path(__file__).resolve().parent.parent
+with (project / ".codex/config.toml").open("rb") as source:
+    settings = tomllib.load(source)
+
+
+def overrides(table, prefix=()):
+    for key, value in table.items():
+        path = (*prefix, key)
+        if isinstance(value, dict):
+            yield from overrides(value, path)
+        else:
+            if any("." in part for part in path):
+                raise ValueError("Codex CLI overrides require keys without literal dots")
+            yield "-c"
+            yield ".".join(path) + "=" + json.dumps(value)
+
+
+task = (
+    "Bu proje için ortam optimizasyonu tamamlandı; yeni geliştirme oturumundasın. "
+    "AGENTS.md, ULTIMATE-CODEX-PROMPT.md, references/README.md ve sekiz görseli temel alarak "
+    "oynanabilir Godot prototipini geliştir. .codex/ENVIRONMENT.md yalnızca devam notudur; "
+    "önceki sohbetin araç listesi hakkındaki ifadeyi bu oturum için tekrar etme ve yeniden "
+    "oturum açma döngüsüne girme. Yalnızca inceleme veya planla durma: kodla, çalıştır, test et, "
+    "gerçek Godot görüntülerini kaydet. Global Codex ayarlarını değiştirme."
+)
+arguments = sys.argv[1:] or [task]
+os.execvp("codex", ["codex", "--no-daemon", "--cd", str(project), *overrides(settings), *arguments])

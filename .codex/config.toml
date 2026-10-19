@@ -1,0 +1,18 @@
+# Project-only settings; use .codex/start-godot when project trust is absent.
+# Keep Blender, node_repl and native computer-use for 3D and gameplay verification.
+
+[features]
+apps = false
+remote_plugin = false
+
+[apps._default]
+enabled = false
+
+[plugins."browser@openai-bundled"]
+enabled = false
+
+[plugins."chrome@openai-bundled"]
+enabled = false
+
+[plugins."visualize@openai-bundled"]
+enabled = false
