@@ -1,11 +1,19 @@
 #!/bin/bash
 # SessionStart: üretim checkpoint'ini, açık soruları ve son doğrulama durumunu bağlama ekler.
-root="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+# Masaüstü uygulaması worktree oturumlarında $CLAUDE_PROJECT_DIR'i ANA checkout'a işaret ettirir (2026-10-20 gözlemi:
+# worktree'de hook dosyası olmasa da hook çalıştı). Bu yüzden durum oturumun gerçek cwd'sinden (stdin JSON) okunur.
+in=""; [ -t 0 ] || in=$(cat)
+cwd=$(jq -r '.cwd // empty' <<<"$in" 2>/dev/null)
+root=$(git -C "${cwd:-${CLAUDE_PROJECT_DIR:-.}}" rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}")
 cd "$root" 2>/dev/null || exit 0
 tmp=$(mktemp)
 {
   echo "## Imaro stüdyo durumu (otomatik, SessionStart)"
   echo "Dal: $(git branch --show-current 2>/dev/null) · HEAD $(git rev-parse --short HEAD 2>/dev/null) · değişen dosya: $(git status --porcelain 2>/dev/null | wc -l | tr -d ' ')"
+  # Worktree tabanı main'in gerisindeyse (2026-10-20: uygulama worktree'yi eski commit'ten açtı) hemen uyar.
+  if git rev-parse -q --verify main >/dev/null 2>&1 && ! git merge-base --is-ancestor main HEAD 2>/dev/null; then
+    echo "UYARI: bu dal main'in GERİSİNDE (HEAD $(git rev-parse --short HEAD), main $(git rev-parse --short main)). İşe başlamadan: commit'siz ise 'git merge --ff-only main', değilse yeni worktree aç. Kanon/hook/CLAUDE.md eski olabilir."
+  fi
   if [ -f production/STATE.md ]; then
     sed -n '/<!-- CHECKPOINT:BEGIN -->/,/<!-- CHECKPOINT:END -->/p' production/STATE.md | grep -v 'CHECKPOINT:' | head -30
   else

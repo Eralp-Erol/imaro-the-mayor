@@ -16,4 +16,4 @@ else
 fi
 # Manifest dışı eklenmiş dosya da kanonu kirletir.
 extra=$(find . -type f ! -name manifest.json ! -name .DS_Store | sed 's|^\./||' | sort | comm -23 - <(jq -r '.files[].path' manifest.json | sort))
-if [ -n "$extra" ]; then echo "canon-check: manifest dışı dosya: $extra" >&2; exit 1; fi
+if [ -n "$extra" ]; then echo "$extra" | sed "s/^/canon-check: manifest dışı dosya: /" >&2; exit 1; fi
