@@ -6,7 +6,8 @@ extends SimSystem
 ## aktör kararları (T-013) üretecek. Sayılar ve sözlük `data/sim/facade_config.json`'dadır.
 ##
 ## Durum (`state.systems["parcels"]`): {"overlay": {parsel_id (int) -> {zone, pending_zone, due_tick, command_id,
-## pending_density, pending_max_height_m}}}. Yalnız dokunulan parseller girer; kalanı `ParcelSource` şablonudur.
+## pending_density, pending_max_height_m, density, max_height_m (yürürlüğe girince pending_*'dan)}}}. Yalnız dokunulan
+## parseller girer; kalanı `ParcelSource` şablonudur.
 ## Statik gelişme/sahiplik/talep T-013'ün işidir; bu sistem onların yerini TUTMAZ.
 
 const SYSTEM := &"parcels"
@@ -30,6 +31,9 @@ func on_daily(state: GameState) -> void:
 			continue
 		entry["zone"] = entry["pending_zone"]
 		entry["pending_zone"] = &""
+		# yürürlükteki yoğunluk/yükseklik (NO_VALUE = imar varsayılanı); T-013 ekonomi okur
+		entry["density"] = entry["pending_density"]
+		entry["max_height_m"] = entry["pending_max_height_m"]
 		SimEventLog.emit(state, &"parcel.changed", &"event.zoning.applied",
 			PackedStringArray([String(SimContract.parcel_ref(id))]), {"zone": String(entry["zone"])},
 			PackedInt64Array(), int(entry["command_id"]))
@@ -42,6 +46,15 @@ static func overlay_of(state: GameState, parcel_id: int) -> Dictionary:
 		return {}
 	var entry: Variant = data["overlay"].get(parcel_id, null)
 	return (entry as Dictionary).duplicate(true) if entry is Dictionary else {}
+
+
+## Bindirme sözlüğüne DOĞRUDAN (kopyasız) okuma erişimi: parsel kimliği -> kayıt. Salt okunur kullanın (T-013 ekonomi
+## tick'te her gün okur; `overlay_of` kopya verir). Bindirme yoksa boş sözlük.
+static func overlay_ref(state: GameState) -> Dictionary:
+	var data: Variant = state.systems.get(String(SYSTEM), null)
+	if not (data is Dictionary) or not (data.get("overlay", null) is Dictionary):
+		return {}
+	return data["overlay"]
 
 
 ## `zoning.propose` etkisi: bekleyen öneriyi yazar (yürürlük `due_tick`'te).

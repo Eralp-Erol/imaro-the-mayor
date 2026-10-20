@@ -1,0 +1,61 @@
+{
+	"_header": "T-013 ekonomi cekirdegi v0 calisma-modeli sayilari (F05-C: ayarlanabilir, kanon DEGIL; F05-D olcek/nufus/uretim ACIK). Formuller: design/specs/economy-core-v0.md. Para birimsiz tamsayi (Q-003); '_pm' son ekli degerler 1000 olcekli (per-mille) tamsayidir. Bolge kodu GOMULU DEGIL: 'regions.overrides' anahtarlari dunya verisindeki bolge kodlaridir (varsayilan bos).",
+	"zones": {
+		"_notes": "Arazi kullanimi anahtari -> izin verilen kullanimlar ve varsayilan yogunluk (1000 = taban). Anahtarlar data/sim/facade_config.json zoning.land_uses ile ayni sozluktur; listede olmayan imar yapilanmaya kapali sayilir.",
+		"zone.residential": {"uses": ["residential"], "density_pm": 1000},
+		"zone.mixed": {"uses": ["residential", "commercial"], "density_pm": 1000},
+		"zone.commercial": {"uses": ["commercial"], "density_pm": 1000},
+		"zone.green": {"uses": [], "density_pm": 1000}
+	},
+	"uses": {
+		"_notes": "Kullanim basina proje parametreleri. units_per_1000m2: 1000 m2 basina birim (konut: hane kapasitesi, ticaret: dukkan birimi). cost_per_unit: insaat maliyeti/birim. rent_per_unit_month: dengedeki aylik kira/birim. infra_per_unit: birim basina altyapi kapasitesi tuketimi. plan_days: planned asamasi suresi. construction_*: insaat suresi = base + birim * per_unit (gun).",
+		"residential": {
+			"units_per_1000m2": 6, "cost_per_unit": 1000, "rent_per_unit_month": 8, "infra_per_unit": 1,
+			"plan_days": 10, "construction_base_days": 45, "construction_days_per_unit": 3
+		},
+		"commercial": {
+			"units_per_1000m2": 4, "cost_per_unit": 1500, "rent_per_unit_month": 14, "infra_per_unit": 1,
+			"plan_days": 10, "construction_base_days": 45, "construction_days_per_unit": 4
+		}
+	},
+	"decision": {
+		"_notes": "Yatirimci karar fonksiyonu (SIM-02). w_*: etken agirliklari (1000 = 1.0). Engel etkenleri (altyapi/finansman/imar) agirlik 1000 ve deger -1000 ile tek basina olumsuz sonuc verir. base_threshold: esik; yatirimci threshold_shift'i eklenir. interest_pm: yillik finansman maliyeti (makro, ileride T-014/T-017). yield_full_scale_pm: yillik net getiri bu degerde etken degeri 1000 olur. project_scale_ref: 'buyuk proje' olcegi (maliyet yuku etkeni). review_enabled: 1 = bos parseller periyodik taranir (otonom buyume), 0 = yalniz imar sonrasi dikkat degerlendirmesi (deney/test). review_period_days: bos parselin periyodik taranma araligi (imlec tick basina n/periyot parsel tarar). max_reviews_per_tick: tick basina azami tam degerlendirme (yatirimci dikkati kitdir; imlec kaldigi yerden surer, tick maliyeti sinirli). decline_backoff_days: reddedilen parselin yeniden degerlendirilmeden once bekledigi gun (0 = beklemez). attention_delay_days: imar yururluge girdikten sonra zorunlu degerlendirme gecikmesi. prescreen_demand_pm: bu talep endeksinin altindaki pazar periyodik taramada degerlendirilmez. negative_repeat_days: tekrarlanabilir olumsuz kodun yeniden kaydi icin gun. max_starts_per_region_per_day: bolge basina gunluk azami baslangic. storey_m/reference_floors: yukseklik sinirinin birim carpana cevrilmesi.",
+		"w_demand": 400, "w_expected_return": 300, "w_construction_cost": 100, "w_infrastructure": 1000,
+		"w_financing": 1000, "w_zoning": 1000, "w_sentiment": 100,
+		"base_threshold": 450, "sentiment_range": 400,
+		"demand_gain_pm": 1000, "rent_floor_pm": 600, "rent_cap_pm": 1400,
+		"interest_pm": 40, "yield_full_scale_pm": 150, "project_scale_ref": 50000,
+		"infra_bonus_max": 150, "financing_bonus_max": 100,
+		"review_enabled": 1, "review_period_days": 10, "max_reviews_per_tick": 60, "decline_backoff_days": 30, "attention_delay_days": 2, "prescreen_demand_pm": 520,
+		"negative_repeat_days": 180, "max_starts_per_region_per_day": 2,
+		"storey_m": 3, "reference_floors": 4
+	},
+	"investors": {
+		"_notes": "Yatirimci havuzu (yer tutucu kimlikler actor.investor.<sira>). capital: baslangic sermayesi (birimsiz). threshold_shift: esige eklenen risk istahi (negatif = daha istekli). monthly_inflow: aylik dis sermaye girdisi (kredi/diger gelir; makro, ileride T-014/T-017); kira geliri ayrica eklenir.",
+		"list": [
+			{"capital": 80000, "threshold_shift": -30, "monthly_inflow": 6000},
+			{"capital": 80000, "threshold_shift": 0, "monthly_inflow": 6000},
+			{"capital": 80000, "threshold_shift": 30, "monthly_inflow": 6000},
+			{"capital": 80000, "threshold_shift": 0, "monthly_inflow": 6000}
+		]
+	},
+	"regions": {
+		"_notes": "Bolge baslangic degerleri (hepsi bolgeye uygulanir). overrides: bolge kodu -> ayni alanlardan istenenler. initial_households: bos dunyada baslangic hane talebi (F05-D ACIK). income_pm/access_pm/service_pm: gelir/erisim/hizmet girdileri (0..1000; v0 sabit, T-014/T-017 yazar). infra_capacity_units: altyapi kapasitesi (birim).",
+		"defaults": {
+			"initial_households": 200, "income_pm": 1000, "access_pm": 600, "service_pm": 600,
+			"infra_capacity_units": 1000
+		},
+		"overrides": {}
+	},
+	"cohorts": {
+		"_notes": "Hane/talep kohortlari (SIM-01). initial_occupancy_pm: T0 mevcut konut stogunun baslangicta dolu orani (latent_hh = initial_households + stok*oran). shops_per_household_pm: hane basina desteklenen dukkan birimi. jobs_per_commercial_unit: dukkan birimi basina is. jobs_needed_per_household_pm: hane basina gereken is (cekim). w_*: cekim agirliklari. growth_base_pm: aylik azami hane buyume/kuculme orani.",
+		"initial_occupancy_pm": 950, "shops_per_household_pm": 100, "jobs_per_commercial_unit": 8,
+		"jobs_needed_per_household_pm": 800, "w_access": 300, "w_service": 300, "w_jobs": 400,
+		"growth_base_pm": 30
+	},
+	"land": {
+		"_notes": "Arsa degeri dinamigi (SIM-07 asiri talep -> spekulasyon, kismi). Aylik. speculation_demand_pm ustunde artar, relax_demand_pm altinda tabana doner. max_multiplier_pm: taban degerin kati (tavan).",
+		"speculation_demand_pm": 800, "speculation_rate_pm": 20, "relax_demand_pm": 450,
+		"relax_rate_pm": 30, "max_multiplier_pm": 3000
+	}
+}

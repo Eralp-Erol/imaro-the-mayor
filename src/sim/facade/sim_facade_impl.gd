@@ -173,6 +173,8 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 			view.zone = overlay["zone"]
 		view.pending_zone = overlay.get("pending_zone", &"")
 		view.development = overlay.get("development", view.development)
+		# T-013: ekonomi kuruluysa gelişme/arsa değeri/sahip (CAN-03: bunları yalnız aktör kararı yazar)
+		EconomyState.decorate_view(_state, view)
 		view.reason_ids = reason_index.get(String(SimContract.parcel_ref(id)), PackedInt64Array())
 		view.provenance = provenance()
 		out.append(view)
@@ -241,6 +243,13 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 		mismatch.error_code = &"world_mismatch"
 		mismatch.message = "Kayıt bu dünyaya ait değil (dünya kimliği veya parsel sayısı uyuşmuyor)."
 		return mismatch
+	var economy_problem := EconomyState.validate_data(result.state.systems.get(EconomyState.KEY, null),
+		_parcels.parcel_count())  # T-013: ekonomi bölümü varsa biçimi/boyu denetlenir (yoksa "" döner)
+	if not economy_problem.is_empty():
+		var corrupt := SimSave.LoadResult.new()
+		corrupt.error_code = &"corrupt"
+		corrupt.message = "Kayıt bozuk: %s." % economy_problem
+		return corrupt
 	_state = result.state
 	_driver.bind_state(_state)
 	_retained_cache = {}
