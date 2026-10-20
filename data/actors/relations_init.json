@@ -1,0 +1,10 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 7): baslangic iliski onseli. default: iliski yoksa kullanilan deger (seyrek tutulur, ilk temasta olusur). overrides: yer tutucu ornekler (kanon degil). 'trust' ayni zamanda cürümenin hedefi trust0'dir.",
+	"default": {"trust": 0, "resentment": 0, "obligation": 0, "familiarity": 200},
+	"overrides": [
+		{"from": "actor.council.1", "to": "actor.protagonist", "trust": 100},
+		{"from": "actor.council.3", "to": "actor.protagonist", "trust": -80, "resentment": 120},
+		{"from": "actor.media.1", "to": "actor.protagonist", "familiarity": 500}
+	]
+}

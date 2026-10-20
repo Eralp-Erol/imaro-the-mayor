@@ -1,0 +1,250 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 7): M2 yer tutucu kadro. HICBIR AD, GECMIS, PARTI, RAKIP YOK (Q-005..Q-010 ACIK): protagonist yalniz 'actor.protagonist' + bos profile_slots; adlar loc anahtarindan (varsayilan <key>.name) gelir. Sayilar CALISMA MODELI (kanon degil). bloc kayitlari yer tutucudur: gercek kesimler hane kohortlarindan turetilir (T-017/T-013). investor kadrosu T-013'ten gelir.",
+	"campaign_template": "m2_test",
+	"actors": [
+		{
+			"key": "actor.protagonist",
+			"kind": "protagonist",
+			"profile_slots": []
+		},
+		{
+			"key": "actor.council.1",
+			"kind": "council",
+			"traits": {
+				"self_interest": 500,
+				"public_spirit": 500,
+				"partisanship": 400,
+				"integrity": 600,
+				"volatility": 300
+			},
+			"stance": {
+				"growth_vs_preservation": 0,
+				"public_investment_vs_market": 0,
+				"centralism_vs_localism": 0
+			},
+			"salience": {
+				"housing_cost": 500,
+				"mobility": 500,
+				"fiscal_burden": 500
+			},
+			"resources": {
+				"political": 400,
+				"money": 0,
+				"organization": 200
+			},
+			"affiliations": [
+				"actor.bloc.1"
+			],
+			"constituency_blocs": [
+				"actor.bloc.1"
+			],
+			"party_key": null,
+			"seat_group": null
+		},
+		{
+			"key": "actor.council.2",
+			"kind": "council",
+			"traits": {
+				"self_interest": 700,
+				"public_spirit": 350,
+				"partisanship": 500,
+				"integrity": 450,
+				"volatility": 400
+			},
+			"stance": {
+				"growth_vs_preservation": 300,
+				"public_investment_vs_market": -200,
+				"centralism_vs_localism": 100
+			},
+			"salience": {
+				"housing_cost": 600,
+				"mobility": 300,
+				"fiscal_burden": 700
+			},
+			"resources": {
+				"political": 400,
+				"money": 0,
+				"organization": 200
+			},
+			"affiliations": [
+				"actor.bloc.1"
+			],
+			"constituency_blocs": [
+				"actor.bloc.1"
+			],
+			"party_key": null,
+			"seat_group": null
+		},
+		{
+			"key": "actor.council.3",
+			"kind": "council",
+			"traits": {
+				"self_interest": 350,
+				"public_spirit": 700,
+				"partisanship": 350,
+				"integrity": 700,
+				"volatility": 250
+			},
+			"stance": {
+				"growth_vs_preservation": -300,
+				"public_investment_vs_market": 250,
+				"centralism_vs_localism": -100
+			},
+			"salience": {
+				"housing_cost": 400,
+				"mobility": 650,
+				"environment_health": 600
+			},
+			"resources": {
+				"political": 400,
+				"money": 0,
+				"organization": 200
+			},
+			"affiliations": [
+				"actor.bloc.2"
+			],
+			"constituency_blocs": [
+				"actor.bloc.2"
+			],
+			"party_key": null,
+			"seat_group": null
+		},
+		{
+			"key": "actor.council.4",
+			"kind": "council",
+			"traits": {
+				"self_interest": 500,
+				"public_spirit": 550,
+				"partisanship": 600,
+				"integrity": 500,
+				"volatility": 500
+			},
+			"stance": {
+				"growth_vs_preservation": 100,
+				"public_investment_vs_market": 100,
+				"centralism_vs_localism": 300
+			},
+			"salience": {
+				"jobs_income": 600,
+				"services_utilities": 550,
+				"fiscal_burden": 400
+			},
+			"resources": {
+				"political": 400,
+				"money": 0,
+				"organization": 200
+			},
+			"affiliations": [
+				"actor.bloc.2"
+			],
+			"constituency_blocs": [
+				"actor.bloc.2"
+			],
+			"party_key": null,
+			"seat_group": null
+		},
+		{
+			"key": "actor.council.5",
+			"kind": "council",
+			"traits": {
+				"self_interest": 450,
+				"public_spirit": 450,
+				"partisanship": 450,
+				"integrity": 550,
+				"volatility": 350
+			},
+			"stance": {
+				"growth_vs_preservation": -100,
+				"public_investment_vs_market": -100,
+				"centralism_vs_localism": -300
+			},
+			"salience": {
+				"housing_cost": 500,
+				"public_space": 500,
+				"heritage_identity": 450
+			},
+			"resources": {
+				"political": 400,
+				"money": 0,
+				"organization": 200
+			},
+			"affiliations": [
+				"actor.bloc.1",
+				"actor.bloc.2"
+			],
+			"constituency_blocs": [
+				"actor.bloc.1",
+				"actor.bloc.2"
+			],
+			"party_key": null,
+			"seat_group": null
+		},
+		{
+			"key": "actor.media.1",
+			"kind": "media",
+			"traits": {
+				"combativeness": 500,
+				"volatility": 300,
+				"integrity": 600
+			},
+			"lean": {
+				"growth_vs_preservation": 0
+			},
+			"sensationalism": 400,
+			"credibility": 600,
+			"reach": {
+				"actor.bloc.1": 600,
+				"actor.bloc.2": 600
+			}
+		},
+		{
+			"key": "actor.bloc.1",
+			"kind": "bloc",
+			"traits": {
+				"volatility": 350,
+				"combativeness": 500
+			},
+			"stance": {
+				"growth_vs_preservation": 200,
+				"public_investment_vs_market": -100,
+				"centralism_vs_localism": 0
+			},
+			"salience": {
+				"housing_cost": 800,
+				"mobility": 400,
+				"fiscal_burden": 300
+			},
+			"affiliations": [
+				"actor.bloc.1"
+			],
+			"size": 1000,
+			"grievances": {},
+			"satisfaction": {}
+		},
+		{
+			"key": "actor.bloc.2",
+			"kind": "bloc",
+			"traits": {
+				"volatility": 300,
+				"combativeness": 400
+			},
+			"stance": {
+				"growth_vs_preservation": -250,
+				"public_investment_vs_market": 150,
+				"centralism_vs_localism": 0
+			},
+			"salience": {
+				"housing_cost": 300,
+				"mobility": 700,
+				"environment_health": 500
+			},
+			"affiliations": [
+				"actor.bloc.2"
+			],
+			"size": 800,
+			"grievances": {},
+			"satisfaction": {}
+		}
+	]
+}

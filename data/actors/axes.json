@@ -1,0 +1,5 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 3.3): politik eksen kimlikleri; konum -1000..1000 (isaret/uc anlami gorunen metin anahtarlarinda loc.axis.<id>.neg/.pos, kodda degil). Liste ACIK/CALISMA MODELI: ideoloji karari degildir.",
+	"axes": ["growth_vs_preservation", "public_investment_vs_market", "centralism_vs_localism"]
+}

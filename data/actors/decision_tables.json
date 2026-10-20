@@ -1,0 +1,56 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 6.1, 6.3, 7): karar tablolari, TEK puanlama fonksiyonu icin. Anahtar '<tur>.<fiil>' (kayitta decision.<tur>.<fiil>). factors: name + taban agirlik (permille, negatif = karsi; 0 = yalniz gosterim) + trait_mod (ozellik -> kaydirma, w' = w * (1 + mod * (ozellik - 500) / 500 / 1000)). theta esik (-1000..1000); hysteresis: onceki karar olumluysa esikten dusulur; noise_amp: gurultu genligi (volatility ile olceklenir). tiers: basamakli esik (artan theta; her basamak ayri kayit). Tum sayilar CALISMA MODELI; investor.political_risk_signal ve olay atesleme T-017/T-026 isidir.",
+	"defaults": {"noise_trait": "volatility", "n_prec": 5},
+	"decisions": {
+		"council.vote": {
+			"factors": [
+				{"name": "stance_distance", "weight": 300, "trait_mod": {"partisanship": 100}},
+				{"name": "trust_in_player", "weight": 150},
+				{"name": "resentment", "weight": 100},
+				{"name": "bloc_pressure", "weight": 200, "trait_mod": {"public_spirit": 150}},
+				{"name": "lobby_pressure", "weight": 100, "trait_mod": {"self_interest": 200}},
+				{"name": "budget_realism", "weight": 100},
+				{"name": "obligation", "weight": 50}
+			],
+			"theta": 0, "hysteresis": 30, "noise_amp": 80
+		},
+		"bloc.react": {
+			"factors": [
+				{"name": "grievance_level", "weight": 450},
+				{"name": "satisfaction_level", "weight": -250},
+				{"name": "media_amplification", "weight": 150},
+				{"name": "organizer_capacity", "weight": 100},
+				{"name": "trust_in_player", "weight": -50}
+			],
+			"tiers": [{"id": "petition", "theta": 250}, {"id": "protest", "theta": 500}, {"id": "boycott", "theta": 700}],
+			"hysteresis": 30, "noise_amp": 80
+		},
+		"media.coverage": {
+			"factors": [
+				{"name": "newsworthiness", "weight": 400},
+				{"name": "lean_alignment", "weight": 250},
+				{"name": "fact_signal", "weight": 250},
+				{"name": "credibility_cost", "weight": -100}
+			],
+			"theta": 150, "hysteresis": 30, "noise_amp": 80
+		},
+		"interest.lobby": {
+			"factors": [
+				{"name": "goal_gain", "weight": 450},
+				{"name": "resource_slack", "weight": 200},
+				{"name": "media_window", "weight": 150},
+				{"name": "trust_in_player", "weight": 100}
+			],
+			"theta": 200, "hysteresis": 30, "noise_amp": 80
+		},
+		"remote.policy_move": {
+			"factors": [
+				{"name": "own_region_gain", "weight": 400},
+				{"name": "rivalry_pressure", "weight": 250},
+				{"name": "macro_conditions", "weight": 350}
+			],
+			"theta": 100, "hysteresis": 30, "noise_amp": 80
+		}
+	}
+}

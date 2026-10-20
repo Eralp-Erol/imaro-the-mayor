@@ -1,0 +1,5 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 3.3): konu kimlikleri (sikayet/memnuniyet/hafiza hedefleri). Liste CALISMA MODELI (kanon degil).",
+	"topics": ["housing_cost", "mobility", "environment_health", "jobs_income", "services_utilities", "public_space", "heritage_identity", "fiscal_burden"]
+}
