@@ -3,14 +3,20 @@
 	"_notes": [
 		"Arazi: kıyı ovası + tepe/dağ yığınları (massifs) + ova düzleştirmeleri (plains) + rölyef gürültüsü. Yükseklik mutlak metrelik uzayda tanımlıdır; hücre boyutu değişse coğrafya aynı kalır.",
 		"Referans 02 YÖN: kuzeyde ve D3 arkasında ormanlık tepeler; D4 iç ova (tarla mozaiği); D5 doğu/güneydoğu yamaçları belirgin yükselir; kıyı/ada çevresinde sığ, açık denizde koyu su.",
-		"Massif/plain: merkez ve yarıçap (rx, ry) km; yükseklik m. Hiçbiri kanon değildir."
+		"Massif/plain: merkez ve yarıçap (rx, ry) km; yükseklik m. Hiçbiri kanon değildir.",
+		"relief_noise = yumuşak FBM tümsekleri; ridge = |gürültü| ile keskin sırt/vadi çizgileri (massif rölyef çarpanıyla ölçeklenir, ova/kıyıda sönümlenir; amplitude_m 0 → kapalı). İkisi de dağın dağ gibi okunmasını ayarlar.",
+		"bathymetry.enclosed_shelf: ana karanın kapamasıyla (closing_radius_m) çevrili iç körfezde açık-deniz derinlik terimi ramp_m boyunca inner_factor'a iner (iç körfez açık denizden SIĞ; 1.0 = ayrım yok, boş sözlük = kapalı).",
+		"island: shelf_m/edge_scale_m kıyı plaj rafı; tepe yüksekliği, omuz üssü ve gürültü payı ada başına coast.json'da (peak_m, shoulder, hill_noise); burada yalnız varsayılanlar."
 	],
 	"quantize_m": 0.015625,
 	"shore": {"plain_cap_m": 30.0, "plain_scale_m": 2500.0, "fade_m": 1400.0},
 	"relief_noise": {"frequency_per_km": 0.22, "octaves": 5, "lacunarity": 2.0, "gain": 0.5,
 		"amplitude_m": 150.0, "min_relief_factor": 0.07, "reference_massif_m": 300.0},
+	"ridge": {"frequency_per_km": 0.30, "octaves": 3, "lacunarity": 2.0, "gain": 0.4, "amplitude_m": 170.0,
+		"crest_abs_noise": 0.25},
 	"massif_warp": {"frequency_per_km": 0.09, "amplitude": 0.75},
-	"island": {"edge_scale_m": 220.0, "noise_m": 1.5},
+	"island": {"edge_scale_m": 220.0, "noise_m": 1.5, "shelf_m": 1.5, "shoulder_default": 1.0,
+		"hill_noise_default": 0.3, "hill_frequency_per_km": 0.6},
 	"massifs": [
 		{"id": "north_west_forest_hills", "center_km": [16.0, 2.5], "radius_km": [7.0, 6.0], "peak_m": 450.0},
 		{"id": "north_central_rim", "center_km": [20.0, -1.0], "radius_km": [9.0, 5.5], "peak_m": 480.0},
@@ -29,5 +35,6 @@
 			"micro_relief_m": 2.0}
 	],
 	"bathymetry": {"min_depth_m": 0.8, "rim_depth_m": 9.0, "rim_scale_m": 350.0, "open_sea_depth_m": 115.0,
-		"open_scale_m": 4500.0, "noise_m": 4.0, "noise_frequency_per_km": 0.12}
+		"open_scale_m": 4500.0, "noise_m": 4.0, "noise_frequency_per_km": 0.12,
+		"enclosed_shelf": {"closing_radius_m": 7000.0, "ramp_m": 5000.0, "inner_factor": 0.5}}
 }

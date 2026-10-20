@@ -18,6 +18,10 @@ extends RefCounted
 const SKIRT_BOTTOM_Y := -260.0
 ## Köşegen seçiminde ana köşegene tanınan önyargı (hücre aralığının metre başına yüksekliği; 100 m hücrede 2 m).
 const DIAGONAL_BIAS_PER_M := 0.02
+## Üçgen düz normalinin hücre (iki üçgenin ortak) normaliyle karışımında ÜÇGENİN payı. 1 = saf üçgen faseti;
+## 0 = hücre başına tek düz normal. Eğik/bükülü (düzlemsel olmayan) hücrede iki üçgenin normali ayrışıp çapraz
+## paralel şerit (corduroy) verdiği için tam facet kullanılmaz; yine de tek hücrede iki facet'in izi kalır.
+const FACET_WEIGHT := 0.35
 const SKIRT_WATER_TOP_TINT := Color(0.02, 0.07, 0.15)
 
 
@@ -39,6 +43,15 @@ static func chunk_cell_rect(world: WorldData, cx: int, cz: int, chunk_cells: int
 static func chunk_origin(world: WorldData, cx: int, cz: int, chunk_cells: int) -> Vector3:
 	var p := world.cell_to_world(cx * chunk_cells, cz * chunk_cells)
 	return Vector3(p.x, 0.0, p.y)
+
+
+## Hücrenin köşegen seçimi: true = kuzeybatı-güneydoğu (p00-p11) ile böl, false = kuzeydoğu-güneybatı (p10-p01).
+## Kural: yükseklik farkı küçük olan çaprazla böl (kenar eş-yükselti boyunca uzanır; iki üçgenin normali en az
+## ayrışır). KARAR YALNIZ hücrenin dört köşe yüksekliğinden ve aralıktan gelir: chunk boyutu/sınırı/konumu girmez, bu
+## yüzden dikişin iki yanı ve farklı chunk düzenleri aynı üçgenleri üretir. Önyargı: düz/rampa alanda gürültüyle yön
+## sürekli değişmesin.
+static func uses_main_diagonal(h00: float, h10: float, h01: float, h11: float, span: float) -> bool:
+	return absf(h00 - h11) <= absf(h10 - h01) + DIAGONAL_BIAS_PER_M * span
 
 
 ## Kara chunk'ı. `stride` > 1: kaba LOD (her `stride` örnekten biri; etek yok sayılmaz). `shading_exaggeration` YALNIZ
@@ -96,14 +109,13 @@ static func build_land(world: WorldData, palette: TerrainPalette, cx: int, cz: i
 			var wx := origin.x + (x0 + x1) * 0.5
 			var wz := origin.z + (z0 + z1) * 0.5
 			var col := palette.land_color(elev, slope, sd, a, wx, wz)
-			# Köşegen: yükseklik farkı belirgin biçimde küçük olan çapraz (yüzey daha az kırılır). Önyargı: düz/rampa
-			# alanda gürültü yüzünden yön sürekli değişip şerit (corduroy) deseni oluşturmasın.
-			if absf(h00 - h11) <= absf(h10 - h01) + DIAGONAL_BIAS_PER_M * span:
-				n = _emit_land_tri(p00, p10, p11, col, sea, shading_exaggeration, verts, normals, colors, n)
-				n = _emit_land_tri(p00, p11, p01, col, sea, shading_exaggeration, verts, normals, colors, n)
+			var quad_normal := Vector3(-gx * shading_exaggeration, 1.0, -gz * shading_exaggeration).normalized()
+			if uses_main_diagonal(h00, h10, h01, h11, span):
+				n = _emit_land_tri(p00, p10, p11, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
+				n = _emit_land_tri(p00, p11, p01, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
 			else:
-				n = _emit_land_tri(p00, p10, p01, col, sea, shading_exaggeration, verts, normals, colors, n)
-				n = _emit_land_tri(p10, p11, p01, col, sea, shading_exaggeration, verts, normals, colors, n)
+				n = _emit_land_tri(p00, p10, p01, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
+				n = _emit_land_tri(p10, p11, p01, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
 	if skirts:
 		n = _add_skirts(world, rect, stride, verts, normals, colors, n)
 	verts.resize(n * 3)
@@ -217,7 +229,8 @@ static func _skirt_top(world: WorldData, fixed_is_i: bool, fixed: int, along: in
 
 ## Kara üçgeni: tamamı deniz seviyesinin altındaysa atılır (opak su örter). Düz normal.
 static func _emit_land_tri(p0: Vector3, p1: Vector3, p2: Vector3, col: Color, sea: float, k_shade: float,
-		verts: PackedVector3Array, normals: PackedVector3Array, colors: PackedColorArray, n: int) -> int:
+		quad_normal: Vector3, verts: PackedVector3Array, normals: PackedVector3Array, colors: PackedColorArray,
+		n: int) -> int:
 	if maxf(maxf(p0.y, p1.y), p2.y) < sea:
 		return n
 	var e1 := p2 - p0
@@ -225,6 +238,7 @@ static func _emit_land_tri(p0: Vector3, p1: Vector3, p2: Vector3, col: Color, se
 	e1.y *= k_shade
 	e2.y *= k_shade
 	var nrm := e1.cross(e2).normalized()
+	nrm = quad_normal.lerp(nrm, FACET_WEIGHT).normalized()
 	var k := n * 3
 	verts[k] = p0
 	verts[k + 1] = p1

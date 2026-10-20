@@ -157,6 +157,45 @@ func test_skirts_close_the_world_boundary_only() -> void:
 	assert_int(walls).is_greater(0)
 
 
+# --- Köşegen seçimi: yalnız hücre yüksekliğinden; chunk düzeninden bağımsız ---
+
+func test_diagonal_follows_the_smaller_height_difference_and_flips_when_heights_are_mirrored() -> void:
+	# p00-p11 farkı 0 (düz), p10-p01 farkı 40 → ana köşegenle böl; köşeler çevrilince anti-köşegen.
+	assert_bool(TerrainMeshBuilder.uses_main_diagonal(10.0, 30.0, 50.0, 10.0, 100.0)).is_true()
+	assert_bool(TerrainMeshBuilder.uses_main_diagonal(10.0, 10.0, 10.0, 50.0, 100.0)).is_false()
+	assert_bool(TerrainMeshBuilder.uses_main_diagonal(10.0, 50.0, 10.0, 10.0, 100.0)).is_true()
+	assert_bool(TerrainMeshBuilder.uses_main_diagonal(50.0, 10.0, 10.0, 10.0, 100.0)).is_false()
+	# Düz (eşit) hücrede kararlı: ana köşegen (gürültüyle yön titremesi yok).
+	assert_bool(TerrainMeshBuilder.uses_main_diagonal(5.0, 5.0, 5.0, 5.0, 100.0)).is_true()
+
+
+func test_every_cell_gets_the_same_triangles_regardless_of_chunk_layout() -> void:
+	# Aynı hücre iki farklı chunk düzeninde (32, 20, 7 hücre; dikişler farklı yerde) aynı üçgenleri (köşe konumu, normal,
+	# renk) vermeli: köşegen kararı chunk-yerel değildir.
+	var reference := _triangle_keys(32)
+	assert_int(reference.size()).is_greater(1000)
+	for layout in [20, 7]:
+		var other := _triangle_keys(layout)
+		assert_int(other.size()).is_equal(reference.size())
+		for key in reference:
+			assert_bool(other.has(key)).override_failure_message("chunk=%d düzeninde eksik üçgen %s" % [layout, key]) \
+				.is_true()
+
+
+func test_triangle_keys_differ_when_a_cell_height_changes_so_the_layout_test_is_sensitive() -> void:
+	# Olumsuz kontrol: bir hücrenin köşegen kararını tersine çeviren yükseklik değişimi anahtar kümesini değiştirir.
+	var before := _triangle_keys(20)
+	var changed_world := WorldTestSupport.coarse(WorldTestSupport.control())
+	var land_idx := changed_world.land_mask.find(1)
+	changed_world.heights[land_idx + changed_world.width + 1] += 900.0
+	var after := _triangle_keys(20, changed_world)
+	var changed := 0
+	for key in after:
+		if not before.has(key):
+			changed += 1
+	assert_int(changed).is_greater(0)
+
+
 # --- Su: kıyı/su ayrımı WorldData ile tutarlı ---
 
 func test_water_mesh_is_flat_at_sea_level_and_covers_exactly_cells_with_a_water_corner() -> void:
@@ -207,6 +246,30 @@ func test_water_colors_run_from_turquoise_shallow_to_navy_deep() -> void:
 	assert_float(deep.g / deep.b).is_less(0.6)
 
 
+func test_water_has_three_readable_bands_and_the_deepest_tone_is_not_near_black() -> void:
+	var deepest := TerrainPalette.water_color(-9000.0, 200.0)
+	assert_float(deepest.get_luminance()).is_greater(0.12)  # lacivert ama okunur
+	assert_float(deepest.b).is_greater(0.28)
+	# Her mesafede en az "derin" kadar açık: hiçbir yerde derin banttan daha koyu değil (körfez ortası çukur olmaz).
+	var previous := TerrainPalette.water_color(0.0, 0.0).get_luminance() + 1.0
+	for away in range(0, 9000, 50):
+		var lum := TerrainPalette.water_color(-float(away), 40.0).get_luminance()
+		assert_float(lum).is_greater_equal(deepest.get_luminance() - 0.0001)
+		assert_float(lum).is_less_equal(previous + 0.0001)  # kıyıdan uzaklaştıkça tekdüze koyulaşır
+		previous = lum
+	# Derin bant kıyıdan yeterince uzakta SABİT: açık deniz ile geniş körfez aynı tonu alır.
+	assert_object(TerrainPalette.water_color(-3000.0, 90.0)).is_equal(TerrainPalette.water_color(-9000.0, 200.0))
+
+
+func test_water_band_transitions_are_narrow() -> void:
+	# Turkuaz hale kıyıdan ~0.5 km içinde biter (bloom gibi geniş değil): 600 m'de sığ bant zaten bitmiş olmalı.
+	var shallow := TerrainPalette.water_color(-10.0, 40.0)
+	var at_600 := TerrainPalette.water_color(-600.0, 40.0)
+	for ch in 3:
+		assert_float(at_600[ch]).is_equal_approx(TerrainPalette.WATER_MID[ch], 0.01)
+	assert_float(shallow.g / shallow.b).is_greater(0.85)
+
+
 # --- Determinizm ve renk ---
 
 func test_chunk_data_is_deterministic_and_independent_of_build_order() -> void:
@@ -245,6 +308,31 @@ func test_field_mosaic_varies_inside_the_d4_plain_but_not_into_one_flat_colour()
 
 
 # --- Yardımcılar ---
+
+## Tüm kara üçgenlerinin (dünya uzayı köşe konumları sıralı + normal + renk) anahtar kümesi; chunk düzeninden bağımsız
+## olmalı. Yalnız eteksiz (skirts=false) kara, stride 1.
+func _triangle_keys(chunk_cells: int, world: WorldData = null) -> Dictionary:
+	var keys := {}
+	var wd := world if world != null else _world
+	var palette := TerrainPalette.new(wd)
+	var counts := TerrainMeshBuilder.chunk_counts(wd, chunk_cells)
+	for cz in counts.y:
+		for cx in counts.x:
+			var data := TerrainMeshBuilder.build_land(wd, palette, cx, cz, chunk_cells, 1, false, 4.0)
+			var origin := TerrainMeshBuilder.chunk_origin(wd, cx, cz, chunk_cells)
+			var verts: PackedVector3Array = data["vertices"]
+			var normals: PackedVector3Array = data["normals"]
+			var colors: PackedColorArray = data["colors"]
+			for t in range(0, verts.size(), 3):
+				var corners: Array[String] = []
+				for k in 3:
+					var w := origin + verts[t + k]
+					corners.append("%.2f,%.2f,%.2f" % [w.x, w.y, w.z])
+				corners.sort()
+				var nrm := normals[t]
+				keys["%s|%.4f,%.4f,%.4f|%s" % ["/".join(corners), nrm.x, nrm.y, nrm.z, colors[t].to_html()]] = true
+	return keys
+
 
 func _all_chunks(stride: int = 1, skirts: bool = true, exaggeration: float = 4.0) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []

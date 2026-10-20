@@ -25,9 +25,13 @@ const FIELD_TONES: Array[Color] = [
 	Color(0.46, 0.52, 0.30), Color(0.72, 0.66, 0.44),
 ]
 
+## Su: üç AYRIK derinlik bandı (turkuaz sığ → orta mavi → okunur lacivert); geçişler dar. En koyu ton siyaha yaklaşmaz.
 const WATER_SHALLOW := Color(0.17, 0.47, 0.50)
 const WATER_MID := Color(0.07, 0.30, 0.43)
-const WATER_DEEP := Color(0.025, 0.09, 0.20)
+const WATER_DEEP := Color(0.055, 0.20, 0.35)
+## Bant sınırları (kıyıdan uzaklık, m): sığ→orta ve orta→derin geçişi [başlangıç, bitiş].
+const WATER_SHALLOW_EDGE := Vector2(160.0, 420.0)
+const WATER_DEEP_EDGE := Vector2(1400.0, 2200.0)
 
 const FIELD_ROTATION_RAD := 0.41
 const FIELD_SIZE_M := Vector2(760.0, 480.0)
@@ -84,15 +88,15 @@ func land_color(elev: float, slope_deg: float, shore_m: float, sample: int, x: f
 	return Color(c.r * jitter, c.g * jitter, c.b * jitter)
 
 
-## Su köşe rengi: kıyıya yakın sığ turkuaz → orta mavi → açık deniz koyu lacivert. `shore_m` karada +, suda −.
+## Su köşe rengi: kıyıdan uzaklığa göre üç bant. `shore_m` karada +, suda −. Derin bant YALNIZ kıyıdan uzaklığa bağlı
+## olduğu için körfez içi, aynı uzaklıktaki açık denizden koyu çıkamaz (iç körfez dar olduğundan orta bantta kalır).
 static func water_color(shore_m: float, depth_m: float) -> Color:
 	var away := maxf(0.0, -shore_m)
-	var near_t := smoothstep(0.0, 1000.0, away)
-	var deep_t := smoothstep(500.0, 4800.0, away)
-	# Çok sığ sulara (kayalık/ada) ek turkuaz.
-	near_t *= 1.0 - exp(-maxf(depth_m, 0.0) / 6.0) * 0.5
-	var c := WATER_SHALLOW.lerp(WATER_MID, near_t)
-	return c.lerp(WATER_DEEP, deep_t)
+	var shallow_t := smoothstep(WATER_SHALLOW_EDGE.x, WATER_SHALLOW_EDGE.y, away)
+	var deep_t := smoothstep(WATER_DEEP_EDGE.x, WATER_DEEP_EDGE.y, away)
+	# Çok sığ sulara (kayalık/ada) sığ bandı biraz daha uzat.
+	shallow_t *= 1.0 - exp(-maxf(depth_m, 0.0) / 6.0) * 0.5
+	return WATER_SHALLOW.lerp(WATER_MID, shallow_t).lerp(WATER_DEEP, deep_t)
 
 
 func _field_tone(x: float, z: float, broad: float) -> Color:

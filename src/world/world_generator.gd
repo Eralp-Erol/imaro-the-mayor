@@ -193,6 +193,19 @@ static func _build_heights(data: WorldData, terrain: Dictionary, coast: Dictiona
 	var noise_amp := float(noise_cfg["amplitude_m"])
 	var min_rf := float(noise_cfg["min_relief_factor"])
 	var rf_ref := float(noise_cfg["reference_massif_m"])
+	# Sırt katmanı (isteğe bağlı): |gürültü| ile keskin sırt/vadi çizgileri; massif rölyef çarpanı ile ölçeklenir,
+	# ova/kıyıda sönümlenir. Yumuşak FBM katmanı "tümsek" üretir; bu katman dağın "dağ gibi" okunmasını sağlar.
+	var ridge_cfg: Dictionary = terrain.get("ridge", {})
+	var ridge_amp := float(ridge_cfg.get("amplitude_m", 0.0))
+	var ridge_center := maxf(float(ridge_cfg.get("crest_abs_noise", 0.25)), 0.01)
+	var ridge_noise := FastNoiseLite.new()
+	ridge_noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	ridge_noise.fractal_type = FastNoiseLite.FRACTAL_FBM
+	ridge_noise.seed = _stream_seed(world_seed, "ridge") & 0x7FFFFFFF
+	ridge_noise.frequency = float(ridge_cfg.get("frequency_per_km", 0.3)) / 1000.0
+	ridge_noise.fractal_octaves = int(ridge_cfg.get("octaves", 3))
+	ridge_noise.fractal_lacunarity = float(ridge_cfg.get("lacunarity", 2.0))
+	ridge_noise.fractal_gain = float(ridge_cfg.get("gain", 0.45))
 
 	var shore: Dictionary = terrain["shore"]
 	var plain_cap := float(shore["plain_cap_m"])
@@ -201,7 +214,14 @@ static func _build_heights(data: WorldData, terrain: Dictionary, coast: Dictiona
 	var island_cfg: Dictionary = terrain["island"]
 	var island_edge := float(island_cfg["edge_scale_m"])
 	var island_noise := float(island_cfg["noise_m"])
-	var peaks := _island_peaks(coast)
+	var island_shelf := float(island_cfg.get("shelf_m", 1.5))
+	var island_profile := _island_profiles(data, coast, island_cfg, island_src)
+	var island_hills := FastNoiseLite.new()
+	island_hills.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	island_hills.fractal_type = FastNoiseLite.FRACTAL_FBM
+	island_hills.seed = _stream_seed(world_seed, "island_hills") & 0x7FFFFFFF
+	island_hills.frequency = float(island_cfg.get("hill_frequency_per_km", 0.6)) / 1000.0
+	island_hills.fractal_octaves = 3
 
 	var bathy: Dictionary = terrain["bathymetry"]
 	var bathy_noise := FastNoiseLite.new()
@@ -216,6 +236,7 @@ static func _build_heights(data: WorldData, terrain: Dictionary, coast: Dictiona
 	var bathy_amp := float(bathy["noise_m"])
 	var q := float(terrain.get("quantize_m", 0.015625))
 	var sea := data.sea_level
+	var enclosure := _enclosure_factor(data, bathy.get("enclosed_shelf", {}))
 
 	for j in data.height:
 		var z := data.origin.y + j * data.cell_size
@@ -227,20 +248,31 @@ static func _build_heights(data: WorldData, terrain: Dictionary, coast: Dictiona
 			if data.land_mask[idx] == 1:
 				var src := island_src[idx]
 				if src > 0:
-					var t := d / island_edge
-					h = sea + MIN_LAND_M + peaks[src] * t / (1.0 + t) + island_noise * relief_noise.get_noise_2d(x, z)
+					# Ada: kıyıda ince plaj rafı, iç kesime doğru adanın KENDİ iç derinliğine göre yükselen tepe
+					# (düz plato değil); tepe şekli ada başına (tepe yüksekliği, omuz üssü, gürültü payı) değişir.
+					var prof: Vector4 = island_profile[src]  # (tepe m, omuz üssü, gürültü payı, iç derinlik m)
+					var inland := clampf(d / maxf(prof.w, data.cell_size), 0.0, 1.0)
+					var ts_i := d / island_edge
+					var bump := maxf(0.0, 1.0 + prof.z * island_hills.get_noise_2d(x, z) * 1.6)
+					h = sea + MIN_LAND_M + island_shelf * ts_i / (1.0 + ts_i) + prof.x * pow(inland, prof.y) * bump \
+							+ island_noise * relief_noise.get_noise_2d(x, z)
 				else:
 					var n := relief_noise.get_noise_2d(x, z)
 					var rf := min_rf + (1.0 - min_rf) * clampf(relief[idx] / rf_ref, 0.0, 1.0)
 					var ts := d / plain_scale
 					var fade := smoothstep(0.0, fade_m, d)
-					h = sea + MIN_LAND_M + plain_cap * ts / (1.0 + ts) + (relief[idx] + noise_amp * rf * n) * fade
+					var ridge := 0.0
+					if ridge_amp > 0.0:
+						ridge = ridge_amp * rf * (ridge_center - absf(ridge_noise.get_noise_2d(x, z))) / ridge_center
+					h = sea + MIN_LAND_M + plain_cap * ts / (1.0 + ts) + (relief[idx] + noise_amp * rf * n + ridge) * fade
 				h = maxf(h, sea + MIN_LAND_M)
 			else:
 				var t1 := d / rim_scale
 				var t2 := d / open_scale
-				var depth := min_depth + rim_depth * t1 / (1.0 + t1) + open_depth * t2 / (1.0 + t2)
-				depth += bathy_amp * bathy_noise.get_noise_2d(x, z) * minf(t2, 1.0)
+				# Derinlik kıyı uzaklığına bağlıdır; ağzı dar, kıyılarla çevrili iç körfez ayrıca açık denizden SIĞ
+				# tutulur (enclosure: açık denizde 1, iç körfezde inner_factor'a iner).
+				var depth := min_depth + rim_depth * t1 / (1.0 + t1) + open_depth * enclosure[idx] * t2 / (1.0 + t2)
+				depth += bathy_amp * bathy_noise.get_noise_2d(x, z) * minf(t2, 1.0) * enclosure[idx]
 				h = sea - maxf(depth, min_depth)
 			data.heights[idx] = snappedf(h, q)
 
@@ -254,14 +286,59 @@ static func _build_heights(data: WorldData, terrain: Dictionary, coast: Dictiona
 			data.heights[idx] = minf(data.heights[idx], sea - MIN_WATER_DEPTH_M)
 
 
-## `coast.islands[k].peak_m` → island_src değeri (k + 1) ile indekslenen tepe yüksekliği (m).
-static func _island_peaks(coast: Dictionary) -> PackedFloat32Array:
+## Ada başına tepe profili: island_src değeri (k + 1) ile indekslenir; Vector4(tepe m, omuz üssü, gürültü payı,
+## adanın en iç kıyı uzaklığı m). `coast.islands[k]`: peak_m, shoulder, hill_noise (yoksa terrain.island varsayılanı).
+## Omuz üssü < 1 yuvarlak/geniş tepe, > 1 sivri tepe; gürültü payı tepenin düzensizliği (adalar aynı olmasın).
+static func _island_profiles(data: WorldData, coast: Dictionary, island_cfg: Dictionary,
+		island_src: PackedByteArray) -> Array[Vector4]:
 	var list: Array = coast.get("islands", [])
-	var peaks := PackedFloat32Array()
-	peaks.resize(list.size() + 1)
+	var out: Array[Vector4] = []
+	out.resize(list.size() + 1)
+	out[0] = Vector4.ZERO
 	for k in list.size():
-		peaks[k + 1] = float((list[k] as Dictionary).get("peak_m", 15.0))
-	return peaks
+		var cfg: Dictionary = list[k]
+		out[k + 1] = Vector4(float(cfg.get("peak_m", 15.0)),
+				float(cfg.get("shoulder", island_cfg.get("shoulder_default", 1.0))),
+				float(cfg.get("hill_noise", island_cfg.get("hill_noise_default", 0.3))), 0.0)
+	var depth := PackedFloat32Array()
+	depth.resize(list.size() + 1)
+	for idx in island_src.size():
+		var src := island_src[idx]
+		if src > 0:
+			depth[src] = maxf(depth[src], absf(data.shore_distance[idx]))
+	for k in list.size():
+		out[k + 1].w = depth[k + 1]
+	return out
+
+
+## Su hücresi başına "açık deniz = 1 ... kapalı iç körfez = inner_factor" derinlik çarpanı. Kapalı su = ana karanın
+## morfolojik kapamasının doldurduğu su; açık denizden uzaklaştıkça (ramp_m üzerinde yumuşak) inner_factor'a iner.
+## `cfg` boşsa her yerde 1 (eski davranış). Yalnız tamsayı chamfer işlemleri → deterministik.
+static func _enclosure_factor(data: WorldData, cfg: Dictionary) -> PackedFloat32Array:
+	var count := data.width * data.height
+	var factor := PackedFloat32Array()
+	factor.resize(count)
+	factor.fill(1.0)
+	if cfg.is_empty():
+		return factor
+	var inner := float(cfg.get("inner_factor", 1.0))
+	var ramp := maxf(float(cfg.get("ramp_m", 4000.0)), data.cell_size)
+	var mainland := PackedByteArray()
+	mainland.resize(count)
+	for idx in count:
+		mainland[idx] = 1 if data.landmass_ids[idx] == 1 else 0
+	var closed := WorldGrid.closing(mainland, data.width, data.height,
+			float(cfg.get("closing_radius_m", 7000.0)) / data.cell_size)
+	var open_water := PackedByteArray()
+	open_water.resize(count)
+	for idx in count:
+		open_water[idx] = 1 if closed[idx] == 0 and data.land_mask[idx] == 0 else 0
+	var to_open := WorldGrid.distance_to_value(open_water, data.width, data.height, 1)
+	for idx in count:
+		if closed[idx] == 1 and data.land_mask[idx] == 0:
+			var away := float(to_open[idx]) / WorldGrid.CHAMFER_ORTHO * data.cell_size
+			factor[idx] = lerpf(1.0, inner, smoothstep(0.0, ramp, away))
+	return factor
 
 
 static func _add_massif(data: WorldData, relief: PackedFloat32Array, massif: Dictionary,

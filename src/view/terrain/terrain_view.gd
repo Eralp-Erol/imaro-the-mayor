@@ -13,8 +13,10 @@ extends Node3D
 @export var lod_stride: int = 1
 @export var skirts: bool = true
 ## Yalnız GÖLGELEME eğimini büyütür (hillshade z-faktörü); geometri ve yükseklikler gerçektir. 1 = gerçek eğim.
-@export var shading_exaggeration: float = 4.0
+@export var shading_exaggeration: float = 3.0
 @export var use_threads: bool = true
+## Kara chunk'ları gölge düşürür (su düşürmez; ikisi de alır). Gölgeyi açan ışık sahnededir; burada yalnız katılım.
+@export var cast_shadows: bool = true
 
 ## Son kurulumun ölçümleri: data_ms (mesh verisi), mesh_ms (ArrayMesh+düğüm), chunk/üçgen sayıları.
 var stats: Dictionary = {}
@@ -129,7 +131,8 @@ func _make_node(data: Dictionary, indexed: bool, origin: Vector3, node_name: Str
 	node.name = node_name
 	node.mesh = mesh
 	node.position = origin
-	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if cast_shadows and not indexed \
+			else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(node)
 	return node
 

@@ -1,3 +1,4 @@
+# gdlint:disable=max-public-methods
 extends GdUnitTestSuite
 ## T-001 ölçüt 1–2 · Veri yükleme + tohumlu deterministik üreteç (TEK-01/02, WLD-01, TEK-03).
 ## Aynı kontrol verisi + aynı tohum → aynı hash; farklı tohum → farklı hash; hücre boyutu coğrafyayı değiştirmez.
@@ -7,6 +8,12 @@ const SOURCE_FILES: Array[String] = [
 	"res://src/world/world_data.gd", "res://src/world/world_invariants.gd",
 	"res://src/world/world_control_data.gd",
 ]
+
+## Rölyef ölçüleri (sanat yönü ayarı; kanon değil).
+const MIN_HIGHEST_SUMMIT_M := 800.0
+const MIN_D5_MEAN_SLOPE_DEG := 10.0
+const MAX_D4_MEAN_SLOPE_DEG := 3.0
+const MIN_STEEP_MAINLAND_FRACTION := 0.10  # eğimi > 15° olan ana kara oranı
 
 var _default_world: WorldData
 
@@ -103,7 +110,7 @@ func test_control_data_change_changes_hash() -> void:
 	# Kontrol verisi gerçekten kullanılıyor (olumsuz: veri değişince hash aynı kalamaz).
 	var base := WorldTestSupport.control()
 	var changed := WorldTestSupport.control()
-	changed["terrain"]["massifs"][4]["peak_m"] = 900.0
+	changed["terrain"]["massifs"][0]["peak_m"] = float(changed["terrain"]["massifs"][0]["peak_m"]) + 400.0
 	assert_str(WorldTestSupport.coarse(base).state_hash()).is_not_equal(WorldTestSupport.coarse(changed).state_hash())
 
 
@@ -180,6 +187,85 @@ func test_floats_are_finite_and_land_is_above_sea() -> void:
 			non_finite += 1
 	assert_int(non_finite).is_equal(0)
 	assert_array(WorldInvariants.check_mask_height_consistency(w)).is_empty()
+
+
+# --- Rölyef: dağ gibi okunan masifler, düz plato olmayan adalar (sanat yönü ölçümü; eşikler ayar, kanon değil) ---
+
+@warning_ignore("integer_division")
+func _steep_mainland_fraction(world: WorldData) -> float:
+	var steep := 0
+	var n := 0
+	for idx in world.heights.size():
+		if world.landmass_ids[idx] == WorldData.LANDMASS_MAINLAND:
+			n += 1
+			if WorldInvariants._cell_slope_deg(world, idx % world.width, idx / world.width) > 15.0:
+				steep += 1
+	return float(steep) / maxf(n, 1.0)
+
+
+func test_massifs_read_as_mountains_high_summits_and_steep_flanks() -> void:
+	var w := _default_world
+	var highest := 0.0
+	for h in w.heights:
+		highest = maxf(highest, h)
+	assert_float(highest).is_greater(MIN_HIGHEST_SUMMIT_M)
+	assert_float(WorldInvariants.region_stats(w, &"D5")["mean_slope_deg"]).is_greater(MIN_D5_MEAN_SLOPE_DEG)
+	assert_float(_steep_mainland_fraction(w)).is_greater(MIN_STEEP_MAINLAND_FRACTION)
+	# D4 ovası yine belirgin düz (WLD-02): rölyef artışı ovayı bozmaz.
+	assert_float(WorldInvariants.region_stats(w, &"D4")["mean_slope_deg"]).is_less(MAX_D4_MEAN_SLOPE_DEG)
+
+
+func test_relief_negative_flat_relief_data_fails_the_mountain_measure() -> void:
+	# Olumsuz: sırt ve yumuşak gürültü kapatılınca dağ ölçüleri kırmızı (ölçü gerçekten kırılabilir).
+	var control := WorldTestSupport.control()
+	control["terrain"]["ridge"]["amplitude_m"] = 0.0
+	control["terrain"]["relief_noise"]["amplitude_m"] = 0.0
+	var flat := WorldTestSupport.medium(control)
+	assert_float(WorldInvariants.region_stats(flat, &"D5")["mean_slope_deg"]).is_less(MIN_D5_MEAN_SLOPE_DEG)
+	assert_float(_steep_mainland_fraction(flat)).is_less(MIN_STEEP_MAINLAND_FRACTION)
+
+
+@warning_ignore("integer_division")
+## Ada başına {tepe, çeyrek-dilim yükseklik}: yükseklik dağılımının tepesi ve %25'lik dilimi (m, deniz seviyesi üstü).
+func _island_height_profile(world: WorldData) -> Dictionary:
+	var by_landmass := {}
+	for idx in world.heights.size():
+		var lm := world.landmass_ids[idx]
+		if lm > WorldData.LANDMASS_MAINLAND:
+			if not by_landmass.has(lm):
+				by_landmass[lm] = []
+			(by_landmass[lm] as Array).append(world.heights[idx] - world.sea_level)
+	var out := {}
+	for lm in by_landmass:
+		var values: Array = by_landmass[lm]
+		values.sort()
+		out[lm] = {"max": float(values[values.size() - 1]), "q25": float(values[values.size() / 4]), "n": values.size()}
+	return out
+
+
+@warning_ignore("integer_division")
+func test_islands_are_hills_not_flat_plateaus_and_differ_from_each_other() -> void:
+	var profile := _island_height_profile(_default_world)
+	assert_int(profile.size()).is_equal(_default_world.islands.size())
+	var maxima := {}
+	for lm in profile:
+		var p: Dictionary = profile[lm]
+		# Tepe, ada gövdesinin alt çeyreğinden belirgin yüksek: plato değil (en az 3 m ve tepe/çeyrek oranı > 2).
+		assert_float(p["max"] - p["q25"]).is_greater(3.0)
+		assert_float(p["max"]).is_greater(2.0 * p["q25"])
+		maxima[snappedf(p["max"], 1.0)] = true
+	# Adalar birbirinin aynısı değil: tepe yükseklikleri çeşitli.
+	assert_int(maxima.size()).is_greater(_default_world.islands.size() / 2)
+
+
+func test_island_negative_flat_island_data_is_detected_as_plateau() -> void:
+	# Olumsuz: tepe 0.5 m'ye indirilirse ada düz plato olur ve ölçüt kırmızı verir.
+	var control := WorldTestSupport.control()
+	for island: Dictionary in control["coast"]["islands"]:
+		island["peak_m"] = 0.5
+	var profile := _island_height_profile(WorldTestSupport.medium(control))
+	for lm in profile:
+		assert_float(profile[lm]["max"] - profile[lm]["q25"]).is_less(3.0)
 
 
 # --- Saflık (TEK-01/02) ---

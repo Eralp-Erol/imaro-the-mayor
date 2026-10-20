@@ -1,6 +1,8 @@
 class_name WorldInvariants
 extends RefCounted
 ## Dünya-kanon değişmezleri (T-001 ölçüt 3; WLD-01/02/03/05, TEK-03). Saf: yalnız WorldData okur.
+## Kanon olmayan ÇIKARIMLARI (D1 kuzey/D6 güney, ada kimlikleri/sayısı, sabit koordinat) zorunlu kılmaz: yalnız göreli,
+## eksenden bağımsız ilişkiler sınanır (örn. D1 ve D6 karşı kıyılarda, aralarında su).
 ## Her `check_*` ihlal metinlerinin listesini döndürür (boş = değişmez sağlanıyor). Testler hem sağlıklı veride boşluğu
 ## hem bilerek bozulmuş veride ihlali doğrular. Hepsi TOPOLOJİ/göreli konum sınar; kesin koordinat sınamaz (F02, F04):
 ## eşikler kaba ve cömerttir, veriyi düzenlemek bunları kırmamalıdır.
@@ -27,6 +29,10 @@ const D4_MAX_MEAN_HEIGHT_M := 120.0
 const D4_VS_D5_MAX_HEIGHT_RATIO := 0.35
 const D4_VS_D5_MAX_SLOPE_RATIO := 0.5
 const D5_MIN_MEAN_HEIGHT_M := 150.0
+## İç körfez batimetrisi: aynı kıyı uzaklığında iç körfez açık denizden bu kadar (m) fazla derin olamaz ("çukur" yok).
+const BAY_DEPTH_TOLERANCE_M := 2.0
+const BAY_DEPTH_BIN_M := 1000.0
+const BAY_DEPTH_MIN_BIN_CELLS := 50
 
 
 ## Tüm değişmezler (tek körfez analizi paylaşılır).
@@ -38,8 +44,10 @@ static func check_all(world: WorldData) -> PackedStringArray:
 	out.append_array(check_region_layout(world, bay))
 	out.append_array(check_d1_d6_opposite_shores(world, bay))
 	out.append_array(check_t0_port_on_mainland_west_of_d4(world))
+	out.append_array(check_t0_first_industry_on_mainland_west_of_d4(world))
 	out.append_array(check_islands_have_no_t0_port_or_industry(world))
 	out.append_array(check_d4_plain_vs_d5_slopes(world))
+	out.append_array(check_inner_bay_not_deeper_than_open_sea(world, bay))
 	return out
 
 
@@ -65,7 +73,8 @@ static func check_mask_height_consistency(world: WorldData) -> PackedStringArray
 
 ## Ana karanın morfolojik kapamasından körfezi çıkarır. Dönüş:
 ## {mask: PackedByteArray (en büyük körfez bileşeni), cells, area_km2, bbox: Rect2 (dünya m), centroid: Vector2,
-##  water_fraction, mouth_cells, mouth_west_fraction, mouth_east_count, north_cells, south_cells, east_cells}
+##  water_fraction, mouth_cells, mouth_bbox: Rect2 (ağız hücreleri, dünya m), mouth_west_fraction, mouth_east_count,
+##  north_cells, south_cells, east_cells}
 @warning_ignore("integer_division")
 static func analyze_bay(world: WorldData) -> Dictionary:
 	var count := world.width * world.height
@@ -88,7 +97,8 @@ static func analyze_bay(world: WorldData) -> Dictionary:
 	var mask := PackedByteArray()
 	mask.resize(count)
 	var info := {"mask": mask, "cells": 0, "area_km2": 0.0, "bbox": Rect2(), "centroid": Vector2.ZERO,
-		"water_fraction": 0.0, "mouth_cells": 0, "mouth_west_fraction": 0.0, "mouth_east_count": 0,
+		"water_fraction": 0.0, "mouth_cells": 0, "mouth_bbox": Rect2(), "mouth_west_fraction": 0.0,
+		"mouth_east_count": 0,
 		"north_cells": 0, "south_cells": 0, "east_cells": 0}
 	if best == 0:
 		return info
@@ -128,6 +138,8 @@ static func _classify_bay_boundary(world: WorldData, info: Dictionary, closed: P
 	var south_start := bbox.position.y + 0.7 * bbox.size.y
 	var east_land_start := bbox.position.x + 0.75 * bbox.size.x
 	var mouth := 0
+	var mouth_lo := Vector2(INF, INF)
+	var mouth_hi := Vector2(-INF, -INF)
 	var mouth_west := 0
 	var mouth_east := 0
 	var north_cells := 0
@@ -148,6 +160,8 @@ static func _classify_bay_boundary(world: WorldData, info: Dictionary, closed: P
 				touches_land = true
 		if touches_open:
 			mouth += 1
+			mouth_lo = Vector2(minf(mouth_lo.x, p.x), minf(mouth_lo.y, p.y))
+			mouth_hi = Vector2(maxf(mouth_hi.x, p.x), maxf(mouth_hi.y, p.y))
 			if p.x <= west_limit:
 				mouth_west += 1
 			if p.x >= east_start:
@@ -160,6 +174,8 @@ static func _classify_bay_boundary(world: WorldData, info: Dictionary, closed: P
 			if p.x >= east_land_start:
 				east_cells += 1
 	info["mouth_cells"] = mouth
+	if mouth > 0:
+		info["mouth_bbox"] = Rect2(mouth_lo, mouth_hi - mouth_lo)
 	info["mouth_west_fraction"] = float(mouth_west) / float(maxi(mouth, 1))
 	info["mouth_east_count"] = mouth_east
 	info["north_cells"] = north_cells
@@ -230,7 +246,8 @@ static func bay_shore_cells(world: WorldData, bay: Dictionary, code: StringName)
 	return out
 
 
-## D1–D6 var; D3 batıda D4'ün batısı, D4 iç kesim, D2 körfeze değer, D5 doğu/güneydoğu, D6 D1'in güneyi/karşısı.
+## D1–D6 var; D3 D4'ün batısında, D4 iç kesim, D2 körfeze değer ve D3'ün doğusunda, D5 doğu/güneydoğu (D3'ün doğusu,
+## D4'ün güneyi). D1/D6 için yön (kuzey/güney) ZORUNLU DEĞİL: karşı kıyı ilişkisi `check_d1_d6_opposite_shores`'ta.
 static func check_region_layout(world: WorldData, bay: Dictionary = {}) -> PackedStringArray:
 	var info := bay if not bay.is_empty() else analyze_bay(world)
 	var out := PackedStringArray()
@@ -240,12 +257,10 @@ static func check_region_layout(world: WorldData, bay: Dictionary = {}) -> Packe
 			out.append("bölge %s yok veya hiç kara hücresi yok (WLD-02)" % code)
 	if not out.is_empty():
 		return out
-	var d1 := world.region_by_code(&"D1")
 	var d2 := world.region_by_code(&"D2")
 	var d3 := world.region_by_code(&"D3")
 	var d4 := world.region_by_code(&"D4")
 	var d5 := world.region_by_code(&"D5")
-	var d6 := world.region_by_code(&"D6")
 	if d2.display_name != WorldControlData.ONLY_NAME:
 		out.append("D2 adı '%s' olmalı (CAN-01)" % WorldControlData.ONLY_NAME)
 	for r in world.regions:
@@ -258,12 +273,10 @@ static func check_region_layout(world: WorldData, bay: Dictionary = {}) -> Packe
 		out.append("D4 iç kesimde olmalı: ortalama kıyı uzaklığı %.0f m < %.0f m" % [d4_mean_shore, D4_MIN_INLAND_M])
 	if bay_shore_cells(world, info, &"D2").size() < MIN_COAST_CELLS:
 		out.append("D2 körfeze değmiyor (kıyıda olmalı)")
-	if not (d5.centroid.x > d1.centroid.x and d5.centroid.y > d4.centroid.y):
-		out.append("D5 doğu/güneydoğuda olmalı (D1'in doğusu, D4'ün güneyi)")
-	if not (d2.centroid.x > d1.centroid.x):
-		out.append("D2 D1'in doğusunda olmalı")
-	if not (d6.centroid.y > d1.centroid.y):
-		out.append("D6 güney kıyısında, D1'in güneyinde olmalı")
+	if not (d5.centroid.x > d3.centroid.x and d5.centroid.y > d4.centroid.y):
+		out.append("D5 doğu/güneydoğuda olmalı (D3'ün doğusu, D4'ün güneyi)")
+	if not (d2.centroid.x > d3.centroid.x):
+		out.append("D2 D3'ün doğusunda olmalı")
 	return out
 
 
@@ -325,32 +338,56 @@ static func check_d1_d6_opposite_shores(world: WorldData, bay: Dictionary = {}) 
 # --- T0 liman / ada kuralı (WLD-03) ---
 
 ## T0 liman sahası: ana karada (hiçbir adada değil), kıyıda, D4'ün batısında ve D3 içinde.
-@warning_ignore("integer_division")
 static func check_t0_port_on_mainland_west_of_d4(world: WorldData) -> PackedStringArray:
 	var out := PackedStringArray()
 	var port := world.port_site
 	if port == null:
 		out.append("T0 liman sahası tanımlı değil (WLD-03)")
 		return out
+	out.append_array(_site_mainland_west_of_d4(world, port, "T0 liman sahası"))
 	var idx := world.world_to_index(port.position.x, port.position.y)
-	if world.land_mask[idx] == 0:
-		out.append("T0 liman sahası suda")
-	elif world.landmass_ids[idx] != WorldData.LANDMASS_MAINLAND:
-		out.append("T0 liman sahası ana karada değil (kara kütlesi %d; adada olamaz, WLD-03)" % world.landmass_ids[idx])
 	if absf(world.shore_distance[idx]) > PORT_MAX_SHORE_DISTANCE_M:
 		out.append("T0 liman sahası kıyıda değil (kıyıya %.0f m)" % absf(world.shore_distance[idx]))
-	var d4 := world.region_by_code(&"D4")
-	if d4 == null:
-		out.append("D4 yok: liman 'D4'ün batısı' ölçülemiyor")
-	else:
-		var d4_min_x := INF
-		for k in world.land_mask.size():
-			if world.region_ids[k] == d4.id:
-				d4_min_x = minf(d4_min_x, world.cell_to_world(k % world.width, k / world.width).x)
-		if not (port.position.x < d4.centroid.x and port.position.x < d4_min_x):
-			out.append("T0 liman sahası D4'ün batısında değil (x=%.0f, D4 min x=%.0f)" % [port.position.x, d4_min_x])
 	if world.region_code_at(port.position.x, port.position.y) != &"D3":
 		out.append("T0 liman sahası D3'te değil (F02 atlas: batı limanı)")
+	return out
+
+
+## T0 ilk ana sanayi sahası (`first_industry`): ana karada (adada değil) ve D4'ün batısında
+## (WLD-03; F02 "Liman/ada kuralı").
+static func check_t0_first_industry_on_mainland_west_of_d4(world: WorldData) -> PackedStringArray:
+	var out := PackedStringArray()
+	var site: WorldSite = null
+	for candidate in world.sites:
+		if candidate.kind == &"first_industry":
+			site = candidate
+			break
+	if site == null:
+		out.append("T0 ilk ana sanayi sahası tanımlı değil (WLD-03)")
+		return out
+	out.append_array(_site_mainland_west_of_d4(world, site, "T0 ilk ana sanayi sahası (%s)" % site.id))
+	return out
+
+
+## Ortak saha kuralı: su değil, ana karada (ada değil), D4'ün batısında (hem D4 ağırlık merkezi hem en batı hücresi).
+@warning_ignore("integer_division")
+static func _site_mainland_west_of_d4(world: WorldData, site: WorldSite, label: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var idx := world.world_to_index(site.position.x, site.position.y)
+	if world.land_mask[idx] == 0:
+		out.append("%s suda" % label)
+	elif world.landmass_ids[idx] != WorldData.LANDMASS_MAINLAND:
+		out.append("%s ana karada değil (kara kütlesi %d; adada olamaz, WLD-03)" % [label, world.landmass_ids[idx]])
+	var d4 := world.region_by_code(&"D4")
+	if d4 == null:
+		out.append("D4 yok: %s 'D4'ün batısı' ölçülemiyor" % label)
+		return out
+	var d4_min_x := INF
+	for k in world.land_mask.size():
+		if world.region_ids[k] == d4.id:
+			d4_min_x = minf(d4_min_x, world.cell_to_world(k % world.width, k / world.width).x)
+	if not (site.position.x < d4.centroid.x and site.position.x < d4_min_x):
+		out.append("%s D4'ün batısında değil (x=%.0f, D4 min x=%.0f)" % [label, site.position.x, d4_min_x])
 	return out
 
 
@@ -374,6 +411,70 @@ static func check_islands_have_no_t0_port_or_industry(world: WorldData) -> Packe
 			var lm := world.landmass_at(site.position.x, site.position.y)
 			if lm != WorldData.LANDMASS_MAINLAND:
 				out.append("%s (%s) ana karada değil: kara kütlesi %d (WLD-03)" % [site.id, site.kind, lm])
+	return out
+
+
+# --- Batimetri: iç körfez açık denizden derin olamaz ---
+
+## Derinlik kıyı uzaklığına bağlıdır; ağzı dar iç körfez AYNI kıyı uzaklığında açık denizden derin ("çukur") olamaz.
+## Kıyı uzaklığı kutularında (BAY_DEPTH_BIN_M) ortalama derinlik karşılaştırılır; ayrıca toplam ortalama ve en büyük
+## derinlik.
+## Yalnız göreli sınar; derinlik sayıları kanon değildir.
+static func check_inner_bay_not_deeper_than_open_sea(world: WorldData, bay: Dictionary = {}) -> PackedStringArray:
+	var info := bay if not bay.is_empty() else analyze_bay(world)
+	var out := PackedStringArray()
+	if int(info["cells"]) == 0:
+		return out  # körfez yok: ayrı değişmez (check_bay_topology) bildirir
+	var bay_mask: PackedByteArray = info["mask"]
+	var bins := 0
+	var bay_n := PackedInt32Array()
+	var open_n := PackedInt32Array()
+	var bay_sum := PackedFloat64Array()
+	var open_sum := PackedFloat64Array()
+	var bay_total := 0.0
+	var open_total := 0.0
+	var bay_count := 0
+	var open_count := 0
+	var bay_max := 0.0
+	var open_max := 0.0
+	for idx in world.heights.size():
+		if world.land_mask[idx] == 1:
+			continue
+		var depth := world.sea_level - world.heights[idx]
+		var bin := int(absf(world.shore_distance[idx]) / BAY_DEPTH_BIN_M)
+		while bins <= bin:
+			bay_n.append(0)
+			open_n.append(0)
+			bay_sum.append(0.0)
+			open_sum.append(0.0)
+			bins += 1
+		if bay_mask[idx] == 1:
+			bay_n[bin] += 1
+			bay_sum[bin] += depth
+			bay_total += depth
+			bay_count += 1
+			bay_max = maxf(bay_max, depth)
+		else:
+			open_n[bin] += 1
+			open_sum[bin] += depth
+			open_total += depth
+			open_count += 1
+			open_max = maxf(open_max, depth)
+	if open_count == 0:
+		return out
+	for bin in bins:
+		if bay_n[bin] < BAY_DEPTH_MIN_BIN_CELLS or open_n[bin] < BAY_DEPTH_MIN_BIN_CELLS:
+			continue
+		var bay_mean := bay_sum[bin] / bay_n[bin]
+		var open_mean := open_sum[bin] / open_n[bin]
+		if bay_mean > open_mean + BAY_DEPTH_TOLERANCE_M:
+			out.append("iç körfez kıyıdan %.0f-%.0f m bandında açık denizden derin (%.1f m > %.1f m): çukur" % [
+				bin * BAY_DEPTH_BIN_M, (bin + 1) * BAY_DEPTH_BIN_M, bay_mean, open_mean])
+	if bay_count > 0 and bay_total / bay_count > open_total / open_count + BAY_DEPTH_TOLERANCE_M:
+		out.append("iç körfez ortalama derinliği (%.1f m) açık denizinkinden (%.1f m) fazla" % [
+			bay_total / bay_count, open_total / open_count])
+	if bay_max > open_max + BAY_DEPTH_TOLERANCE_M:
+		out.append("iç körfez en büyük derinliği (%.1f m) açık denizinkinden (%.1f m) fazla" % [bay_max, open_max])
 	return out
 
 
