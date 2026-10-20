@@ -44,6 +44,14 @@ static func region_entry(control_data: Dictionary, code: String) -> Dictionary:
 	return {}
 
 
+## `terrain.settlement_terraces` içinde bölge koduna ait İLK seki girdisi (kimliğe bağlanmaz). Yoksa boş sözlük.
+static func terrace_entry(control_data: Dictionary, region_code: String) -> Dictionary:
+	for entry: Dictionary in control_data["terrain"].get("settlement_terraces", []):
+		if str(entry.get("region", "")) == region_code:
+			return entry
+	return {}
+
+
 static func island_entry(control_data: Dictionary, island_id: String) -> Dictionary:
 	for entry: Dictionary in control_data["coast"]["islands"]:
 		if entry["id"] == island_id:

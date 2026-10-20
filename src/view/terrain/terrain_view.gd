@@ -113,7 +113,7 @@ func _build_chunk_data(k: int) -> void:
 	var cz := k / _chunk_counts.x
 	_land_data[k] = TerrainMeshBuilder.build_land(_world, _palette, cx, cz, chunk_cells, lod_stride, skirts,
 			shading_exaggeration)
-	_water_data[k] = TerrainMeshBuilder.build_water(_world, cx, cz, chunk_cells)
+	_water_data[k] = TerrainMeshBuilder.build_water(_world, _palette, cx, cz, chunk_cells)
 
 
 func _make_node(data: Dictionary, indexed: bool, origin: Vector3, node_name: String) -> MeshInstance3D:

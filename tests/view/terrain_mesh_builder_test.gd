@@ -233,6 +233,25 @@ func test_every_water_sample_is_under_water_mesh_and_every_land_sample_is_in_the
 	assert_array(_land_mesh_violations(_world)).is_empty()
 
 
+func test_water_vertex_colours_come_from_the_palette_at_the_vertex_world_position() -> void:
+	var checked := 0
+	for chunk in _all_chunks():
+		var water: Dictionary = chunk["water"]
+		if int(water["triangles"]) == 0:
+			continue
+		var origin: Vector3 = chunk["origin"]
+		var verts: PackedVector3Array = water["vertices"]
+		var colors: PackedColorArray = water["colors"]
+		for k in water["indices"]:
+			var v := verts[k]
+			var idx := _world.world_to_index(origin.x + v.x, origin.z + v.z)
+			var expect := _palette.water_color_at(idx, origin.x + v.x, origin.z + v.z)
+			assert_float(colors[k].g).is_equal_approx(expect.g, 0.0001)
+			assert_float(colors[k].b).is_equal_approx(expect.b, 0.0001)
+			checked += 1
+	assert_int(checked).is_greater(1000)
+
+
 func test_water_colors_run_from_turquoise_shallow_to_navy_deep() -> void:
 	var shallow := TerrainPalette.water_color(-60.0, 1.5)
 	var mid := TerrainPalette.water_color(-1200.0, 25.0)
@@ -258,7 +277,10 @@ func test_water_has_three_readable_bands_and_the_deepest_tone_is_not_near_black(
 		assert_float(lum).is_less_equal(previous + 0.0001)  # kıyıdan uzaklaştıkça tekdüze koyulaşır
 		previous = lum
 	# Derin bant kıyıdan yeterince uzakta SABİT: açık deniz ile geniş körfez aynı tonu alır.
-	assert_object(TerrainPalette.water_color(-3000.0, 90.0)).is_equal(TerrainPalette.water_color(-9000.0, 200.0))
+	var open_sea := TerrainPalette.water_color(-9000.0, 200.0)
+	var wide_bay := TerrainPalette.water_color(-6000.0, 90.0)
+	for ch in 3:
+		assert_float(wide_bay[ch]).is_equal_approx(open_sea[ch], 0.0005)
 
 
 func test_water_band_transitions_are_narrow() -> void:
@@ -343,7 +365,7 @@ func _all_chunks(stride: int = 1, skirts: bool = true, exaggeration: float = 4.0
 				"cx": cx, "cz": cz, "origin": TerrainMeshBuilder.chunk_origin(_world, cx, cz, CHUNK_CELLS),
 				"land": TerrainMeshBuilder.build_land(_world, _palette, cx, cz, CHUNK_CELLS, stride, skirts,
 					exaggeration),
-				"water": TerrainMeshBuilder.build_water(_world, cx, cz, CHUNK_CELLS),
+				"water": TerrainMeshBuilder.build_water(_world, _palette, cx, cz, CHUNK_CELLS),
 			})
 	return out
 

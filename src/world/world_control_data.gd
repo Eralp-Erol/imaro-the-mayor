@@ -55,7 +55,34 @@ static func validate(control: Dictionary) -> PackedStringArray:
 	for code in REGION_CODES:
 		if not seen.has(code):
 			errors.append("bölge %s tanımlı değil (WLD-02)" % code)
+	errors.append_array(_validate_terraces(control, seen))
 	var coast: Dictionary = control["coast"]
 	if (coast.get("mainland", {}) as Dictionary).get("coast_path_km", []).size() < 4:
 		errors.append("coast.mainland.coast_path_km en az 4 kontrol noktası içermeli")
+	return errors
+
+
+## terrain.settlement_terraces şeması: kimlik, pozitif yarıçap, bilinen bölge VEYA mutlak merkez, makul eğim/sönüm.
+static func _validate_terraces(control: Dictionary, region_codes: Dictionary) -> PackedStringArray:
+	var errors := PackedStringArray()
+	var ids := {}
+	for t: Dictionary in (control["terrain"] as Dictionary).get("settlement_terraces", []):
+		var tag := "settlement_terraces '%s'" % str(t.get("id", "?"))
+		var id := str(t.get("id", ""))
+		if id.is_empty() or ids.has(id):
+			errors.append("%s: kimlik boş veya yinelenen" % tag)
+		ids[id] = true
+		var rad: Variant = t.get("radius_km", [])
+		if not (rad is Array) or (rad as Array).size() != 2 or float(rad[0]) <= 0.0 or float(rad[1]) <= 0.0:
+			errors.append("%s: radius_km iki pozitif sayı olmalı" % tag)
+		var region := str(t.get("region", ""))
+		if not region.is_empty() and not region_codes.has(region):
+			errors.append("%s: bilinmeyen bölge '%s'" % [tag, region])
+		if region.is_empty() and not t.has("center_km"):
+			errors.append("%s: region + offset_norm veya center_km gerekli" % tag)
+		var slope := float(t.get("slope_deg", 5.0))
+		if slope <= 0.0 or slope >= 45.0:
+			errors.append("%s: slope_deg (0, 45) aralığında olmalı" % tag)
+		if float(t.get("falloff", 1.2)) < 0.0 or float(t.get("detail_falloff", 0.0)) < 0.0:
+			errors.append("%s: falloff negatif olamaz" % tag)
 	return errors

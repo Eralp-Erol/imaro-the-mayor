@@ -36,6 +36,9 @@ var shore_distance: PackedFloat32Array = PackedFloat32Array()
 var regions: Array[WorldRegion] = []
 var islands: Array[WorldIsland] = []
 var sites: Array[WorldSite] = []
+## Yerleşim sekileri (terrace): kapalı (enabled = false) olanlar da ayak iziyle listelenir;
+## arazi yalnız açık olanlarda değişir.
+var terraces: Array[WorldTerrace] = []
 ## T0 liman sahası işareti (sites içindeki ilk &"port"); yoksa null.
 var port_site: WorldSite = null
 
@@ -116,6 +119,15 @@ func region_by_code(code: StringName) -> WorldRegion:
 	return null
 
 
+## Bölge koduna ait yerleşim sekileri (açık/kapalı fark etmez).
+func terraces_of_region(code: StringName) -> Array[WorldTerrace]:
+	var out: Array[WorldTerrace] = []
+	for t in terraces:
+		if t.region_code == code:
+			out.append(t)
+	return out
+
+
 func site_by_id(site_id: StringName) -> WorldSite:
 	for s in sites:
 		if s.id == site_id:
@@ -135,6 +147,9 @@ func state_dict() -> Dictionary:
 	var site_state: Array = []
 	for s in sites:
 		site_state.append(s.state_dict())
+	var terrace_state: Array = []
+	for t in terraces:
+		terrace_state.append(t.state_dict())
 	return {
 		"world_id": world_id, "seed": world_seed, "origin": [origin.x, origin.y], "size": [size.x, size.y],
 		"cell_size": cell_size, "width": width, "height": height, "sea_level": sea_level,
@@ -143,6 +158,7 @@ func state_dict() -> Dictionary:
 		"region_ids_sha256": _sha256_hex(region_ids),
 		"landmass_ids_sha256": _sha256_hex(landmass_ids),
 		"regions": region_state, "islands": island_state, "sites": site_state,
+		"terraces": terrace_state,
 	}
 
 

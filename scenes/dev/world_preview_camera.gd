@@ -2,10 +2,15 @@ class_name WorldPreviewCamera
 extends Camera3D
 ## T-001 önizleme kamerası (DEV; T-003'ün gerçek kamera rig'i DEĞİL). Odak noktası + yön + eğim + uzaklık.
 ## Fare: sol sürükle = kaydır, sağ/orta sürükle = döndür/eğ, tekerlek = yakınlaş. Klavye: WASD kaydır (Shift hızlı),
-## Q/E döndür, R/F eğim, Z/X yakınlaş, 1-4 = preset. Mac izleme yüzeyi: iki parmak kaydır = kaydır, sıkıştır = yakınlaş.
+## Q/E döndür, R/F eğim, Z/X yakınlaş, 1-5 = preset. Mac izleme yüzeyi: iki parmak kaydır = kaydır, sıkıştır = yakınlaş.
 ## Simülasyon durumuna dokunmaz; WorldData'yı yalnız ön ayar hesabı için okur.
 
-const PRESETS: Array[StringName] = [&"metro", &"bay_west", &"plain_east", &"harbor"]
+const PRESETS: Array[StringName] = [&"metro", &"bay_west", &"plain_east", &"harbor", &"d5_slopes"]
+## d5_slopes: odak, D5 çapasından metro merkezine (körfez/ova) doğru bölgenin küçük yarıçapının bu oranı kadar
+## ilerideki alt yamaç; kamera körfez/ova tarafından yamaca bakar (WorldData bölge çapasından türer, sabit koordinat yok).
+const D5_SLOPES_FOCUS_RADIUS_SHARE := 0.4
+const D5_SLOPES_DISTANCE_M := 7000.0
+const D5_SLOPES_PITCH_DEG := 35.0
 const MIN_DISTANCE := 150.0
 const MAX_DISTANCE := 90000.0
 const MIN_PITCH := 8.0
@@ -45,6 +50,17 @@ func apply_preset(preset: StringName, world: WorldData) -> void:
 			heading_deg = 150.0
 			pitch_deg = 38.0
 			distance = 24000.0
+		&"d5_slopes":
+			var d5s := world.region_by_code(&"D5")
+			var to_d5 := Vector2(1.0, 0.0)
+			if d5s != null:
+				var away := d5s.anchor - center
+				to_d5 = away.normalized() if away.length() > 1.0 else to_d5
+				f = d5s.anchor - to_d5 * minf(d5s.radius.x, d5s.radius.y) * D5_SLOPES_FOCUS_RADIUS_SHARE
+			# Kamera ova/körfez tarafında, D5'e (yamaca) doğru bakar: yön = metro merkezinden D5'e.
+			heading_deg = rad_to_deg(atan2(to_d5.x, -to_d5.y))
+			pitch_deg = D5_SLOPES_PITCH_DEG
+			distance = D5_SLOPES_DISTANCE_M
 		&"harbor":
 			f = world.port_site.position if world.port_site != null else center
 			heading_deg = 235.0

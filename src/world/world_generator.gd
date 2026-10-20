@@ -39,6 +39,7 @@ static func generate(control: Dictionary, world_seed: int, overrides: Dictionary
 	data.heights.resize(count)
 	data.shore_distance.resize(count)
 
+	data.terraces = _resolve_terraces(data, control["terrain"], control["regions"])
 	var island_src := _rasterize_coast(data, control["coast"], world_seed)
 	_label_landmasses(data)
 	_compute_shore_distance(data)
@@ -278,12 +279,108 @@ static func _build_heights(data: WorldData, terrain: Dictionary, coast: Dictiona
 
 	for plain: Dictionary in terrain.get("plains", []):
 		_flatten_plain(data, plain, island_src, relief_noise, q)
+	for terrace in data.terraces:
+		if terrace.enabled:
+			_apply_terrace(data, terrace, island_src, relief, relief_noise, shore, q)
 	# Nicem (snappedf) sonrası ada/kara-su değişmezini garanti et.
 	for idx in count:
 		if data.land_mask[idx] == 1:
 			data.heights[idx] = maxf(data.heights[idx], sea + MIN_LAND_M)
 		else:
 			data.heights[idx] = minf(data.heights[idx], sea - MIN_WATER_DEPTH_M)
+
+
+## `terrain.settlement_terraces` → WorldTerrace listesi. Merkez ya mutlak (`center_km`) ya da bölge çapasından türetilir
+## (`region` + `offset_norm`: çapadan bölge yarıçapı katı cinsinden ofset; bölge düzenlenirse seki onunla gider).
+## Yukarı yön (masife) varsayılan olarak sekiden bölge çapasına doğrudur;
+## `uphill_deg` (0 = doğu, 90 = güney) ile ezilir.
+static func _resolve_terraces(data: WorldData, terrain: Dictionary, regions_cfg: Dictionary) -> Array[WorldTerrace]:
+	var out: Array[WorldTerrace] = []
+	var region_by_code := {}
+	for r: Dictionary in regions_cfg.get("regions", []):
+		region_by_code[str(r["code"])] = r
+	for cfg: Dictionary in terrain.get("settlement_terraces", []):
+		var t := WorldTerrace.new()
+		t.id = StringName(str(cfg["id"]))
+		t.region_code = StringName(str(cfg.get("region", "")))
+		t.enabled = bool(cfg.get("enabled", true))
+		t.radius = _vec2(cfg["radius_km"]) * 1000.0
+		t.falloff = float(cfg.get("falloff", 1.2))
+		t.detail_falloff = float(cfg.get("detail_falloff", 2.0 * t.falloff))
+		t.slope_deg = float(cfg.get("slope_deg", 5.0))
+		t.micro_relief_m = float(cfg.get("micro_relief_m", 1.5))
+		t.center_height_m = float(cfg.get("center_height_m", -1.0))
+		t.basis = str(cfg.get("basis", ""))
+		var anchor := Vector2.ZERO
+		var has_anchor := false
+		if region_by_code.has(str(t.region_code)):
+			var rc: Dictionary = region_by_code[str(t.region_code)]
+			anchor = data.origin + _vec2(rc["anchor_km"]) * 1000.0
+			has_anchor = true
+			var offset := _vec2(cfg.get("offset_norm", [0.0, 0.0]))
+			t.center = anchor + offset * _vec2(rc["radius_km"]) * 1000.0
+		if cfg.has("center_km"):
+			t.center = data.origin + _vec2(cfg["center_km"]) * 1000.0
+		if cfg.has("uphill_deg"):
+			var a := deg_to_rad(float(cfg["uphill_deg"]))
+			t.uphill = Vector2(cos(a), sin(a))
+		elif has_anchor and (anchor - t.center).length() > 1.0:
+			t.uphill = (anchor - t.center).normalized()
+		out.append(t)
+	return out
+
+
+## Seki: çekirdekte arazi, `slope_deg` eğimli düzlem + mikro rölyef olur; `falloff` bandında orijinale yumuşakça karışır
+## (rölyef gürültüsü ve sırt dahil her şey sönümlenir). Düzlem kıyı rafının altına inmez. Yalnız ana kara.
+## Tohumdan bağımsızdır (düzlem + çekirdek ortalaması); mikro rölyef mevcut gürültü akışını okur (RNG çağrısı yok).
+static func _apply_terrace(data: WorldData, t: WorldTerrace, island_src: PackedByteArray, relief: PackedFloat32Array,
+		noise: FastNoiseLite, shore_cfg: Dictionary, q: float) -> void:
+	var plain_cap := float(shore_cfg["plain_cap_m"])
+	var plain_scale := float(shore_cfg["plain_scale_m"])
+	var reach := t.radius * (1.0 + maxf(t.falloff, t.detail_falloff))
+	var fade_m := float(shore_cfg["fade_m"])
+	var box := _bbox(data, t.center, reach)
+	if t.center_height_m < 0.0:
+		var sum := 0.0
+		var n := 0
+		for j in range(box.position.y, box.end.y):
+			for i in range(box.position.x, box.end.x):
+				var idx := j * data.width + i
+				if data.land_mask[idx] == 0 or island_src[idx] > 0:
+					continue
+				if t.in_core(data.cell_to_world(i, j)):
+					var ts := absf(data.shore_distance[idx]) / plain_scale
+					sum += MIN_LAND_M + plain_cap * ts / (1.0 + ts) + relief[idx]
+					n += 1
+		var natural_m := sum / float(maxi(n, 1)) if n > 0 else MIN_LAND_M
+		# Seki kıyıya kökleşir: merkezde düzlem, kıyıdan hedef eğimle yükselen rampayı (kıyı uzaklığı * tan) aşmaz;
+		# böylece alt yamaç sahilden doğal yükselir, masif ortalaması kıyıdan uzakta sekiyi dağ kotuna taşımaz.
+		var shore_m := absf(data.shore_distance[data.world_to_index(t.center.x, t.center.y)])
+		t.center_height_m = minf(natural_m, MIN_LAND_M + tan(deg_to_rad(t.slope_deg)) * shore_m)
+	var tan_slope := tan(deg_to_rad(t.slope_deg))
+	for j in range(box.position.y, box.end.y):
+		for i in range(box.position.x, box.end.x):
+			var idx := j * data.width + i
+			if data.land_mask[idx] == 0 or island_src[idx] > 0:
+				continue
+			var p := data.cell_to_world(i, j)
+			var u := t.normalized_distance(p)
+			var w := 1.0 - smoothstep(1.0, 1.0 + t.falloff, u)
+			var wd := 1.0 - smoothstep(1.0, 1.0 + t.detail_falloff, u)
+			if wd <= 0.0 and w <= 0.0:
+				continue
+			var d := absf(data.shore_distance[idx])
+			var ts := d / plain_scale
+			var floor_h := data.sea_level + MIN_LAND_M + plain_cap * ts / (1.0 + ts)
+			# 1) Detay sönümü (geniş band): sırt + rölyef gürültüsü yumuşakça kalkar, masif gövdesi kalır.
+			var smooth_h := floor_h + relief[idx] * smoothstep(0.0, fade_m, d)
+			var h := lerpf(data.heights[idx], maxf(smooth_h, floor_h), wd)
+			# 2) Düzlem (dar band): hedef eğimli seki.
+			if w > 0.0:
+				var plane := data.sea_level + t.center_height_m + tan_slope * (p - t.center).dot(t.uphill)
+				var target := maxf(plane, floor_h) + t.micro_relief_m * noise.get_noise_2d(p.x * 3.0, p.y * 3.0)
+				h = lerpf(h, maxf(target, floor_h), w)
+			data.heights[idx] = snappedf(h, q)
 
 
 ## Ada başına tepe profili: island_src değeri (k + 1) ile indekslenir; Vector4(tepe m, omuz üssü, gürültü payı,

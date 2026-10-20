@@ -6,7 +6,7 @@ extends GdUnitTestSuite
 const SOURCE_FILES: Array[String] = [
 	"res://src/world/world_generator.gd", "res://src/world/world_grid.gd",
 	"res://src/world/world_data.gd", "res://src/world/world_invariants.gd",
-	"res://src/world/world_control_data.gd",
+	"res://src/world/world_control_data.gd", "res://src/world/world_terrace.gd",
 ]
 
 ## Rölyef ölçüleri (sanat yönü ayarı; kanon değil).

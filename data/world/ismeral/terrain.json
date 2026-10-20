@@ -6,6 +6,7 @@
 		"Massif/plain: merkez ve yarıçap (rx, ry) km; yükseklik m. Hiçbiri kanon değildir.",
 		"relief_noise = yumuşak FBM tümsekleri; ridge = |gürültü| ile keskin sırt/vadi çizgileri (massif rölyef çarpanıyla ölçeklenir, ova/kıyıda sönümlenir; amplitude_m 0 → kapalı). İkisi de dağın dağ gibi okunmasını ayarlar.",
 		"bathymetry.enclosed_shelf: ana karanın kapamasıyla (closing_radius_m) çevrili iç körfezde açık-deniz derinlik terimi ramp_m boyunca inner_factor'a iner (iç körfez açık denizden SIĞ; 1.0 = ayrım yok, boş sözlük = kapalı).",
+		"settlement_terraces: yamaç bölgesinin körfeze/ovaya bakan alt kotunda YERLEŞİM SEKİSİ (T0'da gerçek merkez/çarşı/konut için, WLD-04). Statü: ÇALIŞMA MODELİ (ÇM) — yer, boyut, eğim kanon değildir; serbestçe düzenlenir. Genel mekanizma: D2-D6'dan her biri ileride seki alabilir; şimdilik yalnız D5'te. Merkez = bölge çapası + offset_norm * bölge yarıçapı (km), yani bölge düzenlenirse seki onunla gider; mutlak merkez için center_km. radius_km = çekirdek (eğim tam hedef), falloff = çekirdek yarıçapının katı kadar yumuşak düzlem rampası, detail_falloff = ondan geniş band: sırt + rölyef gürültüsü önce burada sönerek masif gövdesine iner (uçurum yok). slope_deg = çekirdek eğimi; yukarı yön (masife) varsayılan seki -> bölge çapası, uphill_deg ile ezilir (0 = doğu, 90 = güney). center_height_m verilmezse türetilir: çekirdekteki masif rölyefi ortalaması ile kıyıdan hedef eğimle yükselen rampanın küçüğü (seki kıyıya kökleşir, dağ kotuna çıkmaz). enabled=false: ayak izi listelenir ama arazi değişmez (olumsuz test).",
 		"island: shelf_m/edge_scale_m kıyı plaj rafı; tepe yüksekliği, omuz üssü ve gürültü payı ada başına coast.json'da (peak_m, shoulder, hill_noise); burada yalnız varsayılanlar."
 	],
 	"quantize_m": 0.015625,
@@ -33,6 +34,11 @@
 			"micro_relief_m": 3.0},
 		{"id": "d2_coastal_plain", "center_km": [31.5, 11.5], "radius_km": [4.0, 3.2], "target_m": 20.0, "flatten": 0.8,
 			"micro_relief_m": 2.0}
+	],
+	"settlement_terraces": [
+		{"id": "d5_bay_facing_terrace", "region": "D5", "offset_norm": [-0.5, -0.4], "radius_km": [1.5, 1.25],
+			"falloff": 1.2, "detail_falloff": 2.4, "slope_deg": 4.0, "micro_relief_m": 1.5, "enabled": true,
+			"basis": "ÇM (OY yönü: Referans 02 D5 yeşil kademeli yamaç, alt kotta yerleşim; F02 atlas D5 'eğimli mahalleler, küçük merkez'). D5 çapasının körfeze/ovaya bakan (kuzeybatı) alt yamacı; masif doğuda/yukarıda kalır."}
 	],
 	"bathymetry": {"min_depth_m": 0.8, "rim_depth_m": 9.0, "rim_scale_m": 350.0, "open_sea_depth_m": 115.0,
 		"open_scale_m": 4500.0, "noise_m": 4.0, "noise_frequency_per_km": 0.12,

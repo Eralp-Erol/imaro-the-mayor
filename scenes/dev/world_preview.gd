@@ -1,11 +1,11 @@
 extends Node3D
 ## T-001 dünya önizleme sahnesi (DEV): WorldData üretir → chunk'lı flat-shaded arazi + su → tek güneş, ışık, kamera.
 ## Açma: tools/godot.sh --path . res://scenes/dev/world_preview.tscn -- --preset=metro  (veya editörde F6).
-## Komut satırı (-- sonrası): --preset=metro|bay_west|plain_east|harbor  --seed=N  --cell=M (hücre m)  --chunk=N (hücre)
+## Komut satırı (-- sonrası): --preset=metro|bay_west|plain_east|harbor|d5_slopes  --seed=N  --cell=M (hücre m)  --chunk=N (hücre)
 ##   (geçersiz değer → net hata + varsayılan; --cell en az 20 m)
 ##   --exag=K (gölgeleme eğim abartısı) --sun-el=DERECE --sun-az=DERECE --sun-energy=E --ambient=E --no-shadows
 ##   --stride=N (LOD deneyi)  --markers (D-kodu/saha işaretleri açık başlar)  --no-threads.
-## Tuşlar: F3 işaretleri aç/kapa (varsayılan KAPALI), 1-4 preset; kamera: bkz world_preview_camera.gd.
+## Tuşlar: F3 işaretleri aç/kapa (varsayılan KAPALI), 1-5 preset; kamera: bkz world_preview_camera.gd.
 ## HUD yok; sayılar yalnız konsola. Bu sahne simülasyon durumu tutmaz.
 
 const DATA_DIR := "res://data/world/ismeral"
@@ -17,8 +17,11 @@ const MAX_CELL_M := 2000.0
 ## Gölge yalnız bu kamera uzaklığının (m) altında açık: kara chunk başına +1 draw call (~+100, metro); metro
 ## uzaklığında (58 km) gölge uzunluğu birkaç piksel olduğundan kazanç yok (eğim gölgelemesi her ölçekte var).
 const SHADOW_MAX_CAMERA_DISTANCE_M := 30000.0
-const SUN_ENERGY := 1.0
-const AMBIENT_ENERGY := 0.42
+## Işık tabanı (VIS-01, AD takibi): gölge yüzü/gölge içindeki yüzler siyaha inmesin. Ambient ~2x (eski 0.42), güneş
+## buna göre kısıldı: güneşe bakan düz zeminin toplam parlaklığı eski dengeye yakın kalır, gölge tabanı yaklaşık iki
+## katına çıkar (ölçüm: bkz T-001 raporu).
+const SUN_ENERGY := 0.7
+const AMBIENT_ENERGY := 0.85
 
 ## Son kurulumun ölçümleri (perf_probe okur): control_ms, generate_ms, terrain (TerrainView.stats), vb.
 var build_stats: Dictionary = {}

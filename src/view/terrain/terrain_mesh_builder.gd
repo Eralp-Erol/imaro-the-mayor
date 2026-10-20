@@ -11,7 +11,8 @@ extends RefCounted
 ## - Kara: indekssiz üçgen listesi, ÜÇGEN BAŞINA düz normal (flat-shaded), hücre başına renk (TerrainPalette);
 ##   köşegen yönü yükseklik farkına göre.
 ##   Tamamen deniz seviyesinin altındaki üçgenler ATILIR (opak su yüzeyi örter) → üçgen sayısı ~yarıya iner.
-## - Su: deniz seviyesinde düz yüzey; en az bir köşesi su olan hücreler; köşe rengi kıyı mesafesinden (sığ → derin).
+## - Su: deniz seviyesinde düz yüzey; en az bir köşesi su olan hücreler; köşe rengi: ince sığ şerit (en yakın kıyı) +
+##   ana karaya uzaklığa bağlı geniş orta→derin geçişi (adalar balon halesi üretmez; bkz TerrainPalette).
 ## - Dünya sınırlarında etek (skirt): "boş sınır" yerine kapalı blok; metro dışı dünya sonraki işlerdir.
 ## Tüm fonksiyonlar saf ve salt okunurdur.
 
@@ -124,10 +125,12 @@ static func build_land(world: WorldData, palette: TerrainPalette, cx: int, cz: i
 	return {"vertices": verts, "normals": normals, "colors": colors, "triangles": n}
 
 
-## Su chunk'ı (indeksli, düz yüzey). Dönüş:
+## Su chunk'ı (indeksli, düz yüzey; köşe rengi `palette.water_color_at`: bükülmüş, ana karaya uzaklığa bağlı
+## bantlar). Dönüş:
 ## {"vertices": PackedVector3Array, "normals": PackedVector3Array, "colors": PackedColorArray,
 ##  "indices": PackedInt32Array, "triangles": int}; su yoksa triangles = 0.
-static func build_water(world: WorldData, cx: int, cz: int, chunk_cells: int) -> Dictionary:
+static func build_water(world: WorldData, palette: TerrainPalette, cx: int, cz: int, chunk_cells: int) -> Dictionary:
+	var origin := chunk_origin(world, cx, cz, chunk_cells)
 	var rect := chunk_cell_rect(world, cx, cz, chunk_cells)
 	var i0 := rect.position.x
 	var j0 := rect.position.y
@@ -174,7 +177,7 @@ static func build_water(world: WorldData, cx: int, cz: int, chunk_cells: int) ->
 			var idx := j * w + i
 			verts[l] = Vector3((i - i0) * cell, sea, (j - j0) * cell)
 			normals[l] = Vector3.UP
-			colors[l] = TerrainPalette.water_color(world.shore_distance[idx], sea - heights[idx])
+			colors[l] = palette.water_color_at(idx, origin.x + (i - i0) * cell, origin.z + (j - j0) * cell)
 	return {"vertices": verts, "normals": normals, "colors": colors, "indices": indices,
 		"triangles": indices.size() / 3}
 

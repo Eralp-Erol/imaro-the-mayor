@@ -29,6 +29,14 @@ const D4_MAX_MEAN_HEIGHT_M := 120.0
 const D4_VS_D5_MAX_HEIGHT_RATIO := 0.35
 const D4_VS_D5_MAX_SLOPE_RATIO := 0.5
 const D5_MIN_MEAN_HEIGHT_M := 150.0
+## Yerleşim sekisi (WLD-04, ÇM): yamaç bölgesinde T0 merkez/çarşı/konut için yerleşilebilir alan.
+## Eşikler ölçüm toleransıdır
+## (hedef eğim veride, genelde 4-5°); veri düzenlemesi bunları kırmamalıdır.
+const TERRACE_REQUIRED_REGIONS: Array[StringName] = [&"D5"]
+const TERRACE_MAX_SLOPE_DEG := 8.0
+const TERRACE_MIN_GENTLE_SHARE := 0.95
+const TERRACE_MIN_LAND_SHARE := 0.6
+const TERRACE_MIN_MEASURED_CELLS := 4
 ## İç körfez batimetrisi: aynı kıyı uzaklığında iç körfez açık denizden bu kadar (m) fazla derin olamaz ("çukur" yok).
 const BAY_DEPTH_TOLERANCE_M := 2.0
 const BAY_DEPTH_BIN_M := 1000.0
@@ -47,6 +55,7 @@ static func check_all(world: WorldData) -> PackedStringArray:
 	out.append_array(check_t0_first_industry_on_mainland_west_of_d4(world))
 	out.append_array(check_islands_have_no_t0_port_or_industry(world))
 	out.append_array(check_d4_plain_vs_d5_slopes(world))
+	out.append_array(check_settlement_terraces(world))
 	out.append_array(check_inner_bay_not_deeper_than_open_sea(world, bay))
 	return out
 
@@ -497,6 +506,64 @@ static func check_d4_plain_vs_d5_slopes(world: WorldData) -> PackedStringArray:
 	if float(d4["mean_slope_deg"]) > D4_VS_D5_MAX_SLOPE_RATIO * float(d5["mean_slope_deg"]):
 		out.append("D4 eğimi (%.1f°) D5 eğiminden (%.1f°) belirgin düz değil" % [
 			d4["mean_slope_deg"], d5["mean_slope_deg"]])
+	return out
+
+
+## Yerleşim sekileri (WLD-04): gerekli bölgelerde (D5) en az bir seki var; her seki (kapalı olanlar dahil)
+## kendi bölgesinde,
+## ana karada, çoğunlukla karada; çekirdeğinin kıyı hücresi olmayan örneklerinde eğim ≤ TERRACE_MAX_SLOPE_DEG (en az
+## TERRACE_MIN_GENTLE_SHARE payı); yamaç bölgelerinde (TERRACE_REQUIRED_REGIONS) seki bölge ortalamasından
+## alçakta (masif
+## yukarıda kalır).
+static func check_settlement_terraces(world: WorldData) -> PackedStringArray:
+	var out := PackedStringArray()
+	for code in TERRACE_REQUIRED_REGIONS:
+		if world.region_by_code(code) != null and world.terraces_of_region(code).is_empty():
+			out.append("%s için yerleşim sekisi tanımlı değil (WLD-04: gerçek merkez/konut alanı)" % code)
+	for t in world.terraces:
+		var region := world.region_by_code(t.region_code)
+		var tag := "seki '%s'" % t.id
+		if not t.enabled:
+			tag += " (kapalı)"
+		var expected := PI * t.radius.x * t.radius.y / (world.cell_size * world.cell_size)
+		var land := 0
+		var measured := 0
+		var gentle := 0
+		var sum_slope := 0.0
+		var sum_h := 0.0
+		for j in world.height:
+			for i in world.width:
+				if not t.in_core(world.cell_to_world(i, j)):
+					continue
+				var idx := j * world.width + i
+				if world.land_mask[idx] == 0:
+					continue
+				land += 1
+				if world.shore_distance[idx] < 2.0 * world.cell_size:
+					continue  # kıyı hücresi: eğim denize bakan komşuyu da içerir, seki ölçümüne girmez
+				var slope := _cell_slope_deg(world, i, j)
+				measured += 1
+				sum_slope += slope
+				sum_h += world.heights[idx] - world.sea_level
+				if slope <= TERRACE_MAX_SLOPE_DEG:
+					gentle += 1
+		if region != null and world.landmass_at(t.center.x, t.center.y) != WorldData.LANDMASS_MAINLAND:
+			out.append("%s ana karada değil" % tag)
+		if region != null and world.region_code_at(t.center.x, t.center.y) != t.region_code:
+			out.append("%s merkezi %s bölgesi içinde değil" % [tag, t.region_code])
+		if float(land) < TERRACE_MIN_LAND_SHARE * expected:
+			out.append("%s çekirdeğinin çoğu su (kara payı %.0f%%)" % [tag, 100.0 * land / maxf(expected, 1.0)])
+		if measured < TERRACE_MIN_MEASURED_CELLS:
+			continue  # çözünürlük bu seki için eğimi ölçmeye yetmiyor
+		var share := float(gentle) / float(measured)
+		if share < TERRACE_MIN_GENTLE_SHARE:
+			out.append("%s çekirdeğinde eğimi <= %.0f° olan pay %.0f%% < %.0f%% (ort. eğim %.1f°)" % [
+				tag, TERRACE_MAX_SLOPE_DEG, 100.0 * share, 100.0 * TERRACE_MIN_GENTLE_SHARE, sum_slope / measured])
+		if region != null and t.region_code in TERRACE_REQUIRED_REGIONS:  # yamaç bölgeleri: alt yamaç koşulu
+			var stats := region_stats(world, t.region_code)
+			if not stats.is_empty() and sum_h / measured >= float(stats["mean_height"]):
+				out.append("%s ortalama yüksekliği (%.0f m) bölge ortalamasından (%.0f m) alçak değil: alt yamaç değil" % [
+					tag, sum_h / measured, stats["mean_height"]])
 	return out
 
 
