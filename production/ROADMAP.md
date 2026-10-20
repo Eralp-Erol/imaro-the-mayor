@@ -57,3 +57,7 @@ Departmanlar, hat sahipliği, çalışma kuralları ve kayıt defteri: `producti
 | T-022 | Karar akışları: imar önerisi, meclis oylaması, bütçe | ux / ui-engineer | T-019, T-017 (mock ile başlar) | CAN-05, CAN-06 |
 T-001 takipleri: T-001a (render: ışık, harbor dikiş deliği), T-001b (world: ada tepeleri, iç körfez batimetrisi), T-001c (world+render: alt-hücre kıyı), T-001d (= T-025 arazi paleti).
 Gerçek `WorldData` koordinatına bağlı işler yalnız: T-003, T-005, T-011, T-012; geri kalan hatlar coğrafyadan bağımsızdır (fixture/mock).
+
+### M1 kapısı (T-006) için taşınan AÇIK kabul koşulları (commit ≠ kabul)
+- T-012: K8 LOD0↔LOD1 ≤%5 (şu an %9,5); yerel evrede yapı üçgeni ≤900k (şu an ~1,27M); low-key ışık onayı (arazi V bandı); HLOD2/HLOD1 kararları; gerçek T0 verisiyle görsel kapı (VIS-04).
+- T-001: yaratıcı coğrafya onayı (Q-015, kullanıcı). T-007: Windows çalıştırma + iPad zinciri cihazda (T-008). T-011: bellek (+~95 MB), üretim süresi sessiz makinede. T-009/T-010 henüz yok.

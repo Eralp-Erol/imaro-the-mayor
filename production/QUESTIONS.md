@@ -21,6 +21,7 @@ Durumlar:
 | Q-010 | İçerik tonu sınırları: yolsuzluk/çıkar çatışması sunumu, şiddet/taciz, etnik-dinsel konular, gerçek figür/olay benzerliği, hiciv (AS-6, AS-10, AS-13) | **open** | — |
 | Q-011 | UX: HUD stili, açılış menüsü, istatistik biçimi, zoom akışı (sürekli/ölçek kapısı), tek/iki panel, olay kesintisi + otomatik duraklatma varsayılanı (ux-ia §9, AS-11) | **open** | — |
 | Q-012 | Oyun içi takvim biçimi; Türkçe alt başlık istenip istenmediği | **open** | — |
+| Q-015 | Ismeral coğrafyasının yaratıcı onayı: T-001 çıktısı (körfez, ada dizisi, D1–D6 yerleşimi, D1 kuzey kıyıda çıkarımı, liman sahası) kullanıcı tarafından onaylandı mı? | **open** | yalnız KALICI koordinata bağlı işler (aşağıda) |
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
@@ -44,3 +45,7 @@ Tek sert kural: **ad/sayı/senaryo kanon gibi yazılmaz**; cevaplar `design/deci
 
 ### Q-014 · İmar önerisi meclisten geçmeli mi? (status: open — engellemiyor)
 Kaynak: T-027 sim raporu (SIM-05, CAN-05/06). Şu an çalışma modeli: önerilen imar değişikliği `apply_delay_days=3` sonra otomatik yürürlüğe girer (veri). Gerçek yetki/meclis usulü F05-D'de AÇIK. Beklerken: yapılandırılabilir `requires_council` bayrağı (veri), UI akışı iki yolu da gösterebilir.
+
+### Q-015 · Ismeral coğrafyasının yaratıcı onayı (status: open — kullanıcı kararı bekliyor)
+Teknik/görsel kapılar geçti (art-director GEÇER, QA PASS, canon kontrolü temiz) ama kıyı çizgisi, ada sayısı/konumu, D1–D6 yerleşimi ve "D1 kuzey kıyıda" çıkarımı **ÇM/OY** verisidir; kullanıcı onayı verilmedi. T-001 görüntüleri sohbette paylaşıldı (`artifacts/screenshots/captures/*t001-final*`; `world_preview` ile açılır).
+Onay gelene kadar kural: **hiçbir görev kalıcı şehir/mahalle/liman/yol/yerleşim koordinatını mevcut araziye sabitlemez**; yerleşim ve ağ yalnız `WorldData` + çapalardan çalışma zamanında türetilir, koordinat içeren üretilmiş veri commit'lenmez; testler topolojik/göreli kalır; kontrol verisi (`data/world/ismeral/*.json`) düzenlenebilir kalır.
