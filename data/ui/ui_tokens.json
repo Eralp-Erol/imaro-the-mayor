@@ -1,0 +1,59 @@
+{
+	"_header": "T-019 tasarim belirtecleri: TEK KAYNAK. Gorsel kimlik KANON DEGIL (HUD stili ACIK, Q-011); notr tema, degistirilebilir. Boyutlar mantiksal birim (~pt) ve ui_scale ile carpilir; 'floors' dokunmatik profilde alt sinirlardir (ux-layout-v0 §3.2).",
+	"colors": {
+		"hud_bg": "1b2027f2",
+		"panel_bg": "20262eF5",
+		"panel_bg_alt": "2a313b",
+		"text": "eef1f4",
+		"text_muted": "aeb7c1",
+		"text_on_accent": "0e1318",
+		"button_bg": "323a46",
+		"button_hover": "3e4757",
+		"button_pressed": "7db4e6",
+		"button_disabled": "262c35",
+		"text_disabled": "8c96a2",
+		"border": "56606e",
+		"accent": "7db4e6",
+		"focus": "ffd666",
+		"mock": "f2b84b",
+		"danger": "ff9a90",
+		"ok": "8fd6a0",
+		"scrim": "00000066"
+	},
+	"sizes": {
+		"body": 14,
+		"small": 12,
+		"title": 18,
+		"heading": 22,
+		"target_min": 36,
+		"target_primary": 38,
+		"spacing": 8,
+		"radius": 6,
+		"focus_width": 2,
+		"bar_top": 48,
+		"bar_banner": 24,
+		"bar_toolbar": 56,
+		"panel_width": 400,
+		"notif_width": 420,
+		"toolbar_max_width": 760,
+		"sheet_max_height": 560,
+		"map_margin": 8
+	},
+	"limits": {
+		"panel_frac_side_desktop": 0.28,
+		"panel_frac_side_touch": 0.38,
+		"sheet_frac": 0.45,
+		"center_visible_min": 0.5
+	},
+	"floors": {
+		"body": 17,
+		"small": 13,
+		"target": 44,
+		"target_primary": 56,
+		"bar_top": 56,
+		"bar_toolbar": 64,
+		"edge_margin": 16,
+		"gap": 8
+	},
+	"safe_area_extra": 8
+}

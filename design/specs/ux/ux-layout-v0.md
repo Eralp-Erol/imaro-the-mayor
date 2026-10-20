@@ -89,3 +89,12 @@ Tek "Mutluluk %" hiçbir yerde yoktur (SIM-09).
 6. **Ölçek kapısı** davranışı (`zoom.locked_here`) sahte kamera ölçeği olayıyla.
 Sonra T-020 (1-3-4 gerçek), T-021 (5), T-022 (imar/meclis/bütçe akışları).
 Kabul ölçütü ekleri: panel açıkken harita merkezi ≥ yarı görünür (ekran görüntüsü ölçümü); tüm metinler `UiText` üzerinden; `grep` ile gömülü metin yok.
+
+## 7. T-019 uygulama notları (uygulamadan çıkan düzeltmeler)
+- **Ölçek kuralı:** boyut = `max(taban × ui_scale, dokunmatik alt sınırı)`; taban belirteçler `data/ui/ui_tokens.json`. Dokunmatik taban ölçek `PlatformProfile.DEFAULTS` değeridir (şu an 1,25; §1'deki 1,15 önerisinin yerine geçer: gövde 14 × 1,25 = 17,5 ≥ 17 pt). Kullanıcı ölçeği küçültse de dokunmatikte 44/56 pt, gövde 17, yardımcı 13 alt sınırları korunur.
+- **Sık hedef** masaüstünde 38, dokunmatikte ≥ 56 (§3.2); masaüstü rahat hedef 36.
+- **Panel genişliği** masaüstünde `min(400 × ölçek, %28)`: 1280 pencerede ≈ 358 (§2'deki "360" ile %28 tavanı çakışır; tavan öncelikli).
+- **Dikey alt sayfa** araç çubuğu DAHİL en çok %45 yüksekliktir; böylece ekran merkezi hiçbir zaman örtülmez (ölçüt: harita merkez bölgesinin ≥ %50'si görünür, `HudLayout.center_visible_fraction`).
+- **Üst şerit** dar çerçevede (dikey iPad 834/1024) iki satıra sarılır: tarih ve para ikinci satıra iner; yükseklik içerikten gelir.
+- **Kurulmamış modlar** (İnşa, Yönetim; T-022 öncesi) araç çubuğunda gizlenmez, devre dışı + "Henüz kurulmadı" etiketiyle görünür.
+- **Sabitle** = sabit panel Esc/seçim temizleme gibi dolaylı kapanmalarda kapanmaz; yalnız Kapat düğmesiyle kapanır. Sürüklenebilir alt sayfa tutamağı v0'da YOK (ölü kontrol olmasın diye).

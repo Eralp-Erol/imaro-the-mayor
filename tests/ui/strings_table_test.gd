@@ -1,7 +1,10 @@
 extends GdUnitTestSuite
-## T-018 ölçüt 5 · Merkezi Türkçe metin tablosu kuralları (data/ui/strings.tr.json): geçerli JSON, anahtar biçimi,
-## para simgesi/adı yasağı (Q-003), tek "Mutluluk" skoru yasağı (SIM-09), yer tutucu dengesi, zorunlu anahtar aileleri.
-## Her kuralın OLUMSUZ karşılığı: bilerek bozulmuş sözlük bellekte üretilir ve denetçinin ihlal bulduğu doğrulanır.
+## T-018 ölçüt 5 · Merkezi Türkçe metin tablosu kuralları (data/ui/strings.tr.json): geçerli JSON, anahtar
+## biçimi,
+## para simgesi/adı yasağı (Q-003), tek "Mutluluk" skoru yasağı (SIM-09), yer tutucu dengesi, zorunlu anahtar
+## aileleri.
+## Her kuralın OLUMSUZ karşılığı: bilerek bozulmuş sözlük bellekte üretilir ve denetçinin ihlal bulduğu
+## doğrulanır.
 
 const PATH := "res://data/ui/strings.tr.json"
 const FORBIDDEN_CURRENCY := ["₺", "$", "€", "£", "lira", "Lira"]

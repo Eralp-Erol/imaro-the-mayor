@@ -1,0 +1,10 @@
+{
+	"_header": "T-019 UI yapilandirmasi. Hepsi CALISMA MODELI / YER TUTUCU (kanon degil). Para adi/simgesi yalniz buradan okunur (Q-003 ACIK); gosterimde baska simge kullanilmaz.",
+	"economy.currency_symbol": "¤",
+	"economy.currency_name": "",
+	"calendar.days_per_year": 360,
+	"calendar._note": "Takvim esleme (yil/gun) ACIK; sim tick'i = 1 oyun gunu (ADR-0002). 360 yer tutucudur.",
+	"zoning.land_uses": ["zone.residential", "zone.mixed", "zone.commercial", "zone.green", "zone.industrial"],
+	"zoning._note": "ADR-0005 Ek B anahtarlari + gosterim denemesi icin industrial. Sozlesmede arazi kullanimi sorgusu YOK (v1.1 istegi); sim listede olmayan kullanimi gerekceyle reddeder.",
+	"hud.notification_rows": 3
+}
