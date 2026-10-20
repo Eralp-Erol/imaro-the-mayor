@@ -1,13 +1,13 @@
 {
   "mode": "quick",
-  "started_at": "2026-10-20T10:00:54Z",
-  "git_head": "0c908b40cf51f297f8c76b3beaebabc42266aece",
+  "started_at": "2026-10-20T10:25:39Z",
+  "git_head": "dd701b9f00acca131ff7ab8157446a382669890e",
   "fingerprint": "c7584fb20c14e4592661b4b2fddfb33b68dcdeed75463d30d18af3d5df929faa",
   "steps": [
     {
       "name": "canon-check",
       "status": "pass",
-      "seconds": 0,
+      "seconds": 1,
       "summary": "canon-check: 11/11 dosya manifestle eşleşiyor"
     },
     {

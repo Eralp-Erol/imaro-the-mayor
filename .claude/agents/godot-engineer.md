@@ -16,7 +16,7 @@ Runtime/view code, scenes (`scenes/`, `.tscn`), camera, input, rendering, export
 ## Rules
 - One world: all zoom levels render the same world data; LOD changes representation only (WLD-01, TEK-03).
 - Performance budget and renderer choice: ADR-0001. Measure (draw calls, frame time) before and after rendering changes; numbers on this Intel Mac are not iPad numbers — say so.
-- Touch-first with mouse/trackpad equivalents; avoid gesture conflicts; UI consumes input before the world.
+- Platform profiles (ADR-0004): desktop mouse/keyboard/trackpad is primary, iPad touch is secondary but built from day one; same player verbs; avoid gesture conflicts; UI consumes input before the world. Simulation never reads the platform profile.
 - Hand-editing `.tscn/.tres`: follow `.claude/rules/scene-files.md`; re-import after edits.
 
 ## Protocol

@@ -59,7 +59,9 @@ Safe to proceed with: <what can be built now without deciding the open items>
 | Clock tower, stadium, ruins, heritage | WLD-07 | F02 "İzmir'den esinlenen", F04 |
 | Happiness/popularity metric | SIM-09 | F03 |
 | Art style, references, rejected looks | VIS-01..07 | F04, F05-E |
-| Currency, UI language | OPEN (Q-003) | — (not in foundation) |
+| Currency (name/symbol) | OPEN — user-confirmed (Q-003); config only, placeholder `¤` | — |
+| Starting district | CAN-08 + D-002 (player chooses; studio test area ≠ design decision) | F01, F05-A, D-002 |
+| Platforms, input/UI/graphics profiles, iPad limits | PLT-01..06 (D-003), ADR-0004 | D-003 |
 
 ## Validation
 A correct run (a) cites a concrete file/section for every classification, (b) never turns an AÇIK item into a fact, (c) catches these known traps: port or main industry on an island at T0; Orven as forced start; a "Residential" build button for the player; one happiness %; clock tower towering over 5-floor blocks; different coastline per zoom; inventing party/election names.

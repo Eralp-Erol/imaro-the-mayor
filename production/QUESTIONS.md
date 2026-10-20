@@ -5,20 +5,13 @@ Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Grup
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
 - Kullanıcı eski POC'yi referans görselleriyle birlikte sildi; kullanılmaz.
 
-### Q-002 · İlk geliştirilecek (dikey dilim) ilçe  (status: open)
-- Context: CAN-08 — oyuncu yalnızca gerçekten geliştirilmiş ilçeleri seçer; Orven seçilebilir ama zorunlu başlangıç değil. M2 dikey dilimi bir ilçeyi sokak ölçeğine kadar geliştirmeyi gerektirir. Metro iskeleti (M1/T-001) bu karara bağlı değil.
-- Options: A) Orven (D2, doğu kıyısı karma ilçe: konut, gündelik ticaret, atölye, marina servisi; büyüme alanı var) · B) D1 Merkez (tarihî çekirdek, saat kulesi, çarşı — görsel/tarihî yük en yüksek) · C) D6 karşı yaka çekirdeği
-- Recommendation: A — tek kesin adlı ilçe, karma ve büyümeye açık olduğu için imar→yatırım→inşaat döngüsü en net burada görünür; D1'in miras yükünü erken almaz. Mimari ilçe-bağımsız (veri odaklı) kurulur; sürüm öncesinde en az ikinci bir ilçe geliştirilmeden Orven fiilen zorunlu başlangıç hâline getirilmez.
-- Meanwhile: M1 metro ölçeğinde tüm bölgeleri kaba düzeyde kurar; ilçe ayrıntısı bu cevabı bekler.
+### Q-002 · İlk geliştirilecek (dikey dilim) ilçe  (status: answered → D-002)
+- Oyuncu başlangıç ilçesini kendisi seçer; Orven zorunlu değil. Stüdyo, M2 için teknik test alanı seçebilir (Orven/D2) ama bu oyun tasarımı varsayımına dönüşmez.
 
-### Q-003 · Anderva'nın para birimi ve arayüz dili  (status: open)
-- Context: POC brifi Türkçe arayüz ve ₺ istiyordu; Anderva ise Türkiye olmayan kurgusal bir ülke ve foundation para birimini belirtmiyor (ülke görselindeki ₺ etiketi UI olduğu için kanon değil).
-- Options: A) Türkçe arayüz + ₺ · B) Türkçe arayüz + kurgusal Anderva para birimi (ad/simge sizden) · C) Çok dilli (Türkçe + İngilizce), para birimi A veya B
-- Recommendation: Türkçe varsayılan arayüz kesin; para birimi sizin kararınız — kurgusal ülke tutarlılığı için B'ye yakınım ama A da tutarlı bir tercih.
-- Meanwhile: tüm metinler ve para biçimlendirme tek yerden; geçici olarak ₺ gösterilir ve "geçici" olarak işaretlidir.
+### Q-003 · Anderva'nın para birimi  (status: deferred — kullanıcı 2026-10-20'de bilinçli olarak AÇIK bıraktı; karar gerekene kadar sorulmaz)
+- Kullanıcı: "Anderva'nın para birimi henüz kararlaştırılmadı. Bu konu OPEN kalacak. Gerekli sistemlerde yapılandırılabilir parametreler kullan; para birimi adı veya sembolü hakkında kanon oluşturma."
+- Studio kuralı: para birimi adı/simgesi yalnız yapılandırmadan okunur (`economy.currency_name`, `economy.currency_symbol`); geçici gösterim nötr `¤` simgesidir; hiçbir belge, test veya UI metni ₺ ya da başka bir adı kanon gibi kullanmaz. Simülasyon tutarları birimsiz tamsayıdır.
+- Arayüz dili: bu soruda cevaplanmadı; çalışma varsayımı Türkçe varsayılan arayüz, tüm metinler merkezi (ÇM). Şimdilik yeniden sorulmuyor.
 
-### Q-004 · Hedef platform önceliği  (status: open)
-- Context: Foundation platformu açık bırakıyor; önceki belgeler iPad yatay, dokunmatik öncelikli hedef öngörüyordu. Geliştirme makinesi 2019 Intel MacBook Pro. Gerçek iPad testi fiziksel cihaz + Apple geliştirici hesabı/imzalama gerektirir.
-- Options: A) iPad (yatay, dokunmatik) birincil + macOS ikincil · B) Masaüstü (macOS/Windows) birincil, iPad sonra · C) İkisi eşit
-- Recommendation: A — tasarım geçmişi ve dokunmatik öncelikli UX bu yönde; mimari zaten platform-bağımsız. Hangi iPad modeline sahip olduğunuzu ve bir Apple Developer hesabınız olup olmadığını da yazarsanız performans bütçesini cihaza göre sabitleriz.
-- Meanwhile: dokunmatik + fare/trackpad birlikte; performans bütçesi düşük güçlü GPU varsayımıyla (ADR-0001); "iPad'de çalışır" denmez.
+### Q-004 · Hedef platform önceliği  (status: answered → D-003)
+- Masaüstü (Windows + macOS) birincil, iPadOS ikincil ama ilk günden mimaride. Uygulama: ADR-0004.

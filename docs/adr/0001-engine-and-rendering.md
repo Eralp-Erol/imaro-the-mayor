@@ -1,6 +1,7 @@
 # ADR-0001 · Motor, dil, renderer ve performans bütçesi
 
 - Durum: kabul · Tarih: 2026-10-20 · Karar veren: technical-director (Studio Director, Opus) — foundation F06 teknolojiyi geliştirme liderine bırakır
+- Güncelleme: platform hedefleri, renderer profilleri ve performans bütçesinin okunuşu ADR-0004 (D-003) ile güncellendi.
 - Karşıladığı gereksinimler: WLD-01, TEK-01, TEK-03, TEK-04, TEK-05, VIS-01, VIS-04; F06 "özgürlük sınırsız değil" (oyunun ana vaadini gösterebilmeli)
 
 ## Bağlam
@@ -8,12 +9,12 @@
 
 ## Karar
 1. **Godot 4.7.2 (stable), GDScript**, statik tipli. Sürüm `tools/godot.sh` ile doğrulanır. 4.8 kararlı çıkınca ayrı bir ADR ile değerlendirilir (şu an beta1).
-2. **Varsayılan renderer: GL Compatibility.** Hedef estetik ileri ışıklandırma gerektirmez; Intel Mac'te ve iOS Simulator'da çalışan tek renderer budur; eski iPad'lere en geniş uyumu verir. **Mobile renderer** (iOS'ta Metal) hedef cihaz testinde (Q-004) yeniden ölçülür; ölçüm Compatibility'den belirgin iyi çıkarsa bu ADR güncellenir. Forward+ kullanılmaz.
+2. **Varsayılan renderer: GL Compatibility.** Hedef estetik ileri ışıklandırma gerektirmez; Intel Mac'te ve iOS Simulator'da çalışan tek renderer budur; eski iPad'lere en geniş uyumu verir. **Mobile renderer** (iOS ve Apple Silicon'da Metal) ve masaüstü yüksek profil için Forward+ gerçek cihaz testlerinde yeniden ölçülür (ADR-0004); ölçüm Compatibility'den belirgin iyi çıkarsa bu ADR güncellenir. Forward+ kullanılmaz.
 3. **Render mimarisi** (ADR-0002 görünüm katmanı): 1 km chunk başına `MultiMeshInstance3D` (tür başına), örnek başına renk/ölçek; `visibility_range` ile chunk proxy'leri (HLOD). Metro görünümü için ikinci HLOD kademesi (birleştirilmiş bölge kütleleri) gereklidir — ilk ölçeklenme darboğazı budur. Proxy geçişlerinde fade/hysteresis (benchmark'ta sert "pop" görüldü).
 4. **Simülasyon dili:** GDScript + Packed*Array sütunları; ağır sistemler `WorkerThreadPool` ile dilim-yaz/sıralı-birleştir deseninde (deterministik olduğu ölçüldü). Kare içinde tick çalıştırılmaz: günlük tick ya iş parçacığında ya da karelere bölünerek yürür. GDExtension (godot-cpp) yalnız profiler kanıtıyla.
 5. **Koordinatlar:** metre, tek dünya; görünümde origin rebasing (ADR-0002 §2). Double-precision derleme yok.
 
-## Performans bütçesi (başlangıç; Q-004 cevabı ve cihaz ölçümüyle güncellenir)
+## Performans bütçesi (masaüstü referansı; iPad bütçesi cihaz ölçümüyle ayrıca yazılır — ADR-0004)
 | Ölçü | Bütçe | Dayanak |
 |---|---|---|
 | Kare süresi, geliştirme Mac'i, Compatibility, 1366×1024 | ort. ≤ 8 ms, p95 ≤ 16,6 ms (her preset) | Benchmark: 60k yapıda ort. 4–10 ms, metroda p95 16 ms → sınırda |
@@ -35,7 +36,7 @@ Masaüstü rakamları **iPad performans kanıtı değildir** (TEK-04).
 ## Sonuçlar ve riskler
 - Godot'ta yayımlanmış büyük ölçekli şehir kurma örneği bulunamadı; ölçek riski bizim ölçümlerimizle yönetilir (her milestone'da perf kapısı).
 - Simülasyon CPU'su render'dan daha sıkı sınır: sistem tasarımı kohort/toplu modelle başlamalı (ADR-0002 §3).
-- Yeniden açma tetikleyicileri: hedef cihazda bütçe aşımı; Godot 4.8 kararlı sürümü; Q-004 cevabı (platform); GDScript tick bütçesinin GDExtension olmadan tutmaması.
+- Yeniden açma tetikleyicileri: hedef cihazda bütçe aşımı; Godot 4.8 kararlı sürümü; Windows/iPad cihaz ölçümleri (ADR-0004); GDScript tick bütçesinin GDExtension olmadan tutmaması.
 
 ## Kanıt
 - `experiments/scale-bench/RESULTS.md` (+ `results/*.json`, temsilî kareler `experiments/scale-bench/evidence/`, **sanat referansı değildir**). Ölçüm koşulları: Godot 4.7.2 editör ikilisi, Radeon Pro 560X, VSync kapalı, MSAA 2×, makine dış yük altında (load 5–25) → ±%40 gürültü. Üç renderer da bu makinede başladı.

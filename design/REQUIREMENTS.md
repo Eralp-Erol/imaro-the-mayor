@@ -16,7 +16,7 @@ Kanıt seviyeleri: `—` yok · `T` otomatik test · `R` runtime ekran görünt�
 | CAN-05 | Planlama/imar: arazi kullanımı, yoğunluk, yükseklik, gelişme koşulları. | F03 mod 2 | OY | — |
 | CAN-06 | Siyasi/ekonomik yönetim: bütçe, yatırım önceliği, hizmet kapasitesi, yetki, meclis desteği, teşvik, çıkar çatışması, seçim, bölgesel projeler. Bürokrasi yaratıcı inşayı boğmaz. | F03 mod 3 | OY | — |
 | CAN-07 | Ismeral kampanyasında aynı erkek protagonist: ilçe başkanı → metropol başkanı → ulusal mücadele → cumhurbaşkanlığı seçim zaferi = final. Ülke yönetimi oynanmaz. | F01, F05-A | K | — |
-| CAN-08 | Oyuncu yalnızca gerçekten geliştirilmiş, oynanabilir ilçelerden birini seçer; üretilmemiş ilçe seçilebilir gösterilmez. | F01, F05-A | K | — |
+| CAN-08 | Oyuncu başlangıç ilçesini kendisi seçer; yalnızca gerçekten geliştirilmiş, oynanabilir ilçeler seçilebilir gösterilir. Orven zorunlu değildir; stüdyonun geliştirme test alanı seçimi oyuncu özgürlüğünü kısıtlamaz. | F01, F05-A, **D-002** | K | — |
 | CAN-09 | Yedi bölge kampanyası ayrı protagonist/hikâye/kayıt; başarılar taşınmaz. Diğer bölgeler soyut ekonomi ve siyasetle etkindir. | F01, F05-A | K | — |
 | CAN-10 | Kariyer seviye-puanı menüsü değildir: seçim, destek, itibar, müttefik, medya, sicil; kaybedilen seçim anlamlı sonuç doğurur. | F01, F03 | OY | — |
 | CAN-11 | Makam değişiminde karakter ve dünya durumu sıfırlanmaz; aynı dünya daha geniş yetkiyle yönetilir. | F01, F03 | K | — |
@@ -74,5 +74,23 @@ Kanıt seviyeleri: `—` yok · `T` otomatik test · `R` runtime ekran görünt�
 | TEK-01 | Simülasyon render/input'tan ayrı, sabit tick'li, kare hızından bağımsız ve seed ile deterministik; headless test edilebilir. | ADR-0002 | — |
 | TEK-02 | Kayıt/yükleme: kaydet → yükle → N tick → durum hash'i eşit. | ADR-0002 | — |
 | TEK-03 | Tek dünya verisi (arazi, kıyı, ağlar) tüm kamera ölçeklerinde aynı kaynaktan render edilir; LOD yalnızca temsil değiştirir. | ADR-0002 | — |
-| TEK-04 | Dokunmatik öncelikli girdi + fare/trackpad karşılığı; iPad'de gerçek cihaz testi yapılmadan "iPad'de çalışır" denmez. | ADR-0001 | — |
+| TEK-04 | Platform girdi/UI profilleri: masaüstü (fare/klavye/trackpad) birincil, dokunmatik (iPad) ikincil ama ilk günden; aynı oyuncu fiilleri. Gerçek cihaz testi olmadan bir platformda "çalışır" denmez. | ADR-0004, D-003 | — |
 | TEK-05 | Performans bütçesi ADR-0001'deki benchmark'a dayanır; bütçeyi aşan değişiklik kanıtla gerekçelendirilir. | ADR-0001 | — |
+
+## Platform (PLT — kullanıcı kararı D-003)
+
+| ID | Gereksinim | Kaynak | Statü | Kanıt |
+|---|---|---|---|---|
+| PLT-01 | Birincil hedef Windows ve macOS; ikincil hedef iPadOS. | D-003 | K | — |
+| PLT-02 | iPadOS ilk günden mimari ve UX kapsamında; iPad'e özgü sorunlar sonraya ertelenmez. | D-003 | K | — |
+| PLT-03 | Simülasyon derinliği, mekanikler ve sistemler iPad sınırlarına göre baştan kısılmaz; masaüstü kapsamı iPad için azaltılmaz. | D-003 | K | — |
+| PLT-04 | Tek simülasyon çekirdeği ve ortak dünya verisi; simülasyon sonuçları platformdan bağımsızdır. | D-003, ADR-0004 | K / TEK | — |
+| PLT-05 | Platforma uygun kontrol, etkileşim, UI ve grafik profilleri olabilir. | D-003 | OY | — |
+| PLT-06 | Platform performansı varsayımla değil gerçek cihaz testleri ve benchmark'larla değerlendirilir; platformlar arası eşit kapasite varsayılmaz, farklar ölçümle raporlanır. | D-003 | K | — |
+
+## Açık parametreler (kanon oluşturulmaz)
+
+| Konu | Kural | Kaynak |
+|---|---|---|
+| Para birimi adı/simgesi | Yapılandırma parametresi; geçici gösterim `¤`; hiçbir yerde kanon gibi yazılmaz | Q-003 (kullanıcı: OPEN) |
+| Başlangıç ilçesi | `start_district_id` verisi; kodda sabit ilçe yok | D-002 |
