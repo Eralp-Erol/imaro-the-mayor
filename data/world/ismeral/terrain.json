@@ -1,0 +1,33 @@
+{
+	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; koordinatlar kilitli değil (F02, F04)",
+	"_notes": [
+		"Arazi: kıyı ovası + tepe/dağ yığınları (massifs) + ova düzleştirmeleri (plains) + rölyef gürültüsü. Yükseklik mutlak metrelik uzayda tanımlıdır; hücre boyutu değişse coğrafya aynı kalır.",
+		"Referans 02 YÖN: kuzeyde ve D3 arkasında ormanlık tepeler; D4 iç ova (tarla mozaiği); D5 doğu/güneydoğu yamaçları belirgin yükselir; kıyı/ada çevresinde sığ, açık denizde koyu su.",
+		"Massif/plain: merkez ve yarıçap (rx, ry) km; yükseklik m. Hiçbiri kanon değildir."
+	],
+	"quantize_m": 0.015625,
+	"shore": {"plain_cap_m": 30.0, "plain_scale_m": 2500.0, "fade_m": 1400.0},
+	"relief_noise": {"frequency_per_km": 0.22, "octaves": 5, "lacunarity": 2.0, "gain": 0.5,
+		"amplitude_m": 150.0, "min_relief_factor": 0.07, "reference_massif_m": 300.0},
+	"massif_warp": {"frequency_per_km": 0.09, "amplitude": 0.75},
+	"island": {"edge_scale_m": 220.0, "noise_m": 1.5},
+	"massifs": [
+		{"id": "north_west_forest_hills", "center_km": [16.0, 2.5], "radius_km": [7.0, 6.0], "peak_m": 450.0},
+		{"id": "north_central_rim", "center_km": [20.0, -1.0], "radius_km": [9.0, 5.5], "peak_m": 480.0},
+		{"id": "north_east_rim", "center_km": [35.0, -1.0], "radius_km": [8.5, 8.0], "peak_m": 560.0},
+		{"id": "east_rim", "center_km": [41.0, 14.0], "radius_km": [6.5, 8.0], "peak_m": 520.0},
+		{"id": "south_east_slopes", "center_km": [37.5, 33.0], "radius_km": [9.5, 10.5], "peak_m": 780.0},
+		{"id": "south_east_foothills", "center_km": [33.5, 26.0], "radius_km": [6.0, 6.0], "peak_m": 230.0},
+		{"id": "south_hills", "center_km": [22.0, 38.0], "radius_km": [9.5, 6.5], "peak_m": 320.0},
+		{"id": "south_west_coast_hills", "center_km": [13.0, 35.0], "radius_km": [4.0, 6.0], "peak_m": 190.0},
+		{"id": "d3_backing_hills", "center_km": [10.0, 8.5], "radius_km": [4.0, 3.2], "peak_m": 230.0}
+	],
+	"plains": [
+		{"id": "d4_inland_plain", "center_km": [25.5, 8.5], "radius_km": [9.0, 5.2], "target_m": 28.0, "flatten": 0.93,
+			"micro_relief_m": 3.0},
+		{"id": "d2_coastal_plain", "center_km": [31.5, 11.5], "radius_km": [4.0, 3.2], "target_m": 20.0, "flatten": 0.8,
+			"micro_relief_m": 2.0}
+	],
+	"bathymetry": {"min_depth_m": 0.8, "rim_depth_m": 9.0, "rim_scale_m": 350.0, "open_sea_depth_m": 115.0,
+		"open_scale_m": 4500.0, "noise_m": 4.0, "noise_frequency_per_km": 0.12}
+}

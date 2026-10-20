@@ -1,0 +1,15 @@
+{
+	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; koordinatlar kilitli değil (F02, F04)",
+	"_notes": [
+		"Bu dosya dünya üretiminin genel parametreleri. Hiçbir sayı kanon değildir; hepsi elle düzenlenebilir (WLD-01: tek dünya, ölçek başına ayrı veri yok).",
+		"Birimler: bu dizindeki tüm *_km alanları HARİTA-YEREL kilometre, orijin = metro sınırının kuzeybatı köşesi; x = doğu, y = güney (kuzey = -z, TEKNİK eksen sözleşmesi, kanon değil).",
+		"Metro ölçeği ~40x40 km TEKNİK/ÇALIŞMA MODELİ bir parametredir (ADR-0002; ölçek çubuğu/pusula kanon değildir). Anderva-Ismeral ölçek oranı AÇIK (Q-002)."
+	],
+	"schema_version": 1,
+	"id": "ismeral",
+	"origin_m": [0.0, 0.0],
+	"size_km": [40.0, 40.0],
+	"cell_size_m": 100.0,
+	"sea_level_m": 0.0,
+	"default_seed": 1467
+}
