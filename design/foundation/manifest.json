@@ -1,0 +1,63 @@
+{
+  "package": "IMARO_GAME_DESIGN_FOUNDATION",
+  "version": "2026-10-20",
+  "language": "tr",
+  "scope": "creative design foundation; no prompts, implementation, or harness setup",
+  "files": [
+    {
+      "path": "README.md",
+      "size_bytes": 4151,
+      "sha256": "170a3def31bdcc951806074f4d21fad731a5e8d6dd87d9a144abcc8d6b7294c8"
+    },
+    {
+      "path": "docs/01_CREATIVE_BIBLE.md",
+      "size_bytes": 8093,
+      "sha256": "05d50aef2aac230e2a55c2da2ff5b3e44013d29c1242a4c7a078fb0f18b63196"
+    },
+    {
+      "path": "docs/02_ISMERAL_WORLD_AND_GROWTH.md",
+      "size_bytes": 8883,
+      "sha256": "3b79599ce3ab2d87005d35688dfb4458bd787621bc6a46e570a8bdaa2736ef9d"
+    },
+    {
+      "path": "docs/03_GAMEPLAY_AND_SIMULATION.md",
+      "size_bytes": 7379,
+      "sha256": "856167f7b07e358111951e07001e395070e8c3fba3a0e6ad85e5051ad3ded284"
+    },
+    {
+      "path": "docs/04_VISUAL_DIRECTION_AND_ASSETS.md",
+      "size_bytes": 6770,
+      "sha256": "132de4071f53d4af7fdf827a6ebbcdd37c2bbdb42b2fc298d2bb3271891788be"
+    },
+    {
+      "path": "docs/05_DECISIONS_OPEN_AND_REJECTED.md",
+      "size_bytes": 7033,
+      "sha256": "d32d86060b1744c175550e2115719dd50f7fdafee3935fef1bb50cdc641624e2"
+    },
+    {
+      "path": "docs/06_TECH_HANDOFF_BOUNDARIES.md",
+      "size_bytes": 3470,
+      "sha256": "34853baa35e6d63dabb0f145bc5fdfd65888edec43cfdf98d93f4cfb38255376"
+    },
+    {
+      "path": "visual-references/01_anderva_approved_country.png",
+      "size_bytes": 2867216,
+      "sha256": "ab8c390b49c78db52db45ed7eabacb0a978348132d8cee639f0a5ad07ac90ea9"
+    },
+    {
+      "path": "visual-references/01b_anderva_country_crop.png",
+      "size_bytes": 1830862,
+      "sha256": "84dcae651de321bad3946f75b9c91e185b0b61c62e05f4c3cbce2987d7e25110"
+    },
+    {
+      "path": "visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg",
+      "size_bytes": 1042202,
+      "sha256": "8d892b73d9c95c24a42c1d7e37a279b79080fef29295b4d920505fe4a14d2e90"
+    },
+    {
+      "path": "visual-references/03_ismeral_mature_architecture_DIRECTION.png",
+      "size_bytes": 3598286,
+      "sha256": "114431034ee785f872ce259c38ce867b5ad369d1ac3e4857050dab2c84133d41"
+    }
+  ]
+}

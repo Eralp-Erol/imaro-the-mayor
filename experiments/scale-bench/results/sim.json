@@ -1,0 +1,105 @@
+{
+  "determinism": {
+    "hashes": {
+      "parallel": "9a2b3ea1c97de232",
+      "parallel_again": "9a2b3ea1c97de232",
+      "parallel_seed2": "4bc145c13a419017",
+      "serial": "9a2b3ea1c97de232",
+      "serial_again": "9a2b3ea1c97de232",
+      "serial_seed2": "4bc145c13a419017"
+    },
+    "parallel_different_seed_differs": true,
+    "parallel_equals_serial": true,
+    "parallel_same_seed_equal": true,
+    "serial_different_seed_differs": true,
+    "serial_same_seed_equal": true
+  },
+  "meta": {
+    "cpu": "Intel(R) Core(TM) i7-8850H CPU @ 2.60GHz",
+    "cpu_threads": 12,
+    "godot": "4.7.2-stable (official)",
+    "os": "macOS 15.8.1",
+    "ticks": 100
+  },
+  "naive_dict_10k": {
+    "cohorts": 3333,
+    "mode": "dictionary",
+    "ms_per_tick_median": 41.504,
+    "ms_per_tick_min": 41.408,
+    "ms_per_tick_runs": [
+      41.408,
+      45.393,
+      41.504
+    ],
+    "parcels": 10000
+  },
+  "naive_object_10k": {
+    "cohorts": 3333,
+    "mode": "refcounted_object",
+    "ms_per_tick_median": 35.758,
+    "ms_per_tick_min": 35.741,
+    "ms_per_tick_runs": [
+      39.419,
+      35.758,
+      35.741
+    ],
+    "parcels": 10000
+  },
+  "packed_10k_serial": {
+    "cohorts": 3333,
+    "hash": "c311a5e7edae492b",
+    "ms_per_tick_median": 11.002,
+    "ms_per_tick_min": 10.884,
+    "ms_per_tick_runs": [
+      11.002,
+      10.884,
+      11.167
+    ],
+    "parallel": false,
+    "parcels": 10000,
+    "phase_ms_per_tick_rep0": {
+      "apply": 0.29397,
+      "decide": 0.52625,
+      "diffuse": 7.68934,
+      "invest": 2.48948
+    }
+  },
+  "packed_60k_parallel4": {
+    "cohorts": 20000,
+    "hash": "9a2b3ea1c97de232",
+    "ms_per_tick_median": 37.105,
+    "ms_per_tick_min": 37.097,
+    "ms_per_tick_runs": [
+      42.069,
+      37.105,
+      37.097
+    ],
+    "parallel": true,
+    "parcels": 60000,
+    "phase_ms_per_tick_rep0": {
+      "apply": 2.01587,
+      "decide": 3.66346,
+      "diffuse": 27.6276,
+      "invest": 8.75734
+    }
+  },
+  "packed_60k_serial": {
+    "cohorts": 20000,
+    "hash": "9a2b3ea1c97de232",
+    "ms_per_tick_median": 74.481,
+    "ms_per_tick_min": 68.438,
+    "ms_per_tick_runs": [
+      68.438,
+      74.481,
+      76.776
+    ],
+    "parallel": false,
+    "parcels": 60000,
+    "phase_ms_per_tick_rep0": {
+      "apply": 1.86545,
+      "decide": 3.39769,
+      "diffuse": 47.73974,
+      "invest": 15.43105
+    }
+  }
+}

@@ -4,3 +4,14 @@
 .codex/backups/
 artifacts/logs/
 *.tmp
+artifacts/verify/*.log
+artifacts/verify/gdunit/
+artifacts/screenshots/captures/
+reports/
+
+# GdUnit4 -rd ile mutlak yol verilirse depo içinde açılan başıboş ağaçlar
+/private/
+/Users/
+
+# Benchmark ham ekran görüntüleri (~46 MB); temsilî kopyalar experiments/scale-bench/evidence/ içinde
+experiments/scale-bench/results/shots/
