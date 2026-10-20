@@ -1,7 +1,7 @@
 # M0 kapanış kontrolü
 
 Bu oturumda (kurulum worktree'si) doğrulanamayan, **yeni bir oturumda** yapılması gereken kontroller. Kural: kanıt yoksa durum PASS olamaz. Durumlar: `BEKLİYOR` · `PASS` · `FAIL` · `DOĞRULANAMADI` (neden yazılır).
-M0 kapanır: C-01…C-07, C-09, C-10 PASS olduğunda. **Güncel durum (Çalıştırma 2): M0 KAPANMADI — C-02 ve C-07 canlı doğrulama bekliyor.** Bir FAIL varsa T-001 başlamadan düzeltilir.
+M0 kapanır: C-01…C-07, C-09, C-10 PASS olduğunda. **Güncel durum (Çalıştırma 3): M0 OPERASYONEL OLARAK KAPANDI (açık doğrulama eksikleriyle) — C-02 PASS; C-07 KISMİ (doğrudan yol canlı PASS, dolaylı yeni-guard senaryoları canlı DOĞRULANAMADI → T-901).** Kullanıcı kararı (2026-10-20): süresiz M0 blokajı yok; T-001 başlatıldı.
 
 | # | Kontrol | Nasıl doğrulanır | Beklenen | Durum | Kanıt |
 |---|---|---|---|---|---|
@@ -40,6 +40,16 @@ C-04 / C-05 komutu (yeni worktree kökünde):
 ```bash
 claude -p --output-format json "Use the Agent tool twice: subagent_type qa-engineer with prompt 'Reply only: OK', then subagent_type technical-director with prompt 'Reply only: OK'. Then answer DONE." | jq '{result: .result, models: (.modelUsage | keys)}'
 ```
+
+## Çalıştırma 3 · 2026-10-20 · oturum `18d51b09` · ana checkout, worktree KAPALI, `main` @ `a0237b0` → dal `task/T-001-ismeral-world`
+
+**Sonuç: M0 operasyonel olarak kapatıldı (kullanıcı kararı); doğrulanmamış kısımlar açık.**
+
+- **C-02 → PASS.** Oturum ana checkout'ta, `main` @ `a0237b0` üzerinde açıldı; SessionStart bağlamında hook çıktısı otomatik geldi: "Imaro stüdyo durumu (otomatik, SessionStart)", dal/HEAD satırı, STATE.md checkpoint'i, Q-003 "açık — engellemiyor", "Son doğrulama: full pass @ 2026-10-20T11:53:09Z". Timeout düzeltmesi canlıda çalışıyor. Kapsam notu: bu, worktree'siz ana-checkout oturumu için kanıttır; worktree oturumunda tekrar sınanmadı (artık kullanılmıyor).
+- **C-07 → KISMİ (PASS denmez).** Canlı görülen: (a) `Edit` → `design/foundation/README.md`: "File is in a directory that is denied by your permission settings" (permissions.deny); (b) `Bash` `echo x >> design/foundation/README.md`: PreToolUse hook "Bu komut design/foundation/ içeriğini değiştirebilir" ile reddetti. Her iki yol zaten eski regex ile de yakalanıyordu; yani bu, yeni 3 katmanlı guard'ın *eskiden açık olan* senaryolarını (cd+göreli yazma, python parçalı yol, glob, sembolik bağ…) canlı kanıtlamaz. O senaryolar betik düzeyinde 105/0 (`tools/test-canon-guard.sh`) ama **canlıda DOĞRULANMADI**. Ek: bu oturumda Bash çağrısı sınıflandırıcıdan (Self-Modification) ret aldı; kanon yazma probu tekrarlanmadı. Kanon dosyaları değişmedi (`canon-check` 11/11 PASS, `verify quick` içinde).
+- **Takip görevi:** `T-901` (canlı dolaylı-yazma sınaması) — oyun geliştirmeyi engellemez.
+- **`verify quick` bulgusu:** `studio-check` başlangıçta FAIL idi: Haiku taraması gitignored `.claude/worktrees/` altındaki eski kopyaları ve `STUDIO-VALIDATION.md` satır 33'ü (testin kendini anlatan metni) yakalıyordu. Gerçek bir Haiku ataması yok. Tarama `worktrees/` dizinini atlayacak şekilde düzeltildi (`tools/studio_check.py`); sonuç `quick` 5/5 PASS (head `a0237b0`, fingerprint `c7584fb20c14`).
+- **Git:** worktree kullanılmadı; `main` korundu; dal `a0237b0`'dan açıldı; mevcut izlenmeyen `.agents/` ve `IMARO_GAME_DESIGN_FOUNDATION_2026-10-20/` dokunulmadı.
 
 ## Kapanıştan sonra izlenen açık teknik riskler
 | Risk | Kayıt | İlk kontrol noktası |

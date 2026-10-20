@@ -80,7 +80,8 @@ for f in sorted(os.listdir(agents_dir)):
             problems.append(f"{rel(p)}: olmayan skill '{sk}'")
 
 # Haiku yasağı: hiçbir yapılandırmada model olarak geçmemeli.
-for dirpath, _, files in os.walk(CLAUDE):
+for dirpath, dirs, files in os.walk(CLAUDE):
+    dirs[:] = [d for d in dirs if d != "worktrees"]  # eski worktree kopyaları (gitignored) taranmaz
     for f in files:
         if f.endswith((".md", ".json")):
             p = os.path.join(dirpath, f)
