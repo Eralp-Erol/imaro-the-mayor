@@ -1,0 +1,2229 @@
+{
+ "budgets": {
+  "max_lod0_meshes": 40,
+  "max_lod0_tris": 1500,
+  "proxy_max_tris": 14,
+  "skirt_m": 2.5
+ },
+ "forward": "+Z (glTF)",
+ "kit_version": 1,
+ "material": "mat_kit",
+ "modules": [
+  {
+   "aabb_lod0_m": {
+    "max": [
+     20.0,
+     12.9,
+     18.4
+    ],
+    "min": [
+     -20.0,
+     -2.5,
+     -12.0
+    ]
+   },
+   "eave_height_m": 12.0,
+   "era": "mid",
+   "family": "civ_hall",
+   "floors": 3,
+   "footprint_m": [
+    40.0,
+    24.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/civ_hall/bld_civ_hall_a.glb",
+   "id": "bld_civ_hall_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_civ_hall_a_LOD0",
+     "tris": 498
+    },
+    "LOD1": {
+     "node": "bld_civ_hall_a_LOD1",
+     "tris": 36
+    },
+    "PROXY": {
+     "node": "bld_civ_hall_a_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W2",
+     "W8",
+     "W11"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "ec21d15f74acaea7491e29aa1b47bd4cee9196c87cd166121f8b6de7a9b30869",
+   "total_height_m": 12.9,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     22.0,
+     12.9,
+     14.0
+    ],
+    "min": [
+     -22.0,
+     -2.5,
+     -14.0
+    ]
+   },
+   "eave_height_m": 12.0,
+   "era": "mid",
+   "family": "civ_hall",
+   "floors": 3,
+   "footprint_m": [
+    44.0,
+    28.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/civ_hall/bld_civ_hall_b.glb",
+   "id": "bld_civ_hall_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_civ_hall_b_LOD0",
+     "tris": 698
+    },
+    "LOD1": {
+     "node": "bld_civ_hall_b_LOD1",
+     "tris": 54
+    },
+    "PROXY": {
+     "node": "bld_civ_hall_b_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W2",
+     "W8",
+     "W11"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "a4eba9f70160759a9617f82a2f187b46c37dab0de0a1205e3c06596fd9f86a9f",
+   "total_height_m": 12.9,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     18.0,
+     17.5,
+     11.0
+    ],
+    "min": [
+     -18.0,
+     -2.5,
+     -11.0
+    ]
+   },
+   "eave_height_m": 16.0,
+   "era": "mid",
+   "family": "civ_hall",
+   "floors": 4,
+   "footprint_m": [
+    36.0,
+    22.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/civ_hall/bld_civ_hall_c.glb",
+   "id": "bld_civ_hall_c",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_civ_hall_c_LOD0",
+     "tris": 548
+    },
+    "LOD1": {
+     "node": "bld_civ_hall_c_LOD1",
+     "tris": 32
+    },
+    "PROXY": {
+     "node": "bld_civ_hall_c_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R8",
+     "R5"
+    ],
+    "wall_rows": [
+     "W2",
+     "W8",
+     "W11"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "dd4e6851752eb16c8865560cee31399d89ac9ce7881036ad49439ab5558ddd69",
+   "total_height_m": 17.5,
+   "variant": "c"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     15.15,
+     13.636,
+     9.3
+    ],
+    "min": [
+     -15.15,
+     -2.5,
+     -9.3
+    ]
+   },
+   "eave_height_m": 10.0,
+   "era": "old",
+   "family": "ind_heritage",
+   "floors": 2,
+   "footprint_m": [
+    30.0,
+    18.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/ind_heritage/bld_ind_heritage_a.glb",
+   "id": "bld_ind_heritage_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_ind_heritage_a_LOD0",
+     "tris": 308
+    },
+    "LOD1": {
+     "node": "bld_ind_heritage_a_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_ind_heritage_a_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R4",
+     "R5",
+     "R8"
+    ],
+    "wall_rows": [
+     "W10",
+     "W11"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "48119a77a03cd5382697fd731c2fc81439976d1b2cc3b89831d765ddf06be87c",
+   "total_height_m": 13.64,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     16.15,
+     17.0,
+     11.9
+    ],
+    "min": [
+     -16.4,
+     -2.5,
+     -11.65
+    ]
+   },
+   "eave_height_m": 10.0,
+   "era": "old",
+   "family": "ind_heritage",
+   "floors": 2,
+   "footprint_m": [
+    32.0,
+    23.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/ind_heritage/bld_ind_heritage_b.glb",
+   "id": "bld_ind_heritage_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_ind_heritage_b_LOD0",
+     "tris": 466
+    },
+    "LOD1": {
+     "node": "bld_ind_heritage_b_LOD1",
+     "tris": 46
+    },
+    "PROXY": {
+     "node": "bld_ind_heritage_b_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R7",
+     "R8"
+    ],
+    "wall_rows": [
+     "W10",
+     "W11"
+    ]
+   },
+   "roof_type": "sawtooth",
+   "sha256": "3f760b8d9cd870f2356255dc2cc2b9d6e7d76fe4ca452b199898b1c5e5ebc0a9",
+   "total_height_m": 17.0,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     20.0,
+     9.616,
+     12.3
+    ],
+    "min": [
+     -20.0,
+     -2.5,
+     -12.3
+    ]
+   },
+   "eave_height_m": 7.5,
+   "era": "late",
+   "family": "ind_shed",
+   "floors": 1,
+   "footprint_m": [
+    40.0,
+    24.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/ind_shed/bld_ind_shed_a.glb",
+   "id": "bld_ind_shed_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_ind_shed_a_LOD0",
+     "tris": 166
+    },
+    "LOD1": {
+     "node": "bld_ind_shed_a_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_ind_shed_a_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R6",
+     "R7"
+    ],
+    "wall_rows": [
+     "W9",
+     "W12",
+     "W13"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "3091b6a01da89f99038ba5d76da97e3a07d90a006b8d0555ab76a219b9d09283",
+   "total_height_m": 9.62,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     18.0,
+     8.6,
+     14.0
+    ],
+    "min": [
+     -18.0,
+     -2.5,
+     -14.0
+    ]
+   },
+   "eave_height_m": 7.0,
+   "era": "late",
+   "family": "ind_shed",
+   "floors": 1,
+   "footprint_m": [
+    36.0,
+    28.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/ind_shed/bld_ind_shed_b.glb",
+   "id": "bld_ind_shed_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_ind_shed_b_LOD0",
+     "tris": 180
+    },
+    "LOD1": {
+     "node": "bld_ind_shed_b_LOD1",
+     "tris": 26
+    },
+    "PROXY": {
+     "node": "bld_ind_shed_b_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R6",
+     "R7",
+     "R8"
+    ],
+    "wall_rows": [
+     "W9",
+     "W12",
+     "W13"
+    ]
+   },
+   "roof_type": "sawtooth",
+   "sha256": "b4b927f111ff4d4276a0181d22a9b8f25289cc9b3c07be623ed6184923467f39",
+   "total_height_m": 8.6,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     28.25,
+     10.608,
+     18.0
+    ],
+    "min": [
+     -28.0,
+     -2.5,
+     -15.3
+    ]
+   },
+   "eave_height_m": 8.5,
+   "era": "late",
+   "family": "ind_shed",
+   "floors": 1,
+   "footprint_m": [
+    56.0,
+    30.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/ind_shed/bld_ind_shed_c.glb",
+   "id": "bld_ind_shed_c",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_ind_shed_c_LOD0",
+     "tris": 248
+    },
+    "LOD1": {
+     "node": "bld_ind_shed_c_LOD1",
+     "tris": 44
+    },
+    "PROXY": {
+     "node": "bld_ind_shed_c_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R6",
+     "R7"
+    ],
+    "wall_rows": [
+     "W9",
+     "W12",
+     "W13"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "db40c701f56246bede3800e4f5384375c85fcd2647e340b89dda8c050324a0e7",
+   "total_height_m": 10.61,
+   "variant": "c"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     4.5,
+     23.0,
+     4.5
+    ],
+    "min": [
+     -4.5,
+     -2.5,
+     -4.5
+    ]
+   },
+   "eave_height_m": 23.0,
+   "era": "old",
+   "family": "lmk_clocktower",
+   "floors": 0,
+   "footprint_m": [
+    9.0,
+    9.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/lmk_clocktower/bld_lmk_clocktower.glb",
+   "id": "bld_lmk_clocktower",
+   "kind": "landmark",
+   "lods": {
+    "LOD0": {
+     "node": "bld_lmk_clocktower_LOD0",
+     "tris": 318
+    },
+    "LOD1": {
+     "node": "bld_lmk_clocktower_LOD1",
+     "tris": 84
+    },
+    "PROXY": {
+     "node": "bld_lmk_clocktower_PROXY",
+     "tris": 12
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R8"
+    ],
+    "wall_rows": [
+     "W2",
+     "W11"
+    ]
+   },
+   "roof_type": "special",
+   "sha256": "69e7fc47fddc1afd232f2713758d117560a7b31d578406f088b90e3da4f96866",
+   "total_height_m": 23.0,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     4.0,
+     5.3,
+     5.0
+    ],
+    "min": [
+     -4.0,
+     -2.5,
+     -5.0
+    ]
+   },
+   "eave_height_m": 3.0,
+   "era": "mid",
+   "family": "res_house",
+   "floors": 1,
+   "footprint_m": [
+    7.0,
+    9.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_house/bld_res_house_a.glb",
+   "id": "bld_res_house_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_house_a_LOD0",
+     "tris": 108
+    },
+    "LOD1": {
+     "node": "bld_res_house_a_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_house_a_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5",
+     "R6"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "2f790384ff32aea041449ef38183ae960eb1365f1b05dccf7c507fe6c8bfa85a",
+   "total_height_m": 5.3,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     4.25,
+     8.245,
+     5.35
+    ],
+    "min": [
+     -4.25,
+     -2.5,
+     -4.25
+    ]
+   },
+   "eave_height_m": 6.0,
+   "era": "mid",
+   "family": "res_house",
+   "floors": 2,
+   "footprint_m": [
+    7.5,
+    8.5
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_house/bld_res_house_b.glb",
+   "id": "bld_res_house_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_house_b_LOD0",
+     "tris": 192
+    },
+    "LOD1": {
+     "node": "bld_res_house_b_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_house_b_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5",
+     "R6"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "a52dba914624a50a3d0cc2fa14f042154d21e3fb980ac742f0ad9dd5595eee53",
+   "total_height_m": 8.24,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     5.75,
+     8.41,
+     5.0
+    ],
+    "min": [
+     -5.55,
+     -2.5,
+     -5.0
+    ]
+   },
+   "eave_height_m": 6.0,
+   "era": "mid",
+   "family": "res_house",
+   "floors": 2,
+   "footprint_m": [
+    10.5,
+    9.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_house/bld_res_house_c.glb",
+   "id": "bld_res_house_c",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_house_c_LOD0",
+     "tris": 180
+    },
+    "LOD1": {
+     "node": "bld_res_house_c_LOD1",
+     "tris": 44
+    },
+    "PROXY": {
+     "node": "bld_res_house_c_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5",
+     "R6"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "b63488594a420661ad4abfe6e21118c6423acaedb118f08fd3453f61e746474e",
+   "total_height_m": 8.41,
+   "variant": "c"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     5.0,
+     8.3,
+     4.75
+    ],
+    "min": [
+     -5.0,
+     -2.5,
+     -4.75
+    ]
+   },
+   "eave_height_m": 6.0,
+   "era": "mid",
+   "family": "res_house",
+   "floors": 2,
+   "footprint_m": [
+    10.0,
+    8.5
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_house/bld_res_house_d.glb",
+   "id": "bld_res_house_d",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_house_d_LOD0",
+     "tris": 234
+    },
+    "LOD1": {
+     "node": "bld_res_house_d_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_house_d_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5",
+     "R6"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "25bf92d06c8a9e91a8f21a88369d1dbaac79c6dd9a9c2ebfa8181ddff1bc4ae6",
+   "total_height_m": 8.3,
+   "variant": "d"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     3.75,
+     5.245,
+     6.4
+    ],
+    "min": [
+     -3.75,
+     -2.5,
+     -5.5
+    ]
+   },
+   "eave_height_m": 3.0,
+   "era": "mid",
+   "family": "res_house",
+   "floors": 1,
+   "footprint_m": [
+    7.5,
+    10.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_house/bld_res_house_e.glb",
+   "id": "bld_res_house_e",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_house_e_LOD0",
+     "tris": 140
+    },
+    "LOD1": {
+     "node": "bld_res_house_e_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_house_e_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5",
+     "R6"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "f8c08d466aede0f42dcfa502cd94858baba62aad93f3d25f2edf0b31c50af717",
+   "total_height_m": 5.25,
+   "variant": "e"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     9.0,
+     20.6,
+     9.3
+    ],
+    "min": [
+     -9.0,
+     -2.5,
+     -8.0
+    ]
+   },
+   "eave_height_m": 18.0,
+   "era": "late",
+   "family": "res_late",
+   "floors": 6,
+   "footprint_m": [
+    18.0,
+    16.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_late/bld_res_late_a.glb",
+   "id": "bld_res_late_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_late_a_LOD0",
+     "tris": 428
+    },
+    "LOD1": {
+     "node": "bld_res_late_a_LOD1",
+     "tris": 38
+    },
+    "PROXY": {
+     "node": "bld_res_late_a_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W5",
+     "W6",
+     "W7",
+     "W9"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "e9b1d12c9287cf44121ff5708b3f47075f075113af7a631e3a4f00b68d5249d1",
+   "total_height_m": 20.6,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     9.0,
+     21.8,
+     9.3
+    ],
+    "min": [
+     -9.0,
+     -2.5,
+     -8.0
+    ]
+   },
+   "eave_height_m": 19.2,
+   "era": "late",
+   "family": "res_late",
+   "floors": 6,
+   "footprint_m": [
+    18.0,
+    16.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_late/bld_res_late_a_gf.glb",
+   "id": "bld_res_late_a_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_late_a_gf_LOD0",
+     "tris": 418
+    },
+    "LOD1": {
+     "node": "bld_res_late_a_gf_LOD1",
+     "tris": 40
+    },
+    "PROXY": {
+     "node": "bld_res_late_a_gf_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W5",
+     "W6",
+     "W7",
+     "W9"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "5ceec26e1ab92bd3feb7db6ace1846a663a80d1c27eec8b04ed213d6368cac25",
+   "total_height_m": 21.8,
+   "variant": "a_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     12.5,
+     23.0,
+     8.3
+    ],
+    "min": [
+     -12.5,
+     -2.5,
+     -7.5
+    ]
+   },
+   "eave_height_m": 21.0,
+   "era": "late",
+   "family": "res_late",
+   "floors": 7,
+   "footprint_m": [
+    24.0,
+    14.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_late/bld_res_late_b.glb",
+   "id": "bld_res_late_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_late_b_LOD0",
+     "tris": 524
+    },
+    "LOD1": {
+     "node": "bld_res_late_b_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_late_b_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5"
+    ],
+    "wall_rows": [
+     "W1",
+     "W5",
+     "W6",
+     "W7",
+     "W9"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "e8dfdb9cce0d6321a48797f05d41540e68fd001e8910d9a9de511f16591a594b",
+   "total_height_m": 23.0,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     12.5,
+     24.2,
+     8.3
+    ],
+    "min": [
+     -12.5,
+     -2.5,
+     -7.5
+    ]
+   },
+   "eave_height_m": 22.2,
+   "era": "late",
+   "family": "res_late",
+   "floors": 7,
+   "footprint_m": [
+    24.0,
+    14.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_late/bld_res_late_b_gf.glb",
+   "id": "bld_res_late_b_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_late_b_gf_LOD0",
+     "tris": 528
+    },
+    "LOD1": {
+     "node": "bld_res_late_b_gf_LOD1",
+     "tris": 24
+    },
+    "PROXY": {
+     "node": "bld_res_late_b_gf_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5"
+    ],
+    "wall_rows": [
+     "W1",
+     "W5",
+     "W6",
+     "W7",
+     "W9"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "894d7a3aaa32708b03faca6ee08eec837286b21d32fb1615484ea9bb54ea31c0",
+   "total_height_m": 24.2,
+   "variant": "b_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     8.0,
+     17.6,
+     7.3
+    ],
+    "min": [
+     -8.0,
+     -2.5,
+     -6.0
+    ]
+   },
+   "eave_height_m": 15.0,
+   "era": "late",
+   "family": "res_late",
+   "floors": 5,
+   "footprint_m": [
+    16.0,
+    12.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_late/bld_res_late_c.glb",
+   "id": "bld_res_late_c",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_late_c_LOD0",
+     "tris": 320
+    },
+    "LOD1": {
+     "node": "bld_res_late_c_LOD1",
+     "tris": 38
+    },
+    "PROXY": {
+     "node": "bld_res_late_c_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W5",
+     "W6",
+     "W7",
+     "W9"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "bbfd7e01ca57ba10b323a7f118927a198d2208cd38c4a55050cbc8bea43fc4d0",
+   "total_height_m": 17.6,
+   "variant": "c"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     7.0,
+     14.6,
+     5.5
+    ],
+    "min": [
+     -7.0,
+     -2.5,
+     -5.5
+    ]
+   },
+   "eave_height_m": 12.0,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 4,
+   "footprint_m": [
+    14.0,
+    11.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_a.glb",
+   "id": "bld_res_mid_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_a_LOD0",
+     "tris": 208
+    },
+    "LOD1": {
+     "node": "bld_res_mid_a_LOD1",
+     "tris": 28
+    },
+    "PROXY": {
+     "node": "bld_res_mid_a_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "62e95da8d0b3a4c9be08083aa32299c8894035467db81083090d12b639e3dbb0",
+   "total_height_m": 14.6,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     7.0,
+     15.8,
+     6.7
+    ],
+    "min": [
+     -7.0,
+     -2.5,
+     -5.5
+    ]
+   },
+   "eave_height_m": 13.2,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 4,
+   "footprint_m": [
+    14.0,
+    11.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_a_gf.glb",
+   "id": "bld_res_mid_a_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_a_gf_LOD0",
+     "tris": 210
+    },
+    "LOD1": {
+     "node": "bld_res_mid_a_gf_LOD1",
+     "tris": 30
+    },
+    "PROXY": {
+     "node": "bld_res_mid_a_gf_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "bc8854a9ba3808d0cebc6fc5dce78712f59fde66b344ad8e85ca0d47d8ab0d6c",
+   "total_height_m": 15.8,
+   "variant": "a_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     9.0,
+     17.6,
+     6.0
+    ],
+    "min": [
+     -9.0,
+     -2.5,
+     -6.0
+    ]
+   },
+   "eave_height_m": 15.0,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 5,
+   "footprint_m": [
+    18.0,
+    12.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_b.glb",
+   "id": "bld_res_mid_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_b_LOD0",
+     "tris": 358
+    },
+    "LOD1": {
+     "node": "bld_res_mid_b_LOD1",
+     "tris": 38
+    },
+    "PROXY": {
+     "node": "bld_res_mid_b_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "66169ec31608d9cb20a1ed2972baf8935ba6c0604e9a2c8b2249223a1bc157b7",
+   "total_height_m": 17.6,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     9.0,
+     18.8,
+     7.2
+    ],
+    "min": [
+     -9.0,
+     -2.5,
+     -6.0
+    ]
+   },
+   "eave_height_m": 16.2,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 5,
+   "footprint_m": [
+    18.0,
+    12.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_b_gf.glb",
+   "id": "bld_res_mid_b_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_b_gf_LOD0",
+     "tris": 350
+    },
+    "LOD1": {
+     "node": "bld_res_mid_b_gf_LOD1",
+     "tris": 40
+    },
+    "PROXY": {
+     "node": "bld_res_mid_b_gf_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "4728296f7539525680f3744ca3e84826a58e78bba56bd8c846af4f2f45fd6440",
+   "total_height_m": 18.8,
+   "variant": "b_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     6.0,
+     17.6,
+     5.0
+    ],
+    "min": [
+     -6.0,
+     -2.5,
+     -5.0
+    ]
+   },
+   "eave_height_m": 15.0,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 5,
+   "footprint_m": [
+    12.0,
+    10.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_c.glb",
+   "id": "bld_res_mid_c",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_c_LOD0",
+     "tris": 256
+    },
+    "LOD1": {
+     "node": "bld_res_mid_c_LOD1",
+     "tris": 28
+    },
+    "PROXY": {
+     "node": "bld_res_mid_c_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "475d12313b5e0350a4656c4d479cef7bb1aeab715f1e2486ea66070071361345",
+   "total_height_m": 17.6,
+   "variant": "c"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     6.0,
+     18.8,
+     6.2
+    ],
+    "min": [
+     -6.0,
+     -2.5,
+     -5.0
+    ]
+   },
+   "eave_height_m": 16.2,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 5,
+   "footprint_m": [
+    12.0,
+    10.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_c_gf.glb",
+   "id": "bld_res_mid_c_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_c_gf_LOD0",
+     "tris": 260
+    },
+    "LOD1": {
+     "node": "bld_res_mid_c_gf_LOD1",
+     "tris": 30
+    },
+    "PROXY": {
+     "node": "bld_res_mid_c_gf_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "1a3a35d4860a470c396946ca3ac151d10c04e0a05ffb435b0c60d3896c625e6d",
+   "total_height_m": 18.8,
+   "variant": "c_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     10.0,
+     20.6,
+     7.0
+    ],
+    "min": [
+     -10.0,
+     -2.5,
+     -7.0
+    ]
+   },
+   "eave_height_m": 18.0,
+   "era": "mid",
+   "family": "res_mid",
+   "floors": 6,
+   "footprint_m": [
+    20.0,
+    14.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_mid/bld_res_mid_d.glb",
+   "id": "bld_res_mid_d",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_mid_d_LOD0",
+     "tris": 338
+    },
+    "LOD1": {
+     "node": "bld_res_mid_d_LOD1",
+     "tris": 38
+    },
+    "PROXY": {
+     "node": "bld_res_mid_d_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W5",
+     "W6",
+     "W7"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "494a7e61a93ea4bd164826ca448e3e299e60b27ffb3012dd5a5d4466e05156da",
+   "total_height_m": 20.6,
+   "variant": "d"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     3.95,
+     11.2,
+     6.8
+    ],
+    "min": [
+     -3.95,
+     -2.5,
+     -6.45
+    ]
+   },
+   "eave_height_m": 9.0,
+   "era": "old",
+   "family": "res_old",
+   "floors": 3,
+   "footprint_m": [
+    7.0,
+    12.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_old/bld_res_old_a.glb",
+   "id": "bld_res_old_a",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_old_a_LOD0",
+     "tris": 128
+    },
+    "LOD1": {
+     "node": "bld_res_old_a_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_old_a_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "5db4bbfc3784a51aa002f87e31941956d5e512e6e96ac1754ed7024b2ddb8a58",
+   "total_height_m": 11.2,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     3.95,
+     12.4,
+     7.2
+    ],
+    "min": [
+     -3.95,
+     -2.5,
+     -6.45
+    ]
+   },
+   "eave_height_m": 10.2,
+   "era": "old",
+   "family": "res_old",
+   "floors": 3,
+   "footprint_m": [
+    7.0,
+    12.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_old/bld_res_old_a_gf.glb",
+   "id": "bld_res_old_a_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_old_a_gf_LOD0",
+     "tris": 134
+    },
+    "LOD1": {
+     "node": "bld_res_old_a_gf_LOD1",
+     "tris": 24
+    },
+    "PROXY": {
+     "node": "bld_res_old_a_gf_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "cd4cb3f6dda54e11256e115fe260d8fe2360de1e9846c7fcc28f5a66024ea48f",
+   "total_height_m": 12.4,
+   "variant": "a_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     4.0,
+     8.5,
+     6.3
+    ],
+    "min": [
+     -4.0,
+     -2.5,
+     -5.95
+    ]
+   },
+   "eave_height_m": 6.5,
+   "era": "old",
+   "family": "res_old",
+   "floors": 2,
+   "footprint_m": [
+    8.0,
+    11.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_old/bld_res_old_b.glb",
+   "id": "bld_res_old_b",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_old_b_LOD0",
+     "tris": 112
+    },
+    "LOD1": {
+     "node": "bld_res_old_b_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_old_b_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "gable",
+   "sha256": "3c83fd79d067654952da856b72cfb4550f080d46228d066756885f306523b28a",
+   "total_height_m": 8.5,
+   "variant": "b"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     3.5,
+     11.0,
+     7.3
+    ],
+    "min": [
+     -3.5,
+     -2.5,
+     -6.5
+    ]
+   },
+   "eave_height_m": 9.0,
+   "era": "old",
+   "family": "res_old",
+   "floors": 3,
+   "footprint_m": [
+    7.0,
+    13.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_old/bld_res_old_c.glb",
+   "id": "bld_res_old_c",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_old_c_LOD0",
+     "tris": 182
+    },
+    "LOD1": {
+     "node": "bld_res_old_c_LOD1",
+     "tris": 28
+    },
+    "PROXY": {
+     "node": "bld_res_old_c_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "0b6531432ffec613a57ac43fa6c3b04f24082e926fd02b655120693533e6451a",
+   "total_height_m": 11.0,
+   "variant": "c"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     3.5,
+     12.2,
+     7.7
+    ],
+    "min": [
+     -3.5,
+     -2.5,
+     -6.5
+    ]
+   },
+   "eave_height_m": 10.2,
+   "era": "old",
+   "family": "res_old",
+   "floors": 3,
+   "footprint_m": [
+    7.0,
+    13.0
+   ],
+   "gf": true,
+   "glb": "res://assets/models/buildings/res_old/bld_res_old_c_gf.glb",
+   "id": "bld_res_old_c_gf",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_old_c_gf_LOD0",
+     "tris": 188
+    },
+    "LOD1": {
+     "node": "bld_res_old_c_gf_LOD1",
+     "tris": 30
+    },
+    "PROXY": {
+     "node": "bld_res_old_c_gf_PROXY",
+     "tris": 10
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R1",
+     "R2"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "flat",
+   "sha256": "a0dd7dfc55b6179767830b90cb713c6cb82d7042b3ec248005ca2ea56ad01105",
+   "total_height_m": 12.2,
+   "variant": "c_gf"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     3.95,
+     8.3,
+     5.45
+    ],
+    "min": [
+     -3.95,
+     -2.5,
+     -5.45
+    ]
+   },
+   "eave_height_m": 6.5,
+   "era": "old",
+   "family": "res_old",
+   "floors": 2,
+   "footprint_m": [
+    7.0,
+    10.0
+   ],
+   "gf": false,
+   "glb": "res://assets/models/buildings/res_old/bld_res_old_d.glb",
+   "id": "bld_res_old_d",
+   "kind": "building",
+   "lods": {
+    "LOD0": {
+     "node": "bld_res_old_d_LOD0",
+     "tris": 96
+    },
+    "LOD1": {
+     "node": "bld_res_old_d_LOD1",
+     "tris": 22
+    },
+    "PROXY": {
+     "node": "bld_res_old_d_PROXY",
+     "tris": 14
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R3",
+     "R4",
+     "R5"
+    ],
+    "wall_rows": [
+     "W1",
+     "W2",
+     "W3",
+     "W4",
+     "W8"
+    ]
+   },
+   "roof_type": "hip",
+   "sha256": "0093c4d49c2784771d42e6eb7a2b2a6e841535fd9fd3a62b32849ceeaeb7c677",
+   "total_height_m": 8.3,
+   "variant": "d"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     1.25,
+     30.0,
+     1.25
+    ],
+    "min": [
+     -1.25,
+     -2.5,
+     -1.25
+    ]
+   },
+   "eave_height_m": 30.0,
+   "era": "none",
+   "family": "prop_chimney",
+   "floors": 0,
+   "footprint_m": [
+    2.5,
+    2.5
+   ],
+   "gf": false,
+   "glb": "res://assets/models/props/prop_chimney.glb",
+   "id": "prop_chimney",
+   "kind": "prop",
+   "lods": {
+    "LOD0": {
+     "node": "prop_chimney_LOD0",
+     "tris": 54
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R2"
+    ],
+    "wall_rows": [
+     "W10"
+    ]
+   },
+   "roof_type": "special",
+   "sha256": "99d6838874871e5ccd53b1573b6b32efdb5248f4bdb0c61caa9d9554a740e57d",
+   "total_height_m": 30.0,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     0.25,
+     1.75,
+     0.13
+    ],
+    "min": [
+     -0.25,
+     0.0,
+     -0.13
+    ]
+   },
+   "eave_height_m": 1.75,
+   "era": "none",
+   "family": "prop_human",
+   "floors": 0,
+   "footprint_m": [
+    0.5,
+    0.26
+   ],
+   "gf": false,
+   "glb": "res://assets/models/props/prop_human.glb",
+   "id": "prop_human",
+   "kind": "prop",
+   "lods": {
+    "LOD0": {
+     "node": "prop_human_LOD0",
+     "tris": 28
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R2",
+     "R7",
+     "R5",
+     "R1"
+    ],
+    "wall_rows": [
+     "W2",
+     "W5",
+     "W6",
+     "W7",
+     "W9",
+     "W3"
+    ]
+   },
+   "roof_type": "special",
+   "sha256": "8286149babdbfafe37fa962e8b09ed0e618797eee492cb3b5720f75d668ddc05",
+   "total_height_m": 1.75,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     4.808,
+     14.026,
+     4.588
+    ],
+    "min": [
+     -4.674,
+     0.0,
+     -4.8
+    ]
+   },
+   "eave_height_m": 14.03,
+   "era": "none",
+   "family": "veg_plane",
+   "floors": 0,
+   "footprint_m": [
+    9.48,
+    9.39
+   ],
+   "gf": false,
+   "glb": "res://assets/models/vegetation/veg_plane.glb",
+   "id": "veg_plane",
+   "kind": "vegetation",
+   "lods": {
+    "LOD0": {
+     "node": "veg_plane_LOD0",
+     "tris": 72
+    },
+    "LOD1": {
+     "node": "veg_plane_LOD1",
+     "tris": 32
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "P2",
+     "P3",
+     "P4"
+    ],
+    "wall_rows": [
+     "W1"
+    ]
+   },
+   "roof_type": "special",
+   "sha256": "b8d6f6829023ca38208554b03227d5ca8e9a270f7439b950694f44c8939f1334",
+   "total_height_m": 14.03,
+   "variant": "a"
+  },
+  {
+   "aabb_lod0_m": {
+    "max": [
+     0.92,
+     1.5,
+     2.2
+    ],
+    "min": [
+     -0.92,
+     0.02,
+     -2.2
+    ]
+   },
+   "eave_height_m": 1.5,
+   "era": "none",
+   "family": "veh_car",
+   "floors": 0,
+   "footprint_m": [
+    1.84,
+    4.4
+   ],
+   "gf": false,
+   "glb": "res://assets/models/vehicles/veh_car.glb",
+   "id": "veh_car",
+   "kind": "vehicle",
+   "lods": {
+    "LOD0": {
+     "node": "veh_car_LOD0",
+     "tris": 28
+    }
+   },
+   "palette": {
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ],
+    "roof_rows": [
+     "R2"
+    ],
+    "wall_rows": [
+     "W5",
+     "W7",
+     "W9",
+     "W2",
+     "W6",
+     "W1",
+     "W12"
+    ]
+   },
+   "roof_type": "special",
+   "sha256": "c6162a318c0759d825980c39596550cd0c49de548f63da5ad1133e78b246bf22",
+   "total_height_m": 1.5,
+   "variant": "a"
+  }
+ ],
+ "palette": "res://assets/kit/kit_palette.json",
+ "pivot": "footprint centre, y=0, skirt to -2.5",
+ "seed": 0,
+ "spec": "design/specs/art/building-kit-v0.md",
+ "units": "metre",
+ "uv0": "x=(part_id+0.5)/16, y=shade"
+}
