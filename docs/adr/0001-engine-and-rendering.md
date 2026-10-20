@@ -9,20 +9,37 @@
 
 ## Karar
 1. **Godot 4.7.2 (stable), GDScript**, statik tipli. Sürüm `tools/godot.sh` ile doğrulanır. 4.8 kararlı çıkınca ayrı bir ADR ile değerlendirilir (şu an beta1).
-2. **Varsayılan renderer: GL Compatibility.** Hedef estetik ileri ışıklandırma gerektirmez; Intel Mac'te ve iOS Simulator'da çalışan tek renderer budur; eski iPad'lere en geniş uyumu verir. **Mobile renderer** (iOS ve Apple Silicon'da Metal) ve masaüstü yüksek profil için Forward+ gerçek cihaz testlerinde yeniden ölçülür (ADR-0004); ölçüm Compatibility'den belirgin iyi çıkarsa bu ADR güncellenir. Forward+ kullanılmaz.
+2. **Renderer: başlangıç (geliştirme) renderer'ı GL Compatibility — tüm platformlar için değişmez karar değildir (D-004).** Bugün tek kanıtlı yol bu (Intel Mac'te çalışıyor, iOS Simulator'da tek seçenek). Platforma ve kalite profiline göre renderer seçimi gerçek cihaz ölçümüyle yapılır (T-010): macOS Intel (Compatibility / Mobile / Forward+ — MoltenVK), iPad Pro M serisi (Compatibility / Mobile / Forward+ — Metal), Windows (cihaz gelince: Compatibility / Mobile / Forward+ — D3D12/Vulkan). Sonuç ADR-0004'teki grafik profillerine yazılır; Godot'ta renderer başlangıçta seçildiği için profil = proje ayarı özellik geçersiz kılması + başlangıç bayrağı.
 3. **Render mimarisi** (ADR-0002 görünüm katmanı): 1 km chunk başına `MultiMeshInstance3D` (tür başına), örnek başına renk/ölçek; `visibility_range` ile chunk proxy'leri (HLOD). Metro görünümü için ikinci HLOD kademesi (birleştirilmiş bölge kütleleri) gereklidir — ilk ölçeklenme darboğazı budur. Proxy geçişlerinde fade/hysteresis (benchmark'ta sert "pop" görüldü).
 4. **Simülasyon dili:** GDScript + Packed*Array sütunları; ağır sistemler `WorkerThreadPool` ile dilim-yaz/sıralı-birleştir deseninde (deterministik olduğu ölçüldü). Kare içinde tick çalıştırılmaz: günlük tick ya iş parçacığında ya da karelere bölünerek yürür. GDExtension (godot-cpp) yalnız profiler kanıtıyla.
 5. **Koordinatlar:** metre, tek dünya; görünümde origin rebasing (ADR-0002 §2). Double-precision derleme yok.
 
-## Performans bütçesi (masaüstü referansı; iPad bütçesi cihaz ölçümüyle ayrıca yazılır — ADR-0004)
-| Ölçü | Bütçe | Dayanak |
+## Performans: ölçülenler ve kanıtlanmamış hedefler
+Üç yük **ayrı ayrı** ölçülür ve ayrı raporlanır; biri diğerinin kanıtı sayılmaz:
+- **Render kare süresi** — simülasyon durdurulmuşken, standart kamera preset'lerinde (ms ort./p95, draw call).
+- **Simülasyon tick süresi** — başsız, sistem başına, oyun günü başına (ms).
+- **Birleşik oyun yükü** — render + simülasyon belirli oyun hızında birlikte koşarken kare süresi p95 ve tick gecikmesi (oyun hızı hedefe yetişiyor mu).
+
+### Bugüne kadar ölçülen (sentetik, geliştirme Mac'i, `experiments/scale-bench`)
+| Ölçü | Sonuç | Niteliği |
 |---|---|---|
-| Kare süresi, geliştirme Mac'i, Compatibility, 1366×1024 | ort. ≤ 8 ms, p95 ≤ 16,6 ms (her preset) | Benchmark: 60k yapıda ort. 4–10 ms, metroda p95 16 ms → sınırda |
-| Draw call, metro preset | ≤ 600 (hedef ≤ 400) | 60k'da 398; 327k'da 579 |
-| Yapı üçgeni, ilçe LOD | ≲ 600 / orta katlı blok; proxy ≤ 12 | Blender hattı smoke: 5 katlı blok 208 üçgen |
-| Simülasyon tick'i (metro ölçeği, 60k parsel + 20k kohort) | ≤ 50 ms / oyun günü, kare dışı | Ölçülen: seri ~70 ms, 4 iş parçacığı ~40 ms |
-| Sahne kurulumu | ≤ 5 s metro yüklemesi | 60k'da 1,2 s; 240k'da 10 s → büyük N için artımlı/arka plan kurulumu |
-Masaüstü rakamları **iPad performans kanıtı değildir** (TEK-04).
+| Render, 60k yapı, Compatibility | ort. 4–10 ms; metro p95 ≈ 16 ms; 398 draw call (metro) | Sentetik kutular (12–24 üçgen), yol/ağaç/UI yok; makine dış yük altında (±%40) |
+| Render, 327k yapı | en kötü ort. 12,9 ms (≈77 fps) | Aynı sentetik sahne |
+| Sim tick, 60k parsel + 20k kohort | seri ~70 ms, 4 iş parçacığı ~40 ms / oyun günü | Sentetik iş yükü; gerçek sistem kuralları yok |
+| Birleşik yük | **ölçülmedi** | — |
+
+### Simülasyon frekansı: 40 ms neye göre?
+40 ms, **bir oyun günü tick'inin** (ADR-0002 §4) maliyetidir; hedef frekansa göre değerlendirilmemiştir, çünkü oyun zamanının gerçek zamana oranı **ÇM/AÇIK**tır (F03 "Oyun temposu", F05-C). Değerlendirme formülü: simülasyonun gerçek zamandaki yükü = tick_ms × (oyun günü / gerçek saniye). Örnek (yalnız hesap, hedef değil): 1 gün/sn → 40 ms/sn (%4 iş parçacığı süresi); 10 gün/sn → 400 ms/sn — iş parçacığında kareyi bloklamadan sürdürülebilir olup olmadığı birleşik yük ölçümüyle gösterilmelidir. Tick kare içinde çalıştırılmaz (karar 4).
+
+### Hedefler (başlangıç; **hiçbiri karşılanmış sayılmaz**)
+| Ölçü | Hedef | Durum |
+|---|---|---|
+| Render, masaüstü referans (geliştirme Mac'i), her preset | ort. ≤ 8 ms, p95 ≤ 16,6 ms | Sentetikte yakın; gerçek sahnede kanıtlanmadı |
+| Draw call, metro | ≤ 600 (hedef ≤ 400) | Sentetikte tuttu; gerçek sahnede kanıtlanmadı |
+| Sim tick | en yüksek oyun hızında gerçek zamana yetişmeli, kare p95'ini bozmamalı; sayısal bütçe zaman ölçeği belirlenince yazılır | Kanıtlanmadı |
+| iPad (M serisi) | cihaz ölçümünden sonra yazılır (T-008, T-010) | Ölçülmedi |
+| Windows | cihaz gelince | Ölçülmedi |
+Simülasyon kapsamı bu hedeflere göre kısılmaz (PLT-03); aşım olursa önce optimizasyon (iş parçacığı, toplu model, GDExtension), sonra ölçümle kullanıcıya rapor.
 
 ## Alternatifler
 | Seçenek | Artı | Neden reddedildi |
@@ -31,12 +48,12 @@ Masaüstü rakamları **iPad performans kanıtı değildir** (TEK-04).
 | Unreal 5.8 | En güçlü büyük dünya araçları | macOS'ta yalnız Apple Silicon; Blueprint/uasset ikili → ajanlarla yönetilemez; iPad'de ağır |
 | Bevy 0.20 | Saf Rust deterministik sim | Editör yok, ~4 ayda bir kırıcı sürüm, iOS durumu belirsiz, Intel Mac'te yavaş derleme, arazi/yol ekosistemi yok |
 | Web (three.js/Babylon + TypeScript) | En iyi CLI/test deneyimi, iPad Safari'de WebGPU | **Ciddi aday, yedek seçenek.** Reddedilme nedeni: iPad sekme belleği riski, yerel uygulama kalitesi/paketleme belirsizliği, editör/inspector kaybı; Godot'un headless test + capture hattı burada zaten doğrulandı. Godot ölçek bütçesini cihazda tutturamazsa yeniden açılır. |
-| Godot Forward+ / Mobile varsayılan | Daha zengin ışık, GPU zaman ölçümü | Estetik gerektirmiyor; Intel Mac'te MoltenVK; iOS Simulator yalnız Compatibility |
+| Godot Forward+ / Mobile | Daha zengin ışık, Metal/D3D12, GPU zaman ölçümü | **Reddedilmedi, ertelendi:** platform/kalite profili başına T-010 cihaz ölçümüyle seçilecek (D-004) |
 
 ## Sonuçlar ve riskler
 - Godot'ta yayımlanmış büyük ölçekli şehir kurma örneği bulunamadı; ölçek riski bizim ölçümlerimizle yönetilir (her milestone'da perf kapısı).
 - Simülasyon CPU'su render'dan daha sıkı sınır: sistem tasarımı kohort/toplu modelle başlamalı (ADR-0002 §3).
-- Yeniden açma tetikleyicileri: hedef cihazda bütçe aşımı; Godot 4.8 kararlı sürümü; Windows/iPad cihaz ölçümleri (ADR-0004); GDScript tick bütçesinin GDExtension olmadan tutmaması.
+- Yeniden açma tetikleyicileri: T-010 renderer karşılaştırması; hedef cihazda bütçe aşımı; Godot 4.8 kararlı sürümü; Windows/iPad cihaz ölçümleri (ADR-0004); GDScript tick bütçesinin GDExtension olmadan tutmaması.
 
 ## Kanıt
 - `experiments/scale-bench/RESULTS.md` (+ `results/*.json`, temsilî kareler `experiments/scale-bench/evidence/`, **sanat referansı değildir**). Ölçüm koşulları: Godot 4.7.2 editör ikilisi, Radeon Pro 560X, VSync kapalı, MSAA 2×, makine dış yük altında (load 5–25) → ±%40 gürültü. Üç renderer da bu makinede başladı.

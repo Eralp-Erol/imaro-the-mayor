@@ -36,10 +36,11 @@ Safe to proceed with: <what can be built now without deciding the open items>
 
 ## QUESTIONS.md entry format
 ```
-### Q-NNN · <short title>  (status: open | answered → D-NNN)
+### Q-NNN · <short title>  (status: open | blocked | answered → D-NNN)
 - Context: <why it matters now; which task/REQ is affected>
 - Options: A) … B) … C) …
 - Recommendation: <option + one-line reason>
+- Blocks: <task ids, only if status is blocked; open = blocks nothing>
 - Meanwhile: <reversible default / parked tasks>
 ```
 

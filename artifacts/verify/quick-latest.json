@@ -1,13 +1,13 @@
 {
   "mode": "quick",
-  "started_at": "2026-10-20T10:25:39Z",
-  "git_head": "dd701b9f00acca131ff7ab8157446a382669890e",
+  "started_at": "2026-10-20T10:59:13Z",
+  "git_head": "b997a868a6f58f243e4edbcc38c0db7de59966cb",
   "fingerprint": "c7584fb20c14e4592661b4b2fddfb33b68dcdeed75463d30d18af3d5df929faa",
   "steps": [
     {
       "name": "canon-check",
       "status": "pass",
-      "seconds": 1,
+      "seconds": 0,
       "summary": "canon-check: 11/11 dosya manifestle eşleşiyor"
     },
     {
@@ -19,13 +19,13 @@
     {
       "name": "gdlint",
       "status": "pass",
-      "seconds": 1,
+      "seconds": 2,
       "summary": "Success: no problems found"
     },
     {
       "name": "import",
       "status": "pass",
-      "seconds": 11,
+      "seconds": 12,
       "summary": "içe aktarma temiz"
     },
     {

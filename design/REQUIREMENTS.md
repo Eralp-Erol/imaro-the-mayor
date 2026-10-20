@@ -86,6 +86,7 @@ Kanıt seviyeleri: `—` yok · `T` otomatik test · `R` runtime ekran görünt�
 | PLT-03 | Simülasyon derinliği, mekanikler ve sistemler iPad sınırlarına göre baştan kısılmaz; masaüstü kapsamı iPad için azaltılmaz. | D-003 | K | — |
 | PLT-04 | Tek simülasyon çekirdeği ve ortak dünya verisi; simülasyon sonuçları platformdan bağımsızdır. | D-003, ADR-0004 | K / TEK | — |
 | PLT-05 | Platforma uygun kontrol, etkileşim, UI ve grafik profilleri olabilir. | D-003 | OY | — |
+| PLT-07 | iPad'de gerçek cihaz testleri ilk anlamlı grafik + girdi prototipinden itibaren yapılır (M2 sonuna ertelenmez); renderer ve kalite profilleri platform başına ölçümle seçilir, hiçbiri tüm platformlar için sabit değildir. Bunlar T-001'i bloklamaz. | D-004 | K | — |
 | PLT-06 | Platform performansı varsayımla değil gerçek cihaz testleri ve benchmark'larla değerlendirilir; platformlar arası eşit kapasite varsayılmaz, farklar ölçümle raporlanır. | D-003 | K | — |
 
 ## Açık parametreler (kanon oluşturulmaz)

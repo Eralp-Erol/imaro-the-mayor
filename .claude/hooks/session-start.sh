@@ -12,8 +12,10 @@ tmp=$(mktemp)
     echo "production/STATE.md yok — plan-milestone ile başlat."
   fi
   if [ -f production/QUESTIONS.md ]; then
-    open=$(grep -E '^### Q-[0-9]+.*status: open' production/QUESTIONS.md | sed 's/^### //; s/ *(status: open)//')
-    [ -n "$open" ] && { echo "Kullanıcı kararı bekleyen sorular:"; echo "$open" | sed 's/^/- /'; }
+    blocked=$(grep -E '^### Q-[0-9]+.*status: blocked' production/QUESTIONS.md | sed 's/^### //')
+    open=$(grep -E '^### Q-[0-9]+.*status: open' production/QUESTIONS.md | sed 's/^### //')
+    [ -n "$blocked" ] && { echo "ENGELLEYEN sorular (görev durduruyor):"; echo "$blocked" | sed 's/^/- /'; }
+    [ -n "$open" ] && { echo "Açık tasarım kararları (engellemiyor, izleniyor):"; echo "$open" | sed 's/^/- /'; }
   fi
   for f in $(ls -t artifacts/verify/*-latest.json 2>/dev/null | head -n1); do
     res=$(jq -r '"\(.mode) \(.result) @ \(.started_at)"' "$f" 2>/dev/null)

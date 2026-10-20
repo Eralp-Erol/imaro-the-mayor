@@ -7,7 +7,7 @@ Kural: yalnız gerçekten çalıştırılanlar "geçti" sayılır.
 | Adım | Test | Sonuç | Kanıt |
 |---|---|---|---|
 | 1. Gereksinimi referans paketinden okuma | E2E-A: design-director, T-001 ön kontrolü (Opus) | **Geçti** — foundation bölümlerini kaynak göstererek sınıflandırdı; 6 REQ satırını kaynak metne karşı denetledi; 2 gerçek kusur buldu (T-001'de belirsiz "referans 02" atfı, WLD-05 özetinin kaynaktan katı olması) → düzeltildi | `production/tasks/T-001.md`, `design/REQUIREMENTS.md` |
-| 2. Uzmana yönlendirme | Studio Director → simulation-engineer (T-900), qa-engineer, systems-designer, design-director | **Geçti** (sınırlı: aşağıdaki not) | — |
+| 2. Uzmana yönlendirme | Studio Director → simulation-engineer (T-900), qa-engineer, systems-designer, design-director | **Kısmi** — rol tanımları ve yönlendirme mantığı çalıştı; Claude Code'un proje ajanlarını canlı keşfi **doğrulanmadı** (M0-CLOSURE C-03) | — |
 | 3. Skill/araç etkinleştirme | Ajanlar önyüklenen skill'leri okuyup uyguladı (TDD, sim-invariants, canon-check, verification) | **Kısmi** — E2E-C `canon-check`'i resmi biçimde değil elle uyguladı | ajan raporları |
 | 4. Küçük izole teknik görev | T-900 kanonik durum hash'i: TDD (önce kırmızı, sonra yeşil), 31 test | **Geçti** | `src/sim/core/state_hash.gd`, `tests/sim/state_hash_test.gd` |
 | 5. Gerçek doğrulama | `tools/verify.sh quick` | **Geçti** — 5 adım, 36 test | `artifacts/verify/quick-latest.json` |
@@ -34,6 +34,7 @@ Kural: yalnız gerçekten çalıştırılanlar "geçti" sayılır.
 | `verify.sh quick` unit adımı | 36/36 | parse hatalı test paketi → FAIL (önceden yanlışlıkla PASS'ti, düzeltildi) |
 | `stop-verify-gate` hook | doğrulanmış durumda izin | doğrulamadan sonra değişen oyun dosyası → `block`; döngü koruması çalışıyor |
 | `session-start` hook | checkpoint, açık sorular, son doğrulama ve bayatlık durumu enjekte ediliyor | — |
+| Performans | — | Benchmark sonuçları **sentetiktir**; render/sim/birleşik yük ayrımı ve kanıtlanmamış hedefler ADR-0001'de |
 | Blender hattı | headless üreteç 3 koşuda aynı SHA-256; Godot içe aktarma 208 üçgen, 14×15,9×10 m, 2 materyal | yanlış genişlik → `RESULT: FAIL` |
 
 ## 4. Kurulum sırasında bulunan ve düzeltilen hatalar
@@ -45,6 +46,9 @@ Kural: yalnız gerçekten çalıştırılanlar "geçti" sayılır.
 6. `studio_check.py` YAML liste ayrıştırma hatası → düzeltildi, olumsuz testle doğrulandı.
 
 ## 5. Doğrulanmamış / kullanıcı tarafında yapılacak
+
+Takip listesi ve kesin kontrol komutları: `production/M0-CLOSURE.md` (C-01…C-10). Aşağıdakilerin hiçbiri PASS sayılmaz.
+
 - **Yeni oturumda kayıt:** proje ajanlarının (`/agents`) ve skill'lerinin listelenmesi, `env` ile Haiku→Sonnet yönlendirmesinin etkinleşmesi. Doğrulama (giriş yapılmış terminalde): `claude -p --output-format json "merhaba" | jq '.modelUsage|keys'` → yalnız opus/sonnet görünmeli.
 - **Blender MCP'nin LLM üzerinden çağrısı:** `tools/blender/start-mcp.sh` sonra yeni oturumda `blender` MCP sunucusunu onaylayıp `get_scene_info`.
 - iPad/Metal, export şablonu performansı, render+sim birlikte (ADR-0001 §Kanıt).
