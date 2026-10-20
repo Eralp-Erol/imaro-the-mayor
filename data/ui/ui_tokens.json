@@ -43,6 +43,7 @@
 		"panel_frac_side_desktop": 0.28,
 		"panel_frac_side_touch": 0.38,
 		"sheet_frac": 0.45,
+		"sheet_frac_expanded": 0.8,
 		"center_visible_min": 0.5
 	},
 	"floors": {

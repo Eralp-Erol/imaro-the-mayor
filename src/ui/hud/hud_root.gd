@@ -23,6 +23,9 @@ signal reason_requested(event: SimEvent)
 signal agenda_requested
 signal speed_changed(level: int)
 signal layout_changed
+## `refresh()` snapshot'ı yeniledi (tick/olay/hız değişti) ve sırada işlenmemiş yeni olaylar (varsa) şerite itildi.
+signal refreshed
+signal events_received(events: Array[SimEvent])
 
 var ctx: UiContext = null
 var input: InputProfile = null
@@ -35,6 +38,8 @@ var panel: PanelShell = null
 var layout: HudLayout = null
 ## Önizleme: simüle güvenli alan (sol, üst, sağ, alt); sıfır = cihazdan oku.
 var simulated_safe: Vector4 = Vector4.ZERO
+## Alt sayfa (dikey dokunmatik) genişletildi mi: oyuncu seçimidir, paneller arası ve yeniden kurmalarda kalır.
+var sheet_expanded: bool = false
 
 var _platform: PlatformProfile = null
 var _safe: UiSafeArea = null
@@ -136,7 +141,9 @@ func refresh() -> void:
 	if not fresh.is_empty():
 		_event_cursor = fresh[fresh.size() - 1].seq
 		strip.push_events(fresh)
+		events_received.emit(fresh)
 	_relayout()
+	refreshed.emit()
 
 
 func snapshot() -> SimSnapshot:
@@ -203,6 +210,7 @@ func _reopen_panel() -> void:
 		panel = null
 	panel = PanelShell.create(ctx)
 	panel.closed.connect(_close_panel)
+	panel.expand_toggled.connect(_on_expand_toggled)
 	panel.minimum_size_changed.connect(_queue_relayout)
 	panel.set_title(UiText.t(_panel_title_key))
 	panel.set_content(_panel_builder.call(ctx))
@@ -244,7 +252,7 @@ func _relayout() -> void:
 	_frame.size = frame_size
 	top_bar.set_wrapped(top_bar.single_row_min_width() > frame_size.x)
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
-		top_bar.get_combined_minimum_size().y)
+		top_bar.get_combined_minimum_size().y, sheet_expanded)
 	toolbar.set_rows(layout.toolbar_rows)
 	_place(top_bar, layout.top)
 	if banner.visible:
@@ -252,6 +260,7 @@ func _relayout() -> void:
 	_place(strip, layout.notifications)
 	_place(toolbar, layout.toolbar)
 	if is_panel_open():
+		panel.set_expand_available(layout.panel_mode == HudLayout.MODE_SHEET, sheet_expanded)
 		_place(panel, layout.panel)
 	layout_changed.emit()
 
@@ -275,6 +284,11 @@ func _place(c: Control, rect: Rect2) -> void:
 	c.position = rect.position
 	# Yüksekliği 0 verilen öğeler içeriğine göre büyür (set_size en az içerik boyutuna kenetler).
 	c.size = Vector2(rect.size.x, maxf(rect.size.y, 0.0))
+
+
+func _on_expand_toggled(expanded: bool) -> void:
+	sheet_expanded = expanded
+	_relayout()
 
 
 func _on_speed_chosen(level: int) -> void:

@@ -5,9 +5,9 @@ extends VBoxContainer
 ## (CAN-03): "özel bina yerleştir" aracı hiçbir modda yoktur. Kurulmamış sistemin sekmesi GİZLENMEZ ama
 ## dürüstçe
 ## etiketlidir ("Henüz kurulmadı") ve devre dışıdır; sahte araç yok.
-## Mevcut gerçek yetenek: İmar modu (imar önerisi + denetçi). İnşa (kamusal yol/park) ve Yönetim
-## (bütçe/meclis ekranları)
-## komut/ekran bakımından T-022 öncesi kurulmamıştır.
+## Mevcut gerçek yetenek: İmar modu (imar önerisi + denetçi) ve Yönetim modu (bütçe, meclis, gündem panelleri;
+## T-022). Panel açılır ama sim bölümü kurulmamışsa panel dürüstçe "Henüz kurulmadı" der (sahte içerik yok).
+## İnşa (kamusal yol/park) komut/ekran bakımından kurulmamıştır.
 ## Dikey dokunmatikte iki satır: modlar üstte, araçlar altta; yatay/masaüstünde tek satır.
 
 signal mode_changed(mode_id: StringName)
@@ -18,12 +18,15 @@ const MODE_PLAN := &"mode.plan"
 const MODE_MANAGE := &"mode.manage"
 const TOOL_INSPECT := &"tool.inspect"
 const TOOL_ZONE := &"tool.zone"
+const TOOL_BUDGET := &"tool.budget"
+const TOOL_COUNCIL := &"tool.council"
+const TOOL_AGENDA := &"tool.agenda"
 
 ## Mod → {built: bool, tools: [tool_id]}. Kurulu olmayan mod devre dışı etiketlidir.
 const MODES := {
 	&"mode.build": {"built": false, "tools": []},
 	&"mode.plan": {"built": true, "tools": [&"tool.inspect", &"tool.zone"]},
-	&"mode.manage": {"built": false, "tools": []},
+	&"mode.manage": {"built": true, "tools": [&"tool.budget", &"tool.council", &"tool.agenda"]},
 }
 
 var current_mode: StringName = MODE_PLAN

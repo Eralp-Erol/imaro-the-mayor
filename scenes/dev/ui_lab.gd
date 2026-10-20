@@ -1,17 +1,21 @@
 extends Control
-## ui_lab (T-019): HUD iskeleti + panel kabuğu + denetçi + mini imar akışı, `MockSimFacade` ile.
-## UI yalnız `SimFacade` tipine bağlıdır; harita yer tutucusu (UiLabMap) dev amaçlıdır. MOCK her yerde
-## işaretlidir.
+## ui_lab (T-019/T-022): HUD iskeleti + panel kabuğu + denetçi + karar akışları (imar, meclis, bütçe, gündem),
+## `MockSimFacade` ya da GERÇEK `SimFacadeImpl` ile. UI yalnız `SimFacade` tipine bağlıdır; harita yer tutucusu
+## (UiLabMap) dev amaçlıdır. MOCK her yerde işaretlidir; gerçek simde MOCK bandı yoktur.
 ##
 ## Açma:   tools/godot.sh --path . res://scenes/dev/ui_lab.tscn -- [--imaro-input-profile=touch]
 ## [--ui-lab-scenario=NAME]
 ##                         [--ui-lab-safe=ÜST,SAĞ,ALT,SOL] [--ui-lab-demo=ADIM]
-## Senaryo: declined (varsayılan) | positive | groups | council | invalid
+## Senaryo: declined (varsayılan) | positive | groups | council | invalid | zoning_council
+## Alt sayfa (dikey dokunmatik) genişletilmiş başlasın: `--ui-lab-expand=1`
+## Sim: `--ui-lab-sim=real` -> aynı senaryonun parselleriyle gerçek SimFacadeImpl (bütçe/meclis/gruplar KURULMAMIŞ)
 ## Demo adımları (capture için, tick sürücüsü kapalı): home | inspect | zoning | reject | done | protected |
 ## states | reason (senaryonun gerekçe paneli) | reason_list | reason_parcel | reason_actor | reason_rejected |
 ## reason_bad (tutarsız kayıt, yalnız dev) | reason_chain (zincir gezinmesi, yalnız dev)
+## T-022: zoning_sent | zoning_done | zoning_vote | zoning_multi | council | council_pending | council_done |
+## budget | budget_edit | budget_locked | agenda | agenda_empty | agenda_options (yalnız dev: v1.1 şekli)
 ## Klavye (dev): N seçili parselin gerekçeleri · F5 aktör listesi (aktör girişi önizlemesi) · F1 masaüstü profili · F2 iPad yatay (1366x1024) · F3 iPad dikey (1024x1366) · F4 güvenli alan
-## simülasyonu
+## simülasyonu · F6 imar yolu: meclis gerekli/gerekmez (Q-014 önizlemesi)
 ##
 ## DEV metinleri aşağıdaki sabitlerdedir (oyuncu UI'ı değildir; oyun metinleri UiText'ten gelir).
 
@@ -21,6 +25,7 @@ const SCENARIO_FILES := {
 	"groups": "res://tests/fixtures/mock_scenario_group_reactions.json",
 	"council": "res://tests/fixtures/mock_scenario_council_budget_vote.json",
 	"invalid": "res://tests/fixtures/mock_scenario_invalid_commands.json",
+	"zoning_council": "res://tests/ui/fixtures/ui_mock_zoning_council.json",
 }
 ## Dev tick sürücüsü: hız basamağı -> saniyedeki tick (gerçek eşleme sim sürücü yapılandırması, ÇM).
 const DEV_TICKS_PER_SECOND := {0: 0.0, 1: 1.0, 2: 2.0, 3: 4.0}
@@ -29,19 +34,18 @@ const SAFE_SIMULATION := Vector4(0.0, 24.0, 0.0, 20.0)
 var facade: SimFacade = null
 var hud: HudRoot = null
 var map: UiLabMap = null
+var decisions: DecisionPanels = null
 
 var scenario_name_in_use: String = "declined"
 var _platform: PlatformProfile = null
 var _selected: int = 0
 var _inspector: ParcelInspector = null
-var _zoning: UiLabZoning = null
 var _reason_panel: ReasonPanel = null
 var _reason_nav: Array[Dictionary] = []
 var _reason_initial: Callable = Callable()
 var _driver_on: bool = true
 var _accum: float = 0.0
 var _seen_tick: int = -1
-var _event_cursor: int = 0
 
 
 func _ready() -> void:
@@ -50,17 +54,22 @@ func _ready() -> void:
 	var scenario_name: String = args.get("scenario", "declined")
 	scenario_name_in_use = scenario_name if SCENARIO_FILES.has(scenario_name) else "declined"
 	facade = MockSimFacade.from_file(SCENARIO_FILES[scenario_name_in_use])
+	if str(args.get("sim", "mock")) == "real":
+		facade = _real_facade_from(facade as MockSimFacade)
 	_platform = PlatformProfile.detect()
 	map = UiLabMap.new()
 	add_child(map)
 	hud = HudRoot.new()
 	hud.simulated_safe = _parse_safe(str(args.get("safe", "")))
+	hud.sheet_expanded = str(args.get("expand", "")) == "1"
 	add_child(hud)
 	hud.layout_changed.connect(_on_layout_changed)
 	hud.tool_selected.connect(_on_tool_selected)
 	hud.reason_requested.connect(_on_event_reason)
 	hud.panel_closed.connect(_on_panel_closed)
 	hud.setup(facade, _platform)
+	decisions = DecisionPanels.attach(hud, facade)
+	decisions.reason_wanted.connect(_open_reason)
 	_after_profile()
 	if args.has("demo"):
 		await get_tree().process_frame
@@ -75,21 +84,12 @@ func _process(delta: float) -> void:
 		while _accum >= 1.0:
 			_accum -= 1.0
 			facade.advance(1)
-	if facade != null and facade.last_event_seq() != _event_cursor:
-		_dispatch_events()
 	if facade != null and facade.current_tick() != _seen_tick:
 		_seen_tick = facade.current_tick()
 		map.reload()
 		_refresh_inspector()
 		if _reason_panel != null and is_instance_valid(_reason_panel):
 			_reason_panel.refresh()
-
-
-func _dispatch_events() -> void:
-	for e in facade.events_since(_event_cursor):
-		_event_cursor = e.seq
-		if _zoning != null and is_instance_valid(_zoning):
-			_zoning.handle_event(e)
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
@@ -107,6 +107,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_open_reason(func(p: ReasonPanel) -> void: p.show_subject(StringName("parcel.%d" % maxi(_selected, 1))))
 		KEY_F5:
 			open_actors()
+		KEY_F6:
+			UiPrefs.set_zoning_requires_council(not UiPrefs.zoning_requires_council())
+			if hud.panel_id() == DecisionPanels.PANEL_ZONING:
+				decisions.zoning_panel().refresh()
 		KEY_F4:
 			hud.simulated_safe = Vector4.ZERO if hud.simulated_safe != Vector4.ZERO else SAFE_SIMULATION
 			hud.apply_profile(_platform)
@@ -132,15 +136,15 @@ func reason_panel() -> ReasonPanel:
 
 
 func open_zoning() -> void:
-	hud.open_panel(&"zoning", &"zoning.title", _build_zoning)
+	decisions.open_zoning(PackedInt64Array([_selected]) if _selected > 0 else PackedInt64Array())
 
 
 func state() -> Dictionary:
 	return {"selected": _selected, "panel": hud.panel_id(), "tick": facade.current_tick()}
 
 
-func zoning_flow() -> UiLabZoning:
-	return _zoning
+func zoning_flow() -> ZoningFlowPanel:
+	return decisions.zoning_panel()
 
 
 func _switch_profile(profile_name: StringName, window_size: Vector2i) -> void:
@@ -165,7 +169,15 @@ func _on_layout_changed() -> void:
 
 
 func _on_select_screen(screen_pos: Vector2) -> void:
-	select_parcel(map.pick(screen_pos))
+	var picked := map.pick(screen_pos)
+	# İmar paneli açıkken haritadan seçilen parsel öneri alanına eklenir (boşluğa dokunmak paneli kapatmaz).
+	if hud.panel_id() == DecisionPanels.PANEL_ZONING:
+		if picked > 0:
+			_selected = picked
+			map.select(picked)
+			decisions.add_zoning_parcel(picked)
+		return
+	select_parcel(picked)
 
 
 func _on_tool_selected(tool_id: StringName) -> void:
@@ -177,7 +189,6 @@ func _on_tool_selected(tool_id: StringName) -> void:
 
 func _on_panel_closed(_id: StringName) -> void:
 	_inspector = null
-	_zoning = null
 	_reason_panel = null
 	_reason_nav = []
 
@@ -237,11 +248,6 @@ func _build_inspector(c: UiContext) -> Control:
 	return _inspector
 
 
-func _build_zoning(c: UiContext) -> Control:
-	_zoning = UiLabZoning.create(c, facade, _selected)
-	return _zoning
-
-
 func _refresh_inspector() -> void:
 	if _inspector == null or not is_instance_valid(_inspector):
 		return
@@ -260,38 +266,126 @@ func _run_demo(step: String) -> void:
 	match step:
 		"inspect":
 			select_parcel(1)
-		"zoning":
-			select_parcel(1)
-			open_zoning()
-		"reject":
-			select_parcel(1)
-			open_zoning()
-			_zoning.choose_use(&"zone.industrial")
-		"done":
-			select_parcel(1)
-			open_zoning()
-			_zoning.choose_use(&"zone.mixed")
-			_zoning.send()
-			facade.advance(6)
-			_dispatch_events()
-			hud.refresh()
-			map.reload()
-			_open_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(_first_reason_ids()))
-		"protected":
-			select_parcel(2)
-			open_zoning()
-			_zoning.choose_use(&"zone.commercial")
-			_zoning.send()
-			facade.advance(3)
-			_dispatch_events()
-			hud.refresh()
-			map.reload()
+		"zoning", "reject", "done", "protected", "zoning_sent", "zoning_done", "zoning_vote", "zoning_multi":
+			_demo_zoning(step)
+		"council", "council_pending", "council_done", "budget", "budget_edit", "budget_locked", "agenda", \
+		"agenda_empty", "agenda_options":
+			_demo_decisions(step)
 		"reason", "reason_list", "reason_parcel", "reason_actor", "reason_rejected", "reason_bad", "reason_chain":
 			_demo_reason(step)
 		"states":
 			hud.set_agenda(2, 5, true)
 			hud.open_panel(&"states", &"inspector.title", _build_state_gallery)
 	hud.refresh()
+
+
+## Karar akışı capture demoları (T-022): imar önerisi.
+func _demo_zoning(step: String) -> void:
+	var zone_parcel := 2 if step == "protected" else 1
+	select_parcel(zone_parcel)
+	open_zoning()
+	var flow := zoning_flow()
+	match step:
+		"reject":
+			flow.choose_use(&"zone.industrial")
+		"done":
+			flow.choose_use(&"zone.mixed")
+			flow.send()
+			facade.advance(6)
+			hud.refresh()
+			map.reload()
+			_open_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(_first_reason_ids()))
+		"protected":
+			flow.choose_use(&"zone.commercial")
+			flow.send()
+			facade.advance(3)
+			hud.refresh()
+			map.reload()
+		"zoning_sent":
+			flow.choose_use(&"zone.mixed")
+			flow.send()
+		"zoning_done":
+			flow.choose_use(&"zone.mixed")
+			flow.send()
+			facade.advance(8)
+			hud.refresh()
+			map.reload()
+		"zoning_vote":
+			flow.choose_use(&"zone.mixed")
+			flow.send()
+			facade.advance(2)
+			hud.refresh()
+		"zoning_multi":
+			flow.add_parcel(2)
+			flow.choose_use(&"zone.commercial")
+
+
+## Karar akışı capture demoları (T-022): meclis, bütçe, gündem.
+func _demo_decisions(step: String) -> void:
+	match step:
+		"council":
+			decisions.open_council()
+		"council_pending":
+			facade.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+			facade.advance(1)
+			hud.refresh()
+			decisions.open_council()
+		"council_done":
+			facade.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+			facade.advance(6)
+			hud.refresh()
+			decisions.open_council()
+		"budget":
+			decisions.open_budget()
+		"budget_edit":
+			decisions.open_budget()
+			decisions.budget_panel().step(&"budget.line.roads", 1)
+			decisions.budget_panel().step(&"budget.line.roads", 1)
+			decisions.budget_panel().step(&"budget.line.parks", -1)
+		"budget_locked":
+			facade.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+			facade.advance(1)
+			hud.refresh()
+			decisions.open_budget()
+		"agenda":
+			facade.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+			facade.advance(1)
+			hud.refresh()
+			decisions.open_agenda()
+		"agenda_empty":
+			decisions.open_agenda()
+		"agenda_options":
+			decisions.open_agenda()
+			decisions.agenda_panel().set_item_provider(_dev_option_items)
+
+
+## DEV: v1.1 `AgendaItemView` şeklinin önizlemesi (sözleşmede yok; sayılar SAHTE, yalnız mock modda gösterilir).
+func _dev_option_items(_snapshot: SimSnapshot) -> Array[AgendaModel.Item]:
+	var it := AgendaModel.Item.new()
+	it.id = &"dev.item.1"
+	it.kind = &"dev_event"
+	it.title_key = &"agenda.item_new"
+	it.days_left = 4
+	it.can_defer = true
+	var o := AgendaModel.Option.new()
+	o.id = &"a"
+	o.label_key = &"agenda.option"
+	o.has_cost = true
+	o.cost = 2000
+	o.preview_key = &"zoning.preview.estimate_note"
+	it.options = [o]
+	var out: Array[AgendaModel.Item] = [it]
+	return out
+
+
+## Aynı senaryonun parselleriyle GERÇEK SimFacadeImpl (T-027): bütçe/meclis/gruplar kurulmamıştır.
+func _real_facade_from(mock: MockSimFacade) -> SimFacade:
+	var views: Array[ParcelView] = []
+	for v in mock.parcel_views(mock.parcel_ids()):
+		v.provenance = SimContract.PROVENANCE_SIM
+		views.append(v)
+	var impl := SimFacadeImpl.create(20261020, ListParcelSource.create(&"ui_lab.world", views))
+	return impl if impl != null else mock
 
 
 ## Gerekçe paneli capture demoları: senaryoyu gerekçe oluşana dek oynatır, sonra ilgili girişi açar.
@@ -337,8 +431,9 @@ func _demo_reason(step: String) -> void:
 func _swap_facade(next: SimFacade) -> void:
 	facade = next
 	hud.facade = next
+	decisions.rebind(next)
+	decisions.facade = next
 	map.bind(next, hud.ctx)
-	_event_cursor = 0
 
 
 func _play_scenario() -> void:

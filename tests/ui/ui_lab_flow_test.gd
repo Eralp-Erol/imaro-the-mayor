@@ -35,7 +35,7 @@ func test_validate_rejection_is_shown_with_reason_and_blocks_sending() -> void:
 	await await_idle_frame()
 	lab.select_parcel(1)
 	lab.open_zoning()
-	var flow: UiLabZoning = lab.zoning_flow()
+	var flow: ZoningFlowPanel = lab.zoning_flow()
 	flow.choose_use(&"zone.industrial")  # mock sim bu kullanımı tanımıyor
 	assert_bool(flow.last_validation.is_rejected()).is_true()
 	assert_that(flow.last_validation.reason_key).is_equal(CommandResult.REJECT_INVALID_VALUE)
@@ -52,7 +52,7 @@ func test_valid_proposal_runs_end_to_end_to_the_investor_reason() -> void:
 	await await_idle_frame()
 	lab.select_parcel(1)
 	lab.open_zoning()
-	var flow: UiLabZoning = lab.zoning_flow()
+	var flow: ZoningFlowPanel = lab.zoning_flow()
 	flow.choose_use(&"zone.mixed")
 	assert_bool(flow.last_validation.is_rejected()).is_false()
 	assert_str(flow.verdict_text()).is_equal("Öneri geçerli; gönderilebilir")
@@ -94,7 +94,7 @@ func test_zoning_without_parcel_asks_for_selection() -> void:
 	var lab := _lab()
 	await await_idle_frame()
 	lab.open_zoning()
-	var flow: UiLabZoning = lab.zoning_flow()
+	var flow: ZoningFlowPanel = lab.zoning_flow()
 	assert_object(flow.use_button(&"zone.mixed")).is_null()  # parsel yokken seçenek yok (ölü düğme yok)
 
 

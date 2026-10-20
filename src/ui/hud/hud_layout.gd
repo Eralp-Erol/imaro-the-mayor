@@ -27,8 +27,10 @@ var map_region: Rect2 = Rect2()
 
 ## `top_min_height`: üst şeridin içeriğinden gelen asgari yükseklik (iki satıra sarıldıysa tabandan
 ## büyüktür).
+## `sheet_expanded`: yalnız alt sayfa kipinde (dikey dokunmatik); oyuncu "Genişlet" derse sayfa `sheet_frac_expanded`
+## kadar yükselir (varsayılan %45 değişmez; şehri örtme kararı oyuncunundur).
 static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banner: bool,
-		top_min_height: float = 0.0) -> HudLayout:
+		top_min_height: float = 0.0, sheet_expanded: bool = false) -> HudLayout:
 	var l := HudLayout.new()
 	var tk := ctx.tokens
 	var margin := ctx.edge_margin()
@@ -65,8 +67,10 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 			l.panel = Rect2(frame.x - panel_w, y, panel_w, frame.y - y)
 		else:
 			# Alt sayfa + araç çubuğu birlikte en çok %45 yükseklik: ekranın ortası hiçbir zaman örtülmez.
-			var budget := frame.y * tk.limit("sheet_frac")
-			var sheet_h := minf(ctx.px(tk.size("sheet_max_height")), budget - (toolbar_h + margin + gap))
+			var budget := frame.y * tk.limit("sheet_frac_expanded" if sheet_expanded else "sheet_frac")
+			var sheet_h := budget - (toolbar_h + margin + gap)
+			if not sheet_expanded:
+				sheet_h = minf(ctx.px(tk.size("sheet_max_height")), sheet_h)
 			sheet_h = maxf(sheet_h, 0.0)
 			l.panel = Rect2(0.0, l.toolbar.position.y - gap - sheet_h, frame.x, sheet_h)
 	return l

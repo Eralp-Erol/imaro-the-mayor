@@ -4,7 +4,19 @@
 	"economy.currency_name": "",
 	"calendar.days_per_year": 360,
 	"calendar._note": "Takvim esleme (yil/gun) ACIK; sim tick'i = 1 oyun gunu (ADR-0002). 360 yer tutucudur.",
-	"zoning.land_uses": ["zone.residential", "zone.mixed", "zone.commercial", "zone.green", "zone.industrial"],
+	"zoning.land_uses": [
+		"zone.residential",
+		"zone.mixed",
+		"zone.commercial",
+		"zone.green",
+		"zone.industrial"
+	],
 	"zoning._note": "ADR-0005 Ek B anahtarlari + gosterim denemesi icin industrial. Sozlesmede arazi kullanimi sorgusu YOK (v1.1 istegi); sim listede olmayan kullanimi gerekceyle reddeder.",
-	"hud.notification_rows": 3
+	"hud.notification_rows": 3,
+	"settings.auto_pause_agenda": false,
+	"settings._note": "Gundem ogesinde otomatik duraklatma yalniz AYAR; varsayilani ACIK SORU (Q-011/AS-11) - false yer tutucudur.",
+	"zoning.requires_council": false,
+	"zoning._council_note": "Imar onerisi meclisten gecmeli mi? ACIK (Q-014). false = sim'in simdiki gercegi (apply_delay_days sonra otomatik yururluk). UI iki yolu da gosterebilir; gercek bayrak sim yapilandirmasindan gelmeli (v1.1 istegi).",
+	"budget.edit_step": 1000,
+	"budget._note": "Butce duzenleyici adim buyuklugu: yalniz girdi granulerligi, denge/kanon DEGIL (yer tutucu). Birimsiz tamsayi."
 }

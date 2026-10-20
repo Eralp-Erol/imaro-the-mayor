@@ -16,6 +16,10 @@ const V_LABEL_DANGER := &"LabelDanger"
 const V_LABEL_ON_MOCK := &"LabelOnMock"
 const V_LABEL_OK := &"LabelOk"
 const V_PANEL_ALERT := &"PanelAlert"
+## "Tahmin" işareti: dolgusuz, vurgu çerçeveli çip (mock rengi DEĞİL; mock sarıdır, tahmin çerçevelidir).
+const V_ESTIMATE_CHIP := &"EstimateChip"
+## Kart: panel içinde gruplanmış bilgi bloğu (oylama, kalem, öğe).
+const V_INFO_CARD := &"InfoCard"
 
 
 static func build(ctx: UiContext) -> Theme:
@@ -34,6 +38,13 @@ static func build(ctx: UiContext) -> Theme:
 	t.set_type_variation(V_PANEL_ALERT, &"PanelContainer")
 	t.set_stylebox(&"panel", V_PANEL_ALERT,
 		_flat(tk.color("panel_bg_alt"), tk.color("danger"), 3, int(tk.size("radius")), pad, pad))
+	t.set_type_variation(V_ESTIMATE_CHIP, &"PanelContainer")
+	var chip := _flat(Color.TRANSPARENT, tk.color("accent"), 2, 4, pad / 2, 1)
+	chip.draw_center = false
+	t.set_stylebox(&"panel", V_ESTIMATE_CHIP, chip)
+	t.set_type_variation(V_INFO_CARD, &"PanelContainer")
+	t.set_stylebox(&"panel", V_INFO_CARD,
+		_flat(tk.color("panel_bg_alt"), tk.color("border"), 1, int(tk.size("radius")), pad, pad))
 	t.set_type_variation(V_MOCK_CHIP, &"PanelContainer")
 	t.set_stylebox(&"panel", V_MOCK_CHIP, _flat(tk.color("mock"), Color.TRANSPARENT, 0, 4, pad / 2, 1))
 	t.set_type_variation(V_MOCK_BANNER, &"PanelContainer")

@@ -11,6 +11,8 @@ extends PanelContainer
 
 signal closed
 signal pinned_changed(pinned: bool)
+## Alt sayfa kipinde "Genişlet/Küçült" düğmesi (dikey dokunmatik; yalnız yerleşim kipi sayfaysa görünür).
+signal expand_toggled(expanded: bool)
 
 var pinned: bool = false
 var state_view: StateView = null
@@ -19,6 +21,7 @@ var _ctx: UiContext = null
 var _title: Label = null
 var _pin: Button = null
 var _close: Button = null
+var _expand: Button = null
 var _scroll: ScrollContainer = null
 
 
@@ -38,6 +41,10 @@ static func create(ctx: UiContext) -> PanelShell:
 	p._pin.tooltip_text = UiText.t(&"a11y.pinned")
 	p._pin.toggled.connect(p._on_pin_toggled)
 	header.add_child(p._pin)
+	p._expand = UiFactory.button(ctx, UiText.t(&"panel.expand"), false, true)
+	p._expand.visible = false
+	p._expand.toggled.connect(p._on_expand_toggled)
+	header.add_child(p._expand)
 	p._close = UiFactory.button(ctx, UiText.t(&"common.close"), true)
 	p._close.tooltip_text = UiText.t(&"a11y.close_panel")
 	p._close.pressed.connect(p.request_close)
@@ -54,6 +61,18 @@ static func create(ctx: UiContext) -> PanelShell:
 
 func set_title(text: String) -> void:
 	_title.text = text
+
+
+## Genişlet düğmesi yalnız alt sayfa kipinde görünür; durum HudRoot'tadır (paneller arası kalıcı).
+func set_expand_available(available: bool, expanded: bool) -> void:
+	_expand.visible = available
+	_expand.set_pressed_no_signal(expanded)
+	_expand.text = UiText.t(&"panel.collapse" if expanded else &"panel.expand")
+	_expand.tooltip_text = UiText.t(&"a11y.collapse_sheet" if expanded else &"a11y.expand_sheet")
+
+
+func expand_button() -> Button:
+	return _expand
 
 
 func title_text() -> String:
@@ -84,6 +103,11 @@ func close_button() -> Button:
 
 func pin_button() -> Button:
 	return _pin
+
+
+func _on_expand_toggled(on: bool) -> void:
+	_expand.text = UiText.t(&"panel.collapse" if on else &"panel.expand")
+	expand_toggled.emit(on)
 
 
 func _on_pin_toggled(on: bool) -> void:

@@ -68,7 +68,8 @@ func test_time_controls_pause_toggle_and_selected_state() -> void:
 
 func test_mode_toolbar_unbuilt_modes_are_disabled_and_honestly_labelled() -> void:
 	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
-	for mode_id in [ModeToolbar.MODE_BUILD, ModeToolbar.MODE_MANAGE]:
+	# Yönetim modu T-022 ile kuruldu (bütçe/meclis/gündem panelleri); yalnız İnşa kurulmamıştır.
+	for mode_id in [ModeToolbar.MODE_BUILD]:
 		var b := tb.mode_button(mode_id)
 		assert_bool(b.disabled).is_true()
 		assert_str(b.text).contains("Henüz kurulmadı")

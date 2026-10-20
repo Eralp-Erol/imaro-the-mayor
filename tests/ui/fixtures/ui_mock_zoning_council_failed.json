@@ -1,0 +1,271 @@
+{
+ "format": "imaro.mock_scenario",
+ "format_version": 1,
+ "provenance": "MOCK",
+ "contract_version": "1.0",
+ "id": "ui_mock_zoning_council_failed",
+ "description": "MOCK: (T-022 UI test verisi) Imar onerisi meclis oylamasinda reddedilir; imar degismez. Sayilar sahte.",
+ "initial": {
+  "tick": 0,
+  "speed": 1,
+  "world_id": "fixture.world",
+  "land_uses": [
+   "zone.residential",
+   "zone.mixed",
+   "zone.commercial",
+   "zone.green"
+  ],
+  "parcels": [
+   {
+    "id": 1,
+    "region_code": "F1",
+    "center": [
+     -400.0,
+     200.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 1,
+     "name_key": "mock.actor.landowner.1"
+    },
+    "land_value": 2600,
+    "reason_ids": []
+   },
+   {
+    "id": 2,
+    "region_code": "F1",
+    "center": [
+     0.0,
+     -400.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 2,
+     "name_key": "mock.actor.landowner.2"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   }
+  ],
+  "budget": {
+   "period": 0,
+   "status": "draft",
+   "revenue": 0,
+   "balance": 0,
+   "pending_vote_id": 0,
+   "lines": []
+  },
+  "council": {
+   "council": {
+    "kind": "council",
+    "id": 1,
+    "name_key": "mock.actor.council.1"
+   },
+   "seats_total": 11,
+   "blocs": [
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 1,
+      "name_key": "mock.actor.council_bloc.1"
+     },
+     "seats": 6,
+     "stance": 200,
+     "position": "undecided",
+     "reason_id": 0
+    },
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 2,
+      "name_key": "mock.actor.council_bloc.2"
+     },
+     "seats": 5,
+     "stance": -300,
+     "position": "undecided",
+     "reason_id": 0
+    }
+   ],
+   "votes": []
+  },
+  "groups": []
+ },
+ "rules": [
+  {
+   "when": {
+    "kind": "zoning.propose",
+    "params": {
+     "parcel_ids": [
+      1
+     ],
+     "land_use": "zone.mixed"
+    }
+   },
+   "effects": [
+    {
+     "after_ticks": 0,
+     "type": "council_vote",
+     "vote": {
+      "vote_id": 1,
+      "subject_ref": "command.1",
+      "title_key": "council.vote.zoning",
+      "closes_after": 2,
+      "status": "pending"
+     }
+    },
+    {
+     "after_ticks": 0,
+     "type": "event",
+     "event": {
+      "kind": "council.vote_opened",
+      "actor": {
+       "kind": "council",
+       "id": 1,
+       "name_key": "mock.actor.council.1"
+      },
+      "subjects": [
+       "vote.1",
+       "command.1"
+      ],
+      "message_key": "event.council.vote_opened"
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "reason",
+     "label": "r_bloc1",
+     "reason": {
+      "actor": {
+       "kind": "council_bloc",
+       "id": 1,
+       "name_key": "mock.actor.council_bloc.1"
+      },
+      "decision_key": "decision.council_bloc.vote_yes",
+      "factors": [
+       {
+        "name_key": "reason.factor.alignment_with_mayor",
+        "value": -300,
+        "weight": 500
+       },
+       {
+        "name_key": "reason.factor.fiscal_concern",
+        "value": 200,
+        "weight": 500
+       }
+      ],
+      "threshold": 500,
+      "outcome": "negative",
+      "subjects": [
+       "vote.1",
+       "command.1"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "reason",
+     "label": "r_bloc2",
+     "reason": {
+      "actor": {
+       "kind": "council_bloc",
+       "id": 2,
+       "name_key": "mock.actor.council_bloc.2"
+      },
+      "decision_key": "decision.council_bloc.vote_yes",
+      "factors": [
+       {
+        "name_key": "reason.factor.alignment_with_mayor",
+        "value": 600,
+        "weight": 500
+       },
+       {
+        "name_key": "reason.factor.district_benefit",
+        "value": 500,
+        "weight": 500
+       }
+      ],
+      "threshold": 500,
+      "outcome": "positive",
+      "subjects": [
+       "vote.1",
+       "command.1"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "council_vote",
+     "reason_labels": [
+      "r_bloc1",
+      "r_bloc2"
+     ],
+     "vote": {
+      "vote_id": 1,
+      "status": "failed",
+      "yes": 5,
+      "no": 6,
+      "abstain": 0,
+      "positions": [
+       {
+        "bloc": {
+         "kind": "council_bloc",
+         "id": 1,
+         "name_key": "mock.actor.council_bloc.1"
+        },
+        "seats": 6,
+        "stance": 200,
+        "position": "no",
+        "reason_label": "r_bloc1"
+       },
+       {
+        "bloc": {
+         "kind": "council_bloc",
+         "id": 2,
+         "name_key": "mock.actor.council_bloc.2"
+        },
+        "seats": 5,
+        "stance": -300,
+        "position": "yes",
+        "reason_label": "r_bloc2"
+       }
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "event",
+     "event": {
+      "kind": "council.vote_resolved",
+      "actor": {
+       "kind": "council",
+       "id": 1,
+       "name_key": "mock.actor.council.1"
+      },
+      "subjects": [
+       "vote.1",
+       "command.1"
+      ],
+      "message_key": "event.council.vote_failed",
+      "args": {
+       "yes": 5,
+       "no": 6
+      },
+      "reason_labels": [
+       "r_bloc1",
+       "r_bloc2"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "timeline": []
+}
