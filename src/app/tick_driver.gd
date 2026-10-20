@@ -4,7 +4,8 @@ extends RefCounted
 ## sınıf süre alır. Düğüm değildir (RefCounted): bir Node'un `_process`'i her karede `advance(delta)` çağırır.
 ##
 ## Kare bağımsızlığı: süre tam sayı mikrosaniyeye çevrilir ve birikim "mikro-tick" olarak (süre x tick/sn) TAM SAYI
-## tutulur; kesirli float birikimi yoktur. Aynı toplam süreyi veren her kare dizisi aynı tick sayısını (ve hash'i) verir.
+## tutulur; kesirli float birikimi yoktur. Aynı toplam süreyi veren her kare dizisi aynı tick sayısını (ve
+## hash'i) verir.
 ## `advance(float)` her kareyi bir kez yuvarlar; tam bağımsızlık için çağıran tam sayı mikrosaniye (`advance_usec`)
 ## vermelidir. Hız tablosu `data/sim/core_config.json` `driver` bölümündedir. Duraklatılmışken süre birikmez.
 ## Tek çağrıda en fazla `max_ticks_per_advance` tick koşar; geri kalan borç birikimde kalır (zaman kaybolmaz).

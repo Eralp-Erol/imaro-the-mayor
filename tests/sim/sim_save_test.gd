@@ -185,6 +185,22 @@ func test_older_unsupported_version_is_rejected_with_clear_message() -> void:
 	assert_str(result.message).contains("0")
 
 
+func test_pre_reason_alignment_v1_save_is_rejected_as_too_old() -> void:
+	# T-027: ReasonLog biçimi değişti (id 1'den, tamsayı ağırlık, outcome/score/subjects/parent_ids) -> sürüm 2.
+	# v1 kayıtlarının taşıması yoktur (kayıp dönüşüm sahte gerekçe üretirdi): anlaşılır hatayla reddedilir.
+	assert_int(SimSave.VERSION).is_equal(2)
+	assert_int(SimSave.MIN_SUPPORTED_VERSION).is_equal(2)
+	var old_state: Dictionary = (bytes_to_var(SimSave.encode(new_state())) as Dictionary)["state"].duplicate(true)
+	old_state["reasons"] = {"capacity": 100, "next_id": 1, "records": [{
+		"id": 0, "tick": 0, "actor": &"investor_1", "decision": &"invest",
+		"factors": [{"name": &"roll", "value": 7, "weight": 1}], "threshold": 5, "code": &""}]}
+	var bytes := _envelope({"version": 1, "state": old_state})
+	_assert_rejected(bytes, &"version_too_old")
+	var message := SimSave.decode(bytes).message
+	assert_str(message).contains("1")
+	assert_str(message).contains("2")
+
+
 func test_newer_version_is_rejected_with_clear_message() -> void:
 	_assert_rejected(_envelope({"version": SimSave.VERSION + 1}), &"version_too_new")
 	var result := SimSave.decode(_envelope({"version": SimSave.VERSION + 1}))

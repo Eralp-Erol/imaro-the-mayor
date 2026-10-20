@@ -63,7 +63,11 @@ func test_invalid_command_is_rejected_with_reason_and_state_unchanged() -> void:
 	var before: Dictionary = state.to_dict()["systems"]
 	_sim.step(state)
 	assert_object(_cmd_value(state, "tax")).is_null()
-	assert_dict(state.to_dict()["systems"]).is_equal(before)
+	# Reddedilen komut sistem verisini değiştirmez; yalnız olay günlüğüne `command.rejected` düşer (T-027).
+	var after: Dictionary = state.to_dict()["systems"]
+	assert_array(after.keys()).contains_exactly_in_any_order(["cmd", "events"])
+	after.erase("events")
+	assert_dict(after).is_equal(before)
 	var rejected := Commands.rejected(state)
 	assert_int(rejected.size()).is_equal(1)
 	assert_str(str(rejected[0]["reason"])).is_equal("value_negative")

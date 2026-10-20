@@ -5,7 +5,8 @@ extends RefCounted
 ##
 ## İki bölüm:
 ##   `sim`    durumla KAYDEDİLEN takvim/kapasite değerleri (GameState.config): days_per_month, months_per_quarter,
-##            reason_log_capacity, command_log_capacity. Kayıt yüklenince aynı takvim geçerli olur.
+##            reason_log_capacity, command_log_capacity, event_log_capacity (<= reason_log_capacity, ADR-0005 §5).
+##            Kayıt yüklenince aynı takvim geçerli olur.
 ##   `driver` yalnız uygulama/görünüm tarafı (TickDriver): speeds (ad -> gerçek saniye başına tick), default_speed,
 ##            max_ticks_per_advance. Durumun parçası değildir.
 ## JSON sayıları float döner; tam sayı değerli olanlar int'e çevrilir, kesirli olanlar reddedilir.
@@ -13,7 +14,7 @@ extends RefCounted
 const DEFAULT_PATH := "res://data/sim/core_config.json"
 
 const _SIM_INT_KEYS: Array[String] = [
-	"days_per_month", "months_per_quarter", "reason_log_capacity", "command_log_capacity",
+	"days_per_month", "months_per_quarter", "reason_log_capacity", "command_log_capacity", "event_log_capacity",
 ]
 
 ## `sim` bölümü (int değerler).
@@ -58,6 +59,8 @@ static func from_dict(data: Dictionary) -> SimConfig:
 		if value == null:
 			return _invalid("sim.%s eksik veya pozitif tam sayı değil" % key)
 		cfg.sim[key] = value
+	if int(cfg.sim["event_log_capacity"]) > int(cfg.sim["reason_log_capacity"]):
+		return _invalid("sim.event_log_capacity reason_log_capacity değerinden büyük olamaz (olay ufku <= gerekçe ufku)")
 	var speeds_in: Variant = driver_in.get("speeds", null)
 	if not (speeds_in is Dictionary) or (speeds_in as Dictionary).is_empty():
 		return _invalid("driver.speeds eksik veya boş")

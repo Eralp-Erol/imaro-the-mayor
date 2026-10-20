@@ -5,6 +5,9 @@ extends RefCounted
 ## doğrulanır ve geçerliyse uygulanır; sonuç komut günlüğüne yazılır. Geçersiz komut gerekçe KODU ile reddedilir;
 ## ret kuyruğun geri kalanını engellemez. Doğrulama gönderimde değil UYGULAMA anındaki durumla yapılır.
 ##
+## Her işlenen komut `command.applied` / `command.rejected` olayı üretir (SimEventLog; `command_id` = seq + 1,
+## sözleşme kimlikleri 1'den başlar; ret anahtarı CommandReject).
+##
 ## Bekleyen kayıt: {seq, issuer, type, params, tick_issued}. Günlük kaydı: bunlara ek
 ## {tick_applied, status (&"applied"|&"rejected"), reason (ret kodu veya &"")}. Günlük kapasitesi config'te
 ## (`command_log_capacity`), en eskiler budanır. Parametreler düz veri olmalı (hash/kayıt için).
@@ -60,13 +63,32 @@ static func process_pending(state: GameState, handlers: Dictionary) -> void:
 		var handler: CommandHandler = handlers.get(String(cmd["type"]), null)
 		var reason: StringName = REASON_UNKNOWN if handler == null else handler.validate(state, cmd["params"])
 		if reason == &"":
-			handler.apply(state, cmd["params"])
+			handler.apply_with_id(state, cmd["params"], int(cmd["seq"]) + 1)
 		entry["tick_applied"] = state.tick
 		entry["status"] = STATUS_APPLIED if reason == &"" else STATUS_REJECTED
 		entry["reason"] = reason
 		state.command_log.append(entry)
+		_emit_event(state, handler, cmd, reason)
 	while state.command_log.size() > capacity:
 		state.command_log.pop_front()
+
+
+## Komut sonucu olayı. Ret argümanları: `kind`, işleyicinin `reject_args`'ı ve (sözleşme dışı kodda) özgün `code`.
+static func _emit_event(state: GameState, handler: CommandHandler, cmd: Dictionary, reason: StringName) -> void:
+	var command_id := int(cmd["seq"]) + 1
+	var subjects := PackedStringArray() if handler == null else handler.subjects(cmd["params"])
+	subjects.append(String(SimContract.ref(SimContract.REF_COMMAND, command_id)))
+	var args := {"kind": cmd["type"]}
+	if reason == &"":
+		SimEventLog.emit(state, &"command.applied", &"event.command.applied", subjects, args, PackedInt64Array(),
+			command_id)
+		return
+	if handler != null:
+		args.merge(handler.reject_args(state, cmd["params"]))
+	if not CommandReject.is_contract_code(reason):
+		args["code"] = reason
+	SimEventLog.emit(state, &"command.rejected", CommandReject.key_for(reason), subjects, args, PackedInt64Array(),
+		command_id)
 
 
 ## StateHash'in desteklediği düz veri mi (null/bool/int/float/String/StringName/Array/Dictionary/Packed*)?

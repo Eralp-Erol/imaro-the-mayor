@@ -66,6 +66,7 @@ class DrawSystem:
 
 
 ## Sistem: günlük karar verir ve gerekçesini kaydeder (SIM-12). roll >= threshold ise "invest", değilse "decline".
+## Değer/ağırlık 1000 ölçekli tamsayıdır (ReasonRecord, ADR-0005): ağırlık 1000 = 1.0, puan = roll.
 class DecisionSystem:
 	extends SimSystem
 	const THRESHOLD := 500
@@ -77,7 +78,8 @@ class DecisionSystem:
 		var roll := state.rng.stream(&"decider").randi_range(0, 999)
 		var decision := &"invest" if roll >= THRESHOLD else &"decline"
 		var code := &"roll_above_threshold" if roll >= THRESHOLD else &"roll_below_threshold"
-		state.record_reason(&"investor_1", decision, [{"name": &"roll", "value": roll, "weight": 1}], THRESHOLD, code)
+		state.record_reason(&"actor.investor.1", decision,
+			[{"name": &"roll", "value": roll, "weight": SimContract.FIXED_SCALE}], THRESHOLD, code)
 
 
 ## Komut: system_data("cmd")[key] = value. Anahtar String, değer negatif olmayan int olmalı.

@@ -1,0 +1,13 @@
+{
+	"_header": "T-027 SimFacadeImpl calisma-modeli sayilari/sozlukleri (F05-C: ayarlanabilir, kanon DEGIL). Ayrintilar src/sim/facade/facade_config.gd.",
+	"facade": {
+		"_notes": "speed_levels: sozlesme hiz seviyesi (indeks) -> TickDriver hiz adi (core_config.json driver.speeds). Indeks 0 = paused. Gercek saniye basina tick degerleri core_config.json'dadir.",
+		"speed_levels": ["paused", "normal", "fast", "fastest"],
+		"parcel_reason_limit": 5
+	},
+	"zoning": {
+		"_notes": "land_uses: kabul edilen arazi kullanimi anahtarlari (sozluk sim yapilandirmasi, sozlesme degil; yer tutucu, kanon degil). apply_delay_days: imar onerisinin yururluge girmesi icin gecen gun (>= 1); T-013 gercek imar surecini getirene kadar calisma modeli.",
+		"land_uses": ["zone.residential", "zone.mixed", "zone.commercial", "zone.green"],
+		"apply_delay_days": 3
+	}
+}

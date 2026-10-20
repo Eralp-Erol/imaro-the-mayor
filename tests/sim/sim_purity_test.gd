@@ -27,8 +27,11 @@ const FORBIDDEN: Dictionary = {
 ## Transandantal/platforma duyarlı matematik çağrıları; aynı satırda deterministik yuvarlama işareti zorunlu.
 const TRANSCENDENTAL := "\\b(sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|exp|pow|log|ease|smoothstep)\\("
 const ROUNDING_MARKERS: Array[String] = ["roundi(", "snappedf(", "snappedi(", "floori(", "ceili(", "int("]
-## Dosya düzeyi yetki: yalnızca kurulumda (tick dışında) yapılandırma dosyası okuyan sınıf.
-const FILE_IO_ALLOWED: Array[String] = ["sim_config.gd"]
+## Dosya düzeyi yetki: yalnızca kurulumda (tick dışında) yapılandırma dosyası okuyan sınıflar. Kayıt yuvası G/Ç'si
+## src/app/save_slot*'tadır ve ayrı taranır (save_slot_purity_test.gd); sim içinde başka dosya G/Ç'ye izin yoktur.
+const FILE_IO_ALLOWED: Array[String] = ["sim_config.gd", "facade_config.gd"]
+## Taban sınıfı çözümlemesi için ek kök: `class_name` -> `extends` haritası buradan da kurulur (örn. SimFacade).
+const CLASS_MAP_ROOTS: Array[String] = ["res://src/sim", "res://src/contracts"]
 const FILE_IO := "\\b(FileAccess|DirAccess)\\b"
 
 
@@ -100,7 +103,9 @@ func test_scan_finds_the_sim_sources_it_is_meant_to_police() -> void:
 	for f in _sources():
 		names.append(f.get_file())
 	for expected in ["game_state.gd", "simulation.gd", "rng_streams.gd", "commands.gd", "reason_log.gd",
-			"sim_save.gd", "state_hash.gd", "tick_driver.gd"]:
+			"sim_save.gd", "state_hash.gd", "tick_driver.gd", "sim_event_log.gd", "command_reject.gd",
+			"sim_facade_impl.gd", "zoning_propose_handler.gd", "parcel_zoning_system.gd", "parcel_source.gd",
+			"list_parcel_source.gd", "reason_adapter.gd", "event_adapter.gd", "facade_config.gd"]:
 		assert_bool(names.has(expected)).override_failure_message("taranmayan dosya: %s" % expected).is_true()
 
 
@@ -130,15 +135,72 @@ func test_transcendental_math_is_never_unrounded() -> void:
 	assert_array(offenders).override_failure_message("yuvarlanmamış transandantal:\n" + "\n".join(offenders)).is_empty()
 
 
+## `class_name X` + `extends Y` -> {"X": "Y"} (sim ve sözleşme dosyaları).
+func _class_map() -> Dictionary:
+	var map := {}
+	var files: Array[String] = []
+	for root in CLASS_MAP_ROOTS:
+		_collect(root, "", files)
+	var name_re := RegEx.create_from_string("(?m)^class_name\\s+(\\w+)")
+	var base_re := RegEx.create_from_string("(?m)^extends\\s+(\\w+)")
+	for path in files:
+		var text := strip_comments(FileAccess.get_file_as_string(path))
+		var n := name_re.search(text)
+		var b := base_re.search(text)
+		if n != null and b != null:
+			map[n.get_string(1)] = b.get_string(1)
+	return map
+
+
+## Taban zinciri RefCounted/Resource'ta bitiyor mu? (SimSystem, CommandHandler, ParcelSource gibi yerel tabanlar
+## üzerinden de.) Zincir Node'a ya da bilinmeyen bir sınıfa çıkıyorsa false.
+func _is_pure_base(base: String, map: Dictionary) -> bool:
+	var guard := 0
+	var current := base
+	while guard < 16:
+		if current == "RefCounted" or current == "Resource":
+			return true
+		if not map.has(current):
+			return false
+		current = map[current]
+		guard += 1
+	return false
+
+
 func test_simulation_classes_extend_refcounted_or_resource_not_node() -> void:
+	var map := _class_map()
 	for path in _sources():
 		var text := strip_comments(FileAccess.get_file_as_string(path))
 		var re := RegEx.create_from_string("(?m)^extends\\s+(\\w+)")
 		var m := re.search(text)
 		if m != null:
 			var base := m.get_string(1)
-			assert_bool(base == "RefCounted" or base == "Resource") \
-				.override_failure_message("%s extends %s (RefCounted/Resource bekleniyordu)" % [path, base]).is_true()
+			assert_bool(_is_pure_base(base, map)) \
+				.override_failure_message("%s extends %s (zincir RefCounted/Resource'ta bitmiyor)" % [path, base]).is_true()
+
+
+func test_base_resolution_flags_node_chains_and_unknown_bases() -> void:
+	var map := {"A": "RefCounted", "B": "A", "C": "Node", "D": "C", "E": "Mystery"}
+	assert_bool(_is_pure_base("B", map)).is_true()
+	assert_bool(_is_pure_base("RefCounted", map)).is_true()
+	assert_bool(_is_pure_base("D", map)).override_failure_message("Node zinciri kaçtı").is_false()
+	assert_bool(_is_pure_base("C", map)).is_false()
+	assert_bool(_is_pure_base("E", map)).override_failure_message("bilinmeyen taban kaçtı").is_false()
+	assert_bool(_is_pure_base("Node3D", map)).is_false()
+
+
+func test_facade_directory_is_scanned_and_never_touches_the_app_save_layer() -> void:
+	var facade_files: Array[String] = []
+	for path in _sources():
+		if path.begins_with("res://src/sim/facade/"):
+			facade_files.append(path)
+	assert_int(facade_files.size()).override_failure_message("facade dizini taranmıyor").is_greater_equal(8)
+	var re := RegEx.create_from_string("\\b(SaveSlot|FileAccess|DirAccess)\\b")
+	for path in facade_files:
+		if FILE_IO_ALLOWED.has(path.get_file()):
+			continue
+		assert_bool(re.search(strip_comments(FileAccess.get_file_as_string(path))) == null) \
+			.override_failure_message("%s dosya G/Ç ya da kayıt yuvası katmanına dokunuyor" % path).is_true()
 
 
 # --- Tarayıcının kendisi başarısız olabilmeli (olumsuz testler) ---

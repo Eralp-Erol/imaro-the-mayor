@@ -9,7 +9,8 @@ func _good() -> Dictionary:
 func test_default_config_loads_with_integer_calendar_and_speeds() -> void:
 	var cfg := SimConfig.load_default()
 	assert_bool(cfg.is_valid()).override_failure_message(cfg.error).is_true()
-	for key: String in ["days_per_month", "months_per_quarter", "reason_log_capacity", "command_log_capacity"]:
+	for key: String in ["days_per_month", "months_per_quarter", "reason_log_capacity", "command_log_capacity",
+			"event_log_capacity"]:
 		assert_int(typeof(cfg.sim[key])).override_failure_message("%s int olmalı" % key).is_equal(TYPE_INT)
 		assert_int(cfg.sim[key]).is_greater(0)
 	assert_bool(cfg.driver["speeds"].has(cfg.driver["default_speed"])).is_true()
@@ -54,3 +55,20 @@ func test_unknown_default_speed_and_bad_json_are_rejected() -> void:
 	assert_str(cfg.error).contains("default_speed")
 	assert_bool(SimConfig.from_json_text("{not json").is_valid()).is_false()
 	assert_bool(SimConfig.from_json_text("[1,2]").is_valid()).is_false()
+
+
+func test_event_log_capacity_is_required_and_not_above_reason_capacity() -> void:
+	# ADR-0005 §5: olay saklama ufku gerekçe saklama ufkundan uzun olamaz.
+	var raw := _good()
+	raw["sim"].erase("event_log_capacity")
+	var cfg := SimConfig.from_dict(raw)
+	assert_bool(cfg.is_valid()).is_false()
+	assert_str(cfg.error).contains("event_log_capacity")
+	raw = _good()
+	raw["sim"]["event_log_capacity"] = int(raw["sim"]["reason_log_capacity"]) + 1
+	cfg = SimConfig.from_dict(raw)
+	assert_bool(cfg.is_valid()).is_false()
+	assert_str(cfg.error).contains("event_log_capacity")
+	raw = _good()
+	raw["sim"]["event_log_capacity"] = raw["sim"]["reason_log_capacity"]
+	assert_bool(SimConfig.from_dict(raw).is_valid()).is_true()

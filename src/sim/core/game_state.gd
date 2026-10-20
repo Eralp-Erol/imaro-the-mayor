@@ -9,7 +9,7 @@ extends RefCounted
 ## pending_commands + command_log + next_command_seq (komut kuyruğu/günlüğü; bkz. Commands).
 
 const CONFIG_KEYS: Array[String] = [
-	"days_per_month", "months_per_quarter", "reason_log_capacity", "command_log_capacity",
+	"days_per_month", "months_per_quarter", "reason_log_capacity", "command_log_capacity", "event_log_capacity",
 ]
 
 var world_seed: int = 0
@@ -46,8 +46,9 @@ func system_data(id: StringName) -> Dictionary:
 
 ## Aktör kararının gerekçesini şimdiki tick ile kaydeder (SIM-12); id veya hata için -1 (bkz. ReasonLog.record).
 func record_reason(actor: Variant, decision: Variant, factors: Array, threshold: Variant,
-		code: StringName = &"") -> int:
-	return reasons.record(tick, actor, decision, factors, threshold, code)
+		code: StringName = &"", subjects: PackedStringArray = PackedStringArray(),
+		parent_ids: PackedInt64Array = PackedInt64Array()) -> int:
+	return reasons.record(tick, actor, decision, factors, threshold, code, subjects, parent_ids)
 
 
 # --- Takvim (tick = gün; oranlar config'ten) ---
@@ -157,6 +158,9 @@ static func validate_dict(data: Variant) -> String:
 		return reasons_error
 	if not (data.get("systems", null) is Dictionary):
 		return "durum.systems sözlük değil"
+	var events_error := SimEventLog.validate_data(data["systems"].get(SimEventLog.SYSTEM_KEY, null))
+	if not events_error.is_empty():
+		return events_error
 	for key in ["pending_commands", "command_log"]:
 		var entries: Variant = data.get(key, null)
 		if not (entries is Array):

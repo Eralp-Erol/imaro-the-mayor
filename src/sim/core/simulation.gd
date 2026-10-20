@@ -40,6 +40,11 @@ func system_count() -> int:
 	return _systems.size()
 
 
+## Komut türünün işleyicisi (kayıtlı değilse null). Facade ön doğrulaması (`validate_command`) bunu kullanır.
+func handler_for(command_type: StringName) -> CommandHandler:
+	return _handlers.get(String(command_type), null)
+
+
 ## Tek tick ilerletir.
 func step(state: GameState) -> void:
 	Commands.process_pending(state, _handlers)

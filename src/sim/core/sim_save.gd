@@ -9,8 +9,12 @@ extends RefCounted
 ## Dosya/slot G/Ç bu sınıfın işi değildir (src/app): buraya yalnız bayt/metin verilir.
 
 const FORMAT := "imaro-sim-save"
-const VERSION := 1
-const MIN_SUPPORTED_VERSION := 1
+## Sürüm geçmişi: 1 = T-002 (ReasonLog id 0'dan, float/ağırlıksız faktör). 2 = T-027 (ReasonLog ADR-0005'e hizalı:
+## id 1'den, 1000 ölçekli tamsayı, outcome/score/subjects/parent_ids; sim olay günlüğü `events` sistem verisi).
+## v1 -> v2 taşıması YOKTUR (gerekçe alanları kayıpsız türetilemez; sahte gerekçe üretmek SIM-12'yi bozar):
+## v1 reddedilir.
+const VERSION := 2
+const MIN_SUPPORTED_VERSION := 2
 
 
 ## Yükleme sonucu. ok ise `state` dolu; değilse `error_code` (&"empty", &"corrupt", &"bad_format",
