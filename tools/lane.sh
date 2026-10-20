@@ -75,7 +75,9 @@ case "$cmd" in
     rc=0
     # gdlint: hattın yolları arasında .gd barındıran mevcut dizin/dosyalar
     gdl=(); p=""; IFS=','; for p in $(field "$id" 4); do
-      p="${p# }"; if [ -e "$p" ]; then case "$p" in src/*|tests/*) gdl+=("$p") ;; esac; fi
+      p="${p# }"
+      case "$p" in src/*|tests/*) ;; *) continue ;; esac
+      if [ -e "$p" ]; then gdl+=("$p"); else for f in "$p"*.gd; do if [ -e "$f" ]; then gdl+=("$f"); fi; done; fi   # önek yolları (src/app/tick_driver*)
     done; unset IFS
     if [ ${#gdl[@]} -gt 0 ]; then
       if uvx --from gdtoolkit==4.5.0 gdlint "${gdl[@]}" >"$out/lint.log" 2>&1; then echo "PASS gdlint        $(tail -n1 "$out/lint.log")"; else echo "FAIL gdlint        $(tail -n1 "$out/lint.log")"; rc=1; fi
