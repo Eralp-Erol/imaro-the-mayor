@@ -2,6 +2,9 @@
 
 Tek üretim koordinatörü: **Studio Director (ana oturum)**. Görev sahipliği, bağımlılıklar ve entegrasyon burada yönetilir; ajanlar yalnız kendi hattının yollarına yazar. Araç: `tools/lane.sh` (durum, sahiplik kontrolü, hat bazlı doğrulama ve commit). Kayıt defteri bu dosyanın sonundaki `LANE|…` satırlarıdır (en uzun yol öneki kazanır; sahipsiz değişiklik = hata).
 
+## ZORUNLU DURAKLAMA (kullanıcı kararı, 2026-10-20)
+M1 teknik kapanışı ve T-030 entegre demo tamamlandığında **dur**: demo + ekran görüntüleri + çalıştırma talimatı + tamamlananlar/eksikler/test sonuçları/açık riskler sun; kullanıcı onayı bekleyen maddeleri (Q-015 coğrafya, T-008 iPad) gerekçeleriyle ayrıca belirt. **Kullanıcının açık onayı olmadan M2 veya yeni özellik görevi BAŞLATILMAZ** (yeni görevler yalnız backlog'a eklenir). Sonsuz doğrulama döngüsüne girilmez. Duraklamaya kadar sürenler: T-017, T-028, T-029, T-030, T-012 açık kriter kararları, M1 kapısı (T-006). Backlog (onay bekliyor, başlatılmaz): T-014 bütçe/altyapı, T-026 NPC/olay içeriği iskeleti, T-001a–c cila, kit v1, T-009/T-010, M2 işleri.
+
 ## Çalışma kuralları (hatlar paralel, çakışma yok)
 1. **Yalnız kendi hattının yollarına yaz.** Paylaşılan dosyalar yalnız koordinatörde: `production/` (ROADMAP, STATE, QUESTIONS, bu dosya), `design/REQUIREMENTS.md`, `design/decisions/`, `CLAUDE.md`, `.claude/`, `tools/` (hat yolu olmayanlar), `project.godot`, `.gitignore`, `addons/`. Bunlarda değişiklik gerekiyorsa raporunda iste; koordinatör uygular.
 2. **Git'e dokunma** (`add/commit/stash/checkout/reset/merge` yok). Commit'i koordinatör `tools/lane.sh commit <hat> "<mesaj>"` ile yalnız o hattın dosyalarıyla yapar. Dal: `dev/m1-parallel` (T-001 dalından), `main`'e alma kullanıcıdadır.
