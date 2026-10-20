@@ -1,0 +1,88 @@
+{
+  "builds": [
+    {
+      "build_ms": 9818.387,
+      "buildings": 240000,
+      "densest_chunk_buildings": 1156,
+      "multimesh_instances": 1806,
+      "proxy_meshes": 508,
+      "requested": 240000
+    }
+  ],
+  "cases": [
+    {
+      "avg_ms": 7.3,
+      "buildings": 240000,
+      "cpu_render_ms": 6.21,
+      "draw_calls": 510.0,
+      "fps_avg": 137.0,
+      "frames_measured": 180,
+      "gpu_render_ms": 0.0,
+      "max_ms": 12.14,
+      "mem_static_mb": 108.8,
+      "n": 240000,
+      "objects": 510.0,
+      "p95_ms": 10.76,
+      "preset": "metro",
+      "primitives": 189122,
+      "screenshot": "results/shots/gl_compatibility-detail10km/n240000_metro_sh-off.png",
+      "screenshot_size": "1366x1024",
+      "shadows": "off",
+      "video_mem_mb": 79.6
+    },
+    {
+      "avg_ms": 5.47,
+      "buildings": 240000,
+      "cpu_render_ms": 1.33,
+      "draw_calls": 103.0,
+      "fps_avg": 182.9,
+      "frames_measured": 180,
+      "gpu_render_ms": 0.0,
+      "max_ms": 10.58,
+      "mem_static_mb": 108.9,
+      "n": 240000,
+      "objects": 103.0,
+      "p95_ms": 7.52,
+      "preset": "district",
+      "primitives": 571246,
+      "screenshot": "results/shots/gl_compatibility-detail10km/n240000_district_sh-off.png",
+      "screenshot_size": "1366x1024",
+      "shadows": "off",
+      "video_mem_mb": 79.6
+    },
+    {
+      "avg_ms": 8.02,
+      "buildings": 240000,
+      "cpu_render_ms": 6.52,
+      "draw_calls": 449.0,
+      "fps_avg": 124.7,
+      "frames_measured": 180,
+      "gpu_render_ms": 0.0,
+      "max_ms": 13.71,
+      "mem_static_mb": 109.1,
+      "n": 240000,
+      "objects": 449.0,
+      "p95_ms": 10.37,
+      "preset": "street",
+      "primitives": 1522074,
+      "screenshot": "results/shots/gl_compatibility-detail10km/n240000_street_sh-off.png",
+      "screenshot_size": "1366x1024",
+      "shadows": "off",
+      "video_mem_mb": 79.6
+    }
+  ],
+  "meta": {
+    "adapter": "AMD Radeon Pro 560X OpenGL Engine",
+    "detail_end_m": 10000.0,
+    "driver": "opengl3",
+    "godot": "4.7.2-stable (official)",
+    "measure_frames": 180,
+    "msaa_3d": 2,
+    "os": "macOS 15.8.1",
+    "renderer": "gl_compatibility",
+    "vendor": "ATI Technologies Inc.",
+    "vsync_mode": 0,
+    "warmup_frames": 60,
+    "window": "(1366, 1024)"
+  }
+}

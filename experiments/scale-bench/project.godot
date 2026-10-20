@@ -1,0 +1,19 @@
+config_version=5
+
+[application]
+config/name="Imaro Scale Bench (disposable)"
+run/main_scene="res://render_bench.tscn"
+run/max_fps=0
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[display]
+window/size/viewport_width=1366
+window/size/viewport_height=1024
+window/size/resizable=false
+window/size/borderless=true
+window/dpi/allow_hidpi=false
+window/vsync/vsync_mode=0
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+anti_aliasing/quality/msaa_3d=2
