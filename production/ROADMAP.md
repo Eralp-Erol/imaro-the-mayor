@@ -34,3 +34,26 @@ ADR-0004 § Platform test hedefleri. Özet: macOS (geliştirme Mac'i) her görev
 | T-006 | M1 kapısı: metro/ilçe/sokak capture'ları, macOS export'unda ve iPad'de ölçüm (render / sim / birleşik ayrı), Windows export'u (cihaz varsa çalıştırma), art + design + technical director incelemesi | qa-engineer + directors | T-003, T-005, T-008, T-009, T-010 | — |
 
 T-001'i bloklayan platform işi yoktur: T-007/T-010 paralel ilerler, T-008 ilk görüntü+girdi prototipini bekler.
+
+## Paralel üretim (2026-10-20 · kullanıcı kararı: T-001 diğer hatları bloke etmez)
+Departmanlar, hat sahipliği, çalışma kuralları ve kayıt defteri: `production/LANES.md` (araç: `tools/lane.sh`). Eklenen görevler (M1/M2 yolu; ayrıntılı dosya yalnız başlayınca açılır):
+| ID | Başlık | Hat / sahip | Bağımlı | REQ |
+|---|---|---|---|---|
+| T-023 | ADR-0005 Sim↔View↔UI sözleşmeleri + MockSimFacade + WorldFixture | contracts / technical-director | — | TEK-01..03, SIM-12 |
+| T-025 | Sanat spec v0: yapı kiti kuralları + arazi paleti | art / art-director | — | VIS-01..07 |
+| T-015 | Karakter/NPC/siyasi olay spec v0 (canon-safe) | chars / systems-designer | — | CAN-06/07/10, SIM-05/11/12 |
+| T-018 | UX spec v0: IA, akışlar, girdi profilleri, Türkçe metin sistemi | ux / ui-engineer | — | SIM-09/12, TEK-04, PLT-02 |
+| T-027 | `SimFacadeImpl`: gerçek sim → sözleşme adaptörü | sim / simulation-engineer | T-002, T-023 | TEK-01, SIM-12 |
+| T-016 | Aktör modeli + karar/gerekçe çatısı | actors / simulation-engineer | T-002, T-023, T-015 | SIM-02, SIM-05, SIM-12 |
+| T-017 | Siyasi aktörler v0: ≥2 grup tepkisi + küçük meclis + medya tonu | actors / simulation-engineer | T-016, T-013 | CAN-06, SIM-05 |
+| T-026 | NPC/karakter profil verisi + olay/diyalog iskeleti (yer tutucu içerik) | actors / simulation-engineer | T-015, T-023 | CAN-07, SIM-11 |
+| T-013 | Ekonomi çekirdeği v0: parsel/mülkiyet/imar, hane, yatırımcı kararı (gerekçeli) | sim / simulation-engineer (+systems-designer spec) | T-002, T-023 | SIM-01..03, SIM-07, CAN-03 |
+| T-014 | Belediye bütçesi + altyapı kapasitesi v0 | sim / simulation-engineer | T-013 | CAN-06, SIM-04 |
+| T-011 | Yol/parsel/blok veri modeli (`WorldNetwork`) | world / world-engineer | T-001 ✓ | WLD-01, CAN-04, CAN-05 |
+| T-012 | Yapı MultiMesh + HLOD render | render / godot-engineer | T-004, T-011 | VIS-02..04 |
+| T-019 | UI temeli: tema, ölçek, merkezi metin, platform-duyarlı yerleşim, `ui_lab` (mock facade) | ux / ui-engineer | T-018, T-023 | TEK-04, PLT-02 |
+| T-020 | HUD + zaman kontrolü + parsel denetçisi | ux / ui-engineer | T-019 | SIM-08, SIM-12 |
+| T-021 | Nedensellik paneli (SIM-12) | ux / ui-engineer | T-019 | SIM-12 |
+| T-022 | Karar akışları: imar önerisi, meclis oylaması, bütçe | ux / ui-engineer | T-019, T-017 (mock ile başlar) | CAN-05, CAN-06 |
+T-001 takipleri: T-001a (render: ışık, harbor dikiş deliği), T-001b (world: ada tepeleri, iç körfez batimetrisi), T-001c (world+render: alt-hücre kıyı), T-001d (= T-025 arazi paleti).
+Gerçek `WorldData` koordinatına bağlı işler yalnız: T-003, T-005, T-011, T-012; geri kalan hatlar coğrafyadan bağımsızdır (fixture/mock).
