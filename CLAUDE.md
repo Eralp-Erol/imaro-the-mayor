@@ -50,6 +50,8 @@ Kural: tek dosyalık/küçük işleri ana oturum doğrudan yapar; uzman yalnızc
 - Tek dünya: her ölçek aynı dünya verisinden (WLD-01, TEK-03).
 - Yanlış temel fark edilirse yama yığma: `technical-director`/`design-director`'a eskale et, temiz yeniden başlangıcı değerlendir.
 - Remote'a push ve geri alınamaz git işlemleri kullanıcı onayı olmadan yapılmaz.
+- Worktree oturumunda ilk iş `git log --oneline -1` ile HEAD'in `main`'i içerdiğini doğrula (`git merge-base --is-ancestor main HEAD`); değilse commit'siz ise `git merge --ff-only main`, değilse yeni worktree. Hook'lar masaüstü uygulamasında ana checkout'tan çalışır: hook/`settings.json` değişikliği `main` güncellenip ana checkout'ta dosyalar değişmeden canlı olmaz (`production/M0-CLOSURE.md` Çalıştırma 2).
+- Kanon (`design/foundation/`) üç katmanla korunur: PreToolUse `guard-canon.sh`, PostToolUse `post-canon-verify.sh` (HEAD'den geri yükler), Stop kapısı. Testi: `tools/test-canon-guard.sh` (`verify full` içinde). Hook'ları değiştirirsen bu testi çalıştır.
 - Worktree oturumunda başlarken ana checkout'un commit'lenmemiş durumuna da bak (`git -C <ana checkout> status`); kullanıcı orada dosya silmiş/eklemiş olabilir.
 - Süreç sonlandırırken yalnız kendi başlattığın PID'i öldür; `pkill -f Godot` gibi geniş desenler paralel ajanların işini öldürür.
 

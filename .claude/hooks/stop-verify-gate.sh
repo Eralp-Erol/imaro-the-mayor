@@ -2,8 +2,14 @@
 # Stop: commit edilmemiş oyun dosyası değişikliği varsa ve son BAŞARILI doğrulamadan sonra kod değiştiyse bir kez durdurur.
 in=$(cat)
 [ "$(jq -r '.stop_hook_active // false' <<<"$in")" = "true" ] && exit 0
-root="${CLAUDE_PROJECT_DIR:-$(git rev-parse --show-toplevel 2>/dev/null)}"
+cwd=$(jq -r '.cwd // empty' <<<"$in")
+root=$(git -C "${cwd:-${CLAUDE_PROJECT_DIR:-.}}" rev-parse --show-toplevel 2>/dev/null || echo "${CLAUDE_PROJECT_DIR:-.}")
 cd "$root" 2>/dev/null || exit 0
+# Kanon bütünlüğü her durumda önce: bozuksa (post-hook'u atlatan bir değişiklik) bitirmeye izin verme.
+if [ -x tools/canon-check.sh ] && ! tools/canon-check.sh >/dev/null 2>&1; then
+  jq -n --arg r "design/foundation/ manifestle eşleşmiyor (değiştirilemez kanon bozulmuş). tools/canon-check.sh çıktısına bak; git checkout HEAD -- design/foundation ile geri yükle ve nedenini kullanıcıya bildir." '{decision:"block",reason:$r}'
+  exit 0
+fi
 [ -x tools/fingerprint.sh ] || exit 0
 paths=""; for p in src scenes tests addons assets project.godot; do [ -e "$p" ] && paths="$paths $p"; done
 [ -z "$paths" ] && exit 0

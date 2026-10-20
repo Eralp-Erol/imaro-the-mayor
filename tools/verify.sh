@@ -1,7 +1,7 @@
 #!/bin/bash
 # Doğrulama hattı. Kullanım: tools/verify.sh <quick|full>
 #   quick: canon-check, studio-check, gdlint, import, GdUnit4 (başsız, ~25 sn)
-#   full : quick + pencereli runtime smoke (project.godot'taki run/main_scene; yoksa veya IMARO_NO_WINDOW=1 ise skip)
+#   full : quick + canon-guard (C-07 savunma testi, ~50 sn) + pencereli runtime smoke (project.godot'taki run/main_scene; yoksa veya IMARO_NO_WINDOW=1 ise skip)
 # Çıktı: insan okur adım satırları (stdout), artifacts/verify/<mode>-latest.json, artifacts/verify/*.log
 # Çıkış: 0 = hepsi geçti, 1 = en az bir adım fail, 2 = kullanım hatası.
 set -euo pipefail
@@ -51,6 +51,11 @@ step() {
 s_canon() {
   if [ ! -x tools/canon-check.sh ]; then SUMMARY="tools/canon-check.sh yok veya çalıştırılamaz"; return 77; fi
   SUMMARY="$(tools/canon-check.sh 2>&1 | tail -n1)"; [ "${PIPESTATUS[0]}" = 0 ]
+}
+
+s_canon_guard() {
+  SUMMARY="$(tools/test-canon-guard.sh 2>&1 | tail -n 3 | tr '\n' ' ' | cut -c1-200)"
+  tools/test-canon-guard.sh >/dev/null 2>&1
 }
 
 s_studio() {
@@ -113,6 +118,7 @@ step gdlint s_lint
 step import s_import
 step unit-gdunit s_unit
 if [ "$mode" = full ]; then
+  step canon-guard s_canon_guard
   step runtime-smoke s_runtime
 fi
 

@@ -49,6 +49,10 @@
       { "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash",
         "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/guard-canon.sh", "timeout": 10 }] }
     ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|mcp__.*",
+        "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-canon-verify.sh", "timeout": 10 }] }
+    ],
     "Stop": [
       { "hooks": [{ "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/stop-verify-gate.sh", "timeout": 30 }] }
     ]
