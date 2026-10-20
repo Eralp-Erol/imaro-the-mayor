@@ -192,54 +192,7 @@ func test_rock_is_a_minor_share_of_the_land_in_the_world() -> void:
 	assert_float(float(rocky) / float(land)).is_less(0.12)  # eski kural: sırtların neredeyse tamamı gri
 
 
-# --- D5 yamaç preset'i ---
-
-func test_d5_slopes_preset_is_the_fifth_key_and_derives_from_the_d5_anchor() -> void:
-	assert_int(WorldPreviewCamera.PRESETS.find(&"d5_slopes")).is_equal(4)  # tuş 5
-	var cam := _camera()
-	cam.apply_preset(&"d5_slopes", _world)
-	assert_str(String(cam.current_preset)).is_equal("d5_slopes")
-	var d5 := _world.region_by_code(&"D5")
-	var focus := Vector2(cam.focus.x, cam.focus.z)
-	var center := _world.origin + _world.size * 0.5
-	# Odak, çapadan metro merkezine (körfez/ova) doğru bölgenin küçük yarıçapının yarısından az kadar kaymış alt yamaçtır.
-	assert_float(focus.distance_to(d5.anchor)).is_between(500.0, minf(d5.radius.x, d5.radius.y) * 0.5)
-	assert_float((focus - d5.anchor).normalized().dot((center - d5.anchor).normalized())).is_greater(0.99)
-	assert_float(cam.distance).is_between(6000.0, 8000.0)
-	assert_float(cam.pitch_deg).is_between(30.0, 40.0)
-	# Kamera D5 tarafından değil ova/körfez tarafından yamaca bakar: ileri yön, odaktan D5 çapasına doğru.
-	var forward := -cam.global_transform.basis.z
-	var to_anchor := Vector3(d5.anchor.x - cam.global_position.x, 0.0, d5.anchor.y - cam.global_position.z)
-	assert_float(Vector2(forward.x, forward.z).normalized().dot(Vector2(to_anchor.x, to_anchor.z).normalized())) \
-			.is_greater(0.9)
-	# Kamera odağın ova/körfez (metro merkezi) tarafında durur, D5'in arkasında değil.
-	var behind := Vector2(cam.global_position.x, cam.global_position.z) - focus
-	assert_float(behind.normalized().dot((center - d5.anchor).normalized())).is_greater(0.9)
-
-
-func test_d5_slopes_preset_follows_the_data_when_the_anchor_moves() -> void:
-	var moved := WorldTestSupport.coarse(WorldTestSupport.control())
-	moved.region_by_code(&"D5").anchor += Vector2(-3000.0, -2000.0)
-	var a := _camera()
-	a.apply_preset(&"d5_slopes", _world)
-	var b := _camera()
-	b.apply_preset(&"d5_slopes", moved)
-	assert_float(Vector2(a.focus.x, a.focus.z).distance_to(Vector2(b.focus.x, b.focus.z))).is_greater(2000.0)
-	var d5 := moved.region_by_code(&"D5")
-	assert_float(Vector2(b.focus.x, b.focus.z).distance_to(d5.anchor)).is_less(minf(d5.radius.x, d5.radius.y) * 0.5)
-
-
-func test_key_five_selects_the_d5_slopes_preset() -> void:
-	var cam := _camera()
-	cam.apply_preset(&"metro", _world)
-	var press := InputEventKey.new()
-	press.physical_keycode = KEY_5
-	press.pressed = true
-	cam._unhandled_input(press)
-	assert_str(String(cam.current_preset)).is_equal("d5_slopes")
-	press.physical_keycode = KEY_1
-	cam._unhandled_input(press)
-	assert_str(String(cam.current_preset)).is_equal("metro")
+# D5 yamaç preset'i testleri T-003 ile tests/view/camera_presets_test.gd'ye taşındı (CameraPresets).
 
 
 # --- Yardımcılar ---
@@ -247,12 +200,6 @@ func test_key_five_selects_the_d5_slopes_preset() -> void:
 func _assert_color_near(actual: Color, expected: Color) -> void:
 	for ch in 3:
 		assert_float(actual[ch]).is_equal_approx(expected[ch], 0.0005)
-
-
-func _camera() -> WorldPreviewCamera:
-	var cam: WorldPreviewCamera = auto_free(WorldPreviewCamera.new())
-	add_child(cam)
-	return cam
 
 
 ## Eski tip dar geçiş: 800 m'de 0→1 (kıyı uzaklığı 1400→2200).

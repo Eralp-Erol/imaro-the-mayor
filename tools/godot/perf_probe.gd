@@ -7,6 +7,8 @@ extends SceneTree
 ## Kare süresi = ardışık process_frame duvar saati (VSync KAPALI zorlanır; CPU+GPU+takas dahil). Draw call/obje/üçgen
 ## Performance monitörleri ile (RENDER_TOTAL_*_IN_FRAME) ve RenderingServer.get_rendering_info ile çapraz okunur.
 ## GPU süresi Compatibility renderer'da ölçülemeyebilir (viewport_get_measured_render_time_gpu → 0 ise raporlanır).
+## Sahnede `perf_tag() -> String` varsa her kare etiketlenir ve `by_tag` altında etiket başına kare süresi / draw call /
+## üçgen ayrıca raporlanır (T-003: otomatik yörünge+zoom taramasında metro/district/local/street aşamaları).
 ## --headless ile ÇALIŞMAZ (dummy renderer).
 
 
@@ -51,6 +53,8 @@ func run() -> void:
 	var draw_calls: Array[float] = []
 	var objects: Array[float] = []
 	var primitives: Array[float] = []
+	var tags: Array[String] = []
+	var tagged: bool = scene.has_method("perf_tag")
 	var last := Time.get_ticks_usec()
 	for k in warmup + frames:
 		await process_frame
@@ -62,6 +66,8 @@ func run() -> void:
 			draw_calls.append(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
 			objects.append(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME))
 			primitives.append(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
+			if tagged:
+				tags.append(str(scene.call("perf_tag")))
 		last = now
 	var rs_draw_calls := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
 	var rs_objects := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME)
@@ -86,6 +92,9 @@ func run() -> void:
 		"scene_ready_ms": snappedf(scene_ready_ms, 0.1),
 		"scene_build_stats": scene.get("build_stats") if scene.get("build_stats") != null else {},
 	}
+	if tagged:
+		report["by_tag"] = _by_tag(tags, frame_ms, draw_calls, primitives)
+	report["hitches"] = _hitches(frame_ms, tags)
 	var text := JSON.stringify(report, "\t")
 	print("PERF_PROBE ", JSON.stringify(report))
 	if out_path != "":
@@ -94,6 +103,35 @@ func run() -> void:
 		if f != null:
 			f.store_string(text)
 	quit(0)
+
+
+## Tek tek takılmalar: 50 ms üstü kareler (kare sırası ölçüm başından, etiket varsa o karedeki etiket). En çok 12.
+func _hitches(frame_ms: Array[float], tags: Array[String]) -> Array:
+	var out: Array = []
+	for k in frame_ms.size():
+		if frame_ms[k] > 50.0 and out.size() < 12:
+			out.append({"frame": k, "ms": snappedf(frame_ms[k], 0.1), "tag": tags[k] if k < tags.size() else ""})
+	return out
+
+
+func _by_tag(tags: Array[String], frame_ms: Array[float], draw_calls: Array[float],
+		primitives: Array[float]) -> Dictionary:
+	var order: Array[String] = []
+	for tag in tags:
+		if not order.has(tag):
+			order.append(tag)
+	var out := {}
+	for tag in order:
+		var f: Array[float] = []
+		var d: Array[float] = []
+		var p: Array[float] = []
+		for k in tags.size():
+			if tags[k] == tag:
+				f.append(frame_ms[k])
+				d.append(draw_calls[k])
+				p.append(primitives[k])
+		out[tag] = {"frames": f.size(), "frame_ms": _stats(f), "draw_calls": _stats(d), "primitives": _stats(p)}
+	return out
 
 
 func _stats(values: Array[float]) -> Dictionary:
