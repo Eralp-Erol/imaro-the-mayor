@@ -5,17 +5,17 @@ extends Node3D
 ## Preset (spec 9.1): kit_lineup | kit_lineup_left | kit_lineup_right | kit_street | kit_street_close (ek) | kit_block
 ## | kit_district |
 ##   kit_roofs | kit_square.
-## Bayraklar: --seed=N  --chunk=M (LOD/yığın boyu m, varsayılan 250)  --lod=auto|0|1|proxy  --no-shadows  --all
+## Bayraklar: --seed=N  --chunk=M (LOD/yığın boyu m, varsayılan 1000 = spec 7.1)  --lod=auto|0|1|proxy  --no-shadows  --all
 ## (lineup'ı da kur)
 ##   --no-props  --metrics-out=/abs/x.json  --cam-dist=M --cam-pitch=D --cam-heading=D (preset üstüne kamera).
-##   Kamera: bkz kit_lab_camera.gd. Işık = spec 5 (güneş 38°/305°, 0,7;
-##   ortam 0,85).
+##   --terrain: T-001 WorldData arazisi (TerrainView, yalnız okunur) üzerinde kit (spec 9.3 Q6 karesi).
+##   Kamera: bkz kit_lab_camera.gd. Işık = güneş 38°/305°, 0,5; ortam 0,7 (spec 13 not 3).
 ## Simülasyon durumu tutmaz; HUD yok. Sayılar konsola (KIT_LAB_METRICS) ve build_stats'a gider.
 
 const SUN_ELEVATION_DEG := 38.0
 const SUN_AZIMUTH_DEG := 305.0
-const SUN_ENERGY := 0.7
-const AMBIENT_ENERGY := 0.85   ## --sun-energy=E / --ambient=E ile deneme için geçersiz kılınabilir
+const SUN_ENERGY := 0.5   ## art-director (T-004 kapısı B1): kit için 0,5 / 0,7; T-001 tabanı 0,7/0,85 değil
+const AMBIENT_ENERGY := 0.7   ## --sun-energy=E / --ambient=E ile deneme için geçersiz kılınabilir
 const LOD0_END_M := 650.0
 const LOD_MARGIN_M := 50.0
 const LINEUP_ORIGIN := Vector3(0.0, 0.0, -1600.0)
@@ -33,6 +33,7 @@ const PLAZA_PAVING := Color(0.70, 0.66, 0.58)
 
 ## Son kurulumun ölçümleri (perf_probe okur).
 var build_stats: Dictionary = {}
+var terrain_info: Dictionary = {}
 
 var _args: Dictionary = {}
 var _lib: KitLibrary
@@ -42,7 +43,7 @@ var _camera: KitLabCamera
 var _sun: DirectionalLight3D
 var _shadows: bool = true
 var _lod_mode: String = "auto"
-var _chunk_m: float = 250.0
+var _chunk_m: float = 1000.0
 var _mmi_count: int = 0
 var _instance_count: int = 0
 var _lineup_items: Array[Dictionary] = []
@@ -52,7 +53,7 @@ func _ready() -> void:
 	_args = _parse_args()
 	_shadows = not _args.has("no-shadows")
 	_lod_mode = str(_args.get("lod", "auto"))
-	_chunk_m = clampf(float(_args.get("chunk", 250.0)), 100.0, 2000.0)
+	_chunk_m = clampf(float(_args.get("chunk", 1000.0)), 100.0, 2000.0)
 	var preset := StringName(str(_args.get("preset", "kit_block")))
 	var lineup_only := (str(preset).begins_with("kit_lineup") or str(preset).begins_with("kit_gallery")) \
 			and not _args.has("all")
@@ -69,6 +70,8 @@ func _ready() -> void:
 	if not lineup_only:
 		_layout = KitLabLayout.new()
 		_layout.generate(_lib, int(_args.get("seed", 20261020)))
+		if _args.has("terrain"):
+			_build_terrain_context()
 		_build_ground()
 		_build_neighbourhood()
 		metrics = _compute_metrics()
@@ -78,7 +81,7 @@ func _ready() -> void:
 	build_stats = {
 		"preset": String(preset), "build_ms": snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1),
 		"multimesh_instances": _mmi_count, "instances": _instance_count, "chunk_m": _chunk_m,
-		"lod_mode": _lod_mode, "shadows": _shadows, "metrics": metrics,
+		"lod_mode": _lod_mode, "shadows": _shadows, "terrain": terrain_info, "metrics": metrics,
 	}
 	print("KIT_LAB ", JSON.stringify(build_stats))
 	var out_path := str(_args.get("metrics-out", ""))
@@ -182,12 +185,60 @@ func _street_focus() -> Vector3:
 	return Vector3(float(_layout.street_view["focus_x"]), 3.0, float(_layout.street_view["z"]))
 
 
+# --- arazi bağlamı (--terrain) ------------------------------------------------------------------------------
+
+## T-001 dünyasını (WorldData -> TerrainView; yalnız okunur) kurar, kit alanını en düz kara dilimine oturtur.
+## Arazi, kit zemininin 0,6 m altına indirilir (kit zemini/sokak z-çakışması olmasın).
+func _build_terrain_context() -> void:
+	var control := WorldControlData.load_dir("res://data/world/ismeral")
+	var world := WorldGenerator.generate(control, int(control["world"]["default_seed"]), {})
+	var area := KitLabLayout.AREA
+	var best := Vector2.ZERO
+	var best_range := INF
+	var b := world.bounds()
+	var x := b.position.x + area.size.x
+	while x < b.end.x - area.size.x:
+		var z := b.position.y + area.size.y
+		while z < b.end.y - area.size.y:
+			var lo := INF
+			var hi := -INF
+			var ok := true
+			for fx in 5:
+				for fz in 4:
+					var sx := x + area.position.x + area.size.x * fx / 4.0
+					var sz := z + area.position.y + area.size.y * fz / 3.0
+					if world.is_water(sx, sz) or world.height_at(sx, sz) < 8.0:
+						ok = false
+						break
+					var h := world.height_at(sx, sz)
+					lo = minf(lo, h)
+					hi = maxf(hi, h)
+				if not ok:
+					break
+			if ok and hi - lo < best_range:
+				best_range = hi - lo
+				best = Vector2(x, z)
+			z += 500.0
+		x += 500.0
+	var terrain := TerrainView.new()
+	terrain.name = "Terrain"
+	terrain.cast_shadows = _shadows
+	terrain.use_threads = false
+	add_child(terrain)
+	terrain.build(world)
+	var h0 := world.height_at(best.x, best.y)
+	terrain.position = Vector3(-best.x, -h0 - 0.6, -best.y)
+	terrain_info = {"site": [best.x, best.y], "height_m": snappedf(h0, 0.1), "range_m": snappedf(best_range, 0.1),
+			"land_chunks": terrain.stats.get("land_chunks", 0)}
+
+
 # --- zemin ---------------------------------------------------------------------------------------------
 
 func _build_ground() -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	_quad(st, Rect2(-9000.0, -9000.0, 18000.0, 18000.0), -0.4, OPEN_GROUND)
+	if not _args.has("terrain"):
+		_quad(st, Rect2(-9000.0, -9000.0, 18000.0, 18000.0), -0.4, OPEN_GROUND)
 	_quad(st, KitLabLayout.AREA.grow(14.0), -0.2, URBAN_GROUND)
 	for s in _layout.streets:
 		var z: float = s["z"]
