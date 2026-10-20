@@ -66,6 +66,12 @@ case "$cmd" in
     id="${1:?hat gerekli}"; [ -n "$(field "$id" 2)" ] || { echo "lane: bilinmeyen hat $id" >&2; exit 2; }
     godot="$("$root/tools/godot.sh" --print-path)"
     out="$root/artifacts/verify/lane-$id"; mkdir -p "$out"; rm -rf "$out/gdunit"
+    # Yeni class_name'li dosya varsa sınıf önbelleği eskir: yalnız o zaman import (paylaşılan .godot önbelleği; nadir)
+    cache="$root/.godot/global_script_class_cache.cfg"
+    if [ ! -f "$cache" ] || [ -n "$(find src tests -name '*.gd' -newer "$cache" 2>/dev/null | head -n1)" ]; then
+      "$godot" --headless --path "$root" --editor --import --quit >"$out/import.log" 2>&1 || true
+      echo "INFO import        sınıf önbelleği yenilendi"
+    fi
     rc=0
     # gdlint: hattın yolları arasında .gd barındıran mevcut dizin/dosyalar
     gdl=(); p=""; IFS=','; for p in $(field "$id" 4); do
