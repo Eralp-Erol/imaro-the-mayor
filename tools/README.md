@@ -10,6 +10,7 @@ Hepsi bash 3.2 uyumlu (`set -euo pipefail`). Godot 4.7.2.stable zorunlu; ikili `
 | `tools/verify.sh quick` | canon-check, gdlint, import, GdUnit4 (başsız, ~25 sn). | 0 = pass, 1 = fail; `artifacts/verify/quick-latest.json` |
 | `tools/verify.sh full` | quick + pencereli runtime smoke (180 kare, `run/main_scene` ile). Ana sahne yoksa (`no main scene yet`) veya `IMARO_NO_WINDOW=1` ise `skip`. | `artifacts/verify/full-latest.json`, günlükler `artifacts/verify/*.log` (git'te yok) |
 | `tools/capture.sh <ad> [--frames N] [--resolution WxH] [--scene res://x.tscn] [-- ekstra]` | Sahneyi (varsayılan `run/main_scene`) pencereli açıp N kare sonra PNG alır (`tools/godot/capture_frame.gd`). Ana sahne ve `--scene` yoksa skip: stderr mesajı, çıkış 0, stdout boş. | stdout: `artifacts/screenshots/captures/<tarih>-<ad>.png` |
+| `tools/perf.sh <ad> [--frames N] [--warmup N] [--resolution WxH] [--scene res://x.tscn] [-- ekstra]` | Sahneyi (varsayılan `scenes/dev/world_preview.tscn`) pencereli açıp kare süresi (VSync kapalı), draw call, obje/üçgen, bellek ölçer (`tools/godot/perf_probe.gd`); ilk N kare ısınma. GPU süresi Compatibility'de ölçülemez. | stdout: `artifacts/perf/<tarih>-<ad>.json` + özet satırı (yük ortalaması dahil) |
 | `tools/visual-diff.sh a.png b.png [fark.png]` | `magick compare -metric AE -fuzz 2%`; farklı piksel sayısı ve yüzde. Eşik kararı çağırana ait. | 0 (araç hatası 1, boyut farkı 2); stdout: `diff_pixels=N total=M percent=P` |
 | `tools/canon-check.sh` | `design/foundation` manifest bütünlüğü (başka ajan yazdı). | 0/1 |
 
