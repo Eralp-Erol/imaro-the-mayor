@@ -38,7 +38,7 @@ lane_files() {
   local id="$1" f
   changed | while IFS= read -r f; do
     [ -n "$f" ] || continue; ignored "$f" && continue
-    [ "$(owner_of "$f")" = "$id" ] && printf '%s\n' "$f"
+    if [ "$(owner_of "$f")" = "$id" ]; then printf '%s\n' "$f"; fi
   done
 }
 

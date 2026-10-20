@@ -19,7 +19,7 @@ Durum: ▶ aktif · ⏸ bekliyor (neden) · ✓ bitti · ○ planlı. Dalga 1 = 
 |---|---|---|---|---|---|
 | **World & City Building** | world | T-001 ✓ · T-001b ada/batimetri · T-001c alt-hücre kıyı · **T-011** yol/parsel/blok veri modeli (`WorldNetwork`) · **T-005** T0 yerleşim üreteci | T-011←T-001 ✓; T-005←T-001 ✓, T-004, T-011 | 1→2 | ▶ T-011 · T-005 ⏸ T-004+T-011 |
 | | render | T-001a ışık+dikiş deliği · **T-003** çok ölçekli kamera rig'i · **T-012** yapı MultiMesh + HLOD | T-003←T-001 ✓, T-007 (input profili); T-012←T-004, T-011 | 2 | ○ |
-| | art | **T-025** sanat spec v0 (yapı kiti kuralları, palet) → **T-004** low-poly yapı kiti v0 | T-004←T-025 | 1 | ▶ T-025 |
+| | art | **T-025** ✓ sanat spec v0 → **T-004** low-poly yapı kiti v0 (technical-artist) | T-004←T-025 ✓ | 1 | ▶ T-004 |
 | **Simulation Engineering** | sim | **T-002** sim çekirdeği · **T-009** çapraz platform determinizm · **T-027** `SimFacadeImpl` (gerçek sim → sözleşme) · **T-013** ekonomi çekirdeği v0 (parsel/mülkiyet/imar, hane, yatırımcı kararı + gerekçe) · **T-014** belediye bütçesi + altyapı kapasitesi v0 | T-009←T-002,T-007; T-027←T-002,T-023; T-013←T-002,T-023; T-014←T-013 | 1 | ▶ T-002 |
 | **Characters, NPC & Political Gameplay** | chars | **T-015** karakter/NPC/siyasi olay spec v0 (systems-designer; yer tutucu adlar, AÇIK sorular listesi) | — (canon-safe) | 1 | ▶ T-015 |
 | | actors | **T-016** aktör modeli + karar/gerekçe çatısı (`Actor`, `Decision`, `Reason`) · **T-017** siyasi aktörler v0: ≥2 seçmen/çıkar grubu tepkisi + küçük meclis oylaması + medya tonu (M2 gereği) · **T-026** NPC/karakter profil verisi + diyalog/olay iskeleti (yer tutucu içerik) | T-016←T-002,T-023,T-015; T-017←T-016,T-013; T-026←T-015,T-023 | 2 | ○ |
@@ -38,7 +38,7 @@ LANE|platform|godot-engineer|src/app/platform_profile,src/app/input_profile,expo
 LANE|contracts|technical-director|docs/adr/0005,docs/adr/0006,src/contracts/,tests/contracts/,tests/fixtures/|tests/contracts|T-023
 LANE|world|world-engineer|data/world/,src/world/,tests/world/|tests/world|T-001b/c, T-011, T-005
 LANE|render|godot-engineer|src/view/,scenes/dev/world_preview,tests/view/,tools/godot/,tools/perf.sh|tests/view|T-001a, T-003, T-012
-LANE|art|art-director|design/specs/art/,art/,assets/|—|T-025, T-004 (technical-artist)
+LANE|art|art-director|design/specs/art/,art/,assets/,scenes/dev/kit_lab,tests/art/|tests/art|T-025, T-004 (technical-artist)
 LANE|chars|systems-designer|design/specs/characters,design/specs/politics,design/specs/political-events|—|T-015 (spec)
 LANE|ux|ui-engineer|design/specs/ux/,src/ui/,scenes/ui/,scenes/dev/ui_lab,tests/ui/,data/ui/|tests/ui|T-018..T-022
 LANE|qa|qa-engineer|tests/qa/,production/qa/|tests/qa|bağımsız doğrulama
