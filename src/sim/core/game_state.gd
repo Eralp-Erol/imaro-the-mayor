@@ -161,6 +161,13 @@ static func validate_dict(data: Variant) -> String:
 	var events_error := SimEventLog.validate_data(data["systems"].get(SimEventLog.SYSTEM_KEY, null))
 	if not events_error.is_empty():
 		return events_error
+	# T-017: aktör ve siyaset bölümleri (yoksa geçerli) biçim denetiminden geçer; bozuk kayıt yüklenmez
+	var actors_error := ActorStore.validate_data(data["systems"].get(ActorStore.SYSTEM_KEY, null))
+	if not actors_error.is_empty():
+		return actors_error
+	var politics_error := PoliticsState.validate_data(data["systems"].get(PoliticsState.KEY, null))
+	if not politics_error.is_empty():
+		return politics_error
 	for key in ["pending_commands", "command_log"]:
 		var entries: Variant = data.get(key, null)
 		if not (entries is Array):

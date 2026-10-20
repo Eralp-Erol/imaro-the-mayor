@@ -1,0 +1,32 @@
+{
+	"schema": 1,
+	"_notes": "T-017 (characters-npc 5/6.3, AS-8, Q-007, Q-014): kucuk meclis usulu VERIDIR, kanon degil. Uye sayisi roster'daki council aktorlerindendir (yer tutucu 5). requires_council: oyuncu onerisi (komut turu) meclis oylamasina gider mi? (Q-014 ACIK: iki yol da test edilir; yer tutucu: ikisi de evet). decision: karar tablosu kimligi. body: meclis organinin yer tutucu referansi (uye aktorlerden ayri). session_days: oylama oturum araligi; min_lead_days: acilistan oturuma en az gun. tie_result: esitlikte sonuc (fail|pass). abstain_band: |marj| <= bu ise uye cekimser (0 = cekimser yok). friction_days: kabul edilen onerinin yururluge gecikmesi (council_friction). history_limit: saklanan kapanmis oylama. bloc_pressure: uyenin temsil ettigi kesimlerin baskisi = stake * (base + k*sikayet/1000)/1000. realism: oneri turu icin uygulanabilirlik (altyapi yuku lo..hi -> +1000..-1000). proposal_axes: imar kullanimi -> eksen konumu (-1000..1000; yer tutucu mekanik, ideoloji karari degil). proposal_effects: imar kullanimi -> kohort -> konu -> etki (+ yarar, - zarar; kesimin onerideki payi). Hepsi CALISMA MODELI.",
+	"decision": "council.vote",
+	"body": "actor.council_body.1",
+	"requires_council": {"zoning.propose": true, "budget.propose": true},
+	"session_days": 14,
+	"min_lead_days": 3,
+	"tie_result": "fail",
+	"abstain_band": 0,
+	"friction_days": 3,
+	"history_limit": 24,
+	"bloc_pressure": {"base_pm": 500, "grievance_k_pm": 500},
+	"titles": {"zoning": "council.vote.zoning", "budget": "council.vote.budget"},
+	"realism": {"zoning": {"lo_pm": 600, "hi_pm": 1000}},
+	"proposal_axes": {
+		"zoning": {
+			"zone.residential": {"growth_vs_preservation": -300},
+			"zone.mixed": {"growth_vs_preservation": -600},
+			"zone.commercial": {"growth_vs_preservation": -500, "public_investment_vs_market": 300},
+			"zone.green": {"growth_vs_preservation": 600}
+		}
+	},
+	"proposal_effects": {
+		"zoning": {
+			"zone.residential": {"housed": {"mobility": -250}, "seeking": {"housing_cost": 500}},
+			"zone.mixed": {"housed": {"mobility": -450, "services_utilities": -300}, "seeking": {"housing_cost": 600}},
+			"zone.commercial": {"housed": {"mobility": -300}, "seeking": {"jobs_income": 400}},
+			"zone.green": {"housed": {"mobility": 100}, "seeking": {"housing_cost": -200}}
+		}
+	}
+}

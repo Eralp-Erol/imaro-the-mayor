@@ -1,0 +1,54 @@
+{
+	"schema": 1,
+	"_notes": "T-017 (characters-npc 6.5-6.6, SIM-05/SIM-09): secmen kesimi turetme ve tepki kurallari. Kesim kimligi roster'daki actor.bloc.<n> yuvasidir; her yuva bir hane kohortuna baglanir (size_source: housed_hh = barinan hane, seeking_hh = konut arayan hane, EconomyQuery.region_stats'tan). Kesimin bolge payi (exposure) kohort buyuklugunden turer: bolge kodu GOMULU DEGIL. blend: kesim sinyali bolge sinyallerinden nasil toplanir (peak = payi min_share_pm ve ustu bolgelerin en yuksegi: yerel baski yerel tepki dogurur; mean = pay-agirlikli ortalama). priorities: konu onemi (0..1000) = base + k*(sinyal-500)/500; stances: eksen konumu (-1000..1000) ayni bicimde (ilk tablo notr, ideoloji karari DEGIL, yalniz turetme mekanigi). Sinyaller (BlocSignals): construction_burden (boru hatti birim / hane), infra_stress (altyapi yuku / kapasite), service_gap (1000-hizmet), demand_shortage ((talep-500)*2), supply_added (baslangictan beri eklenen konut / hane), service_level. Kural: seviye = clamp((sinyal-lo)*1000/(hi-lo)), haftalik girdi = seviye*gain/1000; sikayet/memnuniyet = onceki*(1000-decay)/1000 + girdi (ayri iki defter, net edilmez). attribution_pm: sonuclarin oyuncuya yuklenme payi (hafiza 4.2 alpha). organizer: orgutleme kapasitesi = base + k*boyut payi. tier_reactions: bloc.react basamagi -> GroupReactionView tepkisi. Tum sayilar CALISMA MODELI, kanon degil.",
+	"decay_pm": {"grievance": 100, "satisfaction": 100},
+	"attribution_pm": 600,
+	"blend": {"mode": "peak", "min_share_pm": 100},
+	"organizer": {"base_pm": 300, "size_share_k_pm": 400},
+	"react_decision": "bloc.react",
+	"support_decision": "bloc.support",
+	"tier_reactions": {"petition": "oppose", "protest": "protest", "boycott": "protest"},
+	"cohorts": {
+		"housed": {
+			"bloc": "actor.bloc.1",
+			"size_source": "housed_hh",
+			"priorities": [
+				{"topic": "mobility", "base": 700},
+				{"topic": "services_utilities", "base": 600, "source": "service_gap", "k": 300},
+				{"topic": "environment_health", "base": 400}
+			],
+			"stances": [
+				{"axis": "growth_vs_preservation", "base": 0},
+				{"axis": "public_investment_vs_market", "base": 0}
+			],
+			"grievance_rules": [
+				{"signal": "construction_burden", "topic": "mobility", "lo": 20, "hi": 200, "gain": 300},
+				{"signal": "construction_burden", "topic": "environment_health", "lo": 20, "hi": 200, "gain": 200},
+				{"signal": "infra_stress", "topic": "services_utilities", "lo": 500, "hi": 900, "gain": 300},
+				{"signal": "infra_stress", "topic": "mobility", "lo": 500, "hi": 900, "gain": 200}
+			],
+			"satisfaction_rules": [
+				{"signal": "service_level", "topic": "services_utilities", "lo": 500, "hi": 1000, "gain": 100}
+			]
+		},
+		"seeking": {
+			"bloc": "actor.bloc.2",
+			"size_source": "seeking_hh",
+			"priorities": [
+				{"topic": "housing_cost", "base": 700, "source": "demand_shortage", "k": 300},
+				{"topic": "jobs_income", "base": 400},
+				{"topic": "mobility", "base": 300}
+			],
+			"stances": [
+				{"axis": "growth_vs_preservation", "base": 0, "source": "demand_shortage", "k": -300},
+				{"axis": "public_investment_vs_market", "base": 0}
+			],
+			"grievance_rules": [
+				{"signal": "demand_shortage", "topic": "housing_cost", "lo": 100, "hi": 1000, "gain": 100}
+			],
+			"satisfaction_rules": [
+				{"signal": "supply_added", "topic": "housing_cost", "lo": 0, "hi": 300, "gain": 200}
+			]
+		}
+	}
+}

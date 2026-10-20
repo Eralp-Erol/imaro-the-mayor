@@ -4,9 +4,9 @@
 		"_notes": "Taban tick = 1 oyun gunu. Takvim oranlari ve kayit kapasiteleri durumla birlikte kaydedilir (kayit yuklenince ayni takvim). event_log_capacity <= reason_log_capacity olmali (ADR-0005 s.5: olay saklama ufku gerekce ufkunu asamaz).",
 		"days_per_month": 30,
 		"months_per_quarter": 3,
-		"reason_log_capacity": 20000,
+    "reason_log_capacity": 1000,
 		"command_log_capacity": 5000,
-		"event_log_capacity": 5000
+    "event_log_capacity": 1000
 	},
 	"driver": {
 		"_notes": "Yalniz gorunum/uygulama tarafi (durumun parcasi degil). speeds: hiz adi -> gercek saniye basina tick (tam sayi). 0 = duraklat.",

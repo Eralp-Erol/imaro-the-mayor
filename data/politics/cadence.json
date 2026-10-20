@@ -1,0 +1,13 @@
+{
+	"schema": 1,
+	"_notes": "T-017 (characters-npc 6.4, political-events 1/3/9): siyaset zaman olcekleri ve hacim sinirlari. tick = 1 oyun gunu. scan_days: kesim/medya/olay haftalik tarama araligi. rederive_days: kesim kimligi ve onceligi yeniden turetme (bloc_rederive_days). milestone: olay sablonu kademe kapisi (M2 asgari dilim). autopause: otomatik duraklatma kullanici ayari (varsayilan kapali, AS-11). react_trigger_min: kesim tepkisi yeniden degerlendirmesi icin sikayet/memnuniyet degisim esigi. recheck_days: tepki sakin degilse zorunlu yeniden degerlendirme araligi (alcalma icin). max_react_records_per_scan: tarama basina azami kesim-tepki gerekce kaydi (ReasonLog hacmi; fazlasi sonraki taramaya kalir). activity_floor: sikayet ve memnuniyetin ikisi de bunun altindaysa kesim degerlendirilmez. cause_cap: bir kararin parent_ids'ine girecek azami neden. Hepsi CALISMA MODELI, kanon degil.",
+	"scan_days": 7,
+	"rederive_days": 90,
+	"milestone": "M2",
+	"autopause": false,
+	"react_trigger_min": 100,
+	"recheck_days": 28,
+	"max_react_records_per_scan": 8,
+	"activity_floor": 100,
+	"cause_cap": 3
+}

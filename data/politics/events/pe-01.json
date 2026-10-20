@@ -1,0 +1,35 @@
+{
+	"schema": 1,
+	"_notes": "PE-01 mahalle protestosu (political-events 5, M2 agenda). Yer tutucu sablon: tum sayilar CALISMA MODELI, metinler loc anahtaridir. Sistemden tetiklenir (kilitli senaryo yok).",
+	"id": "PE-01", "category": "protest", "min_milestone": "M2",
+	"hard": [{"src": "bloc.react_tier", "op": ">=", "value": "protest"}],
+	"drivers": [
+		{"name": "weighted_grievance", "src": "bloc.G", "lo": 400, "hi": 900, "weight": 500},
+		{"name": "media_amplification", "src": "bloc.amp", "lo": 0, "hi": 500, "weight": 200},
+		{"name": "organizer_capacity", "src": "bloc.organizer", "lo": 200, "hi": 800, "weight": 300}
+	],
+	"weight": 400, "gamma": 1, "cooldown_days": 60, "rearm_below": 300, "mutex": ["bloc_unrest"],
+	"affected": {"type": "bloc", "from": "trigger"},
+	"delivery": "agenda", "reason_key": "event.pe01.reason", "tone_tags": [], "cause": "bloc_react",
+	"options": [
+		{"id": "listen", "verb": "listen_session", "label_key": "event.pe01.opt.listen",
+			"costs": {"political_capital": 80, "time_days": 7},
+			"effects": [
+				{"target": "bloc.grievance", "scope": "trigger_topic", "magnitude": -120, "delay_days": 7, "duration_days": 90, "curve": "decay", "attribution": 1000},
+				{"target": "relation.trust", "scope": "trigger_bloc", "magnitude": 60, "delay_days": 7, "duration_days": 0, "curve": "step", "attribution": 1000}]},
+		{"id": "remedy", "verb": "fund_remedy_project", "label_key": "event.pe01.opt.remedy",
+			"requires": {"authority": "district_works"}, "costs": {"budget": 500, "time_days": 60},
+			"effects": [
+				{"target": "bloc.grievance", "scope": "trigger_topic", "magnitude": -400, "delay_days": 60, "duration_days": 360, "curve": "linear", "attribution": 1000}]},
+		{"id": "reverse", "verb": "revise_decision", "label_key": "event.pe01.opt.reverse",
+			"effects": [
+				{"target": "investor.political_risk", "scope": "district", "magnitude": 150, "delay_days": 0, "duration_days": 180, "curve": "decay", "attribution": 1000},
+				{"target": "bloc.satisfaction", "scope": "beneficiary_blocs", "magnitude": -250, "delay_days": 14, "duration_days": 180, "curve": "decay", "attribution": 1000}]},
+		{"id": "defer", "verb": "defer", "label_key": "event.defer", "effects": []}
+	],
+	"stages": [
+		{"after_days": 30, "if": {"src": "bloc.react_tier", "op": ">=", "value": "protest"}, "next": "stage_boycott",
+			"effects": [{"target": "bloc.grievance", "scope": "trigger_topic", "magnitude": 120, "delay_days": 0, "duration_days": 30, "curve": "linear", "attribution": 1000}]}
+	],
+	"expiry_days": 120
+}

@@ -13,7 +13,9 @@ extends SimFacade
 ## - Kurulmamış sistemler (bütçe, meclis, grup tepkileri) `snapshot().extensions["x.sim.available.<bölüm>"] = false`
 ##   ve varsayılan boş DTO ile görünür; UI bölümü gizler / `*.not_built` yazar. Komutları gerekçeli reddedilir.
 ## - Hız sim durumu DEĞİLDİR (TickDriver'dadır, hash'e girmez).
-## Entegrasyon: yeni sistem/işleyici `create(..., extra_systems, extra_handlers)` ile takılır (T-013/T-014/T-016).
+## Entegrasyon: yeni sistem/işleyici `create(..., extra_systems, extra_handlers)` ile takılır (T-013/T-014/T-016);
+## T-017: `proposal_gate` (öneri meclis oylamasına gider mi) ve `snapshot_provider` (grup/meclis bölümleri) isteğe
+## bağlıdır.
 
 ## Kurulmamış bölümlerin `extensions` anahtarı öneki (v1.1'de tipli `available` alanına taşınması istenir).
 const AVAILABLE_PREFIX := "x.sim.available."
@@ -34,12 +36,14 @@ var _facade_config: FacadeConfig
 var _max_speed_level: int = SPEED_FASTEST
 var _driver_speeds: Dictionary = {}  # hız adı (String) -> tick/sn (core_config.json driver.speeds)
 var _retained_cache: Dictionary = {}  # {"key": [last_seq, first_reason_id], "start": int}
+var _snapshot_provider: SnapshotProvider  # T-017: grup/meclis bölümlerini dolduran sağlayıcı (yoksa kurulmamış)
 
 
 ## Yeni oyun. Geçersiz yapılandırma/kaynak/hız tablosunda push_error + null.
 static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig = null,
 		facade_config: FacadeConfig = null, extra_systems: Array[SimSystem] = [],
-		extra_handlers: Array[CommandHandler] = []) -> SimFacadeImpl:
+		extra_handlers: Array[CommandHandler] = [], proposal_gate: ProposalGate = null,
+		snapshot_provider: SnapshotProvider = null) -> SimFacadeImpl:
 	var sc := sim_config if sim_config != null else SimConfig.load_default()
 	var fc := facade_config if facade_config != null else FacadeConfig.load_default()
 	var problem := _setup_problem(parcels, sc, fc)
@@ -52,7 +56,8 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
 	impl._facade_config = fc
 	impl._sim = Simulation.new()
 	impl._sim.add_system(ParcelZoningSystem.new())
-	impl._sim.add_handler(ZoningProposeHandler.new(parcels, fc))
+	impl._snapshot_provider = snapshot_provider
+	impl._sim.add_handler(ZoningProposeHandler.new(parcels, fc, proposal_gate))
 	impl._sim.add_handler(UnbuiltCommandHandler.new(SimCommand.KIND_BUDGET_PROPOSE, SECTION_BUDGET))
 	for system in extra_systems:
 		impl._sim.add_system(system)
@@ -151,6 +156,8 @@ func snapshot() -> SimSnapshot:
 		AVAILABLE_PREFIX + String(SECTION_COUNCIL): false,
 		AVAILABLE_PREFIX + String(SECTION_GROUPS): false,
 	}
+	if _snapshot_provider != null:
+		_snapshot_provider.fill(_state, s)
 	return s
 
 

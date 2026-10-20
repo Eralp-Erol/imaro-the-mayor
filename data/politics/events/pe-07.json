@@ -1,0 +1,26 @@
+{
+	"schema": 1,
+	"_notes": "PE-07 hizmet kapasitesi asimi (political-events 5, M2 agenda). Gercek kapasite yatirimi T-014 yazma noktasi: burada etki kesim sikayeti uzerindedir.",
+	"id": "PE-07", "category": "service", "min_milestone": "M2",
+	"hard": [{"src": "service.overload_days", "op": ">=", "value": 14}],
+	"drivers": [
+		{"name": "overload_duration", "src": "service.overload_days", "lo": 14, "hi": 90, "weight": 500},
+		{"name": "growth", "src": "service.growth_pm", "lo": 0, "hi": 300, "weight": 300},
+		{"name": "stress", "src": "service.stress_pm", "lo": 900, "hi": 1300, "weight": 200}
+	],
+	"weight": 400, "gamma": 1, "cooldown_days": 90, "rearm_below": 250, "mutex": ["service_overload"],
+	"affected": {"type": "bloc", "from": "trigger"},
+	"delivery": "agenda", "reason_key": "event.pe07.reason", "tone_tags": [], "cause": "none",
+	"options": [
+		{"id": "capacity", "verb": "emergency_capacity", "label_key": "event.pe07.opt.capacity",
+			"requires": {"authority": "district_works"}, "costs": {"budget": 600},
+			"effects": [
+				{"target": "bloc.grievance", "scope": "trigger_topic", "magnitude": -300, "delay_days": 45, "duration_days": 180, "curve": "linear", "attribution": 1000}]},
+		{"id": "priority", "verb": "service_priority", "label_key": "event.pe07.opt.priority", "costs": {"political_capital": 50},
+			"effects": [
+				{"target": "bloc.grievance", "scope": "trigger_topic", "magnitude": -100, "delay_days": 14, "duration_days": 60, "curve": "decay", "attribution": 1000}]},
+		{"id": "defer", "verb": "defer", "label_key": "event.defer", "effects": []}
+	],
+	"stages": [],
+	"expiry_days": 120
+}

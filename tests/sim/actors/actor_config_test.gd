@@ -16,8 +16,8 @@ func test_default_data_loads_valid_and_exposes_the_m2_placeholder_roster() -> vo
 	assert_str(cfg.campaign_template).is_equal("m2_test")
 	assert_int(cfg.digest.length()).is_equal(64)
 	assert_array(cfg.trait_ids).contains(["volatility", "integrity"])
-	assert_array(cfg.table_ids()).is_equal(["bloc.react", "council.vote", "interest.lobby", "media.coverage",
-		"remote.policy_move"])
+	assert_array(cfg.table_ids()).is_equal(["bloc.react", "bloc.support", "council.vote", "interest.lobby",
+		"media.coverage", "remote.policy_move"])
 
 
 func test_protagonist_is_a_bare_placeholder_without_name_or_background() -> void:

@@ -2,15 +2,16 @@ extends "res://scenes/dev/world_preview.gd"
 ## Entegre geliştirme oynanabilir — T-030'un ASGARİ dilimi (2026-10-20, kullanım limiti nedeniyle ana oturumda).
 ## Commit'li modülleri tek sahnede birleştirir: arazi + gerçek T0 yerleşimi + CameraRig (world_preview),
 ## gerçek SimFacadeImpl (ekonomi çekirdeği) + HudRoot (gerçek facade verisi). Sahte başarı yok; eksikler HUD üstündeki notta.
-## Kısıtlar: T0 yapıları sim durumuna İÇE AKTARILMADI (ExistingStockSource adaptörü yok), imar akışı paneli
-## dünyadan parsel seçimine bağlı değil; eylem klavyeyle (Z). Bütçe/meclis/siyaset sim'de kurulu değil.
+## T0 sütunları başlangıç stoğu olarak gerçek ekonomi durumuna aktarılır: bu bir karar kaydı değildir. Dünya
+## tıklaması parseli imar akışına verir. Sim'in yeni gelişme geometrisi henüz BuildingView'a çevrilmez; bu durum
+## yüzeyde açıkça belirtilir, sahte yapı gösterilmez.
 
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
 const NETWORK_PATH := "res://data/world/ismeral/network.json"
 const DEMO_LAND_USE := &"zone.commercial"
 const NOTE := "Z: odaktaki parsele imar önerisi (zone.commercial) | boşluk: duraklat/sürdür\n" \
-		+ "Entegrasyon notu: T0 yapıları render'da; sim parselleri BOŞ başlar (T0 stoku sim'e aktarılmadı). " \
-		+ "Bütçe/meclis/siyaset: henüz kurulmadı."
+		+ "Tıklama: parseli imar akışına ekle | Z: odaktaki parsele imar önerisi | boşluk: duraklat/sürdür\n" \
+		+ "T0 stok sim'e aktarıldı. Yeni sim gelişimi henüz BuildingView geometrisine bağlı değil; HUD/parsel verisinden izlenir."
 
 var sim_stats: Dictionary = {}
 
@@ -23,6 +24,9 @@ var _demo: bool = false
 var _last_action: String = "-"
 var _status: Label
 var _views: Array[ParcelView] = []
+var _t0_columns: BuildingColumns = null
+var _decisions: DecisionPanels = null
+var _selected_parcel_id: int = -1
 var _acc_ms: float = 0.0
 var _acc_n: int = 0
 var _max_ms: float = 0.0
@@ -52,6 +56,7 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	var t1 := Time.get_ticks_usec()
 	var lib := KitLibrary.load_manifest()
 	var cols: BuildingColumns = T0Settlement.generate(_world, _net, lib.manifest, world_seed, rules)
+	_t0_columns = cols
 	var t2 := Time.get_ticks_usec()
 	var config := BuildingViewConfig.new()
 	config.cast_shadows = _shadows_wanted
@@ -77,13 +82,41 @@ func _start_sim() -> void:
 	if source == null or not source.is_valid():
 		push_error("playable: parsel kaynağı geçersiz")
 		return
-	var handle := EconomyBootstrap.create(_world.world_seed, source)
+	var stock := _stock_from_columns(_t0_columns)
+	if stock == null or not stock.is_valid():
+		push_error("playable: T0 stok adaptörü geçersiz")
+		return
+	var handle := EconomyBootstrap.create(_world.world_seed, source, null, stock)
 	if handle == null:
 		push_error("playable: ekonomi çekirdeği kurulamadı")
 		return
 	_facade = handle.facade
 	_facade.set_speed(3 if _demo else 1)
 	sim_stats["sim_parcels"] = source.parcel_count()
+	sim_stats["t0_stock_parcels"] = stock.parcel_ids().size()
+
+
+## `BuildingColumns` her satırını değil, parsel başına başlangıç kullanım/birim toplamını verir. Bu başlangıç
+## durumu olduğundan ReasonLog'a karar yazılmaz; yeni yapılar hâlâ EconomySystem yatırımcı kararından doğar.
+func _stock_from_columns(cols: BuildingColumns) -> ListStockSource:
+	if cols == null:
+		return ListStockSource.create([])
+	var grouped := {}
+	for i in cols.count:
+		var pid := int(cols.parcel_id[i])
+		var commercial := (int(cols.flags[i]) & (BuildingColumns.FLAG_GROUND_SHOP | BuildingColumns.FLAG_INDUSTRY)) != 0
+		var use: StringName = &"commercial" if commercial else &"residential"
+		if not grouped.has(pid):
+			grouped[pid] = {"residential": 0, "commercial": 0}
+		var units := maxi(1, int(cols.floors[i]))
+		(grouped[pid] as Dictionary)[String(use)] += units
+	var entries: Array = []
+	for pid in grouped.keys():
+		var uses: Dictionary = grouped[pid]
+		# Tek ekonomi parseli tek kullanım taşır; karma parsellerde zemin dükkânı baskınsa ticaret seçilir.
+		var use: StringName = &"commercial" if int(uses["commercial"]) > int(uses["residential"]) else &"residential"
+		entries.append({"parcel_id": int(pid), "use": use, "units": int(uses[String(use)]), "owner": 0})
+	return ListStockSource.create(entries)
 
 
 func _parcel_views() -> Array[ParcelView]:
@@ -114,6 +147,8 @@ func _start_hud() -> void:
 	_hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(_hud)
 	_hud.setup(_facade, PlatformProfile.current())
+	_decisions = DecisionPanels.attach(_hud, _facade)
+	_hud.input.select_requested.connect(_on_select_requested)
 	_status = Label.new()
 	_status.set_anchors_preset(Control.PRESET_TOP_RIGHT)
 	_status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -166,11 +201,28 @@ func _unhandled_input(event: InputEvent) -> void:
 	super._unhandled_input(event)
 
 
-func _submit_demo() -> void:
-	var st := _camera.current_state()
-	var pid := _net.parcel_id_at(st.focus_x, st.focus_z)
+func _on_select_requested(screen_pos: Vector2) -> void:
+	if _camera == null or _net == null or _decisions == null:
+		return
+	var ground := _camera.screen_to_ground(screen_pos)
+	if not bool(ground.get("ok", false)):
+		return
+	var pid := _net.parcel_id_at(float(ground["x"]), float(ground["z"]))
 	if pid <= 0:
-		pid = _nearest_parcel(Vector2(st.focus_x, st.focus_z))
+		_selected_parcel_id = -1
+		return
+	_selected_parcel_id = pid
+	_decisions.open_zoning(PackedInt64Array([pid]))
+	print("PLAYABLE_SELECT parcel=%d" % pid)
+
+
+func _submit_demo() -> void:
+	var pid := _selected_parcel_id
+	var focus := _camera.current_state()
+	if pid <= 0:
+		pid = _net.parcel_id_at(focus.focus_x, focus.focus_z)
+	if pid <= 0:
+		pid = _nearest_parcel(Vector2(focus.focus_x, focus.focus_z))
 	if pid <= 0:
 		_last_action = "parsel bulunamadı"
 		print("PLAYABLE_ACTION ", _last_action)

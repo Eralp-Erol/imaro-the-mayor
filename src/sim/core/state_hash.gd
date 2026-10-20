@@ -71,9 +71,12 @@ static func _write(buffer: StreamPeerBuffer, value: Variant, depth: int) -> Stri
 			return _write_array(buffer, value, depth)
 		TYPE_DICTIONARY:
 			return _write_dictionary(buffer, value, depth)
+		# Packed scalar arrays are canonically equivalent to Array (see format contract), but converting a 30k
+		# parcel column with Array(value) allocates tens of thousands of Variants on every state hash. Iterate
+		# directly so the emitted bytes remain byte-for-byte identical without the temporary allocation.
 		TYPE_PACKED_BYTE_ARRAY, TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, \
 		TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY, TYPE_PACKED_STRING_ARRAY:
-			return _write_array(buffer, Array(value), depth)
+			return _write_packed_scalar_array(buffer, value, depth)
 		TYPE_PACKED_VECTOR2_ARRAY:
 			_write_vector_array(buffer, value, 2)
 		TYPE_PACKED_VECTOR3_ARRAY:
@@ -106,6 +109,18 @@ static func _write_string(buffer: StreamPeerBuffer, value: String) -> void:
 
 
 static func _write_array(buffer: StreamPeerBuffer, value: Array, depth: int) -> String:
+	buffer.put_u8(_TAG_ARRAY)
+	buffer.put_u32(value.size())
+	for i in value.size():
+		var failure := _write(buffer, value[i], depth + 1)
+		if not failure.is_empty():
+			return failure.replace("@@", "@@[%d]" % i)
+	return ""
+
+
+## PackedByte/Int/Float/String arrays use the exact Array tag and element encoding by contract. Kept separate
+## from `_write_array` solely to avoid materialising `Array(value)` for economy's columnar parcel state.
+static func _write_packed_scalar_array(buffer: StreamPeerBuffer, value: Variant, depth: int) -> String:
 	buffer.put_u8(_TAG_ARRAY)
 	buffer.put_u32(value.size())
 	for i in value.size():
