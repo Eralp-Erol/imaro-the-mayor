@@ -1,0 +1,85 @@
+{
+	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; koordinatlar kilitli değil (F02, F04)",
+	"_notes": [
+		"T0 İSKELET AĞ kontrol verisi (T-011): yol/ray/feribot ağının ÜRETİM KURALLARI. Burada KOORDİNAT YOK: ağ, bölge çapalarından, T0 sahalarından (sites.json) ve WorldData'dan (kıyı, eğim) türer. Her sayı ÇALIŞMA MODELİdir (ÇM), kanon değildir; serbestçe düzenlenir.",
+		"Kimlikler: 'fabrics' = kentsel doku ayak izleri; kimlik bir bölge kodudur (D1-D6, resmî ilçe DEĞİL, WLD-02) veya T0 saha çıkıntısıdır (port_yard). Yalnız D2 'Orven' adını taşır (CAN-01); sokak/mahalle adı yoktur (AÇIK).",
+		"fabrics[].center: 'anchor' = bölge çapası, 'terrace' = bölgenin yerleşim sekisi (settlement_terraces) merkezi. radius_norm = bölge yarıçaplarının oranı (kentsel kümenin boyutu), radius_km = mutlak (km). T0 'kompakt çekirdek' (D1+D6) ve 'daha küçük ama gerçek merkezler' (D2-D5) burada oranla ayarlanır (WLD-04); aralarındaki tarım/yeşil kuşak (field_roads, parselsiz açık bloklar) WLD-06 içindir.",
+		"fabrics[].lattice: block_m = [sokak boyunca, çapraz] ızgara aralığı (m); angle_deg = 'auto' (kıyı teğetine paralel, WorldData shore_distance'tan), 'segment' (iki saha arası doğrultu) veya derece; jitter_m = tohumlu konum sapması (yalnız ayrıntı); collector_every = [u, v] her n. hat toplayıcı; omit_local_p = yerel sokak seyreltme olasılığı (layout_seed ile, TOHUMDAN BAĞIMSIZ: topoloji tohumla değişmez); max_slope_deg ve shore_margin_m = ızgara noktası geçerliliği.",
+		"links: bölge/saha merkezleri arası kara yolu. style 'coast' = kıyı konturunu izler (kıyı yolu). Güzergâh WorldData üzerinde A* ile bulunur (eğim/su/kıyı maliyeti); yollar suya ve adalara kurulmaz (WLD-03).",
+		"rail: ray hatları (liman limanından D4'e vb.); 'port' = T0 liman düğümü. ferries: D1 <-> D6 feribot hattı; iki iskele kıyıdan kurulur, hat suyun üstünden geçer, doldurma yoktur (WLD-05).",
+		"connectors: ana ağdan kopuk kalan parçalar (örn. tarla yolları) en yakın düğüme toplayıcıyla bağlanır; enabled=false testlerde bozulmuş varyant içindir.",
+		"parcel_templates: lot_width_m/jitter = cephe genişliği, max_depth_m = tek sıra lot derinliği, min_area_m2/min_frontage_m = alt eşikler, max_block_area_m2 = bundan büyük yüz parselsiz AÇIK arazi (kama/yeşil kuşak) sayılır. Kentsel şablonlar (core/compact/mixed) T-005 yerleşimi içindir; 'industrial' T0 liman/sanayi sahası; 'rural' tarla parselleri. Bunlar arazi KULLANIMI değil, parsel geometrisidir (imar/yapı: sim/T-005)."
+	],
+	"schema_version": 1,
+	"layout_seed": 7311,
+	"classes": {
+		"arterial": {"width_m": 22.0},
+		"collector": {"width_m": 15.0},
+		"local": {"width_m": 10.0},
+		"field": {"width_m": 6.0},
+		"rail": {"width_m": 14.0},
+		"ferry": {"width_m": 0.0}
+	},
+	"geometry": {"snap_m": 3.0, "min_edge_m": 4.0, "max_segment_m": 350.0},
+	"block_rules": {"max_block_area_m2": 4000000.0, "min_block_area_m2": 400.0},
+	"routing": {
+		"cell_m": 250.0, "road_max_slope_deg": 13.0, "rail_max_slope_deg": 6.0, "slope_cost_per_deg": 0.22,
+		"shore_margin_m": 90.0, "footprint_penalty": 7.0, "footprint_inflate_m": 150.0, "simplify_m": 150.0,
+		"coast_offset_m": 280.0, "coast_weight": 3.0, "relax_steps": [1.0, 1.4, 2.0]
+	},
+	"parcel_templates": {
+		"core": {"lot_width_m": 18.0, "lot_width_jitter": 0.12, "max_depth_m": 34.0, "min_area_m2": 130.0, "min_frontage_m": 7.0, "max_block_area_m2": 60000.0},
+		"compact": {"lot_width_m": 20.0, "lot_width_jitter": 0.12, "max_depth_m": 38.0, "min_area_m2": 150.0, "min_frontage_m": 7.5, "max_block_area_m2": 60000.0},
+		"mixed": {"lot_width_m": 22.0, "lot_width_jitter": 0.15, "max_depth_m": 42.0, "min_area_m2": 180.0, "min_frontage_m": 8.0, "max_block_area_m2": 70000.0},
+		"industrial": {"lot_width_m": 55.0, "lot_width_jitter": 0.2, "max_depth_m": 85.0, "min_area_m2": 900.0, "min_frontage_m": 25.0, "max_block_area_m2": 250000.0},
+		"rural": {"lot_width_m": 230.0, "lot_width_jitter": 0.1, "max_depth_m": 250.0, "min_area_m2": 6000.0, "min_frontage_m": 40.0, "max_block_area_m2": 1000000.0}
+	},
+	"fabrics": [
+		{"id": "port_yard", "region": "D3", "sites": ["t0_port", "t0_first_industry"], "pad_m": 650.0, "template": "industrial",
+			"lattice": {"block_m": [250.0, 150.0], "angle_deg": "segment", "jitter_m": 8.0, "collector_every": [3, 3],
+				"omit_local_p": 0.0, "max_slope_deg": 9.0, "shore_margin_m": 45.0},
+			"basis": "ÇM: eski liman + ilk ana sanayi sahası (WLD-03: ana karada, D4'ün batısında); iki T0 sahası arasındaki şerit + kenar payı."},
+		{"id": "D1", "region": "D1", "center": "anchor", "radius_norm": 0.4, "template": "core",
+			"lattice": {"block_m": [120.0, 76.0], "angle_deg": "auto", "jitter_m": 5.0, "collector_every": [4, 4],
+				"omit_local_p": 0.0, "max_slope_deg": 9.0, "shore_margin_m": 130.0}},
+		{"id": "D6", "region": "D6", "center": "anchor", "radius_norm": 0.4, "template": "core",
+			"lattice": {"block_m": [120.0, 76.0], "angle_deg": "auto", "jitter_m": 5.0, "collector_every": [4, 4],
+				"omit_local_p": 0.0, "max_slope_deg": 9.0, "shore_margin_m": 130.0}},
+		{"id": "D2", "region": "D2", "center": "anchor", "radius_norm": 0.3, "template": "compact",
+			"lattice": {"block_m": [140.0, 88.0], "angle_deg": "auto", "jitter_m": 6.0, "collector_every": [4, 4],
+				"omit_local_p": 0.12, "max_slope_deg": 9.0, "shore_margin_m": 130.0}},
+		{"id": "D3", "region": "D3", "center": "anchor", "radius_norm": 0.28, "template": "mixed",
+			"lattice": {"block_m": [140.0, 90.0], "angle_deg": "auto", "jitter_m": 6.0, "collector_every": [4, 4],
+				"omit_local_p": 0.12, "max_slope_deg": 9.0, "shore_margin_m": 130.0}},
+		{"id": "D4", "region": "D4", "center": "anchor", "radius_norm": 0.2, "template": "mixed",
+			"lattice": {"block_m": [140.0, 90.0], "angle_deg": "auto", "jitter_m": 6.0, "collector_every": [4, 4],
+				"omit_local_p": 0.12, "max_slope_deg": 9.0, "shore_margin_m": 130.0}},
+		{"id": "D5", "region": "D5", "center": "terrace", "radius_km": [1.6, 1.3], "template": "compact",
+			"lattice": {"block_m": [140.0, 88.0], "angle_deg": "auto", "jitter_m": 6.0, "collector_every": [4, 4],
+				"omit_local_p": 0.1, "max_slope_deg": 11.0, "shore_margin_m": 130.0}}
+	],
+	"field_roads": [
+		{"region": "D4", "spacing_m": 850.0, "angle_deg": "auto", "jitter_m": 20.0, "max_slope_deg": 6.0,
+			"region_norm": 0.95, "exclude_pad_m": 450.0, "shore_margin_m": 200.0, "class": "field",
+			"basis": "ÇM: D4 iç ovası tarla yolları (WLD-04/06: tarım/yeşil kuşak)."}
+	],
+	"links": [
+		{"id": "d3_d4", "from": "D3", "to": "D4", "class": "arterial"},
+		{"id": "d4_d1", "from": "D4", "to": "D1", "class": "arterial"},
+		{"id": "d4_d2", "from": "D4", "to": "D2", "class": "arterial"},
+		{"id": "d2_d5", "from": "D2", "to": "D5", "class": "arterial"},
+		{"id": "d5_d6", "from": "D5", "to": "D6", "class": "arterial"},
+		{"id": "port_d3", "from": "port_yard", "to": "D3", "class": "arterial"},
+		{"id": "coast_d3_d1", "from": "D3", "to": "D1", "class": "collector", "style": "coast"},
+		{"id": "coast_d1_d2", "from": "D1", "to": "D2", "class": "collector", "style": "coast"}
+	],
+	"rail": [
+		{"id": "port_line", "from": "port", "to": "D4"},
+		{"id": "north_line", "from": "D4", "to": "D1"},
+		{"id": "east_line", "from": "D4", "to": "D2"}
+	],
+	"ferries": [
+		{"id": "bay_ferry", "from": "D1", "to": "D6", "pier_inset_m": 35.0, "access_class": "collector"}
+	],
+	"connectors": {"enabled": true, "class": "collector"}
+}
