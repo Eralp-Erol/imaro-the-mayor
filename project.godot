@@ -6,6 +6,7 @@ config_version=5
 [application]
 
 config/name="Imaro: The Mayor"
+run/main_scene="res://src/app/platform_profile_smoke.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [rendering]
