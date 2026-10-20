@@ -33,7 +33,7 @@ Açık kullanıcı onayı gerektirenler: (1) T-007 Godot export şablonlarının
 ## Kayıt defteri (tools/lane.sh bunu okur) — `LANE|id|sahip|yollar (virgülle, önek)|testler|not`
 LANE|coordinator|studio-director|production/,design/REQUIREMENTS.md,design/decisions/,design/CANON.md,docs/STUDIO.md,docs/engine-reference/,CLAUDE.md,.claude/,tools/,project.godot,.gitignore,.gitattributes,addons/,export_presets.cfg.import,README|—|paylaşılan; yalnız koordinatör
 LANE|sim|simulation-engineer|src/sim/,src/app/tick_driver,src/app/save_slot,tests/sim/,data/sim/,design/specs/economy|tests/sim|T-002, T-009, T-013, T-014
-LANE|actors|simulation-engineer|src/sim/actors/,src/sim/politics/,tests/sim/actors/,tests/sim/politics/,data/actors/|tests/sim/actors,tests/sim/politics|T-016, T-017, T-026 (sim hattından ayrı yol; en uzun önek)
+LANE|actors|simulation-engineer|src/sim/actors/,src/sim/politics/,tests/sim/actors/,tests/sim/politics/,data/actors/,data/politics/,src/sim/facade/,src/sim/core/game_state.gd|tests/sim/actors,tests/sim/politics|T-016 ✓, T-017, T-026 (GEÇİCİ: T-017 süresince src/sim/facade/ ve core/game_state.gd actors hattında — sim hattı boşta; T-017 bitince geri dönülür)
 LANE|platform|godot-engineer|src/app/platform_profile,src/app/input_profile,export_presets.cfg,tools/export.sh,tests/app/|tests/app|T-007, T-008, T-010
 LANE|contracts|technical-director|docs/adr/0005,docs/adr/0006,src/contracts/,tests/contracts/,tests/fixtures/|tests/contracts|T-023
 LANE|world|world-engineer|data/world/,src/world/,tests/world/|tests/world|T-001b/c, T-011, T-005
