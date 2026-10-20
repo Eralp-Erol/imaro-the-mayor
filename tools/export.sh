@@ -140,7 +140,7 @@ cmd_smoke() {
   [ -n "$bin" ] && [ -x "$bin" ] || { echo "export.sh smoke: $app bulunamadı/çalıştırılamaz; önce: tools/export.sh macos $([ "$kind" = release ] && echo --release)" >&2; exit 1; }
   log="build/macos/smoke-$kind.log"; secs="${IMARO_SMOKE_TIMEOUT:-60}"
   [ "${IMARO_NO_WINDOW:-0}" = 1 ] && extra="--headless"
-  "$bin" $extra "$SMOKE_SCENE" >"$log" 2>&1 &
+  "$bin" $extra >"$log" 2>&1 & # sahne yolu verilemez (şablon path override desteklemez): run/main_scene = duman sahnesi
   pid=$!
   while kill -0 "$pid" 2>/dev/null; do
     if [ "$waited" -ge "$secs" ]; then kill "$pid" 2>/dev/null || true; echo "export.sh smoke: ${secs}s zaman aşımı — $log" >&2; exit 1; fi
