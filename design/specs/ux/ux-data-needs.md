@@ -1,6 +1,6 @@
 # UX veri ihtiyaçları v0 (T-018 ölçüt 4) — SimFacade'dan gerekenler
 
-Statü: SÖZLEŞME İSTEĞİ (ADR-0005 / T-023'e girdi; koordinatör v1.1'e taşır). `src/contracts/` bu yazım sırasında **henüz yoktu** (ls: yok; `docs/adr/0005-*` yok) → adlar T-023 taslağına göre **eşlenebilir önerilerdir**; gerçek DTO gelince `ux-data-needs` düzeltilir (uyum raporu aşağıda §6). UI sim'e **yazmaz**, yalnız `SimFacade` üzerinden okur ve `SimCommand` gönderir. Hiçbir alan platform profiline bağlı değildir (PLT-04).
+Statü: ÇALIŞMA MODELİ (TEKNİK sözleşme isteği; kanon değil). Gerçek sözleşme `src/contracts/` (v1.0, contracts hattı, T-023) ve ADR-0005'tir; **çelişkide o kazanır**, bu belge uyarlanır. Aşağıda "v1.0 VAR" etiketli alanlar `src/contracts/` okunarak doğrulandı; "v1.1 TEKNİK istek" etiketliler henüz sözleşmede YOKTUR ve UI bunlara bağımlı kod yazmadan önce sözleşmeye girmesi beklenir (yoksa bölüm gizlenir). UI sim'e **yazmaz**, yalnız `SimFacade` üzerinden okur ve `SimCommand` gönderir. Hiçbir alan platform profiline bağlı değildir (PLT-04).
 
 Genel ilkeler:
 1. **Anahtar + argüman, hazır metin değil.** Her açıklayıcı alan `*_key` (string anahtarı) + `args` sözlüğü. Para tutarı birimsiz tamsayı (`Q-003`).
@@ -13,14 +13,17 @@ Genel ilkeler:
 ## 1. Ortak DTO'lar (istek)
 | DTO | Alanlar | Not |
 |---|---|---|
-| `SimSnapshot` | `tick:int`, `clock:ClockView`, `budget:BudgetView?`, `council:CouncilView?`, `record:PlayerRecordView?`, `election:ElectionView?`, `is_mock:bool` | `?` = kurulmamış olabilir |
-| `ClockView` | `tick`, `day:int`, `year:int` (takvim AÇIK; yalnız gün sayacı yeterli), `paused:bool`, `speed:int`, `available_speeds:Array[int]` | G akışı |
-| `ReasonRecord` | `id`, `outcome:StringName` (enum→`reason.outcome.*`), `subject:Ref`, `tick:int`, `factors:Array[ReasonFactor]`, `parent_ids:Array[id]`, `summary_key`, `summary_args`, `is_estimate`, `expires_tick?` | SIM-12 çekirdeği |
-| `ReasonFactor` | `key` (→`reason.factor.<key>`), `direction:int` (−1 aleyhte, +1 lehte), `weight:int` (binde; sim tanımlı, UI normalize etmez), `args:Dictionary`, `source:Ref?`, `is_estimate`, `trend:int` (−1/0/+1) | |
+| `SimSnapshot` (**v1.0 VAR kısmen**) | `clock`, `budget`, `council`, `group_reactions`, `last_event_seq`, `parcel_count`, `extensions`, `is_mock()`. `record`/`election` yok: **v1.1 TEKNİK istek** (şimdilik `extensions`) | kurulmamış sistem = alan boş/varsayılan; UI `*.not_built` yazar |
+| `ClockView` (**v1.0 VAR kısmen**) | `tick`, `speed`, `available_speeds`, `is_paused()`. `day/year` sözleşmede YOK: **v1.1 TEKNİK istek** (takvim AÇIK, `tick`ten türetim sim'in işi) | G akışı; tarih alanı gelene dek `clock.date_ingame` gösterilmez, yalnız tick/gün sayacı varsa o |
+| `ReasonRecord` (**v1.0 VAR**) | `id`, `tick`, `actor:ActorRef`, `decision_key` (karar metin anahtarı, örn. `decision.investor.develop`), `outcome` (`positive`\|`negative`: karar eylemi GERÇEKLEŞTİ / gerçekleşmedi), `factors:Array[ReasonFactor]`, `threshold`, `score`, `scoring` (`linear`), `subjects:PackedStringArray` (`parcel.12`…), `parent_ids:PackedInt64Array`, `provenance`. Değişmez: `score == Σ katkı`, `outcome` ⇔ `score >= threshold` | SIM-12 çekirdeği. UI başlığı `decision_key` + `outcome` birleşiminden anahtar türetir (`reason.outcome.*` UI eşleme tablosu: karar anahtarı × positive/negative; UI `match` yazmaz, veri tablosu) |
+| `ReasonFactor` (**v1.0 VAR**) | `name_key` (→`reason.factor.<..>`), `value:int`, `weight:int` (sabit noktalı; katkı = `contribution()`), `is_estimate:bool`, `source_ref:StringName` | Yön (lehte/aleyhte) UI'da **katkı işaretinden** türetilir (`contribution()` ≥ 0 lehte); sim ayrı alan vermedikçe UI yön uydurmaz |
+| **v1.1 TEKNİK istek** (ReasonRecord) | `summary_key` + `summary_args` (kısa gerekçe cümlesi), `cause_refs` (zincirin dışındaki neden varlıkları), `expires_tick?` | Hepsi isteğe bağlı; yoksa UI etken listesinden özet kurar, uydurmaz |
+| **v1.1 TEKNİK istek** (ReasonFactor) | `direction` (−1/+1, açık yön), `trend` (−1/0/+1), `args:Dictionary` | `trend` yoksa `a11y.trend_*` göstergesi gizlenir; `reason_history` ile UI iki kayıt karşılaştırıp eğilim türetebilir (hesap açıkça "UI türetimi" etiketli değil, gizli kalır) |
 | `Ref` | `kind:StringName` (parcel, district, group, proposal, road, facility, council_bloc), `id` | |
-| `SimEvent` | `id`, `tick`, `kind`, `text_key`, `args`, `subject:Ref`, `reason_id:id?`, `severity:int` | bildirim şeridi |
+| `SimEvent` (**v1.0 VAR**) | `seq`, `tick`, `kind`, `actor`, `subjects`, `message_key`, `args`, `reason_ids`, `command_id`, `provenance` | bildirim şeridi. Önceki istekteki `text_key`/`subject`/`reason_id`/`severity` sözleşmede `message_key`/`subjects`/`reason_ids`; `severity` **v1.1 TEKNİK istek** (yoksa şerit sırası `seq`) |
 
 ## 2. Akış bazında istekler
+Bu tablo **istek dilidir (v1.1 TEKNİK istek, aksi belirtilmedikçe)**; v1.0 karşılıkları farklı adlıdır ve hizalanacaktır: `ParcelView.zoning{…}` ↔ v1.0 `zone`/`pending_zone`/`development`/`owner`/`land_value`/`reason_ids`; `ParcelView.district` ↔ `region_code`; `BudgetView.{income_total,expense_total,by_category}` ↔ `revenue`/`balance`/`lines[BudgetLineView]`/`pending_vote_id`; `CouncilView.seats` ↔ `seats_total`/`blocs`/`votes`; `GroupReactionView.complaints` ↔ `reaction`/`intensity`/`cause_refs`/`reason_ids`; `reason_id` ↔ `reason_ids`. Henüz sözleşmede olmayan alanlar (önizleme sorguları, `PlayerRecordView`, `ElectionView`, `ZoningOptions`, `DistrictView`) UI'da bölüm gizleme/`*.not_built` ile ele alınır.
 | Akış | Okuma (View/Query) | Komut | Olay |
 |---|---|---|---|
 | **A Yol/kamu alanı çizimi** | `PublicWorkPreview{valid:bool, cost:int?, duration_days:int?, violations:Array[ReasonRecord], snapped_to:Ref?}` ← `SimQuery.preview_public_work(PublicWorkDraft)`; `BudgetView.balance`; yetki alanı: `ParcelView.in_authority:bool` | `DrawPublicWork{kind, class, polyline(WorldData koord.), draft_id}`; `CancelPublicWork{ref}` | `PublicWorkQueued`, `PublicWorkStarted`, `PublicWorkCompleted`, `CommandRejected{reason_id}` |
@@ -35,10 +38,10 @@ Genel ilkeler:
 | Yapılandırma | `economy.currency_symbol/name` (`¤`), `max_game_speed` (profil), `ZoningOptions` | — | — |
 
 ## 3. SimCommand sonucu
-`CommandResult{accepted:bool, reason:ReasonRecord?}`; reddedilen komut her zaman gerekçe verir. UI tahmini yapıp "kabul edildi" göstermez; sonucu bekler (duraklıyken komut sıraya girer, `queued`).
+`CommandResult` (**v1.0 VAR**: `command_id`, `kind`, `status`, `reason_key`, `args`, `reason_ids`, `tick`, `apply_tick`); reddedilen komut gerekçe anahtarı + `reason_ids` verir (önceki istekteki `accepted/reason:ReasonRecord` bu biçime uyarlandı). UI tahmini yapıp "kabul edildi" göstermez; sonucu bekler (duraklıyken komut sıraya girer, `queued`).
 
 ## 4. Sözleşmeye v1.1 istekleri (özet)
-1. `ReasonRecord`/`ReasonFactor` alanları yukarıdaki biçimde (anahtar+argüman, `parent_ids`, `weight`, `direction`, `is_estimate`).
+1. `ReasonRecord`/`ReasonFactor` v1.0'a EK alanlar yalnız: `summary_key/args`, `cause_refs`, `expires_tick`, `direction`, `trend`, `args` (§1 tablosu). `parent_ids`, `weight`, `is_estimate` v1.0'da zaten VAR.
 2. `*_preview` sorguları (`preview_public_work`, `preview_zoning`) — yan etkisiz, deterministik.
 3. `SimFacade.is_mock()`, `SimSnapshot` içinde `?` ile kurulmamış sistemler (`available`).
 4. `ParcelView`/`DistrictView`/`GroupReactionView`/`BudgetView`/`CouncilView` alanları §2'deki gibi; `PlayerRecordView`'de **toplam skor alanı yok** (SIM-09'u sözleşme düzeyinde garanti).
@@ -47,8 +50,14 @@ Genel ilkeler:
 7. Yapılandırma sorguları: `currency_symbol/name`, `available_speeds`, `ZoningOptions` (veri-odaklı seçenek listesi; UI sabit liste gömmez).
 8. Olay/komut adları `StringName` enum karşılıklarıyla; yeni bir değer UI'da kod değişikliği gerektirmez (anahtar tablosu).
 
+## 4b. Gündem (akış I) — v1.1 TEKNİK istek
+Sözleşmede henüz yok; `political-events` şablonlarından (`delivery: ambient|agenda|decision`) beslenir. İstenen: `AgendaItemView{id, template_key, delivery, deadline_tick, options:[{id, label_key, cost, preview?{..., is_estimate}}], can_defer, reason_ids}`, komut `RespondAgenda{item_id, option_id|defer}`, olay `AgendaItemExpired`. `decision` öğesi modal değildir; otomatik duraklatma **UI ayarıdır**, sim'e varsayılan dayatılmaz (varsayılan AÇIK SORU, AS-11).
+
+## 4c. Oynanabilir ilçe listesi — v1.1 TEKNİK istek
+Açılış menüsü (CAN-08) için `WorldData`/senaryo sorgusu: `playable_districts() -> Array[{region_code, name_key?, playable:true}]`; UI `playable=true` olmayanı **listelemez**, hiçbirini varsayılan seçmez. Metropol/ilçe sayısı sabitlenmez (D1..Dn).
+
 ## 5. UI'nin sim'den İSTEMEDİĞİ şeyler
 Hazır Türkçe metin, tek memnuniyet/popülerlik skoru, piksel/ekran koordinatı, platform profili bilgisi, kare hızına bağlı değer.
 
 ## 6. Contracts uyum raporu
-`src/contracts/` ve ADR-0005 bu yazımda mevcut değil → **uyum doğrulanamadı**. Entegrasyonda: (a) adlar `SimFacade/SimSnapshot/SimCommand/SimEvent/ReasonRecord/ParcelView/BudgetView/GroupReactionView/CouncilView` ile birebir kullanıldı; ek istek DTO'lar: `ClockView, PlayerRecordView, ElectionView, ProposalView, DistrictView, PublicWorkPreview, ZoningPreview, ZoningOptions, Ref, ReasonFactor, CommandResult`; (b) fark çıkarsa bu belge değil ADR-0005 kazanır, UX belgeleri güncellenir.
+`src/contracts/` v1.0 okundu (değiştirilmedi; T-023 hâlâ yazılıyor, yeniden hizalama gerekebilir). Doğrulanan: `ReasonRecord`, `ReasonFactor`, `SimEvent`, `ClockView`, `SimSnapshot`, `CommandResult`, `GroupReactionView`, `ParcelView`, `BudgetView`, `CouncilView` (alan adları yukarıdaki tablolarda v1.0 etiketli). Henüz sözleşmede olmayan her şey v1.1 TEKNİK istektir. Eski taslak notu: Entegrasyonda: (a) adlar `SimFacade/SimSnapshot/SimCommand/SimEvent/ReasonRecord/ParcelView/BudgetView/GroupReactionView/CouncilView` ile birebir kullanıldı; ek istek DTO'lar: `ClockView, PlayerRecordView, ElectionView, ProposalView, DistrictView, PublicWorkPreview, ZoningPreview, ZoningOptions, Ref, ReasonFactor, CommandResult`; (b) fark çıkarsa bu belge değil ADR-0005 kazanır, UX belgeleri güncellenir.

@@ -5,6 +5,8 @@ extends GdUnitTestSuite
 
 const PATH := "res://data/ui/strings.tr.json"
 const FORBIDDEN_CURRENCY := ["₺", "$", "€", "£", "lira", "Lira"]
+const GAME_TITLE := "Imaro: The Mayor"  # CAN-01; yerelleştirilmiş ad/alt başlık yalnız kullanıcı kararıyla
+const FORBIDDEN_WORDS := ["puan", "skor"]  # ux-text-system §4 (sicil için); küçük harfe çevrilmiş metinde aranır
 const REQUIRED_PREFIXES := [
 	"mode.", "zoom.", "clock.", "tool.", "draw.", "zoning.", "inspector.", "reason.", "council.", "budget.",
 	"record.", "election.", "state.loading", "state.empty.", "state.error.", "settings.", "a11y.", "format.",
@@ -46,6 +48,15 @@ static func violations(table: Dictionary) -> PackedStringArray:
 				out.append("para simgesi metinde gömülü (yapılandırmadan gelmeli): " + k)
 			if s.to_lower().contains("mutluluk"):
 				out.append("tek skor ifadesi (SIM-09): " + k)
+		if not k.begins_with("_meta."):
+			var low := s.to_lower()
+			for w in FORBIDDEN_WORDS:
+				if low.contains(w):
+					out.append("yasak kelime '%s': %s" % [w, k])
+			if k == "format.percent" and not s.begins_with("%"):
+				out.append("Türkçe yüzde biçimi %{value} olmalı: " + k)
+		if k == "app.title" and s != GAME_TITLE:
+			out.append("oyun adı CAN-01 ile aynı olmalı: " + k)
 		var opens := s.count("{")
 		var closes := s.count("}")
 		if opens != closes or ph_re.search_all(s).size() != opens:
@@ -86,6 +97,15 @@ func test_negative_controls_are_detected() -> void:
 	var bad_ph := _table.duplicate()
 	bad_ph["x.ph"] = "Değer {value"
 	assert_bool(violations(bad_ph).size() > 0).is_true()
+	var bad_title := _table.duplicate()
+	bad_title["app.title"] = "Imaro: Belediye Başkanı"
+	assert_bool(violations(bad_title).size() > 0).is_true()
+	var bad_puan := _table.duplicate()
+	bad_puan["x.puan"] = "Toplam puan: {value}"
+	assert_bool(violations(bad_puan).size() > 0).is_true()
+	var bad_percent := _table.duplicate()
+	bad_percent["format.percent"] = "{value}%"
+	assert_bool(violations(bad_percent).size() > 0).is_true()
 	var inline_symbol := _table.duplicate()
 	inline_symbol["x.sym"] = "Tutar 5 ¤"
 	assert_bool(violations(inline_symbol).size() > 0).is_true()

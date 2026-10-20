@@ -19,19 +19,19 @@ Statü: ÇALIŞMA MODELİ. Tablo: `data/ui/strings.tr.json` (anahtar tabanlı, d
 | Tür | Biçim |
 |---|---|
 | Ondalık/binlik | Türkçe: `1.234,5` (binlik nokta, ondalık virgül). Biçimleme tek yardımcıda (locale ayarlı); sim tamsayısı bölünerek gösterilir. |
-| Yüzde | `%` sonda bitişik `42%` (`format.percent`); yalnız gerçek oran alanları; **memnuniyet/mutluluk yüzdesi yok** (SIM-09). Test: "mutluluk" geçen metin reddedilir. |
+| Yüzde | Türkçe biçim `%42`, yani `%` başta (`format.percent` = `%{value}`); yalnız gerçek oran alanları; **memnuniyet/mutluluk yüzdesi yok** (SIM-09). Test: "mutluluk" geçen metin reddedilir. |
 | Aralık | `a – b` (`format.range`), belirsizlik gösterirken (anket) |
 | Oyun içi tarih | `clock.date_ingame` yer tutucu (`{year}. yıl, {day}. gün`); ay adları/takvim AÇIK. Gerçek dünya tarihi/saat biçimi oyun içinde kullanılmaz. |
 | Süre | `{n} gün`; kısa süreler "saat" ancak sim saat veriyorsa |
 | Birim | metrik; birim her zaman değerin yanında |
 
 ## 4. Ton ve yazım kuralları
-- **Ton:** sakin, resmî değil ama ciddi; bir belediye başkanının çalışma masası. Ünlem yok, emoji yok, mizah yok, abartı yok.
+- **Ton:** sakin, resmî değil ama ciddi; bir belediye başkanının çalışma masası. Ünlem yok, emoji yok, abartı yok; **mizah yok kuralı yalnız UI mikro metni içindir** (düğme, etiket, hata, ipucu). Oyun içeriğinin (olay, haber, diyalog) tonu **AS-6 AÇIK**dır ve bu belge onu belirlemez.
 - **Düğmeler:** fiil kökü/ad-fiil, tek-iki kelime, cümle başı büyük (`Onayla`, `Vazgeç`, `Meclise sun`). "Tamam" yalnız bilgi iletişiminde.
-- **Hitap:** doğrudan hitap kaçınılır; edilgen/yalın ("Burada çizilemez"). Zorunlu olduğunda "siz".
+- **Hitap:** doğrudan hitap kaçınılır; edilgen/yalın ("Burada çizilemez"). Zorunlu olduğunda "siz". **Emir kipi (çiz, öner, seç) ipucu ve açıklamalarda kullanılmaz**; ad-eylem biçimi (çizimi, önerileri) tercih edilir. Düğme etiketi fiil kökü kuralı (`Onayla`) ayrıdır.
 - **Kısaltma:** yasak (ör. "yat." yerine "yatırım"). İstisna: `D1` gibi kod, `1×` hız, `%`. İlk geçişte açılım gerekmeyen yaygın kısaltmalar da yazılmaz.
 - **Terim sözlüğü** (bir terim bir anlam): *İmar* (arazi kullanımı kararı) · *Yoğunluk* · *Yükseklik* · *Parsel* · *Gerekçe* (sim'in kaydettiği neden) · *Etken* (gerekçeyi oluşturan unsur) · *Sicil* (oyuncunun ayrı göstergeleri; "puan"/"skor" demeyiz) · *Grup* (seçmen/çıkar grubu; yer tutucu "Grup n") · *Öneri* (imar/bütçe teklifi) · *Meclis*.
-- **Yasak kelimeler (CAN-03/SIM-09):** "bina yerleştir/dik", "mutluluk", "puan/skor" (sicil için), "seviye atla" (CAN-10).
+- **Yasak kelimeler (CAN-03/SIM-09):** "bina yerleştir/dik", "mutluluk", "puan/skor" (sicil için; `toplam gösterge` denir; test bu kelimeleri reddeder), "seviye atla" (CAN-10).
 - **Hata/engel mesajı kalıbı:** *ne oldu* + *neden (sim gerekçesi)* + *ne yapılabilir*. Örn. `draw.blocked.title` + `draw.blocked.reason`.
 - **Kurulmamış sistem:** `… henüz kurulmadı`; vaat/tarih verme.
 - **Sayılar sahte değil:** metinde örnek sayı, "Örn. 1000" gibi içerik yoktur.

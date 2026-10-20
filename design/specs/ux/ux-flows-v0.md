@@ -30,7 +30,7 @@ Araçlar: Yol, Bulvar, Kavşak, Meydan, Park, Belediye tesisi. Çizim "gerçek �
 | 7 | Sonuç: inşaat kuyruğu bildirimi; dünyada inşaat görünür; geri al penceresi (yalnız henüz başlamamış inşaat) | Ctrl+Z | `common.undo` |
 | 8 | İptal | Esc / sağ tık | `draw.cancel` |
 Notlar: dokunmatikte **sürükle = kaydır** olduğundan çizim *nokta-ekle + onay çubuğu*dur (sürükleyerek çizim kullanılmaz; uzun-bas+sürükle ile mevcut noktayı taşıma opsiyonu). Meydan/Park çokgen kapatma: ilk noktaya dokun/tık. Özel bina aracı yok (`draw.no_private_building`).
-Sim: `PublicWorkDraft` doğrulaması (geçerlilik, maliyet, süre, ihlal ReasonRecord), `BudgetView.balance`, `SimCommand.DrawPublicWork`.
+Sim: `PublicWorkDraft` doğrulaması (geçerlilik, maliyet, süre, ihlal gerekçesi; v1.1 TEKNİK istek), `BudgetView.balance`, `SimCommand.DrawPublicWork`.
 Durumlar: maliyet hesaplanamıyorsa `draw.cost_unavailable` (sahte sayı yok); sim yanıtsızsa `state.error.sim_unavailable`.
 
 ## B. İmar değişikliği önerisi (İmar) — CAN-05, CAN-03
@@ -68,7 +68,7 @@ Hedef: "neden yatırım gelmedi / protesto oldu?" sorusuna **gerekçe zinciri, e
 | 6 | "Haritada göster": ilgili parsel/hat vurgulanır | tık | dokun |
 | 7 | Eylem önerisi (varsa sim `suggested_actions` verir): örn. "altyapı kapasitesi ekle" → ilgili araca götürür; **sim vermezse UI öneri uydurmaz** | — | — |
 Dürüstlük: `is_estimate` etkenler `reason.estimate` ile etiketli; kayıt yoksa `reason.none_recorded`; süresi dolmuşsa `reason.expired`. Ağırlıklar toplamı %100 olarak gösterilmez (sim vermedikçe); sim'in verdiği biçim neyse o.
-Sim: `ReasonRecord{outcome, subject, factors[], parent_ids[], tick, is_estimate}` + `SimQuery.reasons_for(subject_ref)` / `reason_history(subject_ref)`.
+Sim: `ReasonRecord` (v1.0: `decision_key`, `outcome` positive/negative, `score`, `threshold`, `subjects`, `parent_ids`, `factors[ReasonFactor{name_key,value,weight,is_estimate,source_ref}]`) + `reasons_for(subject_ref)` / `reason_history(subject_ref)` sorguları (v1.1 TEKNİK istek; bkz. ux-data-needs).
 
 ## E. Meclis oylaması — SIM-05, CAN-06
 | # | Adım | M | D |
@@ -106,8 +106,22 @@ Tek "Mutluluk %" yoktur. Sicil ayrı göstergelerdir; seçim kesim bazlıdır (p
 | 2 | Göstergeler yan yana: `delivery, fiscal, service, equity, reputation_by_group, media_tone, ally_support` — her biri ayrı, **birleştirilmemiş**; `record.no_single_score` notu | tablo | kartlar |
 | 3 | Grup bazlı tepki: grup adı (yer tutucu `record.group.placeholder`), şikâyetler, **tepkinin nedeni** → akış D | satır tık | satır dokun |
 | 4 | Seçim aşaması: aşama, kalan süre, anket tahmini **belirsizlik aralığıyla** (`election.poll_range`) | şerit | şerit |
-| 5 | Seçim gecesi (L4): bölge/grup bazlı sonuç, "sonucun dökümü" (neden), kayıpta `election.defeated` sonuç ekranı | animasyon azaltma desteği | aynı |
+| 5 | Seçim gecesi (L4): bölge/grup bazlı sonuç, "sonucun dökümü" (neden). Kayıpta `election.defeated` yalnız sonucu bildirir; **kampanyanın bitip bitmediği ima edilmez**: kaybın sonucu (`lose_consequence`) **AÇIK kanca** (AS-5; sim/kullanıcı kararı) ve sonuç ekranı yalnız sim'in verdiği sonraki durumu gösterir | animasyon azaltma desteği | aynı |
 Kurulmamışsa `election.not_built`. Parti adları sabit string değil; `election.party.placeholder` ya da sim `display_key` (politics-elections §8). Sim: `PlayerRecordView`, `GroupReactionView`, `ElectionView`.
+
+## I. Gündem / olay yanıtı — F03 (kesintisiz akış), SIM-12
+`decision` düzeyi olay **modal değildir**; L1 gündem rozeti ve L2 Gündem paneli üzerinden yanıtlanır (political-events §1 ile ux-ia §2 uzlaşması). Oyun akmaya devam eder; öğenin sim'den gelen geri sayımı vardır.
+| # | Adım | M | D |
+|---|---|---|---|
+| 1 | Olay gelir: bildirim şeridine kısa metin + **gündem rozeti** (sayı + en yakın kalan süre; yalnız renk değil) | rozeti tık / kısayol (öneri `G`) | rozete dokun |
+| 2 | Gündem paneli (L2): öğe başlığı, kısa bağlam, `agenda.time_left`, "Neden çıktı?" (olayı ateşleyen `ReasonRecord`) | liste, hover'da ayrıntı | satır dokun, genişler |
+| 3 | **Seçenekler** (şablondan gelen `options[]`): her seçenekte ad, **bedel** (para `format.money`, itibar/grup etkisi sim alanı olarak), **etki önizlemesi** (`agenda.preview`, tahmin etiketli; sim vermezse bölüm gizlenir, UI hesaplamaz) | seçenek kartları | büyük kartlar ≥ 44 pt, hover'a bağlı bilgi yok |
+| 4 | Seç ve onayla (`agenda.choose`) → komut; bağlayıcı/geri alınamazsa küçük L4 onayı (oyuncu başlatmıştır; sim olayı modal açmaz) | Enter | düğme |
+| 5 | **Ertele** (`agenda.defer`, sim `defer` fiilini destekliyorsa): süre dolana dek bekler; `agenda.defer_note` bedelsiz olmadığını söyler | düğme | düğme |
+| 6 | Süre dolarsa: sim'in varsayılan sonucu uygulanır; `agenda.expired` + "Neden?" | bildirim | aynı |
+| 7 | Sonuç: etki dünyada ve sicilde görünür; yanıtın gerekçesi akış D ile okunur | — | — |
+Otomatik duraklatma: **yalnız ayar** (`settings.auto_pause_agenda`); varsayılanı AÇIK SORU (ux-ia §9 madde 6, AS-11). Ayar açıksa yeni `decision` öğesinde sim duraklatma komutu gönderilir; kapalıysa hiçbir şey kesilmez. `interrupt_budget` aşıldığında aşan öğeler zaten `agenda` düzeyine düşer (sim tarafı).
+Kurulmamışsa (`political-events` sistemi yoksa) `agenda.not_built` ile etiketli ya da rozet gizli; boş sekme yok. Sim: `AgendaItemView{id, template_key, delivery, deadline_tick, options[{id, label_key, cost, preview?}], can_defer, reason_id}` (**v1.1 TEKNİK istek**, `ux-data-needs.md` §4b), `SimCommand.RespondAgenda{item_id, option_id|defer}`.
 
 ## Ortak: bildirim şeridi
 Sim olayları (`SimEvent`) → şerit: kısa metin (anahtar+argüman) + "Nedenini gör". Modal yok. Aynı türden olaylar toplulaşır. Geçmiş: `alert.feed_title` listesi. Şerit **sayı sahte değil**: yalnız gelen olaylar.

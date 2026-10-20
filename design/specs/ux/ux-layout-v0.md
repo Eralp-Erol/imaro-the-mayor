@@ -20,7 +20,7 @@ Profil `platform_profile`'dan okunur (T-007); UI sim'e profil bildirmez. Aynı s
 Yerleşim (öneri A, bkz. ux-ia §8.1):
 ```
 ┌ üst şerit: [Duraklat 1× 2× 3×] [Tarih] │ [Para] │ [Ölçek] ............. [Ayarlar] ┐
-│ [sol-üst: bildirim şeridi, kısa, 3 öğe]                          [sağ: L2 panel] │
+│ [sol-üst: bildirim şeridi, kısa, 3 öğe] [gündem rozeti: sayı+süre]  [sağ: L2 panel] │
 │                                                                                  │
 │                          DÜNYA (merkez serbest)                                  │
 │                                                                                  │
@@ -66,6 +66,7 @@ UI kontrolleri olayı önce tüketir; kalanı kameraya gider. Jest tablosu: tek 
 | Para (bakiye) | `BudgetView.balance` + yapılandırma `¤` | gizli |
 | Ölçek göstergesi | kamera ölçek olayı (UI/view; sim değil) | — |
 | Bildirim şeridi | `SimEvent` akışı | boş (öğe yok) |
+| Gündem rozeti (modal değil; tıklayınca L2 Gündem paneli) | `AgendaItemView` listesi (v1.1 TEKNİK istek; sayı + en yakın `deadline_tick`) | gizli (`agenda.not_built` yalnız Yönetim içinde) |
 | Nüfus, memnuniyet, "puan" | **HUD'da kalıcı olarak YOK**; nüfus gibi gerçek bir sayı ancak sim `DistrictView.population` verirse denetçide |
 Tek "Mutluluk %" hiçbir yerde yoktur (SIM-09).
 **MOCK kuralı:** `MockSimFacade` ile çalışırken (ui_lab, T-019) ekranın sabit bir köşesinde `app.mock_banner` ve her mock sayıda `app.mock_badge` görünür; gerçek facade bağlanınca rozetler kodla değil **facade bayrağıyla** (`SimFacade.is_mock()`) kaybolur. Ekran görüntülerinde MOCK etiketi kalmalıdır.

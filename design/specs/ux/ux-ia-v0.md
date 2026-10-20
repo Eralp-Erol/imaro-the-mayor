@@ -20,8 +20,8 @@ Altı katman, üstten alta öncelik (üst katman girdiyi önce alır; "UI girdiy
 | Kat | Yüzey | Süre / kalıcılık | Örnek | Dünyayı örter mi? |
 |---|---|---|---|---|
 | L0 | **Ana görünüm** (3D dünya + dünya içi işaretler: seçim halkası, çizim önizlemesi, protesto/inşaat ikonları) | her zaman | şehir, imar önizleme boyası | — |
-| L1 | **HUD çerçevesi** (kalıcı, ince): üst şerit (zaman kontrolü, tarih, para, ölçek göstergesi), mod/araç çubuğu, mini bildirim şeridi | her zaman | duraklat/1×/2×/3×, mod sekmeleri | Kenarlarda; merkez serbest |
-| L2 | **Bağlamsal panel** (bir tane yan panel): denetçi, nedensellik, bütçe, sicil | seçim/komutla açılır, kapatılabilir/sabitlenebilir | parsel denetçisi | Yan şerit; sabit genişlik |
+| L1 | **HUD çerçevesi** (kalıcı, ince): üst şerit (zaman kontrolü, tarih, para, ölçek göstergesi), mod/araç çubuğu, mini bildirim şeridi, **gündem rozeti** (bekleyen öğe sayısı + en yakın süre) | her zaman | duraklat/1×/2×/3×, mod sekmeleri | Kenarlarda; merkez serbest |
+| L2 | **Bağlamsal panel** (bir tane yan panel): denetçi, nedensellik, bütçe, sicil, **gündem** | seçim/komutla açılır, kapatılabilir/sabitlenebilir | parsel denetçisi | Yan şerit; sabit genişlik |
 | L3 | **Araç içi yüzey** (çizim sırasında alt/üst onay çubuğu, maliyet, uyarı) | araç etkinken | yol çizimi "Bitir/İptal" | Küçük şerit |
 | L4 | **Modal akış** (yalnız geri alınamaz/bağlayıcı kararlar ve oylama sonucu) | kısa, odaklı | meclise sun onayı, seçim gecesi | Evet (kısmi) |
 | L5 | **Sistem** (duraklatma menüsü, ayarlar, hata diyaloğu) | istek üzerine | ayarlar | Evet |
@@ -29,6 +29,7 @@ Altı katman, üstten alta öncelik (üst katman girdiyi önce alır; "UI girdiy
 Kurallar:
 - **Aynı anda en fazla bir L2 paneli** açıktır (desktop'ta isteğe bağlı ikinci "sabit" panel — AÇIK SORU 3).
 - Simülasyon olayları (protesto, yatırımcı vazgeçti) **L1 bildirim şeridine** düşer, **asla modal açmaz** (F03 "kesintisiz akış"). Modal yalnız oyuncunun başlattığı bağlayıcı eylemler ve seçim sonucu içindir.
+- **Gündem (olay yanıtı) modeli:** `political-events` §1 `decision` düzeyi UI'da **modal olmayan gündem öğesidir**: L1 gündem rozeti + L2 Gündem paneli; geri sayımlıdır (süre sim'den okunur), oyun akmaya devam eder. Süre dolarsa sim'in varsayılan sonucu uygulanır ve "Neden?" ile okunur. `ambient`/`agenda` düzeyleri bildirim şeridine/gündem listesine düşer. **Otomatik duraklatma yalnız AYARDIR** (`settings.auto_pause_agenda`); varsayılanı **AÇIK SORU 6** (kullanıcıya; AS-11 ile aynı konu) — o zamana dek UI varsayılanı koymaz, ayar kapalı gelir ve bu çalışma varsayımı olarak işaretlidir. Akış: `ux-flows-v0.md` Akış I.
 - Panel açıkken harita kaydırma/zoom çalışmaya devam eder (panel dışı alan haritadır).
 - Hiçbir yüzey kurulmamış bir sistemi **boş sekme olarak** göstermez; ya gizlenir ya `state.not_built` ile dürüstçe etiketlenir (ui.md).
 
@@ -49,7 +50,7 @@ Mod, **araç takımı bağlamıdır**, ekran değiştirmez; dünya aynı kalır.
 Geçiş kuralları:
 1. Mod değiştirmek **yarım komutu iptal etmez**: devam eden çizim taslağı korunur ve L3'te "taslak bekliyor" gösterilir; oyuncu onaylar ya da `Vazgeç` der.
 2. **Denetçi** ve **Neden?** her modda erişilir (mod bağımsız okuma araçları).
-3. Zaman akışı mod değişiminden etkilenmez (planlama sırasında oyun duraklatılabilir; otomatik duraklatma yok, yalnız ayar olarak sunulur — AÇIK SORU 6).
+3. Zaman akışı mod değişiminden etkilenmez (planlama sırasında oyun duraklatılabilir; otomatik duraklatma yok, yalnız ayar olarak sunulur; varsayılanı AÇIK SORU 6).
 4. Mod önerisi sinyali: yönetim mod rozeti (örn. bekleyen oylama) **sayı+metin** gösterir, kırmızı nokta tek başına değil (erişilebilirlik).
 5. "Özel bina yerleştir" aracı **hiçbir modda yoktur** (CAN-03). İnşa modunda yalnız kamusal/belediye yapıları; imarda yalnız koşul önerisi. UI metni bunu açıklar: `draw.no_private_building`, `zoning.no_instant_building`.
 
@@ -58,13 +59,15 @@ Geçiş kuralları:
 
 | Ölçek | Dünyada görünen | UI davranışı | Kullanılabilir araçlar | Okuma yüzeyi |
 |---|---|---|---|---|
-| Ülke | 7 metropol bölgesi | HUD sade; ilçe/parsel bilgisi kapalı | Yönetim (ulusal bağlam), harita katmanı | Metropol/özet satırları |
-| Metropol | altı çalışma bölgesi (D1..D6) | bölge etiketleri (`district.code`), hover/seçimde bölge kartı | Yönetim, bölgeler arası projeler (yetki varsa), katman | Bölge kartı, bütçe |
+| Ülke | metropol bölgeleri (sayı WorldData'dan) | HUD sade; ilçe/parsel bilgisi kapalı | Okuma: harita katmanı, özet. Yönetim araçları **makama bağlı** (aşağıda) | Metropol/özet satırları |
+| Metropol | çalışma bölgeleri (D1..Dn; **n WorldData'dan okunur**, sabit sayı gömülmez) | bölge etiketleri (`district.code`), hover/seçimde bölge kartı | Yönetim, bölgeler arası projeler (yetki varsa), katman | Bölge kartı, bütçe |
 | İlçe | mahalleler, ana yollar | yol/imar önizlemesi çizilebilir | İnşa (yol, bulvar, meydan), İmar (çokgen), Yönetim | Denetçi (ilçe) |
 | Mahalle/Parsel | parseller, bloklar, binalar | parsel sınırları + denetçi, imar boyası | Tüm araçlar; hassas düzenleme | Denetçi (parsel), Neden? |
 | Sokak/insan | cepheler, kaldırım, araçlar | ince ayar, yaya/yol kesiti; HUD en sade | Kavşak/kesit ayarı, yerel inceleme | Denetçi, dünya içi olay ikonları |
 
 Kurallar:
+- **Araçlar zoom'un yanında makam/yetki ile de kapılanır** (CAN-07, CAN-11: aynı dünya, makam değişince yetki genişler; ülke yönetimi oynanmaz). Kapı iki eksenlidir: (1) ölçek (`zoom.locked_here`), (2) **yetki** (`ActorRef`/oyuncu makamı sim'den okunur; UI makam varsaymaz). İlçe başkanı makamında ülke ölçeğinde 'ulusal' bir yönetim aracı **yoktur** (gizli ya da `state.not_built`/yetki gerekçesiyle etiketli; gri ölü buton değil). Hangi makamın hangi aracı açtığı sim/yetki verisinden gelir (`draw.needs_authority` benzeri gerekçe).
+- 'İlçe' ölçek etiketi (`zoom.district`) ve makam adları **ÇM**'dir; kanon adı değildir.
 - **Ölçek kapıları dürüsttür**: bir araç o ölçekte anlamsızsa gizlenmez gri bırakılmaz, tıklanınca `zoom.locked_here` açıklaması çıkar ("X için İlçe ölçeğine yakınlaşın") ve tek dokunuşla yakınlaştırma önerir. Ölü buton yok.
 - Etiket yoğunluğu ölçekle azalır/artar (LOD'lu UI): ülke ölçeğinde yalnız bölge adları, sokakta yalnız seçili nesne.
 - Dünya içi olay ikonları (protesto, inşaat durdu, yatırımcı vazgeçti) **ölçekle toplulaşır**: uzaktan sayılı küme, yakından tekil ikon; tıklayınca ilgili `ReasonRecord`.
@@ -73,13 +76,14 @@ Kurallar:
 
 ## 6. Sayfa/akış haritası (özet)
 ```
-Açılış (AÇIK §8) → Yükleme → Ana görünüm
+Açılış (AÇIK §8; yeni oyunda yalnız playable=true ilçeler, hiçbiri öne seçili değil → ilçe seçilmeden Başlat devre dışı) → Yükleme → Ana görünüm
 Ana görünüm ─ L1: Zaman | Para | Ölçek | Mod sekmeleri | Bildirim şeridi
    ├─ İnşa: yol/kamusal alan çizimi (L3) ─ onay → komut → kuyruk
    ├─ İmar: imar önerisi (L2 form) ─ meclis gerekiyorsa → Meclis oylaması (L2)
    ├─ Yönetim: Bütçe (L2) · Meclis (L2) · Sicil/Seçim (L2)
    ├─ Denetçi (L2): parsel / ilçe ── "Neden?" ──▶ Nedensellik paneli (L2)
-   └─ Bildirim ── "Nedenini gör" ──▶ Nedensellik paneli
+   ├─ Bildirim ── "Nedenini gör" ──▶ Nedensellik paneli
+   └─ Gündem rozeti ──▶ Gündem (L2): seçenek · önizleme · bedel · Ertele ── "Neden?" ──▶ Nedensellik
 Sistem (L5): Duraklatma menüsü · Ayarlar · Kaydet/Yükle
 ```
 Her akışın adım adım fare/klavye/trackpad + dokunmatik karşılığı: `ux-flows-v0.md`.
@@ -106,9 +110,9 @@ art-director ile çakışma noktaları **işaretlidir (art-dir)**; tek bir görs
 | Seçenek | Tanım |
 |---|---|
 | A. Minimal | Devam / Yeni / Yükle / Ayarlar / Çık, arkada canlı şehir kesiti |
-| B. Senaryo seçimli | Yeni oyunda başlangıç ilçesi (D-002: oyuncu seçer) + başlangıç modu seçimi (`start_mode` AÇIK) |
+| B. Senaryo seçimli | Yeni oyunda başlangıç ilçesi (D-002/CAN-08: oyuncu seçer; **yalnız `playable=true` ilçeler listelenir**, hiçbiri varsayılan/öne seçili değildir — Orven dahil) + başlangıç modu seçimi (`start_mode` AÇIK) |
 | C. Doğrudan oyun | Son oturuma düşer, menü duraklatma menüsüdür |
-**Öneri:** B'nin iskeleti veriyle (ilçe listesi `WorldData`'dan, başlangıç modu seçenekleri yapılandırmadan), görsel olarak A. Başlangıç modu seçimini **kanonlaştırmadan** (kampanya/göreve gelmiş/ikisi) yapılandırılabilir bırak. **AÇIK SORU 2.**
+**Öneri:** B'nin iskeleti veriyle (ilçe listesi `WorldData`'dan **yalnız `playable=true` olanlar**; sıralama kanon sırası değil, nötr; seçim yapılana dek "Başlat" devre dışı + `menu.start_district_pick`; hiç oynanabilir ilçe yoksa `menu.start_district_none`; geliştirme test alanı oyuncuya seçenek olarak sunulmaz; başlangıç modu seçenekleri yapılandırmadan), görsel olarak A. Başlangıç modu seçimini **kanonlaştırmadan** (kampanya/göreve gelmiş/ikisi) yapılandırılabilir bırak. **AÇIK SORU 2.**
 
 ### 8.3 İstatistik tabloları (F05-D AÇIK)
 | Seçenek | Tanım |
@@ -127,6 +131,6 @@ Kamera kontrol şeması (masaüstü: sürükle-pan, tekerlek zoom, Q/E dönüş;
 3. Aynı anda iki sabit panel (masaüstü) gerekli mi, yoksa tek panel mi?
 4. İstatistik tablosu biçimi ve hangi göstergelerin ilk sürümde sunulacağı.
 5. Zoom: sürekli akış mı, ölçek kapıları mı; araç kapıları ne kadar sıkı?
-6. Planlama sırasında otomatik duraklatma varsayılanı (açık/kapalı)?
+6. Gündem (`decision`) öğesinde ve planlama sırasında otomatik duraklatma **varsayılanı** (açık/kapalı)? UI yalnız ayarı sunar (`settings.auto_pause_agenda`); varsayılan kullanıcı kararıdır (political-events AS-11).
 7. Oyun içi takvim/saat biçimi (ay adı var mı, gün/yıl mı?). Şimdilik `clock.date_ingame` yer tutucu.
 8. Para birimi (Q-003) — UI yalnız yapılandırmadan okur; karar gelince yapılandırma değişir, metin değişmez.
