@@ -15,15 +15,12 @@ tmp=$(mktemp)
     open=$(grep -E '^### Q-[0-9]+.*status: open' production/QUESTIONS.md | sed 's/^### //; s/ *(status: open)//')
     [ -n "$open" ] && { echo "Kullanıcı kararı bekleyen sorular:"; echo "$open" | sed 's/^/- /'; }
   fi
-  for m in full quick; do
-    f="artifacts/verify/$m-latest.json"
-    [ -f "$f" ] || continue
+  for f in $(ls -t artifacts/verify/*-latest.json 2>/dev/null | head -n1); do
     res=$(jq -r '"\(.mode) \(.result) @ \(.started_at)"' "$f" 2>/dev/null)
     fp=$(jq -r '.fingerprint' "$f" 2>/dev/null)
     now=$([ -x tools/fingerprint.sh ] && tools/fingerprint.sh 2>/dev/null)
     [ "$fp" = "$now" ] && st="kod o zamandan beri aynı" || st="kod o zamandan beri DEĞİŞTİ — yeniden doğrula"
     echo "Son doğrulama: $res ($st)"
-    break
   done
   tools/canon-check.sh >/dev/null 2>&1 || echo "UYARI: design/foundation manifestle eşleşmiyor (tools/canon-check.sh)."
   echo "İş akışı: /dev-task, plan-milestone, handoff. Kanon: design/CANON.md. Haiku kullanma."
