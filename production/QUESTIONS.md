@@ -49,3 +49,6 @@ Kaynak: T-027 sim raporu (SIM-05, CAN-05/06). Şu an çalışma modeli: önerile
 ### Q-015 · Ismeral coğrafyasının yaratıcı onayı (status: open — kullanıcı kararı bekliyor)
 Teknik/görsel kapılar geçti (art-director GEÇER, QA PASS, canon kontrolü temiz) ama kıyı çizgisi, ada sayısı/konumu, D1–D6 yerleşimi ve "D1 kuzey kıyıda" çıkarımı **ÇM/OY** verisidir; kullanıcı onayı verilmedi. T-001 görüntüleri sohbette paylaşıldı (`artifacts/screenshots/captures/*t001-final*`; `world_preview` ile açılır).
 Onay gelene kadar kural: **hiçbir görev kalıcı şehir/mahalle/liman/yol/yerleşim koordinatını mevcut araziye sabitlemez**; yerleşim ve ağ yalnız `WorldData` + çapalardan çalışma zamanında türetilir, koordinat içeren üretilmiş veri commit'lenmez; testler topolojik/göreli kalır; kontrol verisi (`data/world/ismeral/*.json`) düzenlenebilir kalır.
+
+### Q-013 ek · Çatı payı kuralı çelişkisi (T-005 raporu, art-director kararı gerekir)
+Kit §3.2: küçük merkez/köy/yamaç/tarlada kiremit payı %55–70; aynı spec'te "her 500 m pencerede ≤%55" kuralı var. T-005 yorumu: 500 m kuralı yalnız yoğun/orta yoğun pencereler için geçerli. Onay art-director'da (sanat kuralı), kullanıcı kararı değil. Beklerken: yorum uygulandı.
