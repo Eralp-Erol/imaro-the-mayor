@@ -26,6 +26,7 @@ Durum: ▶ aktif · ⏸ bekliyor (neden) · ✓ bitti · ○ planlı. Dalga 1 = 
 | **Game UX/UI & Interaction** | ux | **T-018** UX spec v0 (IA, akışlar, masaüstü+dokunmatik, Türkçe metin sistemi) · **T-019** UI temeli: tema, ölçek, merkezi metin, platform-duyarlı yerleşim, `ui_lab` (mock facade) · **T-020** HUD + zaman kontrolü + parsel denetçisi · **T-021** nedensellik paneli (SIM-12) · **T-022** karar akışları (imar önerisi, meclis oylaması, bütçe) | T-018 yok; T-019..022←T-018,T-023 (mock facade) | 1→2 | T-018 ✓ · T-019 ✓ · T-021 ✓ · T-020 ◐ (T-019 kapsadı) · T-022 ○ |
 | **Platform Engineering** | platform | **T-007** profil katmanı + export hattı · **T-008** iPad duman testi · **T-010** renderer karşılaştırması | T-008←T-003,T-007; T-010←T-007 | 1 | T-007 ✓ (macOS export+duman PASS; Windows çalıştırma ve iPad ⏸ cihaz) |
 | **Cross-cutting / Contracts** | contracts | **T-023** ADR-0005: Sim↔View↔UI sözleşmeleri (`SimFacade`, `Snapshot`, `Command`, `Event`, `Reason`), `WorldFixture`, `MockSimFacade` | — | 1 | T-023 ✓ (v1.1 ○) |
+| **Integration (öncelikli)** | playable | **T-030** entegre oynanabilir sahne (terrain+T0+kamera+gerçek SimFacade+HUD+bir eylem→gözlenebilir sonuç; birleşik yük; smoke+QA) · **T-029** kayıt/hash maliyeti (ReasonLog) performans görevi · **T-028** Q-015 etiketli topoloji haritası | T-030←T-017, T-022 ✓, T-012 (açık kriterler korunur); T-029←T-017 (core dokunuşu) | 2 | ○ T-028 ▶ |
 | **QA & Directors** | qa | T-006 M1 kapısı; hat teslimlerinde bağımsız QA; T-901 canlı kanon probları | hat teslimleri | kapılar | ○ |
 
 Açık kullanıcı onayı gerektirenler: (1) T-007 Godot export şablonlarının resmî sürüm sayfasından indirilmesi (dosya indirme); (2) T-901 canlı kanon probları; (3) `QUESTIONS.md`'ye giren yaratıcı kararlar (blokaj değil).
@@ -36,9 +37,10 @@ LANE|sim|simulation-engineer|src/sim/,src/app/tick_driver,src/app/save_slot,test
 LANE|actors|simulation-engineer|src/sim/actors/,src/sim/politics/,tests/sim/actors/,tests/sim/politics/,data/actors/,data/politics/,src/sim/facade/,src/sim/core/game_state.gd|tests/sim/actors,tests/sim/politics|T-016 ✓, T-017, T-026 (GEÇİCİ: T-017 süresince src/sim/facade/ ve core/game_state.gd actors hattında — sim hattı boşta; T-017 bitince geri dönülür)
 LANE|platform|godot-engineer|src/app/platform_profile,src/app/input_profile,export_presets.cfg,tools/export.sh,tests/app/|tests/app|T-007, T-008, T-010
 LANE|contracts|technical-director|docs/adr/0005,docs/adr/0006,src/contracts/,tests/contracts/,tests/fixtures/|tests/contracts|T-023
-LANE|world|world-engineer|data/world/,src/world/,tests/world/|tests/world|T-001b/c, T-011, T-005
+LANE|world|world-engineer|data/world/,src/world/,tests/world/,scenes/dev/topology_map|tests/world|T-001b/c, T-011, T-005, T-028
 LANE|render|godot-engineer|src/view/,scenes/dev/world_preview,tests/view/,tools/godot/,tools/perf.sh|tests/view|T-001a, T-003, T-012
 LANE|art|art-director|design/specs/art/,art/,assets/,scenes/dev/kit_lab,tests/art/|tests/art|T-025, T-004 (technical-artist)
 LANE|chars|systems-designer|design/specs/characters,design/specs/politics,design/specs/political-events|—|T-015 (spec)
+LANE|playable|godot-engineer|src/game/,scenes/game/,tests/game/,tools/smoke_playable|tests/game|T-030 entegre oynanabilir sahne (yalnız bağlama; alt sistemlere dokunmaz)
 LANE|ux|ui-engineer|design/specs/ux/,src/ui/,scenes/ui/,scenes/dev/ui_lab,tests/ui/,data/ui/|tests/ui|T-018..T-022
 LANE|qa|qa-engineer|tests/qa/,production/qa/|tests/qa|bağımsız doğrulama
