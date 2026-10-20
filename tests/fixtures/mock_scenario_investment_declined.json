@@ -1,0 +1,248 @@
+{
+ "format": "imaro.mock_scenario",
+ "format_version": 1,
+ "provenance": "MOCK",
+ "contract_version": "1.0",
+ "id": "mock_investment_declined",
+ "description": "MOCK: Aynı imar (parsel 1 karma) farklı koşulda: talep düşük, altyapı kapasitesi yetersiz, arsa pahalı; yatırımcı gelmez (SIM-07), parsel boş kalır, gerekçe kaydedilir. Sayılar sahte.",
+ "initial": {
+  "tick": 0,
+  "speed": 1,
+  "world_id": "fixture.world",
+  "land_uses": [
+   "zone.residential",
+   "zone.mixed",
+   "zone.commercial",
+   "zone.green"
+  ],
+  "parcels": [
+   {
+    "id": 1,
+    "region_code": "F1",
+    "center": [
+     -400.0,
+     200.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 1,
+     "name_key": "mock.actor.landowner.1"
+    },
+    "land_value": 2600,
+    "reason_ids": []
+   },
+   {
+    "id": 2,
+    "region_code": "F1",
+    "center": [
+     0.0,
+     -400.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 2,
+     "name_key": "mock.actor.landowner.2"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   },
+   {
+    "id": 3,
+    "region_code": "F2",
+    "center": [
+     2200.0,
+     -800.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 3,
+     "name_key": "mock.actor.landowner.3"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   }
+  ],
+  "budget": {
+   "period": 1,
+   "status": "approved",
+   "revenue": 120000,
+   "balance": 30000,
+   "pending_vote_id": 0,
+   "lines": [
+    {
+     "line_key": "budget.line.roads",
+     "amount": 40000,
+     "proposed": 40000,
+     "actual": 0
+    },
+    {
+     "line_key": "budget.line.parks",
+     "amount": 15000,
+     "proposed": 15000,
+     "actual": 0
+    },
+    {
+     "line_key": "budget.line.services",
+     "amount": 50000,
+     "proposed": 50000,
+     "actual": 0
+    }
+   ]
+  },
+  "council": {
+   "council": {
+    "kind": "council",
+    "id": 1,
+    "name_key": "mock.actor.council.1"
+   },
+   "seats_total": 11,
+   "blocs": [
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 1,
+      "name_key": "mock.actor.council_bloc.1"
+     },
+     "seats": 6,
+     "stance": 200,
+     "position": "undecided",
+     "reason_id": 0
+    },
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 2,
+      "name_key": "mock.actor.council_bloc.2"
+     },
+     "seats": 5,
+     "stance": -300,
+     "position": "undecided",
+     "reason_id": 0
+    }
+   ],
+   "votes": []
+  },
+  "groups": []
+ },
+ "rules": [
+  {
+   "when": {
+    "kind": "zoning.propose",
+    "params": {
+     "parcel_ids": [
+      1
+     ],
+     "land_use": "zone.mixed"
+    }
+   },
+   "effects": [
+    {
+     "after_ticks": 1,
+     "type": "parcel",
+     "parcel_id": 1,
+     "set": {
+      "zone": "zone.mixed",
+      "pending_zone": ""
+     }
+    },
+    {
+     "after_ticks": 1,
+     "type": "event",
+     "event": {
+      "kind": "parcel.changed",
+      "subjects": [
+       "parcel.1"
+      ],
+      "message_key": "event.zoning.applied",
+      "args": {
+       "zone": "zone.mixed"
+      }
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "reason",
+     "label": "r_investor",
+     "reason": {
+      "actor": {
+       "kind": "investor",
+       "id": 1,
+       "name_key": "mock.actor.investor.1"
+      },
+      "decision_key": "decision.investor.develop",
+      "factors": [
+       {
+        "name_key": "reason.factor.demand",
+        "value": 300,
+        "weight": 400
+       },
+       {
+        "name_key": "reason.factor.expected_return",
+        "value": 400,
+        "weight": 300
+       },
+       {
+        "name_key": "reason.factor.infrastructure_capacity",
+        "value": 100,
+        "weight": 200,
+        "source_ref": "parcel.1"
+       },
+       {
+        "name_key": "reason.factor.construction_cost",
+        "value": -600,
+        "weight": 100,
+        "is_estimate": true
+       }
+      ],
+      "threshold": 500,
+      "outcome": "negative",
+      "subjects": [
+       "parcel.1"
+      ]
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "event",
+     "event": {
+      "kind": "actor.decided",
+      "actor": {
+       "kind": "investor",
+       "id": 1,
+       "name_key": "mock.actor.investor.1"
+      },
+      "subjects": [
+       "parcel.1"
+      ],
+      "message_key": "event.investor.declined",
+      "reason_labels": [
+       "r_investor"
+      ]
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "parcel",
+     "parcel_id": 1,
+     "set": {},
+     "reason_labels": [
+      "r_investor"
+     ]
+    }
+   ]
+  }
+ ],
+ "timeline": []
+}

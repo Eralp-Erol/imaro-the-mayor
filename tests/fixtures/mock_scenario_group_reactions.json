@@ -1,0 +1,352 @@
+{
+ "format": "imaro.mock_scenario",
+ "format_version": 1,
+ "provenance": "MOCK",
+ "contract_version": "1.0",
+ "id": "mock_group_reactions",
+ "description": "MOCK: Parsel 2 ticari imara alınır; bir grup destekler, diğeri protesto eder (SIM-09: grup başına ayrı tutum, toplam skor yok). Sayılar sahte.",
+ "initial": {
+  "tick": 0,
+  "speed": 1,
+  "world_id": "fixture.world",
+  "land_uses": [
+   "zone.residential",
+   "zone.mixed",
+   "zone.commercial",
+   "zone.green"
+  ],
+  "parcels": [
+   {
+    "id": 1,
+    "region_code": "F1",
+    "center": [
+     -400.0,
+     200.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 1,
+     "name_key": "mock.actor.landowner.1"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   },
+   {
+    "id": 2,
+    "region_code": "F1",
+    "center": [
+     0.0,
+     -400.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 2,
+     "name_key": "mock.actor.landowner.2"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   },
+   {
+    "id": 3,
+    "region_code": "F2",
+    "center": [
+     2200.0,
+     -800.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 3,
+     "name_key": "mock.actor.landowner.3"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   }
+  ],
+  "budget": {
+   "period": 1,
+   "status": "approved",
+   "revenue": 120000,
+   "balance": 30000,
+   "pending_vote_id": 0,
+   "lines": [
+    {
+     "line_key": "budget.line.roads",
+     "amount": 40000,
+     "proposed": 40000,
+     "actual": 0
+    },
+    {
+     "line_key": "budget.line.parks",
+     "amount": 15000,
+     "proposed": 15000,
+     "actual": 0
+    },
+    {
+     "line_key": "budget.line.services",
+     "amount": 50000,
+     "proposed": 50000,
+     "actual": 0
+    }
+   ]
+  },
+  "council": {
+   "council": {
+    "kind": "council",
+    "id": 1,
+    "name_key": "mock.actor.council.1"
+   },
+   "seats_total": 11,
+   "blocs": [
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 1,
+      "name_key": "mock.actor.council_bloc.1"
+     },
+     "seats": 6,
+     "stance": 200,
+     "position": "undecided",
+     "reason_id": 0
+    },
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 2,
+      "name_key": "mock.actor.council_bloc.2"
+     },
+     "seats": 5,
+     "stance": -300,
+     "position": "undecided",
+     "reason_id": 0
+    }
+   ],
+   "votes": []
+  },
+  "groups": [
+   {
+    "group": {
+     "kind": "group",
+     "id": 1,
+     "name_key": "mock.actor.group.1"
+    },
+    "region_code": "F1",
+    "stance": 100,
+    "stance_delta": 0,
+    "reaction": "neutral",
+    "intensity": 0,
+    "cause_refs": [],
+    "reason_ids": [],
+    "tick": 0
+   },
+   {
+    "group": {
+     "kind": "group",
+     "id": 2,
+     "name_key": "mock.actor.group.2"
+    },
+    "region_code": "F1",
+    "stance": -100,
+    "stance_delta": 0,
+    "reaction": "neutral",
+    "intensity": 0,
+    "cause_refs": [],
+    "reason_ids": [],
+    "tick": 0
+   }
+  ]
+ },
+ "rules": [
+  {
+   "when": {
+    "kind": "zoning.propose",
+    "params": {
+     "parcel_ids": [
+      2
+     ],
+     "land_use": "zone.commercial"
+    }
+   },
+   "effects": [
+    {
+     "after_ticks": 1,
+     "type": "parcel",
+     "parcel_id": 2,
+     "set": {
+      "zone": "zone.commercial",
+      "pending_zone": ""
+     }
+    },
+    {
+     "after_ticks": 1,
+     "type": "event",
+     "event": {
+      "kind": "parcel.changed",
+      "subjects": [
+       "parcel.2"
+      ],
+      "message_key": "event.zoning.applied",
+      "args": {
+       "zone": "zone.commercial"
+      }
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "reason",
+     "label": "r_support",
+     "reason": {
+      "actor": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "decision_key": "decision.group.support",
+      "factors": [
+       {
+        "name_key": "reason.factor.jobs_access",
+        "value": 700,
+        "weight": 500
+       },
+       {
+        "name_key": "reason.factor.commute_time",
+        "value": 400,
+        "weight": 500
+       }
+      ],
+      "threshold": 400,
+      "outcome": "positive",
+      "subjects": [
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "reason",
+     "label": "r_protest",
+     "reason": {
+      "actor": {
+       "kind": "group",
+       "id": 2,
+       "name_key": "mock.actor.group.2"
+      },
+      "decision_key": "decision.group.protest",
+      "factors": [
+       {
+        "name_key": "reason.factor.traffic_noise",
+        "value": 800,
+        "weight": 500
+       },
+       {
+        "name_key": "reason.factor.rent_pressure",
+        "value": 600,
+        "weight": 500,
+        "is_estimate": true
+       }
+      ],
+      "threshold": 500,
+      "outcome": "positive",
+      "subjects": [
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "group",
+     "reason_labels": [
+      "r_support"
+     ],
+     "reaction": {
+      "group": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "region_code": "F1",
+      "stance": 250,
+      "stance_delta": 150,
+      "reaction": "support",
+      "intensity": 400,
+      "cause_refs": [
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "group",
+     "reason_labels": [
+      "r_protest"
+     ],
+     "reaction": {
+      "group": {
+       "kind": "group",
+       "id": 2,
+       "name_key": "mock.actor.group.2"
+      },
+      "region_code": "F1",
+      "stance": -400,
+      "stance_delta": -300,
+      "reaction": "protest",
+      "intensity": 700,
+      "cause_refs": [
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "event",
+     "event": {
+      "kind": "group.reacted",
+      "actor": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "subjects": [
+       "parcel.2"
+      ],
+      "message_key": "event.group.support",
+      "reason_labels": [
+       "r_support"
+      ]
+     }
+    },
+    {
+     "after_ticks": 2,
+     "type": "event",
+     "event": {
+      "kind": "group.reacted",
+      "actor": {
+       "kind": "group",
+       "id": 2,
+       "name_key": "mock.actor.group.2"
+      },
+      "subjects": [
+       "parcel.2"
+      ],
+      "message_key": "event.group.protest",
+      "reason_labels": [
+       "r_protest"
+      ]
+     }
+    }
+   ]
+  }
+ ],
+ "timeline": []
+}
