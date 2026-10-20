@@ -1,0 +1,21 @@
+{
+	"_header": "T-002 sim cekirdegi calisma-modeli sayilari (F05-C: ayarlanabilir, kanon DEGIL). Ayrintilar src/sim/core/sim_config.gd. Zaman oranlari CM/AC (ADR-0002 Karar 4).",
+	"sim": {
+		"_notes": "Taban tick = 1 oyun gunu. Takvim oranlari ve kayit kapasiteleri durumla birlikte kaydedilir (kayit yuklenince ayni takvim).",
+		"days_per_month": 30,
+		"months_per_quarter": 3,
+		"reason_log_capacity": 20000,
+		"command_log_capacity": 5000
+	},
+	"driver": {
+		"_notes": "Yalniz gorunum/uygulama tarafi (durumun parcasi degil). speeds: hiz adi -> gercek saniye basina tick (tam sayi). 0 = duraklat.",
+		"speeds": {
+			"paused": 0,
+			"normal": 1,
+			"fast": 4,
+			"fastest": 16
+		},
+		"default_speed": "normal",
+		"max_ticks_per_advance": 64
+	}
+}
