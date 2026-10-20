@@ -15,6 +15,13 @@ extends Node3D
 ## Kamera = CameraRig (T-003, src/view/camera/): girdi YALNIZ InputProfile ile. Masaüstü: sol sürükle kaydır, orta tuş
 ##   sürükle döndür, tekerlek/trackpad kıstır imleçte zoom; WASD/oklar kaydır, Q/E döndür, PageUp/PageDown zoom;
 ##   R/F eğim (GEÇİCİ). Dokunmatik (`-- --imaro-input-profile=touch`): tek parmak kaydır, iki parmak kıstır/bük.
+## Yapılar (T-012): varsayılan AÇIK. `--no-buildings` kapatır (T-001/T-003 karşılaştırmaları için). Kaynak = STAND-IN
+##   `DevBuildingSource` (gerçek WorldNetwork parselleri); gerçek T0 yerleşimi (`T0Settlement.generate`) gelince
+##   `_build_buildings()` içindeki TEK satır değişir. Ayarlar: --bld-seed=N --bld-cell=M (chunk m) --lod0-end=M
+##   --lod1-end=M --hlod1-end=M --lod1-shadows --bld-no-hlod2 --bld-no-hlod1 --bld-no-lod0 --bld-no-lod1
+##   --shadow-caster=0|1 (gölgeyi LOD0 mu LOD1 yalnız-gölge mi düşürür)
+##   --no-warmup (gölge hattı ısıtmasını kapat, ölçüm için) --light=t001 (eski T-001 ışığı 0,7/0,85; varsayılan
+##   low-key 0,5/0,7).
 ## HUD yok; sayılar yalnız konsola. Bu sahne simülasyon durumu tutmaz.
 
 const DATA_DIR := "res://data/world/ismeral"
@@ -29,13 +36,14 @@ const MAX_CELL_M := 2000.0
 ## uzaklığında (58 km) gölge uzunluğu birkaç piksel olduğundan kazanç yok (eğim gölgelemesi her ölçekte
 ## var).
 const SHADOW_MAX_CAMERA_DISTANCE_M := 30000.0
-## Işık tabanı (VIS-01, AD takibi): gölge yüzü/gölge içindeki yüzler siyaha inmesin. Ambient ~2x (eski 0.42),
-## güneş
-## buna göre kısıldı: güneşe bakan düz zeminin toplam parlaklığı eski dengeye yakın kalır, gölge tabanı
-## yaklaşık iki
-## katına çıkar (ölçüm: bkz T-001 raporu).
-const SUN_ENERGY := 0.7
-const AMBIENT_ENERGY := 0.85
+## Işık tabanı (VIS-01): LOW-KEY (T-012 kararı; art-director T-004 kapısı B1): güneş 0,5 / ambient 0,7. Eski T-001 tabanı
+## (0,7 / 0,85) bina paletini (W1) neredeyse beyaza taşıyordu (kit spec §13 not 3); paylaşımlı sahnede tek ışık
+## olduğundan arazi de bu tabana iner. Ölçüm (T-001 metro/harbor, aynı kamera, bina yok, arazi pikselleri, V = max(RGB)):
+## metro medyan 0,384 -> 0,337, harbor 0,596 -> 0,522 (ikisi de 0,32-0,64 bandında). Eski taban `--light=t001` ile.
+const SUN_ENERGY := 0.5
+const AMBIENT_ENERGY := 0.7
+const T001_SUN_ENERGY := 0.7
+const T001_AMBIENT_ENERGY := 0.85
 ## Gölge uzaklığı = kamera uzaklığı x çarpan, [min, max] aralığında. Alt sınır sokak ölçeğinde de gölge verir
 ## (tek ortogonal harita: 6 km'de ~1,5 m/texel, 500 m'de ~0,12 m/texel); T-001 preset'lerinin hepsi >3,3 km'dedir
 ## (değişmez: 1,8x ≥ 6000).
@@ -60,6 +68,7 @@ var _markers: WorldDebugMarkers
 var _sun: DirectionalLight3D
 var _args: Dictionary = {}
 var _shadows_wanted: bool = true
+var _buildings: BuildingView = null
 
 
 func _ready() -> void:
@@ -96,6 +105,8 @@ func _ready() -> void:
 	_terrain.build(_world)
 	var t3 := Time.get_ticks_usec()
 
+	var t3b := Time.get_ticks_usec()
+	var building_stats := {}
 	_setup_environment()
 	_setup_sun()
 	_markers = WorldDebugMarkers.new()
@@ -113,6 +124,10 @@ func _ready() -> void:
 	_camera.make_current()
 	_camera.apply_preset(str(args.get("preset", "metro")))
 	_apply_camera_overrides(args)
+	if not args.has("no-buildings"):
+		building_stats = _build_buildings(control, world_seed)
+		if not args.has("no-warmup"):
+			_buildings.warm_up(_camera.camera)
 	if args.has("sweep"):
 		var street_spec := str(args["sweep"]) if str(args["sweep"]) != "true" else "street:port"
 		_sweep = CameraSweep.build(_world, street_spec, _terrain.surface_height_at,
@@ -125,8 +140,9 @@ func _ready() -> void:
 		"control_load_ms": snappedf((t1 - t0) / 1000.0, 0.1),
 		"world_generate_ms": snappedf((t2 - t1) / 1000.0, 0.1),
 		"terrain_build_ms": snappedf((t3 - t2) / 1000.0, 0.1),
-		"terrain": _terrain.stats,
+		"terrain": _terrain.stats, "buildings": building_stats,
 	}
+	build_stats["post_terrain_ms"] = snappedf((Time.get_ticks_usec() - t3b) / 1000.0, 0.1)
 	print("WORLD_PREVIEW ", JSON.stringify(build_stats))
 
 
@@ -172,6 +188,10 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func world() -> WorldData:
 	return _world
+
+
+func buildings() -> BuildingView:
+	return _buildings
 
 
 func camera() -> CameraRig:
@@ -227,6 +247,54 @@ func _apply_camera_overrides(args: Dictionary) -> void:
 	_camera.apply_state(s, true)
 
 
+## STAND-IN yapı kaynağı (WorldNetwork -> DevBuildingSource) + BuildingView (WorldView altında: rebasing otomatik).
+## Gerçek kaynağa geçiş noktası: `cols` satırı -> `T0Settlement.generate(_world, net, lib.manifest, seed, control)`.
+func _build_buildings(control: Dictionary, world_seed: int) -> Dictionary:
+	var t0 := Time.get_ticks_usec()
+	var net_control: Variant = JSON.parse_string(FileAccess.get_file_as_string("%s/network.json" % DATA_DIR))
+	if not net_control is Dictionary:
+		push_error("world_preview: network.json okunamadı, yapılar kurulmadı")
+		return {}
+	var net := NetworkGenerator.generate(_world, net_control, world_seed)
+	var t1 := Time.get_ticks_usec()
+	var lib := KitLibrary.load_manifest()
+	var kit := BuildingKit.from_library(lib)
+	var cols: BuildingColumns = DevBuildingSource.generate(_world, net, lib.manifest,
+			_arg_int(_args, "bld-seed", world_seed, -2147483648, 2147483647))
+	var t2 := Time.get_ticks_usec()
+	var config := BuildingViewConfig.new()
+	config.cell_m = _arg_float(_args, "bld-cell", config.cell_m, 100.0, 4000.0)
+	config.cast_shadows = _shadows_wanted
+	config.lod1_casts_shadow = _args.has("lod1-shadows")
+	config.shadow_caster_lod = _arg_int(_args, "shadow-caster", config.shadow_caster_lod, 0, 1)
+	config.build_hlod2 = not _args.has("bld-no-hlod2")
+	config.build_hlod1 = not _args.has("bld-no-hlod1")
+	config.build_lod0 = not _args.has("bld-no-lod0")
+	config.build_lod1 = not _args.has("bld-no-lod1")
+	config.use_threads = not _args.has("no-threads")
+	config.lod.lod0_end_m = _arg_float(_args, "lod0-end", config.lod.lod0_end_m, 100.0, 5000.0)
+	config.lod.lod1_end_m = _arg_float(_args, "lod1-end", config.lod.lod1_end_m, 300.0, 20000.0)
+	config.lod.hlod1_end_m = _arg_float(_args, "hlod1-end", config.lod.hlod1_end_m, 1000.0, 90000.0)
+	config.lod.hlod2_overlap_m = _arg_float(_args, "hlod2-overlap", config.lod.hlod2_overlap_m, 0.0, 60000.0)
+	var problems := config.lod.problems()
+	if not problems.is_empty():
+		push_error("world_preview: LOD ayarı tutarsız: %s" % ", ".join(problems))
+	_buildings = BuildingView.new()
+	_buildings.name = "Buildings"
+	_view_root.add_child(_buildings)
+	_buildings.setup(_world, kit, config)
+	var report := _buildings.set_columns(cols, net.graph_version)
+	var t3 := Time.get_ticks_usec()
+	if not report.get("ok", false):
+		push_error("world_preview: yapı sütunları reddedildi: %s" % str(report.get("errors")))
+	var stats := _buildings.stats.duplicate()
+	stats["network_ms"] = snappedf((t1 - t0) / 1000.0, 0.1)
+	stats["source_ms"] = snappedf((t2 - t1) / 1000.0, 0.1)
+	stats["view_ms"] = snappedf((t3 - t2) / 1000.0, 0.1)
+	stats["parcels"] = net.parcels.size()
+	return stats
+
+
 func _parse_args() -> Dictionary:
 	var result := {}
 	for arg in OS.get_cmdline_user_args():
@@ -247,7 +315,8 @@ func _setup_environment() -> void:
 	env.background_color = Color(0.045, 0.06, 0.085)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.60, 0.65, 0.74)
-	env.ambient_light_energy = _arg_float(_args, "ambient", AMBIENT_ENERGY, 0.0, 2.0)
+	env.ambient_light_energy = _arg_float(_args, "ambient",
+			T001_AMBIENT_ENERGY if str(_args.get("light", "")) == "t001" else AMBIENT_ENERGY, 0.0, 2.0)
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	var we := WorldEnvironment.new()
 	we.name = "WorldEnvironment"
@@ -263,7 +332,8 @@ func _setup_sun() -> void:
 	_sun = DirectionalLight3D.new()
 	_sun.name = "Sun"
 	_sun.light_color = Color(1.0, 0.97, 0.90)
-	_sun.light_energy = _arg_float(_args, "sun-energy", SUN_ENERGY, 0.0, 4.0)
+	_sun.light_energy = _arg_float(_args, "sun-energy",
+			T001_SUN_ENERGY if str(_args.get("light", "")) == "t001" else SUN_ENERGY, 0.0, 4.0)
 	_sun.shadow_enabled = _shadows_wanted
 	_sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL  # tek harita: en ucuz (bkz. perf notu)
 	_sun.shadow_opacity = 0.55
