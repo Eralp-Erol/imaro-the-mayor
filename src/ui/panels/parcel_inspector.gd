@@ -5,7 +5,7 @@ extends VBoxContainer
 ## `ParcelView`'de OLMAYAN bilgi (altyapı erişimi, yatırımcı ilgisi, nüfus) gösterilmez - sahte satır yok
 ## (sözleşme v1.1
 ## istekleri). Hover'a bağlı bilgi yok: dokunmatik ve masaüstü aynı satırları görür (seç -> denetçi).
-## "Neden?" yalnız kayıtlı gerekçe varsa görünür (SIM-12); nedensellik paneli T-021'dir -> `reason_requested`.
+## "Neden?" yalnız kayıtlı gerekçe varsa görünür (SIM-12); nedensellik paneli `ReasonPanel`dir -> `reason_requested`.
 
 signal reason_requested(subject_ref: StringName)
 
@@ -30,7 +30,7 @@ static func create(ctx: UiContext) -> ParcelInspector:
 	ins.add_child(ins._empty)
 	ins._rows = VBoxContainer.new()
 	ins.add_child(ins._rows)
-	ins._why = UiFactory.button(ctx, UiText.t(&"common.why"), true)
+	ins._why = UiFactory.button(ctx, UiText.t(&"reason.parcel_history"), true)
 	ins._why.visible = false
 	ins._why.pressed.connect(func() -> void: ins.reason_requested.emit(ins._subject))
 	ins.add_child(ins._why)

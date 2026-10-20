@@ -68,12 +68,12 @@ func test_valid_proposal_runs_end_to_end_to_the_investor_reason() -> void:
 		if b.text == UiText.t(&"alert.open_reason"):
 			b.pressed.emit()
 	assert_that(lab.hud.panel_id()).is_equal(&"reason")
-	var preview := _find_preview(lab.hud.panel)
-	assert_object(preview).is_not_null()
-	var joined := " ".join(preview.texts())
+	var panel := _find_panel(lab.hud.panel)
+	assert_object(panel).is_not_null()
+	var joined := " ".join(panel.texts())
 	assert_str(joined).contains("Yatırımcı vazgeçti")
 	assert_str(joined).contains("Altyapı kapasitesi")
-	assert_str(joined).contains("Etkenlerin toplamı eşiğe ulaşmadı")
+	assert_str(joined).contains("eşiğe ulaşılmadı")
 	assert_str(joined).contains("MOCK")
 
 
@@ -98,11 +98,11 @@ func test_zoning_without_parcel_asks_for_selection() -> void:
 	assert_object(flow.use_button(&"zone.mixed")).is_null()  # parsel yokken seçenek yok (ölü düğme yok)
 
 
-func _find_preview(node: Node) -> ReasonPreview:
-	if node is ReasonPreview:
+func _find_panel(node: Node) -> ReasonPanel:
+	if node is ReasonPanel:
 		return node
 	for child in node.get_children():
-		var found := _find_preview(child)
+		var found := _find_panel(child)
 		if found != null:
 			return found
 	return null

@@ -8,8 +8,9 @@ extends Control
 ##                         [--ui-lab-safe=ÜST,SAĞ,ALT,SOL] [--ui-lab-demo=ADIM]
 ## Senaryo: declined (varsayılan) | positive | groups | council | invalid
 ## Demo adımları (capture için, tick sürücüsü kapalı): home | inspect | zoning | reject | done | protected |
-## states
-## Klavye (dev): F1 masaüstü profili · F2 iPad yatay (1366x1024) · F3 iPad dikey (1024x1366) · F4 güvenli alan
+## states | reason (senaryonun gerekçe paneli) | reason_list | reason_parcel | reason_actor | reason_rejected |
+## reason_bad (tutarsız kayıt, yalnız dev) | reason_chain (zincir gezinmesi, yalnız dev)
+## Klavye (dev): N seçili parselin gerekçeleri · F5 aktör listesi (aktör girişi önizlemesi) · F1 masaüstü profili · F2 iPad yatay (1366x1024) · F3 iPad dikey (1024x1366) · F4 güvenli alan
 ## simülasyonu
 ##
 ## DEV metinleri aşağıdaki sabitlerdedir (oyuncu UI'ı değildir; oyun metinleri UiText'ten gelir).
@@ -29,10 +30,14 @@ var facade: SimFacade = null
 var hud: HudRoot = null
 var map: UiLabMap = null
 
+var scenario_name_in_use: String = "declined"
 var _platform: PlatformProfile = null
 var _selected: int = 0
 var _inspector: ParcelInspector = null
 var _zoning: UiLabZoning = null
+var _reason_panel: ReasonPanel = null
+var _reason_nav: Array[Dictionary] = []
+var _reason_initial: Callable = Callable()
 var _driver_on: bool = true
 var _accum: float = 0.0
 var _seen_tick: int = -1
@@ -43,7 +48,8 @@ func _ready() -> void:
 	var args := _parse_args()
 	_driver_on = not args.has("demo")
 	var scenario_name: String = args.get("scenario", "declined")
-	facade = MockSimFacade.from_file(SCENARIO_FILES.get(scenario_name, SCENARIO_FILES["declined"]))
+	scenario_name_in_use = scenario_name if SCENARIO_FILES.has(scenario_name) else "declined"
+	facade = MockSimFacade.from_file(SCENARIO_FILES[scenario_name_in_use])
 	_platform = PlatformProfile.detect()
 	map = UiLabMap.new()
 	add_child(map)
@@ -75,6 +81,8 @@ func _process(delta: float) -> void:
 		_seen_tick = facade.current_tick()
 		map.reload()
 		_refresh_inspector()
+		if _reason_panel != null and is_instance_valid(_reason_panel):
+			_reason_panel.refresh()
 
 
 func _dispatch_events() -> void:
@@ -95,6 +103,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 			_switch_profile(PlatformProfile.INPUT_TOUCH, Vector2i(1366, 1024))
 		KEY_F3:
 			_switch_profile(PlatformProfile.INPUT_TOUCH, Vector2i(1024, 1366))
+		KEY_N:
+			_open_reason(func(p: ReasonPanel) -> void: p.show_subject(StringName("parcel.%d" % maxi(_selected, 1))))
+		KEY_F5:
+			open_actors()
 		KEY_F4:
 			hud.simulated_safe = Vector4.ZERO if hud.simulated_safe != Vector4.ZERO else SAFE_SIMULATION
 			hud.apply_profile(_platform)
@@ -109,6 +121,14 @@ func select_parcel(parcel_id: int) -> void:
 			hud.close_panel_soft()
 		return
 	hud.open_panel(&"inspector", &"inspector.title", _build_inspector)
+
+
+func open_actors() -> void:
+	hud.open_panel(&"actors", &"reason.open_actor", _build_actors)
+
+
+func reason_panel() -> ReasonPanel:
+	return _reason_panel if _reason_panel != null and is_instance_valid(_reason_panel) else null
 
 
 func open_zoning() -> void:
@@ -158,32 +178,56 @@ func _on_tool_selected(tool_id: StringName) -> void:
 func _on_panel_closed(_id: StringName) -> void:
 	_inspector = null
 	_zoning = null
+	_reason_panel = null
+	_reason_nav = []
 
 
 func _on_event_reason(event: SimEvent) -> void:
-	_open_reasons(event.reason_ids)
+	_open_reason(func(p: ReasonPanel) -> void: p.show_event(event))
 
 
 func _on_inspector_reason(subject_ref: StringName) -> void:
-	var records := facade.reasons_for(subject_ref)
-	_open_records(records)
+	open_reason_for(subject_ref)
 
 
-func _open_reasons(ids: PackedInt64Array) -> void:
-	var records: Array[ReasonRecord] = []
-	for id in ids:
-		var r := facade.reason(id)
-		if r != null:
-			records.append(r)
-	_open_records(records)
+func open_reason_for(subject_ref: StringName) -> void:
+	_open_reason(func(p: ReasonPanel) -> void: p.show_subject(subject_ref))
 
 
-func _open_records(records: Array[ReasonRecord]) -> void:
-	var is_mock := facade.is_mock()
-	hud.open_panel(&"reason", &"reason.title", func(c: UiContext) -> Control:
-		var preview := ReasonPreview.create(c)
-		preview.show_records(records, is_mock)
-		return preview)
+## Gerekçe panelini açar; `initial(panel)` ilk görünümü kurar. Profil değişince panel yeniden kurulur ve gezinti
+## durumu geri yüklenir.
+func _open_reason(initial: Callable) -> void:
+	_reason_nav = []
+	_reason_initial = initial
+	hud.open_panel(&"reason", &"reason.title", _build_reason)
+
+
+func _build_reason(c: UiContext) -> Control:
+	var p := ReasonPanel.create(c, facade)
+	p.map_enabled = true
+	p.map_focus_requested.connect(_on_reason_map)
+	_reason_panel = p
+	if not _reason_nav.is_empty():
+		p.restore_nav(_reason_nav)
+	elif _reason_initial.is_valid():
+		_reason_initial.call(p)
+	p.nav_changed.connect(func() -> void: _reason_nav = p.nav_state())
+	_reason_nav = p.nav_state()
+	return p
+
+
+func _on_reason_map(subject_ref: StringName) -> void:
+	var parsed := SimContract.parse_ref(subject_ref)
+	if parsed["kind"] == String(SimContract.REF_PARCEL):
+		_selected = int(parsed["id"])
+		map.select(_selected)
+
+
+func _build_actors(c: UiContext) -> Control:
+	var list := UiLabActors.create(c, facade)
+	list.actor_chosen.connect(func(ref: StringName) -> void:
+		_open_reason(func(p: ReasonPanel) -> void: p.show_subject(ref)))
+	return list
 
 
 func _build_inspector(c: UiContext) -> Control:
@@ -232,7 +276,7 @@ func _run_demo(step: String) -> void:
 			_dispatch_events()
 			hud.refresh()
 			map.reload()
-			_open_reasons(_first_reason_ids())
+			_open_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(_first_reason_ids()))
 		"protected":
 			select_parcel(2)
 			open_zoning()
@@ -242,10 +286,89 @@ func _run_demo(step: String) -> void:
 			_dispatch_events()
 			hud.refresh()
 			map.reload()
+		"reason", "reason_list", "reason_parcel", "reason_actor", "reason_rejected", "reason_bad", "reason_chain":
+			_demo_reason(step)
 		"states":
 			hud.set_agenda(2, 5, true)
 			hud.open_panel(&"states", &"inspector.title", _build_state_gallery)
 	hud.refresh()
+
+
+## Gerekçe paneli capture demoları: senaryoyu gerekçe oluşana dek oynatır, sonra ilgili girişi açar.
+func _demo_reason(step: String) -> void:
+	_play_scenario()
+	match step:
+		"reason":
+			_open_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(_first_reason_ids()))
+		"reason_list":
+			var ids := _all_reason_ids()
+			_open_reason(func(p: ReasonPanel) -> void:
+				p.show_reason_ids(ids)
+				if ids.size() == 1:
+					return)
+		"reason_parcel":
+			select_parcel(1)
+			_open_reason(func(p: ReasonPanel) -> void: p.show_subject(&"parcel.1"))
+		"reason_actor":
+			var ids2 := _all_reason_ids()
+			var first := facade.reason(ids2[0]) if not ids2.is_empty() else null
+			_open_reason(func(p: ReasonPanel) -> void:
+				if first != null and first.actor != null:
+					p.show_subject(first.actor.ref()))
+		"reason_rejected":
+			for e in facade.events_since(0):
+				if e.kind == SimEvent.KIND_COMMAND_REJECTED:
+					var rejected := e
+					_open_reason(func(p: ReasonPanel) -> void: p.show_event(rejected))
+					break
+		"reason_bad":
+			var good := facade.reason(1)
+			var bad_list: Array[ReasonRecord] = []
+			if good != null:
+				bad_list.append(UiLabReasonFacade.corrupt(good, 450, true))
+			_swap_facade(UiLabReasonFacade.with_records(SCENARIO_FILES[scenario_name_in_use], bad_list))
+			_open_reason(func(p: ReasonPanel) -> void: p.show_record(1))
+		"reason_chain":
+			_swap_facade(UiLabReasonFacade.with_records(SCENARIO_FILES[scenario_name_in_use],
+				UiLabReasonFacade.chain_records()))
+			_open_reason(func(p: ReasonPanel) -> void: p.show_record(3))
+
+
+func _swap_facade(next: SimFacade) -> void:
+	facade = next
+	hud.facade = next
+	map.bind(next, hud.ctx)
+	_event_cursor = 0
+
+
+func _play_scenario() -> void:
+	match scenario_name_in_use:
+		"invalid":
+			facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([2]), &"zone.commercial"))
+			facade.advance(3)
+		"groups":
+			facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([2]), &"zone.commercial"))
+			facade.advance(6)
+		"council":
+			facade.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+			facade.advance(6)
+		"positive":
+			facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([1]), &"zone.mixed"))
+			facade.advance(8)
+		_:
+			facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([1]), &"zone.mixed"))
+			facade.advance(6)
+	hud.refresh()
+	map.reload()
+
+
+func _all_reason_ids() -> PackedInt64Array:
+	var ids := PackedInt64Array()
+	var n := 1
+	while facade.reason(n) != null:
+		ids.append(n)
+		n += 1
+	return ids
 
 
 func _first_reason_ids() -> PackedInt64Array:

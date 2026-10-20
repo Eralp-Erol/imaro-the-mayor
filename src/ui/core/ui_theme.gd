@@ -14,6 +14,8 @@ const V_LABEL_TITLE := &"LabelTitle"
 const V_LABEL_HEADING := &"LabelHeading"
 const V_LABEL_DANGER := &"LabelDanger"
 const V_LABEL_ON_MOCK := &"LabelOnMock"
+const V_LABEL_OK := &"LabelOk"
+const V_PANEL_ALERT := &"PanelAlert"
 
 
 static func build(ctx: UiContext) -> Theme:
@@ -28,6 +30,10 @@ static func build(ctx: UiContext) -> Theme:
 	t.set_type_variation(V_PANEL_CARD, &"PanelContainer")
 	t.set_stylebox(&"panel", V_PANEL_CARD,
 		_flat(tk.color("panel_bg"), tk.color("border"), 1, int(tk.size("radius")), pad, pad))
+	# Veri hatası kutusu: renk tek başına değil, kalın çerçeve + simge + metin (ux-states-a11y §1).
+	t.set_type_variation(V_PANEL_ALERT, &"PanelContainer")
+	t.set_stylebox(&"panel", V_PANEL_ALERT,
+		_flat(tk.color("panel_bg_alt"), tk.color("danger"), 3, int(tk.size("radius")), pad, pad))
 	t.set_type_variation(V_MOCK_CHIP, &"PanelContainer")
 	t.set_stylebox(&"panel", V_MOCK_CHIP, _flat(tk.color("mock"), Color.TRANSPARENT, 0, 4, pad / 2, 1))
 	t.set_type_variation(V_MOCK_BANNER, &"PanelContainer")
@@ -72,6 +78,7 @@ static func _build_labels(t: Theme, ctx: UiContext) -> void:
 	_label_variation(t, V_LABEL_HEADING, tk.color("text"), ctx.font_heading())
 	_label_variation(t, V_LABEL_DANGER, tk.color("danger"), ctx.font_body())
 	_label_variation(t, V_LABEL_ON_MOCK, tk.color("text_on_accent"), ctx.font_small())
+	_label_variation(t, V_LABEL_OK, tk.color("ok"), ctx.font_body())
 
 
 static func _label_variation(t: Theme, variation: StringName, color: Color, font_size: int) -> void:

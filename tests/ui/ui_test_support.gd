@@ -51,3 +51,35 @@ static func _collect_buttons(node: Node, out: Array[Button]) -> void:
 		if b != null and b.is_visible_in_tree():
 			out.append(b)
 		_collect_buttons(child, out)
+
+
+## Senaryoyu gerekçe oluşana dek oynatır (T-021 testleri ve capture demoları aynı yolu kullanır).
+static func played(scenario_name: String) -> MockSimFacade:
+	var f := mock(scenario_name)
+	match scenario_name:
+		"mock_scenario_investment_positive":
+			f.submit_command(SimCommand.zoning_propose(PackedInt64Array([1]), &"zone.mixed"))
+			f.advance(8)
+		"mock_scenario_group_reactions":
+			f.submit_command(SimCommand.zoning_propose(PackedInt64Array([2]), &"zone.commercial"))
+			f.advance(6)
+		"mock_scenario_council_budget_vote":
+			f.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+			f.advance(6)
+		"mock_scenario_invalid_commands":
+			f.submit_command(SimCommand.zoning_propose(PackedInt64Array([2]), &"zone.commercial"))
+			f.advance(3)
+		_:
+			f.submit_command(SimCommand.zoning_propose(PackedInt64Array([1]), &"zone.mixed"))
+			f.advance(6)
+	return f
+
+
+## Bir facade'in tüm gerekçe kimlikleri (1..n).
+static func all_reason_ids(facade: SimFacade) -> PackedInt64Array:
+	var ids := PackedInt64Array()
+	var n := 1
+	while facade.reason(n) != null:
+		ids.append(n)
+		n += 1
+	return ids

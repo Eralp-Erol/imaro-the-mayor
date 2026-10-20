@@ -5,7 +5,7 @@ extends VBoxContainer
 ## (erişilebilirlik): yalnız yeni olay gelince en eskisi şeritten çıkar (geçmişte kalır).
 ## Metin: `UiText.event_text` (sim anahtar+argüman verir, UI çevirir). Gerekçe kaydı varsa "Nedenini gör"
 ## (SIM-12).
-## Nedensellik paneli kendisi T-021'dir; burada yalnız `reason_requested` sinyali.
+## Nedensellik paneli (`ReasonPanel`, T-021) sahibi tarafından açılır; burada yalnız `reason_requested` sinyali.
 
 signal reason_requested(event: SimEvent)
 
@@ -66,7 +66,8 @@ func _make_row(event: SimEvent) -> Control:
 	row.add_child(box)
 	var text := UiFactory.label(UiText.event_text(event), &"", true)
 	box.add_child(text)
-	if not event.reason_ids.is_empty():
+	# Gerekçe kaydı olan olay ya da reddedilen komut ("neden kabul edilmedi", SIM-12).
+	if not event.reason_ids.is_empty() or event.kind == SimEvent.KIND_COMMAND_REJECTED:
 		var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), false)
 		why.pressed.connect(func() -> void: reason_requested.emit(event))
 		box.add_child(why)

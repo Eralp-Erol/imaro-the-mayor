@@ -65,6 +65,27 @@ static func money(amount: int) -> String:
 	return t(&"format.money", {"amount": number(amount), "currency": UiConfig.currency_symbol()})
 
 
+## Sabit noktalı değer (SimContract.FIXED_SCALE = 1000) Türkçe ondalıkla: 450 -> `0,45`, 500 -> `0,50`, 125 ->
+## `0,125`. `signed`: artıya `+`, eksiye gerçek eksi işareti (`format.delta_*`). Sim tamsayısı olduğu gibi bölünür.
+@warning_ignore("integer_division")
+static func fixed(value: int, signed: bool = false) -> String:
+	var magnitude := absi(value)
+	var frac := "%03d" % (magnitude % SimContract.FIXED_SCALE)
+	if frac.ends_with("0"):
+		frac = frac.substr(0, 2)
+	var text := "%s,%s" % [number(magnitude / SimContract.FIXED_SCALE), frac]
+	if not signed or value == 0:
+		return (MINUS + text) if value < 0 else text
+	return t(&"format.delta_plus" if value > 0 else &"format.delta_minus", {"value": text})
+
+
+## Sim tick'i -> oyun içi tarih (yer tutucu takvim eşlemesi UiConfig'te; 1 tick = 1 gün, ADR-0002).
+@warning_ignore("integer_division")
+static func tick_date(tick: int) -> String:
+	var dpy := UiConfig.days_per_year()
+	return t(&"clock.date_ingame", {"year": tick / dpy + 1, "day": tick % dpy + 1})
+
+
 ## Türkçe binlik ayracı (nokta) ve gerçek eksi işareti.
 static func number(value: int) -> String:
 	var digits := str(absi(value))
@@ -127,6 +148,8 @@ static func humanize(value: Variant) -> String:
 				return "%s %d" % [t(&"council.vote_label"), id]
 			"command":
 				return "%s %d" % [t(&"command.label"), id]
+			"budget":
+				return "%s %d" % [t(&"budget.title"), id]
 			"actor.investor", "actor.landowner", "actor.group", "actor.council", "actor.council_bloc":
 				return actor_name(ActorRef.make(StringName(str(parsed["kind"]).trim_prefix("actor.")), id))
 	return s
