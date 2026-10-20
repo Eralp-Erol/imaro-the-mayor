@@ -2,6 +2,10 @@
 
 Önce `docs/agent-handoff/IMARO_CHECKPOINT.md` oku (durum, mimari, bağımlılıklar). Bağlayıcı kaynaklar: `CLAUDE.md`, `design/foundation/` (değiştirilemez), `design/CANON.md`, `design/REQUIREMENTS.md`, `design/decisions/D-001..D-004`, `docs/adr/0001..0005`, `production/LANES.md`, `production/QUESTIONS.md`. Bunları yeniden tasarlama; eksik bilgiyi uydurma (açık kararlar için yapılandırılabilir yer tutucu + rapor).
 
+## ÖNEMLİ — izole worktree'de çalışıyorsan (Agent Handover)
+Agent Handover görevi `HEAD`'den AYRI bir worktree'de açar: **ana checkout'taki commit'siz T-017/T-028 dosyaları orada YOKTUR.** Önce geri yükle: `tar xzf docs/agent-handoff/wip/wip-untracked-files.tgz` ve `git apply docs/agent-handoff/wip/wip-tracked-changes.patch` (kökten). Bu yedekler yarım işlerdir; derlenmeyebilir (adım 1). Bu bölümdeki "Mevcut" ifadeleri ana checkout içindir. `.godot` önbelleği ve `.tools/` yoktur: `tools/godot.sh` ana checkout'taki `.tools/` ikilisini bulur; ilk Godot koşusu içe aktarmayı baştan yapar (yavaş).
+Doğrulayıcı çıkış kodları handover için sözleşmedir: **0 bitti · 2 yalnız kullanıcı/cihaz onayı kaldı (DUR, ajanı yeniden çağırma) · 1/4 devam et.** Ağır adımlar aynı HEAD + temiz ağaçta önbellekten gelir (`artifacts/verify/m01-heavy-cache.json`, yalnız tam koşudan yazılır); önbellek yoksa betik tam koşar (handover `--verify-timeout` ≥ 1800 verilmeli).
+
 ## Kurallar
 - Çalışma dalı `dev/m1-parallel`; **main'e merge YOK, deploy YOK, M02 YOK, yeni özellik görevi YOK**. Force push yok. `design/foundation/` altına yazma yok; her teslimde `tools/canon-check.sh`.
 - **Commit'siz T-017/T-028 çalışmasını SİLME/SIFIRLAMA.** Önce incele, sonra tamamla (yedek: `docs/agent-handoff/wip/`).

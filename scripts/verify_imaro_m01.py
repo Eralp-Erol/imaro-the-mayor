@@ -13,8 +13,10 @@ koşulları ayrıca raporlar. Bir DONE/işaret dosyası varlığı ASLA başarı
 Öncelik: 3 > 1 > 4 > 2 > 0.
 
 Kullanım:
-  python3 scripts/verify_imaro_m01.py            # tam koşu (Godot import + GdUnit4 tam + gdlint + smoke; dakikalar sürer)
-  python3 scripts/verify_imaro_m01.py --quick    # Godot gerektiren ağır adımları atlar (exit 4'ten iyisi çıkmaz)
+  python3 scripts/verify_imaro_m01.py            # AUTO (Agent Handover bunu argümansız çağırır): ağır adımlar için aynı HEAD + temiz ağaçta
+                                                 #   yapılmış tam koşunun önbelleğini kullanır, yoksa tam koşar (dakikalar; handover --verify-timeout >=1800)
+  python3 scripts/verify_imaro_m01.py --full     # önbelleği yok say, ağır adımları (Godot import + GdUnit4 tam + gdlint + smoke) yeniden koş
+  python3 scripts/verify_imaro_m01.py --quick    # ağır adımları atlar (exit 4'ten iyisi çıkmaz)
   python3 scripts/verify_imaro_m01.py --list     # kontrol listesini yazar
 Rapor: artifacts/verify/m01-report.json
 """
@@ -70,7 +72,35 @@ SIGNOFF_KEYS = {
 }
 IGNORED_PREFIXES = ("artifacts/", ".agents/", "IMARO_GAME_DESIGN_FOUNDATION_", ".claude/worktrees/", "build/", ".godot/")
 
+HEAVY_IDS = ("godot.import", "godot.gdunit", "godot.gdlint", "smoke.playable")
+HEAVY_CACHE = ROOT / "artifacts/verify/m01-heavy-cache.json"
+
 results: list[dict] = []
+
+
+def head_sha() -> str:
+    return run(["git", "rev-parse", "HEAD"], 15)[1].strip()
+
+
+def tree_is_clean() -> bool:
+    return any(r["id"] == "git.clean" and r["status"] == PASS for r in results)
+
+
+def load_heavy_cache() -> list[dict] | None:
+    """Önbellek yalnız TAM koşudan yazılır; aynı HEAD + o an ve o zaman temiz ağaç gerekir (sahte başarı taşımaz)."""
+    try:
+        c = json.loads(HEAVY_CACHE.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return None
+    if c.get("head") != head_sha() or not c.get("tree_clean") or not tree_is_clean():
+        return None
+    got = {r["id"] for r in c.get("results", [])}
+    return c["results"] if got == set(HEAVY_IDS) else None
+
+
+def store_heavy_cache(heavy: list[dict]) -> None:
+    HEAVY_CACHE.parent.mkdir(parents=True, exist_ok=True)
+    HEAVY_CACHE.write_text(json.dumps({"head": head_sha(), "tree_clean": tree_is_clean(), "results": heavy}, ensure_ascii=False, indent=1), encoding="utf-8")
 
 
 def add(cid: str, title: str, status: str, detail: str = "") -> None:
@@ -258,6 +288,7 @@ def verdict() -> int:
 def main() -> int:
     ap = argparse.ArgumentParser(description="Imaro M01 kabul doğrulayıcısı")
     ap.add_argument("--quick", action="store_true", help="Godot gerektiren ağır adımları atla (exit 4)")
+    ap.add_argument("--full", action="store_true", help="ağır adımları önbelleği yok sayarak yeniden koş")
     ap.add_argument("--list", action="store_true", help="kontrol listesini yaz")
     a = ap.parse_args()
     if a.list:
@@ -278,9 +309,15 @@ def main() -> int:
                 add(cid, title, SKIP, "--quick ile atlandı" if a.quick else "Godot yok")
             add("smoke.playable", "T-030 entegre demo otomatik smoke", SKIP, "--quick ile atlandı" if a.quick else "Godot yok")
         else:
-            gp = godot_path() or ""
-            check_godot_heavy(gp)
-            check_smoke()
+            cached = None if a.full else load_heavy_cache()
+            if cached:
+                for r in cached:
+                    results.append(dict(r, detail="(önbellek: aynı HEAD + temiz ağaç, tam koşudan) " + r.get("detail", "")))
+            else:
+                n0 = len(results)
+                check_godot_heavy(godot_path() or "")
+                check_smoke()
+                store_heavy_cache([r for r in results[n0:] if r["id"] in HEAVY_IDS])
         check_perf()
         check_signoff()
     code = verdict()
