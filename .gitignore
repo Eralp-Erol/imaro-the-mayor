@@ -15,3 +15,6 @@ reports/
 
 # Benchmark ham ekran görüntüleri (~46 MB); temsilî kopyalar experiments/scale-bench/evidence/ içinde
 experiments/scale-bench/results/shots/
+
+# Export çıktıları (tools/export.sh)
+build/
