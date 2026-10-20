@@ -9,7 +9,7 @@ Tek üretim koordinatörü: **Studio Director (ana oturum)**. Görev sahipliği,
 4. **Yarım dosya bırakma:** bir dosyayı parse eder halde yaz (başka hatların import/test koşuları görür). Godot'u yalnız kendi PID'inle başlat/öldür; `pkill -f Godot` yasak. Aynı anda ağır Godot işi (import/capture/export) en çok 2 hat.
 5. **Hatlar arası API yalnız sözleşmeyle** (`docs/adr/0005-*`, `src/contracts/`). Sözleşme değişikliği = contracts hattı. Karşı hat henüz yoksa **mock** (`MockSimFacade`, `WorldFixture`) ile geliştir; gerçek bağlantı entegrasyon görevidir.
 6. **Yaratıcı kararları kanonlaştırma.** Açık konu (`design/foundation/docs/05` §D) → ad/sayı/senaryo uydurma; yer tutucu + yapılandırma/veri + raporuna "AÇIK SORU" maddesi. Koordinatör gruplayıp `production/QUESTIONS.md`'ye yazar; kullanıcı karar verene kadar iş bloklanmaz (yapılandırılabilir ilerlenir).
-7. **Model politikası:** uygulayıcılar `sonnet`, director kapıları `opus`; **Haiku yok**. Ajanlar görev başına bir kez çağrılır, işi bitirince biter (boşta oturum yok). Eşzamanlı ajan tavanı: 6. İnceleme/QA yalnız teslim kapılarında.
+7. **Model politikası:** uygulayıcılar `sonnet`, director kapıları `opus`; **Haiku yok**. Ajanlar görev başına bir kez çağrılır, işi bitirince biter (boşta oturum yok). Eşzamanlı ajan tavanı: 7 (dalga 1; ağır Godot işi en çok 2 hat). İnceleme/QA yalnız teslim kapılarında.
 8. **Coğrafya bağımlılığı yalnız şuna uygulanır:** gerçek `WorldData` koordinatlarını okuyan işler (T-005 yerleşim, T-003 kamera çerçevesi, T-011 yol/parsel, T-012 yapı yerleşimi). Kıyı/ada/bölge koordinatları ÇM verisidir ve değişebilir; kod koordinat gömmez, `WorldData` API'sini (ADR-0005 §WorldData okuma sözleşmesi) kullanır. Sim, UI, karakter/siyaset, platform, sanat kiti **geografiden bağımsızdır** (fixture/mock ile başlar).
 
 ## Departmanlar ve görevleri
@@ -17,7 +17,7 @@ Durum: ▶ aktif · ⏸ bekliyor (neden) · ✓ bitti · ○ planlı. Dalga 1 = 
 
 | Departman | Hat | Görev | Bağımlı | Dalga | Durum |
 |---|---|---|---|---|---|
-| **World & City Building** | world | T-001 ✓ · T-001b ada/batimetri · T-001c alt-hücre kıyı · **T-011** yol/parsel/blok veri modeli (`WorldNetwork`) · **T-005** T0 yerleşim üreteci | T-011←T-001 ✓; T-005←T-001 ✓, T-004, T-011 | 2 | ○ (T-011 ilk) |
+| **World & City Building** | world | T-001 ✓ · T-001b ada/batimetri · T-001c alt-hücre kıyı · **T-011** yol/parsel/blok veri modeli (`WorldNetwork`) · **T-005** T0 yerleşim üreteci | T-011←T-001 ✓; T-005←T-001 ✓, T-004, T-011 | 1→2 | ▶ T-011 · T-005 ⏸ T-004+T-011 |
 | | render | T-001a ışık+dikiş deliği · **T-003** çok ölçekli kamera rig'i · **T-012** yapı MultiMesh + HLOD | T-003←T-001 ✓, T-007 (input profili); T-012←T-004, T-011 | 2 | ○ |
 | | art | **T-025** sanat spec v0 (yapı kiti kuralları, palet) → **T-004** low-poly yapı kiti v0 | T-004←T-025 | 1 | ▶ T-025 |
 | **Simulation Engineering** | sim | **T-002** sim çekirdeği · **T-009** çapraz platform determinizm · **T-027** `SimFacadeImpl` (gerçek sim → sözleşme) · **T-013** ekonomi çekirdeği v0 (parsel/mülkiyet/imar, hane, yatırımcı kararı + gerekçe) · **T-014** belediye bütçesi + altyapı kapasitesi v0 | T-009←T-002,T-007; T-027←T-002,T-023; T-013←T-002,T-023; T-014←T-013 | 1 | ▶ T-002 |
