@@ -113,9 +113,9 @@ func test_default_shadows_come_from_a_shadow_only_lod1_node_in_the_lod0_range_ne
 		if child.name.begins_with("S1_"):
 			casters += 1
 			assert_int(gi.cast_shadow).is_equal(GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY)
-			# gölge düşürme LOD0 menzilinde biter ("600 m ötesi LOD1'de kapalı")
-			assert_float(gi.visibility_range_end).is_equal(
-					float(view.config.lod.range_for(BuildingLod.Tier.LOD0)["end"]))
+			# Gölge görsel LOD0 aralığından bağımsız 700 m'de biter; K8 için
+			# uzatılan LOD0 bu "600 m ötesi LOD1 gölgesi kapalı" kararını değiştirmez.
+			assert_float(gi.visibility_range_end).is_equal(view.config.shadow_end_m)
 			assert_float(gi.visibility_range_begin).is_equal(0.0)
 		else:
 			assert_int(gi.cast_shadow).is_equal(GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)

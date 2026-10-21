@@ -1,7 +1,8 @@
 extends "res://scenes/dev/world_preview.gd"
 ## Entegre geliştirme oynanabilir — T-030'un ASGARİ dilimi (2026-10-20, kullanım limiti nedeniyle ana oturumda).
 ## Commit'li modülleri tek sahnede birleştirir: arazi + gerçek T0 yerleşimi + CameraRig (world_preview),
-## gerçek SimFacadeImpl (ekonomi çekirdeği) + HudRoot (gerçek facade verisi). Sahte başarı yok; eksikler HUD üstündeki notta.
+## gerçek SimFacadeImpl (ekonomi çekirdeği) + HudRoot (gerçek facade verisi). Sahte başarı yok;
+## eksikler HUD üstündeki notta.
 ## T0 sütunları başlangıç stoğu olarak gerçek ekonomi durumuna aktarılır: bu bir karar kaydı değildir. Dünya
 ## tıklaması parseli imar akışına verir. Sim'in yeni gelişme geometrisi henüz BuildingView'a çevrilmez; bu durum
 ## yüzeyde açıkça belirtilir, sahte yapı gösterilmez.
@@ -11,7 +12,8 @@ const NETWORK_PATH := "res://data/world/ismeral/network.json"
 const DEMO_LAND_USE := &"zone.commercial"
 const NOTE := "Z: odaktaki parsele imar önerisi (zone.commercial) | boşluk: duraklat/sürdür\n" \
 		+ "Tıklama: parseli imar akışına ekle | Z: odaktaki parsele imar önerisi | boşluk: duraklat/sürdür\n" \
-		+ "T0 stok sim'e aktarıldı. Yeni sim gelişimi henüz BuildingView geometrisine bağlı değil; HUD/parsel verisinden izlenir."
+		+ "T0 stok sim'e aktarıldı. Yeni sim gelişimi henüz BuildingView geometrisine bağlı değil; " \
+		+ "HUD/parsel verisinden izlenir."
 
 var sim_stats: Dictionary = {}
 
@@ -30,6 +32,7 @@ var _selected_parcel_id: int = -1
 var _acc_ms: float = 0.0
 var _acc_n: int = 0
 var _max_ms: float = 0.0
+var _smoke_save_load_checked: bool = false
 
 
 func _ready() -> void:
@@ -86,9 +89,11 @@ func _start_sim() -> void:
 	if stock == null or not stock.is_valid():
 		push_error("playable: T0 stok adaptörü geçersiz")
 		return
-	var handle := EconomyBootstrap.create(_world.world_seed, source, null, stock)
+	# Integrated playable must use the same Economy + Actors + Politics facade
+	# exposed to the HUD; EconomyBootstrap would silently omit the latter two.
+	var handle := PoliticsBootstrap.create(_world.world_seed, source, null, stock)
 	if handle == null:
-		push_error("playable: ekonomi çekirdeği kurulamadı")
+		push_error("playable: ekonomi/aktör/siyaset çekirdeği kurulamadı")
 		return
 	_facade = handle.facade
 	_facade.set_speed(3 if _demo else 1)
@@ -175,6 +180,12 @@ func _process(delta: float) -> void:
 			_hud.poll()
 	if _demo and _frames == 10:
 		_submit_demo()
+	# Başsız T-030 smoke, gerçek facade üzerinde kayıt baytını tekrar içe alıp
+	# kanonik hash'in korunduğunu denetler. Bu yalnız --demo ile çalışan bir
+	# doğrulama kancasıdır; normal oturumda kayıt durumu veya dosya üretmez.
+	if _demo and not _smoke_save_load_checked and _frames >= 60:
+		_smoke_save_load_checked = true
+		_smoke_save_load()
 	if _status != null:
 		_status.text = "%s\nsim: gün %d | olay %d | son eylem: %s" % [
 				NOTE, _facade.current_tick(), _facade.last_event_seq(), _last_action]
@@ -187,6 +198,11 @@ func _process(delta: float) -> void:
 	if _args.has("shot") and _frames == int(str(_args["shot"])):
 		get_viewport().get_texture().get_image().save_png(str(_args.get("shot-path", "user://playable.png")))
 		print("PLAYABLE_SHOT ", _args.get("shot-path", "user://playable.png"))
+	# Otomatik smoke yalnız kendi Godot sürecini sonlandırabilsin diye sınır açık bir komut satırı
+	# seçeneğidir. Normal oynanışta bu anahtar yoktur; sim veya dünya durumuna girmez.
+	if _args.has("quit-after") and _frames >= maxi(1, int(str(_args["quit-after"]))):
+		print("PLAYABLE_QUIT frames=%d tick=%d" % [_frames, _facade.current_tick()])
+		get_tree().quit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -230,6 +246,23 @@ func _submit_demo() -> void:
 	var res := _facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([pid]), DEMO_LAND_USE))
 	_last_action = "parsel %d → %s: %s" % [pid, String(DEMO_LAND_USE), str(res.get("status"))]
 	print("PLAYABLE_ACTION ", _last_action)
+
+
+func _smoke_save_load() -> void:
+	var impl := _facade as SimFacadeImpl
+	if impl == null:
+		push_error("playable: smoke save/load gerçek SimFacadeImpl gerektirir")
+		print("PLAYABLE_SAVE_LOAD FAIL facade")
+		return
+	var before := impl.state_hash()
+	var bytes := impl.export_save()
+	var loaded := impl.import_save(bytes)
+	var after := impl.state_hash()
+	if loaded.ok and not before.is_empty() and before == after:
+		print("PLAYABLE_SAVE_LOAD OK tick=%d bytes=%d hash=%s" % [impl.current_tick(), bytes.size(), before])
+	else:
+		push_error("playable: smoke save/load hash eşitliği sağlanamadı: %s" % loaded.message)
+		print("PLAYABLE_SAVE_LOAD FAIL ok=%s before=%s after=%s" % [loaded.ok, before, after])
 
 
 func _nearest_parcel(at: Vector2) -> int:

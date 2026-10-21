@@ -11,11 +11,13 @@ var lod: BuildingLod = BuildingLod.new()
 ## Gölge (T-012 ölçüt 3): gölge DÜŞÜREN kademe `shadow_caster_lod`: 0 = LOD0 mesh'i düşürür (tam ayrıntı, gölge
 ## geçişi pahalı: sokak/yerel kareler ~+340k üçgen), 1 = LOD1 mesh'i YALNIZ-GÖLGE düğümü olarak düşürür (LOD0/LOD1
 ## görsel düğümleri gölge düşürmez; MultiMesh kaynağı LOD1 ile PAYLAŞILIR, ek bellek yok). Her iki halde gölge düşürme
-## `lod0_end_m` (+ marjin) ile biter: "600 m ötesi LOD1'de kapalı" (art-director). HLOD'lar hiçbir zaman düşürmez
-## (spec §7.2). `lod1_casts_shadow` ölçüm/deney içindir (LOD1 görsel düğümü de düşürür: gölge 600 m ötesinde AÇIK).
+## Görsel LOD0 menzilinden bağımsız gölge sonu: 700 m = 650 m eşik + 50 m marjin.
+## Böylece K8 için uzatılan görsel LOD0, 600 m ötesinde LOD1 gölgesi kapalı kararını değiştirmez.
+## HLOD'lar hiçbir zaman düşürmez. `lod1_casts_shadow` ölçüm/deney içindir (LOD1 görsel düğümü de gölge düşürür).
 var cast_shadows: bool = true
 var shadow_caster_lod: int = 1
 var lod1_casts_shadow: bool = false
+var shadow_end_m: float = 700.0
 ## Ayak izini kıyıdan bu kadar genişleterek su denetimi (m).
 var coast_margin_m: float = 4.0
 ## HLOD2 kütle kümeleme ızgarası (m) ve yükseklik kademesi eşikleri (m); en yüksek `hlod2_keep_top_share` ayrı kutu.

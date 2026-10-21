@@ -12,7 +12,13 @@ sa="$(magick identify -format '%wx%h' "$a[0]")"; sb="$(magick identify -format '
 # compare farklılık varsa 1 döner; metrik stderr'e yazılır.
 diff_px="$(magick compare -metric AE -fuzz 2% "$a" "$b" "$out" 2>&1 || true)"
 diff_px="${diff_px%% *}"
-case "$diff_px" in ''|*[!0-9]*) echo "visual-diff: magick çıktısı anlaşılamadı: $diff_px" >&2; exit 1 ;; esac
+# ImageMagick büyük görüntülerde AE değerini bilimsel gösterimle yazabilir
+# (ör. `1.05591e+06`). Sayısal doğrulamayı awk'a bırakmak bu geçerli çıktıyı
+# reddetmeden araç hatalarını hâlâ ayıklar.
+if ! awk -v d="$diff_px" 'BEGIN { exit (d ~ /^[0-9]+([.][0-9]+)?([eE][+-]?[0-9]+)?$/) ? 0 : 1 }'; then
+  echo "visual-diff: magick çıktısı anlaşılamadı: $diff_px" >&2
+  exit 1
+fi
 total=$(( ${sa%x*} * ${sa#*x} ))
 pct="$(awk -v d="$diff_px" -v t="$total" 'BEGIN { printf "%.4f", d * 100 / t }')"
 echo "diff_pixels=$diff_px total=$total percent=$pct"

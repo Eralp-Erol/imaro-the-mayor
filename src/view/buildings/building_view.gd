@@ -298,7 +298,9 @@ func _install_cell(data: BuildingCellData) -> void:
 					caster.material_override = _mat
 					caster.name = "S1_%s" % _kit.ids[m]
 					caster.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
-					config.lod.apply(caster, BuildingLod.Tier.LOD0)
+					# K8 görsel LOD0 menzilinden ayrı: gölgeler 700 m'de biter.
+					caster.visibility_range_end = config.shadow_end_m
+					caster.visibility_range_end_margin = config.lod.lod0_margin_m
 					cell.add_child(caster)
 				if not config.build_lod1:
 					mmi1.free()   # yalnız MultiMesh kaynağı lazımdı (caster tutuyor)

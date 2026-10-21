@@ -17,8 +17,10 @@ enum Tier { LOD0, LOD1, HLOD1, HLOD2 }
 
 const TIER_COUNT := 4
 
-## LOD0 -> LOD1 geçişi (spec §7.2: LOD0 0-700, LOD1 600-3000).
-var lod0_end_m: float = 650.0
+## LOD0 -> LOD1 geçişi. 1,45 km merkez-mesafesi eşiği, 1 km hücre AABB'sinin
+## merkezden ölçülmesi nedeniyle sokak görünümünde iki temsili K8 ≤%5 bandında
+## tutar. Gölge menzili bundan bağımsız olarak 700 m'de biter (config).
+var lod0_end_m: float = 1450.0
 var lod0_margin_m: float = 50.0
 ## LOD1 -> HLOD1 geçişi.
 var lod1_end_m: float = 2850.0
