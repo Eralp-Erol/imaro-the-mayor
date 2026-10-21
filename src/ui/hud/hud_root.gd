@@ -62,6 +62,8 @@ var _restore_pin: bool = false
 var _relayout_queued: bool = false
 ## true: `input` dışarıdan paylaşılıyor, sürücüsü başka düğüm (bkz. sözleşme); HUD yalnız fiillerini dinler.
 var _input_shared: bool = false
+## Sahiplerce kaydedilen ek araçlar (mod -> [tool_id]); araç çubuğu yeniden kurulunca yeniden uygulanır.
+var _extra_tools: Dictionary = {}
 
 
 func setup(facade_in: SimFacade, platform: PlatformProfile) -> void:
@@ -102,6 +104,18 @@ func _connect_input_verbs() -> void:
 		input.speed_step_requested.connect(_on_speed_step)
 	if not input.cancel_requested.is_connected(_on_cancel):
 		input.cancel_requested.connect(_on_cancel)
+
+
+## Bir modun araç listesine, yeteneği bağlayan sahip için araç ekler (örn. sonuç paneli). Ölü düğme olmaması için
+## yalnız sahip çağırdığında görünür.
+func register_tool(mode_id: StringName, tool_id: StringName) -> void:
+	var list: Array = _extra_tools.get(mode_id, [])
+	if not list.has(tool_id):
+		list.append(tool_id)
+	_extra_tools[mode_id] = list
+	if toolbar != null:
+		toolbar.add_tool(mode_id, tool_id)
+		_queue_relayout()
 
 
 func is_panel_open() -> bool:
@@ -218,6 +232,9 @@ func _build() -> void:
 	toolbar = ModeToolbar.create(ctx)
 	toolbar.mode_changed.connect(mode_changed.emit)
 	toolbar.tool_selected.connect(tool_selected.emit)
+	for mode_id: StringName in _extra_tools:
+		for tool_id: StringName in _extra_tools[mode_id]:
+			toolbar.add_tool(mode_id, tool_id)
 	_frame.add_child(toolbar)
 	_frame.resized.connect(_relayout)
 	# Otomatik satır kaydıran etiketler içerik değişince asgari boyutu oynatır; yerleşim kare sonunda yeniden uygulanır.

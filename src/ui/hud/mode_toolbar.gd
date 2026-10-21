@@ -21,6 +21,8 @@ const TOOL_ZONE := &"tool.zone"
 const TOOL_BUDGET := &"tool.budget"
 const TOOL_COUNCIL := &"tool.council"
 const TOOL_AGENDA := &"tool.agenda"
+## Sonuç paneli (T-040): yalnız bir sahip `add_tool` ile kaydederse görünür (ölü düğme yok).
+const TOOL_RESULTS := &"tool.results"
 
 ## Mod → {built: bool, tools: [tool_id]}. Kurulu olmayan mod devre dışı etiketlidir.
 const MODES := {
@@ -39,6 +41,8 @@ var _row_tools: HBoxContainer = null
 var _sep: VSeparator = null
 var _mode_buttons: Dictionary = {}
 var _tool_buttons: Dictionary = {}
+## Sahiplerce eklenen araçlar: mod -> [tool_id].
+var _extra_tools: Dictionary = {}
 
 
 static func create(ctx: UiContext) -> ModeToolbar:
@@ -104,6 +108,22 @@ func all_buttons() -> Array[Button]:
 	return out
 
 
+## Bir mod'a, yeteneği gerçekten bağlayan sahip tarafından araç ekler (kaydı olmayan araç hiç görünmez).
+func add_tool(mode_id: StringName, tool_id: StringName) -> void:
+	if not MODES.has(mode_id):
+		return
+	var list: Array = _extra_tools.get(mode_id, [])
+	if list.has(tool_id) or (MODES[mode_id]["tools"] as Array).has(tool_id):
+		return
+	list.append(tool_id)
+	_extra_tools[mode_id] = list
+	if mode_id == current_mode:
+		var keep := current_tool
+		_rebuild_tools()
+		current_tool = keep
+		_sync()
+
+
 func select_mode(mode_id: StringName) -> void:
 	if not MODES.has(mode_id) or not MODES[mode_id]["built"]:
 		return
@@ -120,7 +140,9 @@ func _rebuild_tools() -> void:
 		b.queue_free()
 	_tool_buttons.clear()
 	var spec: Dictionary = MODES[current_mode]
-	for tool_id: StringName in spec["tools"]:
+	var tools: Array = (spec["tools"] as Array).duplicate()
+	tools.append_array(_extra_tools.get(current_mode, []))
+	for tool_id: StringName in tools:
 		var b := UiFactory.button(_ctx, UiText.t(tool_id), true, true)
 		b.pressed.connect(_on_tool_pressed.bind(tool_id))
 		_tool_buttons[tool_id] = b

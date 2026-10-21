@@ -19,6 +19,7 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
 ##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
+##   --m2-open-results  "Döngü sonucu" panelini (HUD) başlangıçta açar (yakalama için).
 
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
 const NETWORK_PATH := "res://data/world/ismeral/network.json"
@@ -60,6 +61,7 @@ var _t0_occupied: Dictionary = {}
 var _m2_target: int = -1
 var _m2_targets: PackedInt64Array = PackedInt64Array()
 var _decisions: DecisionPanels = null
+var _m2_results: M2Results = null
 var _selected_parcel_id: int = -1
 var _acc_ms: float = 0.0
 var _acc_n: int = 0
@@ -204,10 +206,12 @@ func _start_hud() -> void:
 	layer.add_child(_status)
 
 
-## T-040 UI KANCASI (ui-engineer, sonraki tur): HUD kurulduktan sonra çağrılır. Sonuç/gerekçe paneli buraya bağlanır
-## (`_hud`, `_facade`, `_projector` hazır). Bu turda bilerek boş: HUD sonuç paneli T-040'ın render payı DEĞİL.
+## T-040 UI KANCASI: HUD kurulduktan sonra çağrılır. "Döngü sonucu" paneli + gerekçe paneli bağı (UI payı; render/
+## projector koduna dokunmaz). `--m2-open-results` (dev) paneli başlangıçta açar.
 func _on_hud_ready() -> void:
-	pass
+	_m2_results = M2Results.attach(_hud, _facade, _decisions)
+	if _args.has("m2-open-results"):
+		_m2_results.open()
 
 
 ## Dev argümanları (üst nota bakın). Yalnız komut satırında verilirse çalışır.
@@ -416,6 +420,8 @@ func _submit_demo(targets: PackedInt64Array = PackedInt64Array()) -> void:
 	var zone := _demo_zone()
 	var res := _facade.submit_command(SimCommand.zoning_propose(pids, zone))
 	_last_action = "parsel %s → %s: %s" % [str(pids), String(zone), str(res.get("status"))]
+	if _m2_results != null and not res.is_rejected():
+		_m2_results.track_parcels(pids)
 	print("PLAYABLE_ACTION ", _last_action)
 
 
