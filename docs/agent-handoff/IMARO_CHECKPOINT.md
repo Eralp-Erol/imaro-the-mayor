@@ -24,7 +24,13 @@ Araç izin sınıflandırıcısı gözetmen betiğinin ve genel kabul betiğinin
 Kullanıcının izin kuralı ya da açık onayı olmadan bu altyapı kurulmadı. Reddedilen işlemler ve yetkili çözüm yolları: **`docs/agent-handoff/AUTONOMY_BLOCKER.md`**.
 Görevler bu oturumdan sırayla sürüyor (T-040: sim turu `cc5bfbb` commit'li; render turu → HUD → bağımsız QA sırada).
 
-**SIRADAKİ:** T-040 (M2). Önce `production/M2-CONTRACT.md` + `production/tasks/T-040.md` oku. Kabul: acceptance JSON'daki testler 0 hata, gerçek runtime
+**DURDURULDU (2026-10-22, kullanıcı isteğiyle, güvenli):** çalışan ajan yok, Godot/agent_handover süreci yok, paylaşımlı pencere kilidi temizlendi, zamanlanmış görev/otomasyon KURULMADI.
+Kalan iş: **B-002 render düzeltmesi YARIM** (projector `parcel_changes_since`'e geçişi; çalışma ağacında commit'siz: `src/view/buildings/sim_building_{projector,placer,mapping,pump,stage_clock}.gd`,
+`src/game/playable.gd`, `tests/game/m2_*`; yedek: `docs/agent-handoff/wip/b002-render-wip-tracked.patch` + `…-untracked.tgz`; yarım olduğu için `verify playable` 6 test kırık, `gdlint` satır uzunluğu hataları var — bitirmeden commit'leme).
+Devam sırası: (1) B-002'yi bitir (`production/bugs/B-002.md`, görev brifi: feed-güdümlü senkron = `sync(exact)`, düşük kare hızı gecikmesi ≤2 sim günü, non-tick kare ≤ taban+0,5 ms, unplaced API) → (2) bağımsız QA#2 (`production/qa/T-040-qa.md` güncelle; ölçüt 2/10) → (3) T-040 `done` → T-041.
+Commit'li ve doğrulanmış: sim `3244bee` (contracts 86 / sim 601), HUD `8db6b21` (ux 249).
+
+**SIRADAKİ (durdurma öncesi plan):** T-040 (M2). Önce `production/M2-CONTRACT.md` + `production/tasks/T-040.md` oku. Kabul: acceptance JSON'daki testler 0 hata, gerçek runtime
 yakalamaları, bağımsız QA raporu `production/qa/T-040-qa.md`. Sonra T-041 → T-042 → T-043 → T-044.
 
 ## 1. Repo / dal / durum — ESKİ (2026-10-20 gece), tarihî kayıt

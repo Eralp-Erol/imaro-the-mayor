@@ -5,7 +5,7 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 
 | ID | Görev | Bağımlılık | Durum | Deneme | Not |
 |---|---|---|---|---|---|
-| T-040 | İlk nedensel döngü: imar → yatırımcı → inşaat → gerçek 3D yapı → ölçülebilir sonuç | — | in-progress | 0 | sim ✓ `cc5bfbb` · render ✓ `93e5bc3` · HUD ✓ (commit'lenecek) · bağımsız QA sırada |
+| T-040 | İlk nedensel döngü: imar → yatırımcı → inşaat → gerçek 3D yapı → ölçülebilir sonuç | — | in-progress (DURDURULDU 2026-10-22, kullanıcı isteğiyle) | 0 | sim ✓ `cc5bfbb` · render ✓ `93e5bc3` · HUD ✓ `8b9d825` · QA#1 FAIL `19ce1e8` (B-001/B-002) · sim düzeltmesi ✓ `3244bee` (T-045) · HUD düzeltmesi ✓ `8db6b21` (B-001) · **render düzeltmesi (B-002) YARIM**: `docs/agent-handoff/wip/b002-render-wip-*` (çalışma ağacında commit'siz) · sonra QA#2 |
 | T-041 | Parsel/bölge denetçisi + nedensellik zinciri (metro/ilçe/sokak zoom) | T-040 | ready | 0 | görev dosyası: `production/tasks/T-041.md` |
 | T-042 | Oyuncu yol/kamusal alan çizimi → altyapı kapasitesi → yatırımcı kararı | T-040 | ready | 0 | `production/tasks/T-042.md` |
 | T-043 | Orven (D2) başlangıcı + ≥2 ilçe kimliğiyle başlatma testi | T-040 | ready | 0 | `production/tasks/T-043.md` |
