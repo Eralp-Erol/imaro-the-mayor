@@ -5,11 +5,13 @@ extends RefCounted
 ##
 ## Okunan sim alanları:
 ## - Parsel: `ParcelView.zone/pending_zone/development/use/units/progress_pm/region_code/reason_ids`.
-## - Yatırımcı kararı: `facade.reasons_for(parcel_ref)` süzülür `decision_key == decision.investor.develop` (en yeni).
-##   `ParcelView.reason_ids` yalnız son 5 gerekçedir; inşaat sonrası grup tepkileri kararı listeden iter.
-##   Ret nedeni KODU (imar/altyapı/finansman/talep/getiri) kaydedilen ETKENLERDEN okunur (`decline_cause`): engel
-##   etkeni (değer -FIXED_SCALE) imar > altyapı > finansman sırasıyla; engel yoksa talep/getiri katkısı düşük olan
-##   (sim kuralıyla aynı; test sim'in `event.investor.declined` kodu ile eşitliği denetler).
+## - Yatırımcı kararı (B-001): `ParcelView.decision/decision_code/decision_tick/decision_reason_id` (v1.2, ekonomi
+##   durumundan türer; gerekçe günlüğü dönse de doğrudur). Ret nedeni KODU doğrudan `decision_code`dur (sim kodu ->
+##   `m2.decline.<neden>`); gerekçe günlükten budandıysa `decision_reason_id == 0` (karar yine de gösterilir, "Nedenini
+##   gör" yoktur). Gerekçe günlüğü (`reasons_for`) KARAR KAYNAĞI DEĞİLDİR.
+##   `developed_by_sim`/aşama yalnız yardımcı bağlamdır.
+##   Öneri öncesi karar: `decision_tick < proposed_tick` ise bu "önceki değerlendirme"dir; yatırımcı öneriyi henüz
+##   değerlendirmemiştir (kararsız/bekliyor sayılır, "vazgeçildi/yatırım aldı" sayılmaz).
 ## - Bölge/şehir: `economy_outcome()` (`metrics(region)`, `delta_since(baseline, region)`, sayaçlar,
 ##   `municipal_revenue_available`).
 ## - Siyasi: `snapshot().group_reactions` (grup başına AYRI; toplam skor yok), `snapshot().council`.
@@ -19,12 +21,6 @@ extends RefCounted
 ## Karar durumu.
 enum Decision { NONE, APPROVED, DECLINED }
 
-const DECISION_KEY := &"decision.investor.develop"
-const FACTOR_ZONING := &"reason.factor.zoning_fit"
-const FACTOR_INFRA := &"reason.factor.infrastructure_capacity"
-const FACTOR_FINANCING := &"reason.factor.financing"
-const FACTOR_DEMAND := &"reason.factor.demand"
-const FACTOR_RETURN := &"reason.factor.expected_return"
 ## Ret nedeni kodları (UI sözlüğü): `m2.decline.<kod>`.
 const CAUSE_ZONING := &"zoning"
 const CAUSE_INFRASTRUCTURE := &"infrastructure"
@@ -32,6 +28,11 @@ const CAUSE_FINANCING := &"financing"
 const CAUSE_DEMAND := &"demand"
 const CAUSE_RETURN := &"return"
 const CAUSE_UNKNOWN := &"unknown"
+## Sim ret kodu (`ParcelView.decision_code`) -> UI neden kodu.
+const CODE_TO_CAUSE := {
+	&"zoning_not_buildable": CAUSE_ZONING, &"infrastructure_exhausted": CAUSE_INFRASTRUCTURE,
+	&"insufficient_financing": CAUSE_FINANCING, &"demand_too_low": CAUSE_DEMAND, &"return_too_low": CAUSE_RETURN,
+}
 ## Ayrıntılı okunan en çok parsel (gerekçe taraması kopyalar; sınır bilinçli).
 const MAX_DETAIL_PARCELS := 12
 const MAX_REACTION_ROWS := 3
@@ -59,15 +60,15 @@ var council_built: bool = false
 var council_open: int = 0
 var council_done: int = 0
 
-var _cache: Dictionary = {}
+var proposed_tick: int = -1
 
 
 ## `tracked`: takip edilen parsel kimlikleri (imar önerisi verilenler). `baseline`: karşılaştırma başlangıcı ya da null.
-## `cache`: parsel -> {sig, record} (aynı parselin gerekçe taramasını tekrarlamamak için; çağıran saklar).
+## `proposed_tick`: imar önerisinin verildiği tick (öneri öncesi kararı ayırır); -1 = ayrım yok.
 static func build(facade: SimFacade, tracked: PackedInt64Array, baseline: EconomyOutcomeView, baseline_at: int,
-		cache: Dictionary = {}) -> M2ResultModel:
+		proposed_tick: int = -1) -> M2ResultModel:
 	var m := M2ResultModel.new()
-	m._cache = cache
+	m.proposed_tick = proposed_tick
 	var snap := facade.snapshot()
 	m.tick = snap.tick()
 	m._read_parcels(facade, tracked)
@@ -76,42 +77,11 @@ static func build(facade: SimFacade, tracked: PackedInt64Array, baseline: Econom
 	return m
 
 
-## Ret nedeni kodu, KAYDEDİLEN etkenlerden. Olumlu kayıt için boş.
-static func decline_cause(rec: ReasonRecord) -> StringName:
-	if rec == null or rec.outcome == ReasonRecord.OUTCOME_POSITIVE:
+## Sim ret kodundan UI neden kodu. Onay/boş kod için boş; bilinmeyen ret kodu için `unknown` (uydurma yok).
+static func cause_of_code(code: StringName) -> StringName:
+	if code == &"" or code == ParcelView.DECISION_APPROVED:
 		return &""
-	var veto := -SimContract.FIXED_SCALE
-	var demand_part := 0
-	var return_part := 0
-	var found_core := 0
-	var vetoes := {}
-	for f in rec.factors:
-		if f.value <= veto:
-			vetoes[f.name_key] = true
-		if f.name_key == FACTOR_DEMAND:
-			demand_part = f.contribution()
-			found_core += 1
-		elif f.name_key == FACTOR_RETURN:
-			return_part = f.contribution()
-			found_core += 1
-	if vetoes.has(FACTOR_ZONING):
-		return CAUSE_ZONING
-	if vetoes.has(FACTOR_INFRA):
-		return CAUSE_INFRASTRUCTURE
-	if vetoes.has(FACTOR_FINANCING):
-		return CAUSE_FINANCING
-	if found_core < 2:
-		return CAUSE_UNKNOWN
-	return CAUSE_DEMAND if demand_part <= return_part else CAUSE_RETURN
-
-
-## Yatırımcı kararlarının en yenisi (kimliği en büyük); yoksa null.
-static func latest_investor_decision(facade: SimFacade, parcel_id: int) -> ReasonRecord:
-	var best: ReasonRecord = null
-	for r in facade.reasons_for(SimContract.parcel_ref(parcel_id)):
-		if r.decision_key == DECISION_KEY and (best == null or r.id > best.id):
-			best = r
-	return best
+	return CODE_TO_CAUSE.get(code, CAUSE_UNKNOWN)
 
 
 ## Aşama (`parcel.development.*`) için UI anahtarı.
@@ -123,8 +93,8 @@ static func stage_key(development: StringName) -> StringName:
 func signature() -> String:
 	var parts: Array[String] = [str(outcome_available), str(baseline_valid), str(region_code)]
 	for p in parcels:
-		parts.append("%d:%s:%d:%d:%s" % [p.id(), p.view.development, p.view.progress_pm, p.decision,
-				p.view.pending_zone])
+		parts.append("%d:%s:%d:%d:%s:%s:%d:%d:%s" % [p.id(), p.view.development, p.view.progress_pm, p.decision,
+				p.view.pending_zone, p.code, p.tick, p.reason_id, p.before_proposal])
 	for r in metrics + counters:
 		parts.append("%s=%d/%d" % [r.key, r.value, r.delta])
 	parts.append("%d/%d" % [pipeline_residential, pipeline_commercial])
@@ -166,7 +136,7 @@ func _read_parcels(facade: SimFacade, tracked: PackedInt64Array) -> void:
 	for v in views:
 		var row := ParcelRow.new()
 		row.view = v
-		_read_decision(facade, row)
+		_read_decision(row)
 		parcels.append(row)
 	if parcels.is_empty():
 		return
@@ -179,25 +149,24 @@ func _read_parcels(facade: SimFacade, tracked: PackedInt64Array) -> void:
 	region_code = primary.view.region_code
 
 
-func _read_decision(facade: SimFacade, row: ParcelRow) -> void:
+func _read_decision(row: ParcelRow) -> void:
 	var v := row.view
-	var newest := int(v.reason_ids[v.reason_ids.size() - 1]) if not v.reason_ids.is_empty() else 0
-	var sig := "%s|%s|%d|%d" % [v.development, v.pending_zone, v.reason_ids.size(), newest]
-	var cached: Dictionary = _cache.get(v.id, {})
-	var rec: ReasonRecord = null
-	if cached.has("sig") and cached["sig"] == sig:
-		rec = cached["record"]
-	else:
-		rec = latest_investor_decision(facade, v.id)
-		_cache[v.id] = {"sig": sig, "record": rec}
-	row.record = rec
-	if rec == null:
+	var raw: Decision = Decision.NONE
+	match v.decision:
+		ParcelView.DECISION_APPROVED:
+			raw = Decision.APPROVED
+		ParcelView.DECISION_DECLINED:
+			raw = Decision.DECLINED
+	if raw == Decision.NONE:
 		return
-	if rec.outcome == ReasonRecord.OUTCOME_POSITIVE:
-		row.decision = Decision.APPROVED
-	else:
-		row.decision = Decision.DECLINED
-		row.cause = decline_cause(rec)
+	row.recorded = raw
+	row.code = v.decision_code
+	row.tick = v.decision_tick
+	row.reason_id = v.decision_reason_id
+	row.cause = cause_of_code(v.decision_code) if raw == Decision.DECLINED else &""
+	# Öneri anından eski karar: yatırımcı öneriyi henüz değerlendirmedi (kararsız/bekliyor).
+	row.before_proposal = proposed_tick >= 0 and v.decision_tick < proposed_tick
+	row.decision = Decision.NONE if row.before_proposal else raw
 
 
 func _read_outcome(facade: SimFacade, baseline: EconomyOutcomeView, baseline_at: int) -> void:
@@ -257,9 +226,16 @@ func _read_politics(snap: SimSnapshot) -> void:
 class ParcelRow:
 	extends RefCounted
 	var view: ParcelView = null
+	## Öneri SONRASI karar (öneri öncesi karar burada NONE'dur).
 	var decision: Decision = Decision.NONE
-	var record: ReasonRecord = null
+	## Sim'de kayıtlı karar (öneri öncesi olabilir); `before_proposal` ayrımı için.
+	var recorded: Decision = Decision.NONE
+	var before_proposal: bool = false
+	var code: StringName = &""
 	var cause: StringName = &""
+	var tick: int = -1
+	## 0: gerekçe günlükten budandı (karar yine de doğru).
+	var reason_id: int = 0
 
 	func id() -> int:
 		return view.id if view != null else SimContract.NO_ID

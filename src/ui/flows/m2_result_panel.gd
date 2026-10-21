@@ -2,7 +2,9 @@ class_name M2ResultPanel
 extends FlowPanel
 ## "Döngü sonucu" paneli (T-040, M2): imar önerisi -> yatırımcı kararı (kodlu neden) -> aşama/ilerleme -> bölge
 ## ekonomik fark -> siyasi tepki. Tüm sayılar `M2ResultModel` (yani `SimFacade`) okumasıdır; sabit sayı, ölü düğme yok.
-## - "Nedenini gör" yalnız kayıtlı gerekçe varsa görünür ve `reason_requested` ile ReasonPanel'i açtırır (SIM-12).
+## - Karar `ParcelView.decision*`dan okunur (günlük dönse de doğru); "Nedenini gör" yalnız `decision_reason_id>0` iken
+##   görünür, 0 ise dürüst "gerekçe kaydı budandı" notu. Öneri öncesi karar ayrı etiketlenir (B-001).
+## - "Nedenini gör" `reason_requested` ile ReasonPanel'i açtırır (SIM-12).
 ## - Belediye geliri sim'de kurulu değilse dürüst "Henüz kurulmadı" satırı (neden anahtarı sim'den).
 ## - Mock/ekonomisiz facade: ekonomik bölüm "ölçülmüyor" der; parsel ve siyasi bölümler eldeki veriyle çizilir.
 ## - Renk tek başına anlam taşımaz: yön simgesi + metin. Hover'a bağımlı bilgi yok (dokunmatik aynı).
@@ -81,24 +83,35 @@ func _step_label(key: StringName) -> Label:
 
 
 func _add_decision(inner: VBoxContainer, row: M2ResultModel.ParcelRow) -> void:
-	var rec := row.record
-	match row.decision:
-		M2ResultModel.Decision.APPROVED:
-			var date := UiText.tick_date(rec.tick)
-			inner.add_child(_direction_row(ReasonGlyph.Kind.UP, "ok", UiTheme.V_LABEL_OK,
-					UiText.t(&"m2.investor.approved", {"date": date})))
-		M2ResultModel.Decision.DECLINED:
-			var date := UiText.tick_date(rec.tick)
-			inner.add_child(_direction_row(ReasonGlyph.Kind.DOWN, "danger", UiTheme.V_LABEL_DANGER,
-					UiText.t(&"m2.investor.declined", {"date": date})))
-			var cause := UiText.t(StringName("m2.decline.%s" % row.cause))
-			inner.add_child(UiFactory.label(UiText.t(&"m2.decline.cause", {"cause": cause}), &"", true))
-		_:
-			inner.add_child(UiFactory.label(UiText.t(&"m2.investor.none"), UiTheme.V_LABEL_MUTED, true))
-			return
+	# Öneri öncesi karar AYRI etiketlenir; yatırımcı öneriyi henüz değerlendirmedi.
+	if row.before_proposal:
+		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.prior"), UiTheme.V_LABEL_MUTED, true))
+		_add_outcome_lines(inner, row, true)
+		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.waiting"), &"", true))
+		return
+	if row.decision == M2ResultModel.Decision.NONE:
+		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.none"), UiTheme.V_LABEL_MUTED, true))
+		return
+	_add_outcome_lines(inner, row, false)
+
+
+## Kayıtlı kararın satırları + (gerekçe kaydı varsa) "Nedenini gör" ya da dürüst "budandı" notu.
+func _add_outcome_lines(inner: VBoxContainer, row: M2ResultModel.ParcelRow, prior: bool) -> void:
+	var date := UiText.tick_date(row.tick)
+	if row.recorded == M2ResultModel.Decision.APPROVED:
+		inner.add_child(_direction_row(ReasonGlyph.Kind.UP, "ok", UiTheme.V_LABEL_OK,
+				UiText.t(&"m2.investor.approved", {"date": date})))
+	else:
+		inner.add_child(_direction_row(ReasonGlyph.Kind.DOWN, "danger", UiTheme.V_LABEL_DANGER,
+				UiText.t(&"m2.investor.declined", {"date": date})))
+		var cause := UiText.t(StringName("m2.decline.%s" % row.cause))
+		inner.add_child(UiFactory.label(UiText.t(&"m2.decline.cause", {"cause": cause}), &"", true))
+	if row.reason_id <= 0:
+		inner.add_child(_muted(UiText.t(&"m2.investor.pruned")))
+		return
 	var why := UiFactory.button(_ctx, UiText.t(&"m2.why"), true)
-	_tag(why, "why_decision")
-	var rid := rec.id
+	_tag(why, "why_prior" if prior else "why_decision")
+	var rid := row.reason_id
 	why.pressed.connect(func() -> void: _request_reason(func(p: ReasonPanel) -> void: p.show_record(rid)))
 	inner.add_child(why)
 

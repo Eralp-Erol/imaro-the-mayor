@@ -22,12 +22,13 @@ var decisions: DecisionPanels = null
 var tracked: PackedInt64Array = PackedInt64Array()
 var baseline: EconomyOutcomeView = null
 var baseline_tick: int = -1
+## İmar önerisinin verildiği tick (öneri öncesi yatırımcı kararını ayırmak için).
+var proposed_tick: int = -1
 
 var _panel: M2ResultPanel = null
 var _reason_panel: ReasonPanel = null
 var _reason_nav: Array = []
 var _reason_initial: Callable = Callable()
-var _cache: Dictionary = {}
 
 
 static func attach(hud_in: HudRoot, facade_in: SimFacade, decisions_in: DecisionPanels = null) -> M2Results:
@@ -51,7 +52,7 @@ func rebind(facade_in: SimFacade) -> void:
 	tracked = PackedInt64Array()
 	baseline = null
 	baseline_tick = -1
-	_cache = {}
+	proposed_tick = -1
 
 
 # --- Açma / takip ---
@@ -74,12 +75,12 @@ func reason_panel() -> ReasonPanel:
 
 ## İmar önerisi verilen parselleri takibe alır ve karşılaştırma başlangıcını o ana koyar. Başka panel açık değilse
 ## sonuç panelini açar. Aynı küme tekrar verilirse hiçbir şey değişmez.
-func track_parcels(parcel_ids: PackedInt64Array) -> void:
+func track_parcels(parcel_ids: PackedInt64Array, submitted_tick: int = -1) -> void:
 	if parcel_ids.is_empty() or parcel_ids == tracked:
 		return
 	tracked = parcel_ids.duplicate()
-	_cache = {}
 	capture_baseline()
+	proposed_tick = submitted_tick if submitted_tick >= 0 else baseline_tick
 	if not hud.is_panel_open():
 		open()
 	elif is_open():
@@ -94,7 +95,7 @@ func capture_baseline() -> void:
 
 
 func build_model() -> M2ResultModel:
-	return M2ResultModel.build(facade, tracked, baseline, baseline_tick, _cache)
+	return M2ResultModel.build(facade, tracked, baseline, baseline_tick, proposed_tick)
 
 
 ## Nedensellik panelini açar; `initial(panel)` ilk görünümü kurar.
@@ -155,7 +156,7 @@ func _follow_zoning_flow() -> void:
 	var z := decisions.zoning
 	if z.last_submit == null or z.last_submit.is_rejected() or z.parcel_ids.is_empty():
 		return
-	track_parcels(z.parcel_ids)
+	track_parcels(z.parcel_ids, z.last_submit.tick)
 
 
 func _on_panel_closed(panel_id: StringName) -> void:

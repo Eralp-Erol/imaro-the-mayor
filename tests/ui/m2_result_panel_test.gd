@@ -130,7 +130,7 @@ func test_positive_path_shows_approval_progress_and_exact_deltas() -> void:
 	var shown := m.primary.view
 	assert_str(panel.joined_text()).contains(UiText.t(M2ResultModel.stage_key(shown.development)))
 	assert_int(m.primary.decision).is_equal(M2ResultModel.Decision.APPROVED)
-	var approved := UiText.t(&"m2.investor.approved", {"date": UiText.tick_date(m.primary.record.tick)})
+	var approved := UiText.t(&"m2.investor.approved", {"date": UiText.tick_date(m.primary.tick)})
 	assert_str(panel.joined_text()).contains(approved)
 	var pct := UiText.t(&"format.percent", {"value": UiText.number(shown.progress_pm / 10)})
 	assert_str(panel.joined_text()).contains(pct)
@@ -210,7 +210,7 @@ func test_negative_path_shows_coded_decline_cause_from_the_recorded_factors() ->
 	assert_str(code).override_failure_message("sim ret olayı bulunamadı").is_not_empty()
 	assert_str(String(m.primary.cause)).is_equal(String(SIM_CODE_TO_CAUSE[code]))
 	var text := panel.joined_text()
-	assert_str(text).contains(UiText.t(&"m2.investor.declined", {"date": UiText.tick_date(m.primary.record.tick)}))
+	assert_str(text).contains(UiText.t(&"m2.investor.declined", {"date": UiText.tick_date(m.primary.tick)}))
 	var cause_text := UiText.t(StringName("m2.decline.%s" % m.primary.cause))
 	assert_str(text).contains(UiText.t(&"m2.decline.cause", {"cause": cause_text}))
 	assert_str(text).contains(UiText.t(&"parcel.development.vacant"))
@@ -219,7 +219,8 @@ func test_negative_path_shows_coded_decline_cause_from_the_recorded_factors() ->
 
 
 func test_decline_cause_matches_the_code_the_sim_recorded_in_real_runs() -> void:
-	# Aynı koşullar sim kurallarından üç farklı ret kodu üretir (zorlama yok): talep, altyapı, imar.
+	# Aynı koşullar sim kurallarından üç farklı ret kodu üretir (zorlama yok): talep, altyapı, imar. Neden artık
+	# ParcelView.decision_code'dan okunur; sim'in `event.investor.declined` kodu ile eşit olmalı.
 	var seen := {}
 	for case: Array in [[&"zone.commercial", {}], [&"zone.mixed", M2RenderSupport.UNFAVORABLE],
 			[&"zone.green", {}]]:
@@ -235,45 +236,29 @@ func test_decline_cause_matches_the_code_the_sim_recorded_in_real_runs() -> void
 			f.advance(1)
 			for e in f.events_since(cursor):
 				cursor = e.seq
-				if e.message_key != &"event.investor.declined" or e.reason_ids.is_empty():
+				if e.message_key != &"event.investor.declined":
 					continue
-				var rec := f.reason(int(e.reason_ids[0]))
 				var code := str(e.args.get("code", ""))
-				assert_str(String(M2ResultModel.decline_cause(rec))).override_failure_message(
-						"sim kodu %s, UI nedeni %s" % [code, M2ResultModel.decline_cause(rec)]) \
-						.is_equal(String(SIM_CODE_TO_CAUSE[code]))
-				seen[code] = true
+				for v in f.parcel_views(ids):
+					if not e.subjects.has(String(v.ref())):
+						continue
+					if v.decision != ParcelView.DECISION_DECLINED or v.decision_tick != e.tick:
+						continue
+					assert_str(String(v.decision_code)).is_equal(code)
+					assert_str(String(M2ResultModel.cause_of_code(v.decision_code))).override_failure_message(
+							"sim kodu %s, UI nedeni %s" % [code, M2ResultModel.cause_of_code(v.decision_code)]) \
+							.is_equal(String(SIM_CODE_TO_CAUSE[code]))
+					seen[code] = true
 	assert_array(seen.keys()).contains_exactly_in_any_order(
 			["demand_too_low", "infrastructure_exhausted", "zoning_not_buildable"])
-	assert_bool(M2ResultModel.decline_cause(null) == &"").is_true()
 
 
-func _record(factors: Array) -> ReasonRecord:
-	var r := ReasonRecord.new()
-	r.decision_key = M2ResultModel.DECISION_KEY
-	r.threshold = 100
-	for pair: Array in factors:
-		r.factors.append(ReasonFactor.make(pair[0], pair[1], pair[2]))
-	return r.finalize()
-
-
-func test_decline_cause_rule_covers_financing_and_return_and_the_veto_order() -> void:
-	var weight := 400
-	var core := [[M2ResultModel.FACTOR_DEMAND, 300, weight], [M2ResultModel.FACTOR_RETURN, -200, weight]]
-	var veto := -SimContract.FIXED_SCALE
-	assert_str(String(M2ResultModel.decline_cause(_record(core + [[M2ResultModel.FACTOR_FINANCING, veto, weight]])))) \
-			.is_equal("financing")
-	assert_str(String(M2ResultModel.decline_cause(_record(core)))).is_equal("return")
-	var demand_low := [[M2ResultModel.FACTOR_DEMAND, -300, weight], [M2ResultModel.FACTOR_RETURN, 100, weight]]
-	assert_str(String(M2ResultModel.decline_cause(_record(demand_low)))).is_equal("demand")
-	# birden çok engel: sim sırası imar > altyapı > finansman
-	var all_vetoes := core + [[M2ResultModel.FACTOR_FINANCING, veto, weight],
-			[M2ResultModel.FACTOR_INFRA, veto, weight], [M2ResultModel.FACTOR_ZONING, veto, weight]]
-	assert_str(String(M2ResultModel.decline_cause(_record(all_vetoes)))).is_equal("zoning")
-	assert_str(String(M2ResultModel.decline_cause(_record(all_vetoes.slice(0, 4))))).is_equal("infrastructure")
-	# çekirdek etkenler yoksa uydurma yok
-	assert_str(String(M2ResultModel.decline_cause(_record([[&"reason.factor.noise", -50, weight]])))) \
-			.is_equal("unknown")
+func test_cause_of_code_table_covers_every_sim_code_and_never_invents() -> void:
+	for code: String in SIM_CODE_TO_CAUSE:
+		assert_str(String(M2ResultModel.cause_of_code(StringName(code)))).is_equal(String(SIM_CODE_TO_CAUSE[code]))
+	assert_str(String(M2ResultModel.cause_of_code(&"approved"))).is_empty()
+	assert_str(String(M2ResultModel.cause_of_code(&""))).is_empty()
+	assert_str(String(M2ResultModel.cause_of_code(&"some_new_code"))).is_equal("unknown")
 
 
 func test_decline_cause_is_empty_for_a_positive_decision() -> void:
@@ -282,7 +267,7 @@ func test_decline_cause_is_empty_for_a_positive_decision() -> void:
 	var m: M2ResultModel = _panel(scene).model
 	assert_int(m.primary.decision).is_equal(M2ResultModel.Decision.APPROVED)
 	assert_str(String(m.primary.cause)).is_empty()
-	assert_bool(M2ResultModel.decline_cause(m.primary.record) == &"").is_true()
+	assert_str(String(M2ResultModel.cause_of_code(m.primary.code))).is_empty()
 
 
 # --- belediye geliri, mock, tepki ---
@@ -366,6 +351,7 @@ func test_why_button_opens_the_reason_panel_with_the_recorded_factors() -> void:
 	var scene := _scene(ISOLATE, 6)
 	_until(scene, ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION)
 	var results: M2Results = scene["results"]
+	var sim: SimFacade = scene["facade"]
 	var m: M2ResultModel = _panel(scene).model
 	var why := _panel(scene).named_buttons("why_decision")
 	assert_int(why.size()).is_equal(1)
@@ -374,7 +360,8 @@ func test_why_button_opens_the_reason_panel_with_the_recorded_factors() -> void:
 	var rp := results.reason_panel()
 	assert_object(rp).override_failure_message("ReasonPanel açılmadı").is_not_null()
 	assert_str(String(results.hud.panel_id())).is_equal(String(M2Results.PANEL_REASON))
-	var rec := m.primary.record
+	var rec := sim.reason(m.primary.reason_id)
+	assert_object(rec).override_failure_message("decision_reason_id günlükte yok").is_not_null()
 	var texts: PackedStringArray = _all_texts(rp)
 	var joined := " | ".join(texts)
 	for f in rec.factors:
