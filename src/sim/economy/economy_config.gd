@@ -37,7 +37,7 @@ const _DECISION_SPEC := {
 	"max_reviews_per_tick": [1, 1000000], "decline_backoff_days": [0, 3650],
 	"attention_delay_days": [0, 3650],
 	"prescreen_demand_pm": [0, 1000], "negative_repeat_days": [1, 36500], "max_starts_per_region_per_day": [1, 10000],
-	"storey_m": [1, 1000], "reference_floors": [1, 1000],
+	"storey_m": [1, 1000], "reference_floors": [1, 1000], "change_window_ticks": [16, 100000],
 }
 const _COHORT_SPEC := {
 	"initial_occupancy_pm": [0, 1000], "shops_per_household_pm": [0, _NO_MAX], "jobs_per_commercial_unit": [0, _NO_MAX],

@@ -74,12 +74,16 @@ static func check_parcels(facade: SimFacade, snap: SimSnapshot) -> PackedStringA
 	for i in range(1, ids.size()):
 		if ids[i] <= ids[i - 1]:
 			out.append("parcel_ids not strictly ascending at %d" % i)
-	out.append_array(check_parcel_projects(facade.parcel_views(ids)))
-	for p in facade.parcel_views(ids):
+	var views := facade.parcel_views(ids)
+	out.append_array(check_parcel_projects(views))
+	out.append_array(check_parcel_decisions(views))
+	for p in views:
 		if p.provenance != facade.provenance():
 			out.append("parcel %d provenance %s" % [p.id, p.provenance])
 		for rid in p.reason_ids:
 			out.append_array(check_reason_id(facade, rid, "parcel %d" % p.id))
+		if p.decision_reason_id > 0:
+			out.append_array(check_reason_id(facade, p.decision_reason_id, "parcel %d decision" % p.id))
 	return out
 
 
@@ -111,6 +115,35 @@ static func check_parcel_projects(views: Array[ParcelView]) -> PackedStringArray
 					out.append("%s under construction but progress_pm %d" % [where, p.progress_pm])
 			_:
 				out.append("%s unknown development '%s'" % [where, p.development])
+	return out
+
+
+## v1.2: `ParcelView.decision*` alanlarının birbiriyle ve aşamayla tutarlılığı. `decision_reason_id` > 0 ise
+## çözülebilirliği `check_parcels` (facade ile) denetler; budanmış gerekçe 0 olarak GEÇERLİDİR.
+static func check_parcel_decisions(views: Array[ParcelView]) -> PackedStringArray:
+	var out := PackedStringArray()
+	for p in views:
+		var where := "parcel %d" % p.id
+		if p.decision_reason_id < 0:
+			out.append("%s decision_reason_id %d negative" % [where, p.decision_reason_id])
+		match p.decision:
+			ParcelView.DECISION_NONE:
+				if p.decision_code != &"" or p.decision_tick != -1 or p.decision_reason_id != 0:
+					out.append("%s no decision but code/tick/reason set" % where)
+			ParcelView.DECISION_APPROVED:
+				if p.decision_code != &"approved":
+					out.append("%s approved with code '%s'" % [where, p.decision_code])
+				if p.development == ParcelView.DEVELOPMENT_VACANT:
+					out.append("%s approved but vacant" % where)
+			ParcelView.DECISION_DECLINED:
+				if p.decision_code == &"" or p.decision_code == &"approved":
+					out.append("%s declined with code '%s'" % [where, p.decision_code])
+				if p.development != ParcelView.DEVELOPMENT_VACANT:
+					out.append("%s declined but %s" % [where, p.development])
+			_:
+				out.append("%s unknown decision '%s'" % [where, p.decision])
+		if p.decision != ParcelView.DECISION_NONE and p.decision_tick < 0:
+			out.append("%s decision without tick" % where)
 	return out
 
 

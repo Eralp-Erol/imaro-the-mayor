@@ -20,6 +20,8 @@ var _area: PackedInt32Array = PackedInt32Array()       # m2
 var _base_zone: PackedStringArray = PackedStringArray()  # kaynak şablonundaki başlangıç imarı
 var _base_land: PackedInt64Array = PackedInt64Array()  # kaynak şablonundaki başlangıç arsa değeri
 var _region_codes: PackedStringArray = PackedStringArray()  # bölge indeksi -> kod (sıralı)
+## T-045: değişen parsel halkası. DURUM DEĞİL (kayda/hash'e girmez); sınırlı, türetilmiş, yüklemede boşalır.
+var _changes: ParcelChangeLog
 
 
 ## Kurulum sorunu (Türkçe metin) ya da "". Kaynak, yapılandırma ve stok tutarlılığı.
@@ -50,6 +52,7 @@ static func create(parcels: ParcelSource, cfg: EconomyConfig, stock: ExistingSto
 		return null
 	var system := EconomySystem.new()
 	system._cfg = cfg
+	system._changes = ParcelChangeLog.new(cfg.p("change_window_ticks"))
 	system._stock = stock if stock != null else EmptyStockSource.new()
 	system._cache_static(parcels)
 	return system
@@ -57,6 +60,16 @@ static func create(parcels: ParcelSource, cfg: EconomyConfig, stock: ExistingSto
 
 func system_id() -> StringName:
 	return SYSTEM
+
+
+## T-045 · Değişen parsel halkası (salt okunur sorgu; facade `parcel_changes_since` okur). Durum DEĞİLDİR.
+func change_log() -> ParcelChangeLog:
+	return _changes
+
+
+## T-045 · Kayıt yüklendi: halkanın geçmişi bilinmiyor; `tick` yüklenen durumun tick'idir.
+func reset_changes(tick: int) -> void:
+	_changes.reset(tick)
 
 
 ## Yapılandırma (salt okunur sorgular için: ilerleme ‰ süre toplamını buradan hesaplar). Değiştirmeyin.
@@ -89,6 +102,7 @@ func sim_built_units(state: GameState) -> Array[PackedInt64Array]:
 
 
 func on_daily(state: GameState) -> void:
+	_changes.begin_tick(state.tick)
 	var d := _ensure_state(state)
 	var starts_today := PackedInt32Array()
 	starts_today.resize(_region_codes.size())
@@ -297,6 +311,8 @@ func _scan_zone_changes(state: GameState, d: Dictionary) -> void:
 			continue
 		zone_seen[i] = String(zone)
 		if stage[i] == EconomyState.STAGE_VACANT:
+			if last_code[i] != EconomyState.CODE_NONE:  # görünür karar özeti sıfırlanıyor
+				_changes.note(_ids[i])
 			attention[i] = state.tick + _cfg.p("attention_delay_days")
 			attention_cmd[i] = int(entry.get("command_id", 0))
 			last_code[i] = EconomyState.CODE_NONE
@@ -470,6 +486,7 @@ func _approve(state: GameState, d: Dictionary, i: int, investor: int, use: int, 
 	reason_col[i] = reason_id
 	last_code[i] = EconomyState.CODE_APPROVED
 	last_tick[i] = state.tick
+	_changes.note(_ids[i])
 	var regions: Dictionary = d["regions"]
 	var pipe: PackedInt64Array = regions["res_pipe"] if use == EconomyConfig.USE_RESIDENTIAL else regions["com_pipe"]
 	pipe[_region_of[i]] += units
@@ -508,6 +525,7 @@ func _decline(state: GameState, d: Dictionary, i: int, investor: int, use: int, 
 	last_tick[i] = state.tick
 	var reason_col: PackedInt64Array = d["reason_id"]
 	reason_col[i] = reason_id
+	_changes.note(_ids[i])
 	totals["declines_recorded"] += 1
 	SimEventLog.emit(state, &"actor.decided", &"event.investor.declined",
 		PackedStringArray([String(SimContract.parcel_ref(_ids[i]))]),
@@ -551,6 +569,7 @@ func _tick_planned(state: GameState, d: Dictionary, i: int) -> void:
 	var stage: PackedByteArray = d["stage"]
 	stage[i] = EconomyState.STAGE_UNDER_CONSTRUCTION
 	days_left[i] = EconomyMath.construction_days(_cfg, use, (d["units"] as PackedInt32Array)[i])
+	_changes.note(_ids[i])
 	_emit_parcel_event(state, d, i, &"event.construction.started", int((d["reason_id"] as PackedInt64Array)[i]))
 
 
@@ -575,6 +594,7 @@ func _tick_construction(state: GameState, d: Dictionary, i: int) -> void:
 	stage[i] = EconomyState.STAGE_BUILT
 	(d["active"] as Dictionary).erase(i)
 	(d["totals"] as Dictionary)["completions"] += 1
+	_changes.note(_ids[i])
 	_emit_parcel_event(state, d, i, &"event.construction.completed", int((d["reason_id"] as PackedInt64Array)[i]))
 
 
@@ -604,6 +624,7 @@ func _change_construction(state: GameState, d: Dictionary, i: int, new_stage: in
 	stage[i] = new_stage
 	if new_stage == EconomyState.STAGE_STALLED:
 		(d["totals"] as Dictionary)["stalls"] += 1
+	_changes.note(_ids[i])
 	_emit_parcel_event(state, d, i, message_key, reason_id)
 
 

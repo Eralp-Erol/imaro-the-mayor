@@ -97,3 +97,10 @@ func is_mock() -> bool:
 ## kopyasıdır ve sim durumunu DEĞİŞTİRMEZ; önce/sonra farkı için iki okumanın `delta_since`'ı.
 func economy_outcome() -> EconomyOutcomeView:
 	return EconomyOutcomeView.unavailable(provenance(), current_tick())
+
+
+## v1.2 (T-045) · `tick`ten SONRA değişen parsellerin kimlikleri (O(değişen)); olay/gerekçe saklama ufkundan BAĞIMSIZ.
+## Semantik, tüketici protokolü ve kapsam: `ParcelChangeFeed`. Varsayılan (kaynak değişimi izlemiyorsa): `complete ==
+## false` + boş `ids` -> tüketici her seferinde tam eşitler. Değer kopyası; sim durumunu DEĞİŞTİRMEZ.
+func parcel_changes_since(_tick: int) -> ParcelChangeFeed:
+	return ParcelChangeFeed.incomplete(provenance(), current_tick())

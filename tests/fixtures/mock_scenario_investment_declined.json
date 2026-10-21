@@ -236,7 +236,11 @@
      "after_ticks": 3,
      "type": "parcel",
      "parcel_id": 1,
-     "set": {},
+     "set": {
+      "decision": "declined",
+      "decision_code": "demand_too_low"
+     },
+     "decision_reason_label": "r_investor",
      "reason_labels": [
       "r_investor"
      ]

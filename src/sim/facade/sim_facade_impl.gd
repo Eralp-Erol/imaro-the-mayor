@@ -43,6 +43,8 @@ var _economy: EconomySystem  # T-040: ekonomi kuruluysa salt okunur sorgular (il
 ## T-040: sim-geliştirmeli bitmiş birim önbelleği {"completions": int, "units": Array[PackedInt64Array]}. Türetilmiştir
 ## (durum/hash dışı); yalnız tamamlanma sayacı değişince yeniden hesaplanır, kayıt yüklenince silinir.
 var _sim_units_cache: Dictionary = {}
+## T-045: değişen-parsel sorgusunun durum kuşağı. Kayıt yüklenince artar (halka boşalır); durum/hash dışıdır.
+var _change_epoch: int = 0
 
 
 ## Yeni oyun. Geçersiz yapılandırma/kaynak/hız tablosunda push_error + null.
@@ -240,6 +242,23 @@ func economy_outcome() -> EconomyOutcomeView:
 	return o
 
 
+## T-045 · `tick`ten sonra (tick, şimdi] değişen parseller; O(değişen), olay/gerekçe ufkundan BAĞIMSIZ (halka:
+## `EconomySystem.change_log`, durum DIŞI). Pencereden eski/gelecek `tick` ya da yüklenmiş kayıt: `complete == false`
+## (tüketici tam yeniden eşitler); kayıt yüklenince `epoch` artar. Ekonomi kurulu değilse izlenen alanlar hiç değişmez:
+## aralık geçerliyse tam ve boştur. SALT OKUNUR.
+func parcel_changes_since(tick: int) -> ParcelChangeFeed:
+	var feed := ParcelChangeFeed.incomplete(provenance(), _state.tick, _change_epoch)
+	if _economy == null:
+		feed.complete = tick >= -1 and tick <= _state.tick
+		return feed
+	var changes := _economy.change_log()
+	if not changes.covers(tick, _state.tick):
+		return feed
+	feed.complete = true
+	feed.ids = changes.ids_since(tick)
+	return feed
+
+
 func _sim_built_units(completions: int) -> Array[PackedInt64Array]:
 	if _sim_units_cache.get("completions", -1) != completions:
 		_sim_units_cache = {"completions": completions, "units": _economy.sim_built_units(_state)}
@@ -317,6 +336,9 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 	_driver.bind_state(_state)
 	_retained_cache = {}
 	_sim_units_cache = {}
+	_change_epoch += 1  # T-045: halkanın geçmişi artık geçersiz; tüketici tam yeniden eşitler
+	if _economy != null:
+		_economy.reset_changes(_state.tick)
 	return result
 
 

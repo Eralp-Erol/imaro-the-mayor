@@ -241,8 +241,11 @@
       "use": "residential",
       "units": 12,
       "progress_pm": 0,
-      "developed_by_sim": true
+      "developed_by_sim": true,
+      "decision": "approved",
+      "decision_code": "approved"
      },
+     "decision_reason_label": "r_investor",
      "reason_labels": [
       "r_investor"
      ]

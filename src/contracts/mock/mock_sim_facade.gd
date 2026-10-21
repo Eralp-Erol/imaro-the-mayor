@@ -30,6 +30,9 @@ var _pending: Array[Dictionary] = []  # {"due": int, "order": int, "effect": Dic
 var _next_command_id: int = 1
 var _order: int = 0
 var _global_ctx: Dictionary = {"command_id": SimContract.NO_ID, "labels": {}}
+## v1.2 · Parsel değişim günlüğü (mock: sınırsız, kayıt yüklemesi yok): tick ve kimlik paralel, tick artan.
+var _change_ticks: PackedInt32Array = PackedInt32Array()
+var _change_ids: PackedInt64Array = PackedInt64Array()
 
 
 ## Geçersiz senaryo verilirse durum boş kalır; `load_errors()` nedenleri döner.
@@ -139,6 +142,22 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 		if _parcels.has(id):
 			out.append(ParcelView.from_dict((_parcels[id] as ParcelView).to_dict()))
 	return out
+
+
+## v1.2 · `parcel` etkisiyle değişen parseller (mock'ta olay saklama ufku yoktur; epoch hep 0). `tick` -1 = baştan.
+func parcel_changes_since(tick: int) -> ParcelChangeFeed:
+	var feed := ParcelChangeFeed.incomplete(provenance(), _tick)
+	if tick < -1 or tick > _tick:
+		return feed
+	feed.complete = true
+	var seen := {}
+	for k in _change_ticks.size():
+		if _change_ticks[k] > tick:
+			seen[_change_ids[k]] = true
+	var ids: Array = seen.keys()
+	ids.sort()
+	feed.ids = PackedInt64Array(ids)
+	return feed
 
 
 func events_since(after_seq: int, max_count: int = 0) -> Array[SimEvent]:
@@ -312,7 +331,10 @@ func _run_effect(effect: Dictionary, ctx: Dictionary) -> void:
 				p.provenance = provenance()
 				if not labels.is_empty():
 					p.reason_ids = labels
+				_apply_decision(p, effect, ctx)
 				_parcels[id] = p
+				_change_ticks.append(_tick)
+				_change_ids.append(id)
 		"group":
 			var g := GroupReactionView.from_dict(effect.get("reaction", {}))
 			g.tick = _tick
@@ -322,6 +344,17 @@ func _run_effect(effect: Dictionary, ctx: Dictionary) -> void:
 			_patch_budget(effect, labels)
 		"council_vote":
 			_upsert_vote(effect.get("vote", {}), labels, ctx)
+
+
+## v1.2: `set` içinde `decision` varsa karar tick'i yoksa şimdiki tick olur; `decision_reason_label` (etiket) kararın
+## gerekçe kimliğini çözer (yoksa 0). Sim'deki `ParcelView.decision*` ile aynı alanlar.
+func _apply_decision(p: ParcelView, effect: Dictionary, ctx: Dictionary) -> void:
+	var set_fields: Dictionary = effect.get("set", {})
+	if set_fields.has("decision") and not set_fields.has("decision_tick"):
+		p.decision_tick = _tick if p.decision != ParcelView.DECISION_NONE else -1
+	if effect.has("decision_reason_label"):
+		var ids := _resolve([effect["decision_reason_label"]], ctx)
+		p.decision_reason_id = ids[0] if not ids.is_empty() else SimContract.NO_ID
 
 
 func _add_reason(effect: Dictionary, ctx: Dictionary) -> void:

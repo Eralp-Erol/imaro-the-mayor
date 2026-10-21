@@ -27,6 +27,9 @@ const CODE_INFRASTRUCTURE := 3
 const CODE_FINANCING := 4
 const CODE_DEMAND := 5
 const CODE_RETURN := 6
+## Yatırım kararı gerekçesinin karar anahtarı (`EconomySystem._record`); durma/devam gerekçeleri
+## `decision.investor.continue`.
+const DEVELOP_DECISION := &"decision.investor.develop"
 const CODE_NAMES: Array[StringName] = [
 	&"", &"approved", &"zoning_not_buildable", &"infrastructure_exhausted", &"insufficient_financing",
 	&"demand_too_low", &"return_too_low",
@@ -123,6 +126,39 @@ static func decorate_view(state: GameState, view: ParcelView, cfg: EconomyConfig
 	view.units = units
 	view.developed_by_sim = stage != STAGE_VACANT and (d["last_code"] as PackedByteArray)[i] == CODE_APPROVED
 	view.progress_pm = progress_pm(stage, use, units, (d["days_left"] as PackedInt32Array)[i], cfg)
+	_decorate_decision(state, d, i, view)
+
+
+## v1.2 kalıcı karar özeti (`ParcelView.decision*`): MEVCUT sütunlardan (`last_code`, `last_reason_tick`, `reason_id`)
+## türer; gerekçe günlüğünün budanmasına bağlı DEĞİLDİR (yalnız `decision_reason_id` budanınca 0 olur). `last_code`
+## yalnız karar KAYDEDİLİNCE değişir (ret taramalarının hepsi kaydedilmez), dolayısıyla `decision_tick` son KAYDEDİLEN
+## kararın tick'idir. İmar yürürlüğe girince boş parselde sıfırlanır (`last_code = none`) => `decision` boş.
+static func _decorate_decision(state: GameState, d: Dictionary, i: int, view: ParcelView) -> void:
+	var code: int = (d["last_code"] as PackedByteArray)[i]
+	if code == CODE_NONE or code >= CODE_NAMES.size():
+		return
+	view.decision = ParcelView.DECISION_APPROVED if code == CODE_APPROVED else ParcelView.DECISION_DECLINED
+	view.decision_code = CODE_NAMES[code]
+	view.decision_tick = (d["last_reason_tick"] as PackedInt32Array)[i]
+	view.decision_reason_id = _develop_reason_id(state.reasons, (d["reason_id"] as PackedInt64Array)[i])
+
+
+## `reason_id` sütunu durma/devam kararından sonra o kararın gerekçesini gösterir (ebeveyni onay gerekçesidir). Karar
+## özeti HER ZAMAN yatırım kararının (`decision.investor.develop`) gerekçesini verir: ebeveyn zinciri o kayda kadar
+## yürünür. Kayıt ya da zincir budanmışsa 0. Kopyasız (`ReasonLog.peek`): zincir kısadır (durma/devam sayısı kadar).
+static func _develop_reason_id(reasons: ReasonLog, reason_id: int) -> int:
+	var rid := reason_id
+	for _step in 64:
+		var rec := reasons.peek(rid)
+		if rec.is_empty():
+			return 0
+		if rec["decision"] == DEVELOP_DECISION:
+			return rid
+		var parents: PackedInt64Array = rec["parent_ids"]
+		if parents.is_empty():
+			return 0
+		rid = parents[0]
+	return 0
 
 
 ## Aşama + kalan günden inşaat ilerlemesi ‰ (ParcelView.progress_pm): built 1000; under_construction/stalled geçen

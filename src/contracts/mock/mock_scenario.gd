@@ -133,6 +133,8 @@ func _validate_reason_effect(e: Dictionary, where: String) -> void:
 ## Bir etkinin başvurduğu gerekçe etiketleri.
 static func _labels_used(e: Dictionary) -> PackedStringArray:
 	var out := SimContract.to_string_array(e.get("reason_labels", []))
+	if e.has("decision_reason_label"):  # v1.2: parsel etkisinin karar gerekçesi
+		out.append(str(e["decision_reason_label"]))
 	if e.get("reason") is Dictionary:
 		out.append_array(SimContract.to_string_array(e["reason"].get("parent_labels", [])))
 	if e.get("event") is Dictionary:

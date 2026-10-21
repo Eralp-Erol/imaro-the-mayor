@@ -91,6 +91,26 @@ func by_id(id: int) -> Dictionary:
 	return {}
 
 
+## KOPYASIZ okuma (T-045): `by_id` ile aynı kayıt, ama durumun kendi sözlüğü; ÇAĞIRAN SALT OKUR ve dışarı vermeden
+## kopyalar. Kimlikler boşluksuz artar (budama yalnız baştan) => O(1); yoksa/budanmışsa boş sözlük. Parsel başına karar
+## özeti (facade `parcel_views`) binlerce kez çağırır: `by_id`nin derin kopyası ve taraması buna pahalıdır.
+func peek(id: int) -> Dictionary:
+	if _records.is_empty():
+		return {}
+	var index := id - int((_records[0] as Dictionary)["id"])
+	if index < 0 or index >= _records.size():  # kimlikler artan: baştan küçük = budanmış, sondan büyük = henüz yok
+		return {}
+	if int((_records[index] as Dictionary)["id"]) == id:
+		return _records[index]
+	for i in range(mini(index, _records.size() - 1), -1, -1):  # boşluklu (elle düzenlenmiş) kayıt: güvenli yedek tarama
+		var rec: Dictionary = _records[i]
+		if rec["id"] == id:
+			return rec
+		if rec["id"] < id:
+			break
+	return {}
+
+
 ## Süzgeç anahtarları (hepsi isteğe bağlı, VE ile birleşir): actor, decision, code, from_tick, to_tick (dahil),
 ## subject (kaydın `subjects` listesinde geçen ya da aktörü olan referans; sözleşme `ReasonRecord.is_about`).
 ## Sonuç eskiden yeniye sıralı KOPYALAR dizisidir.
