@@ -11,6 +11,11 @@ extends Control
 ## Esc = paneli kapat [sabit değilse]) buradadır; `select/pan/zoom` fiilleri dünyaya (kamera/harita) aittir ve
 ## `input` üzerinden dışarıdan bağlanır. `_unhandled_input` kullanılır: Control olayı önce tüketir (UI
 ## dünyadan önce).
+## GİRDİ YÖNLENDİRME SÖZLEŞMESİ (tek InputProfile): dünya sahnesinde (kamera + HUD) profil TEK örnektir ve olayı/kareyi
+## YALNIZ onu süren düğüm (CameraRig) işler. `bind_input(shared)` sonrası HUD o örneğe yalnız kendi fiillerini
+## (duraklat/hız/iptal) bağlar; `handle_event`/`process`/`reset` ÇAĞIRMAZ ve olay tüketmez. Aksi hâlde (ui_lab, tek
+## başına HUD) kendi profilini kurar ve sürer. İki ayrı profil, HUD'un hareket tuşlarını/jestleri yutmasına yol
+## açıyordu.
 ##
 ## Yerleşim `HudLayout` (saf hesap) ile, güvenli alan `UiSafeArea` ile. Profil değişince (`apply_profile`) HUD
 ## yeniden kurulur
@@ -55,6 +60,8 @@ var _last_snapshot: SimSnapshot = null
 var _last_running_speed: int = SimFacade.SPEED_NORMAL
 var _restore_pin: bool = false
 var _relayout_queued: bool = false
+## true: `input` dışarıdan paylaşılıyor, sürücüsü başka düğüm (bkz. sözleşme); HUD yalnız fiillerini dinler.
+var _input_shared: bool = false
 
 
 func setup(facade_in: SimFacade, platform: PlatformProfile) -> void:
@@ -68,17 +75,33 @@ func apply_profile(platform: PlatformProfile) -> void:
 	if panel != null:
 		_restore_pin = panel.pinned
 	ctx = UiContext.from_profile(platform)
-	input = platform.create_input_profile()
-	# Dokunma/sürükleme eşiği ui_scale ile ölçeklenir (ux-layout §3.4: tap slop 24, masaüstü 8).
-	input.drag_slop_px = ctx.px(24.0 if ctx.is_touch() else 8.0)
-	input.pause_toggle_requested.connect(_on_pause_toggle)
-	input.speed_step_requested.connect(_on_speed_step)
-	input.cancel_requested.connect(_on_cancel)
+	if not _input_shared:
+		input = platform.create_input_profile()
+		# Dokunma/sürükleme eşiği ui_scale ile ölçeklenir (ux-layout §3.4: tap slop 24, masaüstü 8).
+		input.drag_slop_px = ctx.px(24.0 if ctx.is_touch() else 8.0)
+		_connect_input_verbs()
 	_build()
 	_seen_tick = -1
 	refresh()
 	if _panel_id != &"":
 		_reopen_panel()
+
+
+## Paylaşılan profili bağlar (sözleşme: üstteki not). Kendi profili atılır; yalnız HUD fiilleri bağlanır.
+func bind_input(shared: InputProfile) -> void:
+	assert(shared != null, "HudRoot.bind_input: profil boş")
+	_input_shared = true
+	input = shared
+	_connect_input_verbs()
+
+
+func _connect_input_verbs() -> void:
+	if not input.pause_toggle_requested.is_connected(_on_pause_toggle):
+		input.pause_toggle_requested.connect(_on_pause_toggle)
+	if not input.speed_step_requested.is_connected(_on_speed_step):
+		input.speed_step_requested.connect(_on_speed_step)
+	if not input.cancel_requested.is_connected(_on_cancel):
+		input.cancel_requested.connect(_on_cancel)
 
 
 func is_panel_open() -> bool:
@@ -151,20 +174,20 @@ func snapshot() -> SimSnapshot:
 
 
 func _process(_delta: float) -> void:
-	if input != null:
+	if input != null and not _input_shared:
 		input.process(_delta)
 	poll()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if input != null and input.handle_event(event):
+	if input != null and not _input_shared and input.handle_event(event):
 		get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED and layout != null:
 		_relayout()
-	elif what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and input != null:
+	elif what == NOTIFICATION_WM_WINDOW_FOCUS_OUT and input != null and not _input_shared:
 		input.reset()
 
 

@@ -325,6 +325,8 @@
 	"event.council.vote_opened": "Meclis oylaması açıldı",
 	"event.council.vote_passed": "Meclis oylaması kabul edildi: {yes} evet, {no} hayır",
 	"event.budget.approved": "Bütçe onaylandı",
+	"event.agenda.resolved": "Gündem öğesi karara bağlandı",
+	"event.agenda.expired": "Gündem öğesinin süresi doldu; varsayılan sonuç uygulandı",
 	"decision.investor.develop.positive": "Yatırımcı yatırım yaptı",
 	"decision.investor.develop.negative": "Yatırımcı vazgeçti",
 	"decision.group.support.positive": "Grup destek verdi",

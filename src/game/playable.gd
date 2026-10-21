@@ -10,8 +10,8 @@ extends "res://scenes/dev/world_preview.gd"
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
 const NETWORK_PATH := "res://data/world/ismeral/network.json"
 const DEMO_LAND_USE := &"zone.commercial"
-const NOTE := "Z: odaktaki parsele imar önerisi (zone.commercial) | boşluk: duraklat/sürdür\n" \
-		+ "Tıklama: parseli imar akışına ekle | Z: odaktaki parsele imar önerisi | boşluk: duraklat/sürdür\n" \
+const NOTE := "WASD/oklar: kaydır | Q/E: döndür | tekerlek/trackpad: yakınlaş | Boşluk: duraklat/sürdür\n" \
+		+ "Tıklama: parseli seç (imar akışı) | Z: seçili/odaktaki parsele imar önerisi\n" \
 		+ "T0 stok sim'e aktarıldı. Yeni sim gelişimi henüz BuildingView geometrisine bağlı değil; " \
 		+ "HUD/parsel verisinden izlenir."
 
@@ -151,14 +151,21 @@ func _start_hud() -> void:
 	_hud = HudRoot.new()
 	_hud.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(_hud)
+	# Girdi yönlendirme sözleşmesi (HudRoot üst notu): sahnede TEK InputProfile, olayı/kareyi CameraRig sürer.
+	# HUD o örneğe yalnız duraklat/hız/iptal fiillerini bağlar; seçim fiili de aynı örnekten gelir.
+	var shared_input := _camera.input_profile
+	assert(shared_input != null, "playable: CameraRig girdi profili yok")
+	_hud.bind_input(shared_input)
 	_hud.setup(_facade, PlatformProfile.current())
 	_decisions = DecisionPanels.attach(_hud, _facade)
-	_hud.input.select_requested.connect(_on_select_requested)
+	shared_input.select_requested.connect(_on_select_requested)
 	_status = Label.new()
-	_status.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	_status.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_status.position = Vector2(-12, 60)
-	_status.custom_minimum_size = Vector2(560, 0)
+	# Sol altta, araç çubuğunun üstünde: sağdaki yan panel ve soldaki bildirim şeridiyle çakışmaz.
+	_status.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+	_status.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_status.offset_left = 12.0
+	_status.offset_bottom = -96.0
+	_status.custom_minimum_size = Vector2(380, 0)
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	_status.add_theme_font_size_override("font_size", 13)
@@ -211,9 +218,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if key == KEY_Z:
 			_submit_demo()
 			return
-		if key == KEY_SPACE:
-			_facade.set_speed(0 if _facade.speed() != 0 else 1)
-			return
+	# Boşluk/duraklat InputProfile -> HudRoot fiilidir (tek yönlendirme); burada ikinci bir yol YOK.
 	super._unhandled_input(event)
 
 
