@@ -1,0 +1,20 @@
+{
+	"_header": "T-040 · SimBuildingProjector GEÇİCİ eşleme verisi (ÇM; sanat/oyun kararı DEĞİL). Sim'in verdiği (kullanım, birim, inşaat ilerlemesi) -> mevcut kit modülleri. Kit modülleri, aileler, kat sayıları ve palet satırları kit_manifest.json + data/world/ismeral/settlement.json kurallarından gelir; burada yalnız köprü sayıları var. Açık sorular: production/QUESTIONS.md Q-016.",
+	"schema_version": 1,
+	"units_per_floor": 1,
+	"max_buildings_per_parcel": 3,
+	"progress_poll_days": 4,
+	"fallback_zone": "dense",
+	"uses": {
+		"_notes": "families: bu kullanım için izinli kit aileleri (yerleşim kuralındaki zone adaylarıyla kesişir; kesişim boşsa fallback_zone adayları denenir). ground_shop: true ise zemin kat dükkân varyantı (_gf, FLAG_GROUND_SHOP) zorunlu.",
+		"residential": {"families": ["res_mid", "res_late", "res_old", "res_house"], "ground_shop": false},
+		"commercial": {"families": ["res_mid", "res_late", "res_old"], "ground_shop": true}
+	},
+	"_notes": [
+		"units_per_floor: parsel birimi / bu sayı = hedef toplam kat. playable.gd'deki T0 stok adaptörü ile AYNI sözleşme (stokta birim = kat sayısı); ekonomi birimi ile kit katı arasında yeni bir oran uydurulmaz (1).",
+		"max_buildings_per_parcel: bir parsele yan yana en çok bu kadar yapı (cephe şeridi tek sıra). Parsel sığdırabildiği kadarı yerleşir; sığmayan birim görsele yansımaz (sim sayısı yine gerçek veridir).",
+		"progress_poll_days: planlı/durmuş projelerin yoklama aralığı (gün) ve hız bilinmeyen inşaatın yedek aralığı. İnşaatta sonraki okuma günü, kat kademesinin değişeceği günden (iki okumadan ilerleme hızı + SimBuildingPlacer.next_stage_progress) hesaplanır; olaylar (onay, başlama, durma, bitiş) anında işlenir. Kare başına iş bütçesi kodda (playable.gd SIM_SYNC_BUDGET_US).",
+		"İnşaat kademesi: kitte iskele/inşaat modülü YOK. Yapı, nihai modülün ailesindeki daha az katlı modüllerle (aynı ön cephe hizası, orta eksen) kat kademesi olarak gösterilir; tamamda nihai modül. Aile içinde daha küçük modül yoksa (tek katlı) nihai modül inşaat başlayınca görünür.",
+		"fallback_zone: parselin T0 bölge dokusu (zone_by_parcel) bulunamazsa ya da dokunun adayları kullanıma uymazsa (ör. sanayi avlusu + konut) kullanılan doku."
+	]
+}

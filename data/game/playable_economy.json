@@ -1,0 +1,6 @@
+{
+	"_header": "T-040 · Entegre oynanabilir sahne için BAŞLANGIÇ KOŞULU ayarı (ÇM; F05-D ölçek/altyapı/talep AÇIK, kanon DEĞİL, karar kuralı DEĞİL). Ekonomi varsayılan yapılandırması (data/sim/economy/economy_config.json) küçük fixture dünyaları içindir: bölge başına altyapı kapasitesi 1000 birim iken gerçek T0 stoğu bölge başına 4-55 bin birimdir; bu yüzden her yatırım 'infrastructure_exhausted' ile reddedilir ve döngü hiç başlamaz. Bu dosya bölge başına kapasiteyi ve gizli hane talebini T0 stoğundan türetir. Sonuçları ZORLAMAZ: yatırımcı kararı yine sim kurallarıyla verilir (talep düşük/kapasite dar bölgelerde ret doğal olarak sürer). Açık soru: production/QUESTIONS.md Q-016.",
+	"schema_version": 1,
+	"infra_headroom_pm": 300,
+	"latent_demand_pm": 250
+}

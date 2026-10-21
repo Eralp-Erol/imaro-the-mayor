@@ -4,16 +4,40 @@ extends "res://scenes/dev/world_preview.gd"
 ## gerçek SimFacadeImpl (ekonomi çekirdeği) + HudRoot (gerçek facade verisi). Sahte başarı yok;
 ## eksikler HUD üstündeki notta.
 ## T0 sütunları başlangıç stoğu olarak gerçek ekonomi durumuna aktarılır: bu bir karar kaydı değildir. Dünya
-## tıklaması parseli imar akışına verir. Sim'in yeni gelişme geometrisi henüz BuildingView'a çevrilmez; bu durum
-## yüzeyde açıkça belirtilir, sahte yapı gösterilmez.
+## tıklaması parseli imar akışına verir.
+## T-040: sim'in yatırımcı kararıyla doğan yapıları (`ParcelView.developed_by_sim`) `SimBuildingProjector` ile
+## BuildingColumns satırlarına çevrilir ve T0 görünümünden AYRI, küçük bir ikinci `BuildingView`'da ("SimBuildings",
+## aynı dünya/kit/ayar) gösterilir; T0 görünümü yeniden kurulmaz. Oyuncu yapı koymaz (CAN-03): tek kaynak sim.
+##
+## Dev argümanları (YALNIZ doğrulama/yakalama için; oynanışı ve sim kurallarını değiştirmez):
+##   --m2-focus-new   kamera odağını imar önerisi hedefi parsele (en yakın BOŞ, uygun parsel) taşır; --heading/--pitch/
+##                    --distance ile kompozisyon ayarlanır.
+##   --m2-advance=N   başlangıçta (HUD sonrası) demo imar önerisini verir ve facade.advance(N) ile N gün ilerletir.
+##   --m2-batch=N     öneriye en yakın N boş uygun parsel katılır (varsayılan 1).  --m2-skip=K  ilk K adayı atla.
+##   --m2-isolate     otonom yatırımcı taraması kapalı: yapı yalnız oyuncunun imar kararından doğar.
+##   --demo-zone=Z    demo imar anahtarı (varsayılan zone.mixed).
+##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
+##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
+##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
 
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
 const NETWORK_PATH := "res://data/world/ismeral/network.json"
-const DEMO_LAND_USE := &"zone.commercial"
+## Demo imar önerisi. `zone.mixed` (konut + ticaret): yatırımcı talebi en yüksek kullanımı seçer. T0 stoğunda dükkân
+## arzı hane ihtiyacının çok üstünde olduğundan salt ticaret önerisi talep nedeniyle reddedilir (geçerli olumsuz yol);
+## yakalamada o yolu görmek için `--demo-zone=zone.commercial`.
+const DEMO_LAND_USE := &"zone.mixed"
+## Demo hedefi seçerken "bu parsele makul bir yapı sığar mı" sorusunun varsayılan birimi (sim gerçeğini kendisi verir).
+const DEMO_PROBE_UNITS := 3
+## Kare başına projector dilim bütçesi (µs): tick'li karede iş yapılmaz, sonraki karelere yayılır (T-040 ölçüt 10).
+const SIM_SYNC_BUDGET_US := 1200
+## Projector bu kadar sim günü geride kalırsa tick'li karede de dilim yürütülür.
+const MAX_SYNC_BACKLOG_DAYS := 6
+## `--m2-advance` adım uzunluğu (gün): her adımdan sonra projector senkronlanır.
+const M2_ADVANCE_STEP_DAYS := 1
 const NOTE := "WASD/oklar: kaydır | Q/E: döndür | tekerlek/trackpad: yakınlaş | Boşluk: duraklat/sürdür\n" \
 		+ "Tıklama: parseli seç (imar akışı) | Z: seçili/odaktaki parsele imar önerisi\n" \
-		+ "T0 stok sim'e aktarıldı. Yeni sim gelişimi henüz BuildingView geometrisine bağlı değil; " \
-		+ "HUD/parsel verisinden izlenir."
+		+ "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kademesi dahil) ikinci BuildingView'da " \
+		+ "yalnız sim aşamasından çizilir; oyuncu yapı koymaz."
 
 var sim_stats: Dictionary = {}
 
@@ -27,6 +51,14 @@ var _last_action: String = "-"
 var _status: Label
 var _views: Array[ParcelView] = []
 var _t0_columns: BuildingColumns = null
+var _settlement: SettlementResult = null
+var _kit: BuildingKit = null
+var _sim_buildings: BuildingView = null
+var _projector: SimBuildingProjector = null
+var _view_version: int = 0
+var _t0_occupied: Dictionary = {}
+var _m2_target: int = -1
+var _m2_targets: PackedInt64Array = PackedInt64Array()
 var _decisions: DecisionPanels = null
 var _selected_parcel_id: int = -1
 var _acc_ms: float = 0.0
@@ -49,6 +81,8 @@ func _ready() -> void:
 	var t0 := Time.get_ticks_usec()
 	_start_sim()
 	_start_hud()
+	_on_hud_ready()
+	_m2_dev_setup()
 	sim_stats["sim_setup_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
 	print("PLAYABLE ", JSON.stringify(sim_stats))
 
@@ -63,15 +97,20 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	_net = NetworkGenerator.generate(_world, net_control, world_seed)
 	var t1 := Time.get_ticks_usec()
 	var lib := KitLibrary.load_manifest()
-	var cols: BuildingColumns = T0Settlement.generate(_world, _net, lib.manifest, world_seed, rules)
+	# generate() == generate_detailed().columns; ayrıntı (bölge dokusu, meydan, çok parsellileri) projector'a gerekir.
+	_settlement = T0Settlement.generate_detailed(_world, _net, lib.manifest, world_seed, rules)
+	var cols: BuildingColumns = _settlement.columns
 	_t0_columns = cols
+	for pid in cols.occupied_parcels():
+		_t0_occupied[int(pid)] = true
 	var t2 := Time.get_ticks_usec()
 	var config := BuildingViewConfig.new()
 	config.cast_shadows = _shadows_wanted
 	_buildings = BuildingView.new()
 	_buildings.name = "Buildings"
 	_view_root.add_child(_buildings)
-	_buildings.setup(_world, BuildingKit.from_library(lib), config)
+	_kit = BuildingKit.from_library(lib)
+	_buildings.setup(_world, _kit, config)
 	var report := _buildings.set_columns(cols, _net.graph_version)
 	if not report.get("ok", false):
 		push_error("playable: yapı sütunları reddedildi: %s" % str(report.get("errors")))
@@ -81,6 +120,11 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	stats["view_ms"] = snappedf((Time.get_ticks_usec() - t2) / 1000.0, 0.1)
 	stats["parcels"] = _net.parcels.size()
 	stats["buildings"] = cols.count
+	# T-040: sim'in geliştirdiği yapılar için ayrı, başlangıçta BOŞ görünüm (aynı dünya/kit/ayar; kendi sütunları).
+	_sim_buildings = BuildingView.new()
+	_sim_buildings.name = "SimBuildings"
+	_view_root.add_child(_sim_buildings)
+	_sim_buildings.setup(_world, _kit, config)
 	return stats
 
 
@@ -90,43 +134,26 @@ func _start_sim() -> void:
 	if source == null or not source.is_valid():
 		push_error("playable: parsel kaynağı geçersiz")
 		return
-	var stock := _stock_from_columns(_t0_columns)
+	var stock := PlayableStock.from_columns(_t0_columns)
 	if stock == null or not stock.is_valid():
 		push_error("playable: T0 stok adaptörü geçersiz")
 		return
 	# Integrated playable must use the same Economy + Actors + Politics facade
 	# exposed to the HUD; EconomyBootstrap would silently omit the latter two.
-	var handle := PoliticsBootstrap.create(_world.world_seed, source, null, stock)
+	# --m2-isolate (dev): periyodik otonom tarama kapalı; yatırımcı yalnız oyuncunun imar kararından sonra değerlendirir.
+	var patch := {"decision": {"review_enabled": 0}} if _args.has("m2-isolate") else {}
+	var economy_cfg := PlayableEconomy.config_for(_views, stock, patch)
+	var handle := PoliticsBootstrap.create(_world.world_seed, source, economy_cfg, stock)
 	if handle == null:
 		push_error("playable: ekonomi/aktör/siyaset çekirdeği kurulamadı")
 		return
 	_facade = handle.facade
 	_facade.set_speed(3 if _demo else 1)
+	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
+	if _projector == null:
+		push_error("playable: SimBuildingProjector kurulamadı; sim yapıları çizilmeyecek")
 	sim_stats["sim_parcels"] = source.parcel_count()
 	sim_stats["t0_stock_parcels"] = stock.parcel_ids().size()
-
-
-## `BuildingColumns` her satırını değil, parsel başına başlangıç kullanım/birim toplamını verir. Bu başlangıç
-## durumu olduğundan ReasonLog'a karar yazılmaz; yeni yapılar hâlâ EconomySystem yatırımcı kararından doğar.
-func _stock_from_columns(cols: BuildingColumns) -> ListStockSource:
-	if cols == null:
-		return ListStockSource.create([])
-	var grouped := {}
-	for i in cols.count:
-		var pid := int(cols.parcel_id[i])
-		var commercial := (int(cols.flags[i]) & (BuildingColumns.FLAG_GROUND_SHOP | BuildingColumns.FLAG_INDUSTRY)) != 0
-		var use: StringName = &"commercial" if commercial else &"residential"
-		if not grouped.has(pid):
-			grouped[pid] = {"residential": 0, "commercial": 0}
-		var units := maxi(1, int(cols.floors[i]))
-		(grouped[pid] as Dictionary)[String(use)] += units
-	var entries: Array = []
-	for pid in grouped.keys():
-		var uses: Dictionary = grouped[pid]
-		# Tek ekonomi parseli tek kullanım taşır; karma parsellerde zemin dükkânı baskınsa ticaret seçilir.
-		var use: StringName = &"commercial" if int(uses["commercial"]) > int(uses["residential"]) else &"residential"
-		entries.append({"parcel_id": int(pid), "use": use, "units": int(uses[String(use)]), "owner": 0})
-	return ListStockSource.create(entries)
 
 
 func _parcel_views() -> Array[ParcelView]:
@@ -177,6 +204,126 @@ func _start_hud() -> void:
 	layer.add_child(_status)
 
 
+## T-040 UI KANCASI (ui-engineer, sonraki tur): HUD kurulduktan sonra çağrılır. Sonuç/gerekçe paneli buraya bağlanır
+## (`_hud`, `_facade`, `_projector` hazır). Bu turda bilerek boş: HUD sonuç paneli T-040'ın render payı DEĞİL.
+func _on_hud_ready() -> void:
+	pass
+
+
+## Dev argümanları (üst nota bakın). Yalnız komut satırında verilirse çalışır.
+func _m2_dev_setup() -> void:
+	if _facade == null:
+		return
+	if not (_args.has("m2-focus-new") or _args.has("m2-advance")):
+		return
+	_m2_targets = _pick_demo_parcels(_arg_int(_args, "m2-batch", 1, 1, 64), _arg_int(_args, "m2-skip", 0, 0, 100000))
+	_m2_target = int(_m2_targets[0]) if not _m2_targets.is_empty() else -1
+	if _args.has("m2-focus-new") and _m2_target > 0:
+		var wp: WorldParcel = _net.parcels.get(_m2_target)
+		var s := _camera.target_state()
+		s.focus_x = wp.centroid.x
+		s.focus_z = wp.centroid.y
+		_camera.apply_state(s, true)
+		_apply_camera_overrides(_args)
+	if _args.has("m2-advance"):
+		_submit_demo(_m2_targets)
+		var days := _arg_int(_args, "m2-advance", 0, 0, 3650)
+		var t0 := Time.get_ticks_usec()
+		# Küçük adımlarla ilerlet + senkronla: olay günlüğü (1000 kayıt) tek seferde 100 gün taşıyamaz.
+		var left := days
+		while left > 0:
+			var step := mini(left, M2_ADVANCE_STEP_DAYS)
+			_facade.advance(step)
+			_sync_sim_buildings(true)
+			left -= step
+		sim_stats["m2_advance_days"] = days
+		sim_stats["m2_advance_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
+		if _args.has("m2-pause"):
+			_facade.set_speed(SimFacade.SPEED_PAUSED)
+		print(_m2_target_report(days))
+
+
+## `--m2-advance` sonrası hedef parselin sim durumu ve karar gerekçeleri sayımı (konsol; yakalama doğrulaması için).
+func _m2_target_report(days: int) -> String:
+	var tv: Array[ParcelView] = _facade.parcel_views(PackedInt64Array([_m2_target]))
+	var state := "-"
+	if not tv.is_empty():
+		state = "%s use=%s units=%d progress=%d by_sim=%s" % [tv[0].development, tv[0].use, tv[0].units,
+				tv[0].progress_pm, tv[0].developed_by_sim]
+	var positive := 0
+	var negative := 0
+	for r in _facade.reasons_for(SimContract.parcel_ref(_m2_target)):
+		if r.decision_key == &"decision.investor.develop":
+			if r.outcome == ReasonRecord.OUTCOME_POSITIVE:
+				positive += 1
+			else:
+				negative += 1
+	var eo := _facade.economy_outcome()
+	var fmt := "PLAYABLE_M2 target=%d days=%d tick=%d rows=%d parcel[%s] decisions(+%d/-%d) "
+	fmt += "city(approved=%d declined=%d completed=%d) unplaced=%d"
+	return fmt % [_m2_target, days, _facade.current_tick(), _projector.columns().count if _projector != null else -1,
+			state, positive, negative, eo.investments_approved, eo.investments_declined, eo.projects_completed,
+			_projector.unplaced().size() if _projector != null else -1]
+
+
+## Sim durumundan türeyen yapıları ikinci görünüme yansıtır. Sim'e yazmaz. İKİ kip:
+##  - `full = true` (dev `--m2-advance` adımları): bütçesiz tam senkron + görünüm kurulumu.
+##  - `full = false` (kare yolu): KARE BAŞINA TEK iş: bekleyen sütunlar varsa görünümü kurar (`set_columns`), yoksa
+##    projector'ın bütçeli dilimini (`SIM_SYNC_BUDGET_US`) yürütür. Tick'li karede sim zaten ağırdır: iş sonraki
+##    karelere yayılır (kuyruk boşalana dek). `--m2-log` her görünüm kurulumunu yazdırır.
+func _sync_sim_buildings(full: bool = false) -> void:
+	if _projector == null or _sim_buildings == null or _args.has("no-sim-buildings"):
+		return
+	var t_all := Time.get_ticks_usec()
+	var worked := false
+	if full:
+		_projector.sync()
+		worked = true
+	if _projector.version() != _view_version:
+		var t0 := Time.get_ticks_usec()
+		var res := _sim_buildings.set_columns(_projector.columns(), _projector.version())
+		var view_ms := (Time.get_ticks_usec() - t0) / 1000.0
+		_view_version = _projector.version()
+		worked = true
+		sim_stats["sim_buildings"] = _projector.columns().count
+		sim_stats["view_ms_sum"] = float(sim_stats.get("view_ms_sum", 0.0)) + view_ms
+		sim_stats["view_n"] = int(sim_stats.get("view_n", 0)) + 1
+		if not bool(res.get("ok", false)):
+			push_error("playable: sim yapı sütunları reddedildi: %s" % str(res.get("errors")))
+		if _args.has("m2-log"):
+			print("PLAYABLE_SIMBLD tick=%d rows=%d rebuilt_cells=%s view_ms=%.2f backlog=%d" % [
+					_facade.current_tick(), _projector.columns().count, str(res.get("rebuilt", -1)), view_ms,
+					_projector.backlog_ticks()])
+	elif not full:
+		worked = bool(_projector.step(SIM_SYNC_BUDGET_US).get("worked", false))
+	if not worked:
+		return
+	var total_ms := (Time.get_ticks_usec() - t_all) / 1000.0
+	sim_stats["sync_n"] = int(sim_stats.get("sync_n", 0)) + 1
+	sim_stats["sync_ms_sum"] = float(sim_stats.get("sync_ms_sum", 0.0)) + total_ms
+	sim_stats["sync_ms_max"] = maxf(float(sim_stats.get("sync_ms_max", 0.0)), total_ms)
+	# perf_probe raporu (`scene_build_stats`) için: işli karelerin sayısı/ortalaması/azami süresi (projector dilimi VEYA
+	# görünüm kurulumu; kare başına tek iş), görünüm kurulumu ve kuyruk derinliği.
+	var vn := maxi(int(sim_stats.get("view_n", 0)), 1)
+	build_stats["sim_sync"] = {"n": sim_stats["sync_n"],
+			"avg_ms": snappedf(float(sim_stats["sync_ms_sum"]) / int(sim_stats["sync_n"]), 0.01),
+			"max_ms": snappedf(float(sim_stats["sync_ms_max"]), 0.01),
+			"view_builds": int(sim_stats.get("view_n", 0)),
+			"view_avg_ms": snappedf(float(sim_stats.get("view_ms_sum", 0.0)) / vn, 0.01),
+			"audits": int(_projector.stats.get("full_scans", 0)), "rows": _projector.columns().count,
+			"windows": int(_projector.stats.get("windows", 0)),
+			"parcel_reads": int(_projector.stats.get("parcel_reads", 0)),
+			"backlog_max": int(_projector.stats.get("backlog_max", 0)),
+			"step_max_ms": snappedf(float(_projector.stats.get("step_ms_max", 0.0)), 0.01),
+			"begin_max_ms": snappedf(float(_projector.stats.get("begin_ms_max", 0.0)), 0.01),
+			"events_unit_max_ms": snappedf(float(_projector.stats.get("events_ms_max", 0.0)), 0.01),
+			"views_unit_max_ms": snappedf(float(_projector.stats.get("views_ms_max", 0.0)), 0.01),
+			"plan_n": int(_projector.stats.get("plan_n", 0)),
+			"plan_max_ms": snappedf(float(_projector.stats.get("plan_ms_max", 0.0)), 0.01),
+			"plan_avg_ms": snappedf(float(_projector.stats.get("plan_ms_sum", 0.0))
+					/ maxi(int(_projector.stats.get("plan_n", 0)), 1), 0.01)}
+
+
 func _process(delta: float) -> void:
 	super._process(delta)
 	if _facade == null:
@@ -185,12 +332,18 @@ func _process(delta: float) -> void:
 	_acc_ms += delta * 1000.0
 	_acc_n += 1
 	_max_ms = maxf(_max_ms, delta * 1000.0)
+	var tick_before := _facade.current_tick()
 	_facade.drive_usec(int(delta * 1000000.0))
+	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır; kuyruk çok derinleşirse (yavaş kareler)
+	# tick'li karede de bir dilim yürür (sonsuz birikme yok).
+	var behind := _projector != null and _projector.backlog_ticks() > MAX_SYNC_BACKLOG_DAYS
+	if _facade.current_tick() == tick_before or behind:
+		_sync_sim_buildings()
 	if _facade.current_tick() != _seen_tick:
 		_seen_tick = _facade.current_tick()
 		if _hud != null:
 			_hud.poll()
-	if _demo and _frames == 10:
+	if _demo and _frames == 10 and not _args.has("m2-advance"):
 		_submit_demo()
 	# Başsız T-030 smoke, gerçek facade üzerinde kayıt baytını tekrar içe alıp
 	# kanonik hash'in korunduğunu denetler. Bu yalnız --demo ile çalışan bir
@@ -213,6 +366,11 @@ func _process(delta: float) -> void:
 	# Otomatik smoke yalnız kendi Godot sürecini sonlandırabilsin diye sınır açık bir komut satırı
 	# seçeneğidir. Normal oynanışta bu anahtar yoktur; sim veya dünya durumuna girmez.
 	if _args.has("quit-after") and _frames >= maxi(1, int(str(_args["quit-after"]))):
+		var n := int(sim_stats.get("sync_n", 0))
+		if n > 0:
+			print("PLAYABLE_SIMBLD_SYNC n=%d avg_ms=%.2f max_ms=%.2f rows=%d audits=%d" % [n,
+					float(sim_stats["sync_ms_sum"]) / n, float(sim_stats["sync_ms_max"]),
+					_projector.columns().count, int(_projector.stats.get("full_scans", 0))])
 		print("PLAYABLE_QUIT frames=%d tick=%d" % [_frames, _facade.current_tick()])
 		get_tree().quit()
 
@@ -242,19 +400,22 @@ func _on_select_requested(screen_pos: Vector2) -> void:
 	print("PLAYABLE_SELECT parcel=%d" % pid)
 
 
-func _submit_demo() -> void:
-	var pid := _selected_parcel_id
-	var focus := _camera.current_state()
-	if pid <= 0:
-		pid = _net.parcel_id_at(focus.focus_x, focus.focus_z)
-	if pid <= 0:
-		pid = _nearest_parcel(Vector2(focus.focus_x, focus.focus_z))
-	if pid <= 0:
-		_last_action = "parsel bulunamadı"
+## Demo imar önerisi: tıklamayla seçili parsel, yoksa `targets` (dev yolu), yoksa en yakın boş uygun parsel.
+func _submit_demo(targets: PackedInt64Array = PackedInt64Array()) -> void:
+	var pids := PackedInt64Array()
+	if _selected_parcel_id > 0:
+		pids.append(_selected_parcel_id)
+	elif not targets.is_empty():
+		pids = targets
+	else:
+		pids = _pick_demo_parcels(1, 0)
+	if pids.is_empty():
+		_last_action = "boş uygun parsel bulunamadı"
 		print("PLAYABLE_ACTION ", _last_action)
 		return
-	var res := _facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([pid]), DEMO_LAND_USE))
-	_last_action = "parsel %d → %s: %s" % [pid, String(DEMO_LAND_USE), str(res.get("status"))]
+	var zone := _demo_zone()
+	var res := _facade.submit_command(SimCommand.zoning_propose(pids, zone))
+	_last_action = "parsel %s → %s: %s" % [str(pids), String(zone), str(res.get("status"))]
 	print("PLAYABLE_ACTION ", _last_action)
 
 
@@ -275,12 +436,39 @@ func _smoke_save_load() -> void:
 		print("PLAYABLE_SAVE_LOAD FAIL ok=%s before=%s after=%s" % [loaded.ok, before, after])
 
 
-func _nearest_parcel(at: Vector2) -> int:
-	var best := -1
-	var best_d := INF
+func _demo_zone() -> StringName:
+	return StringName(str(_args.get("demo-zone", String(DEMO_LAND_USE))))
+
+
+## Demo/Z hedefleri: kamera odağına en yakın BOŞ ve uygun `count` parsel (ilk `skip` aday atlanır; dev). Boş = sim'de
+## vacant, bekleyen imar önerisi yok ve T0 yapı stoğunda değil (tick 0'da T0 parselleri sim'de de `vacant` görünür);
+## uygun = projector bu kullanım için bir yapı sığdırabilir (aksi halde öneri onaylansa bile çizilecek yapı olmazdı).
+## Oyuncu seçimi bu yoldan geçmez. Sıralama (uzaklık, kimlik) deterministiktir.
+func _pick_demo_parcels(count: int, skip: int) -> PackedInt64Array:
+	var focus := _camera.current_state()
+	var at := Vector2(focus.focus_x, focus.focus_z)
+	var ranked: Array = []
 	for v in _views:
-		var d := v.center.distance_squared_to(at)
-		if d < best_d:
-			best_d = d
-			best = v.id
-	return best
+		if not _t0_occupied.has(v.id):
+			ranked.append([v.center.distance_squared_to(at), v.id])
+	ranked.sort()
+	var use: StringName = &"commercial" if _demo_zone() == &"zone.commercial" else &"residential"
+	var out := PackedInt64Array()
+	var skipped := 0
+	var batch := 24
+	for start in range(0, mini(ranked.size(), 1920), batch):
+		var ids := PackedInt64Array()
+		for k in range(start, mini(start + batch, ranked.size())):
+			ids.append(int(ranked[k][1]))
+		for cur in _facade.parcel_views(ids):
+			if cur.development != ParcelView.DEVELOPMENT_VACANT or cur.pending_zone != &"":
+				continue
+			if _projector != null and not _projector.placer().can_place(cur.id, use, DEMO_PROBE_UNITS):
+				continue
+			if skipped < skip:
+				skipped += 1
+				continue
+			out.append(cur.id)
+			if out.size() >= count:
+				return out
+	return out

@@ -22,6 +22,7 @@ Durumlar:
 | Q-011 | UX: HUD stili, açılış menüsü, istatistik biçimi, zoom akışı (sürekli/ölçek kapısı), tek/iki panel, olay kesintisi + otomatik duraklatma varsayılanı (ux-ia §9, AS-11) | **open** | — |
 | Q-012 | Oyun içi takvim biçimi; Türkçe alt başlık istenip istenmediği | **open** | — |
 | Q-015 | Ismeral coğrafyasının yaratıcı onayı: T-001 çıktısı (körfez, ada dizisi, D1–D6 yerleşimi, D1 kuzey kıyıda çıkarımı, liman sahası) kullanıcı tarafından onaylandı mı? | **open** | yalnız KALICI koordinata bağlı işler (aşağıda) |
+| Q-016 | Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları: ekonomi birimi↔kit katı oranı, inşaat kademesinin görünümü (iskele modülü var mı), başlangıç altyapı kapasitesi/hane talebi, otonom yatırımcı büyümesi oynanabilirde açık mı | **open** | — (engellemiyor) |
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
@@ -52,3 +53,12 @@ Onay gelene kadar kural: **hiçbir görev kalıcı şehir/mahalle/liman/yol/yerl
 
 ### Q-013 ek · Çatı payı kuralı çelişkisi (T-005 raporu, art-director kararı gerekir)
 Kit §3.2: küçük merkez/köy/yamaç/tarlada kiremit payı %55–70; aynı spec'te "her 500 m pencerede ≤%55" kuralı var. T-005 yorumu: 500 m kuralı yalnız yoğun/orta yoğun pencereler için geçerli. Onay art-director'da (sanat kuralı), kullanıcı kararı değil. Beklerken: yorum uygulandı.
+
+### Q-016 · Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları (T-040; status: open — engellemiyor)
+Kaynak: T-040 render payı (godot-engineer). Hiçbiri kanonlaştırılmadı; hepsi yapılandırılabilir ÇM verisidir.
+- **Birim↔kat oranı:** `data/view/sim_building_mapping.json` `units_per_floor = 1` (T0 stok adaptörüyle aynı sözleşme: stokta birim = kat). Ekonomi biriminin (hane/dükkân) kit katına gerçek karşılığı F05-D'de AÇIK.
+- **İnşaat kademesi:** kitte iskele/inşaat modülü yok; yapı, nihai modülün ailesindeki daha az katlı modüllerle kat kademesi olarak görünür (aile içinde küçük modül yoksa nihai modül başta görünür). Art-director: iskele/şantiye görseli ister mi (yeni modül = sanat kararı, uydurulmadı)?
+- **Başlangıç koşulları:** varsayılan ekonomi yapılandırmasında bölge başına altyapı kapasitesi 1000 birim, gerçek T0 stoğu 4-55 bin birimdir → her yatırım `infrastructure_exhausted` ile reddedilir. `data/game/playable_economy.json` kapasiteyi (+%30) ve gizli hane talebini (+%25 konut stoğu) T0 stoğundan türetir (yalnız oynanabilir sahne; sim yapılandırması değişmedi). Doğru ölçek/başlangıç dengesi F05-D'de AÇIK.
+- **Otonom büyüme:** varsayılan sim yapılandırmasında `review_enabled = 1`: yatırımcılar oyuncu komutu olmadan da boş parselleri değerlendirir (yapı yine yalnız sim kararından doğar; CAN-03 ihlali değil ama "oyuncu komutu vermeden yapı oluşmaz" yalnız `review_enabled = 0` iken doğrudur). Oynanabilirde otonom büyüme açık mı kalsın? (`--m2-isolate` yalnız dev/yakalama.)
+- **Demo imarı:** salt ticaret önerisi (`zone.commercial`) T0 dükkân arzı hane ihtiyacının çok üstünde olduğundan talep nedeniyle reddedilir; demo `zone.mixed` kullanır.
+Beklerken stüdyo ne yapar: tüm sayılar veri dosyalarında; test ve yakalamalar bu değerlere değil davranışa (olumlu/olumsuz yol, kademe, hücre-yerel) bağlıdır.
