@@ -21,7 +21,8 @@ HUD çevrilmemiş `event.agenda.*` anahtarları (resolved/expired/lapsed), ekono
 `running.lock` temizliği yoktur; `claude` komutu model sabitlemiyordu (artık `AGENT_HANDOVER_CLAUDE_MODEL` ile sabitlenir, Haiku reddedilir; test edildi).
 Görevler arası otonom devam eden gözetmen için TASLAK: `docs/agent-handoff/drafts/autonomy_supervisor.py.txt` — **çalıştırılmadı, test edilmedi, ETKİN DEĞİL.**
 Araç izin sınıflandırıcısı gözetmen betiğinin ve genel kabul betiğinin oluşturulmasını/çalıştırılmasını reddetti ("Create Unsafe Agents"); aşılmadı.
-Kullanıcının izin kuralı ya da açık onayı olmadan bu altyapı kurulmadı.
+Kullanıcının izin kuralı ya da açık onayı olmadan bu altyapı kurulmadı. Reddedilen işlemler ve yetkili çözüm yolları: **`docs/agent-handoff/AUTONOMY_BLOCKER.md`**.
+Görevler bu oturumdan sırayla sürüyor (T-040: sim turu `cc5bfbb` commit'li; render turu → HUD → bağımsız QA sırada).
 
 **SIRADAKİ:** T-040 (M2). Önce `production/M2-CONTRACT.md` + `production/tasks/T-040.md` oku. Kabul: acceptance JSON'daki testler 0 hata, gerçek runtime
 yakalamaları, bağımsız QA raporu `production/qa/T-040-qa.md`. Sonra T-041 → T-042 → T-043 → T-044.
