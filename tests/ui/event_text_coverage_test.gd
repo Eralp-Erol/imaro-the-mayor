@@ -19,7 +19,7 @@ func after_test() -> void:
 
 
 func test_agenda_status_keys_have_text() -> void:
-	for status: String in [EventEngine.RESOLVED, EventEngine.EXPIRED]:
+	for status: String in [EventEngine.RESOLVED, EventEngine.EXPIRED, EventEngine.LAPSED]:
 		var key := StringName("event.agenda.%s" % status)
 		assert_bool(UiText.has(key)).override_failure_message("çevirisi yok: %s" % key).is_true()
 

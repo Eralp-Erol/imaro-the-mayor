@@ -9,6 +9,9 @@ extends SceneTree
 ## GPU süresi Compatibility renderer'da ölçülemeyebilir (viewport_get_measured_render_time_gpu → 0 ise raporlanır).
 ## Sahnede `perf_tag() -> String` varsa her kare etiketlenir ve `by_tag` altında etiket başına kare süresi / draw call /
 ## üçgen ayrıca raporlanır (T-003: otomatik yörünge+zoom taramasında metro/district/local/street aşamaları).
+## Sahnede `perf_tick() -> int` (sim günü) varsa kare başına tick okunur ve rapora `tick_correlation` eklenir: yavaş
+## karelerin kaçı sim tick'ine denk geldi, tick'li/tick'siz karelerin süresi. Ortalama/P95 tek başına tick kaynaklı
+## takılmaları gizler (T-030 metro bulgusu); `--frames-out=/abs/x.json` ham kare serisini (kare süresi + tick) yazar.
 ## --headless ile ÇALIŞMAZ (dummy renderer).
 
 
@@ -22,6 +25,7 @@ func run() -> void:
 	var frames := 360
 	var warmup := 60
 	var run_name := "perf"
+	var frames_out := ""
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--scene="):
 			scene_path = arg.trim_prefix("--scene=")
@@ -33,6 +37,8 @@ func run() -> void:
 			warmup = maxi(0, int(arg.trim_prefix("--warmup=")))
 		elif arg.begins_with("--name="):
 			run_name = arg.trim_prefix("--name=")
+		elif arg.begins_with("--frames-out="):
+			frames_out = arg.trim_prefix("--frames-out=")
 	if scene_path == "" or not ResourceLoader.exists(scene_path):
 		printerr("perf_probe: sahne yok: '%s'" % scene_path)
 		quit(2)
@@ -55,6 +61,9 @@ func run() -> void:
 	var primitives: Array[float] = []
 	var tags: Array[String] = []
 	var tagged: bool = scene.has_method("perf_tag")
+	var ticked: bool = scene.has_method("perf_tick")
+	var ticks: Array[int] = []
+	var last_tick := -1
 	var last := Time.get_ticks_usec()
 	for k in warmup + frames:
 		await process_frame
@@ -68,6 +77,12 @@ func run() -> void:
 			primitives.append(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))
 			if tagged:
 				tags.append(str(scene.call("perf_tag")))
+			if ticked:
+				var tick: int = scene.call("perf_tick")
+				ticks.append(0 if last_tick < 0 else tick - last_tick)
+				last_tick = tick
+		elif ticked:
+			last_tick = scene.call("perf_tick")
 		last = now
 	var rs_draw_calls := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)
 	var rs_objects := RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME)
@@ -95,6 +110,13 @@ func run() -> void:
 	if tagged:
 		report["by_tag"] = _by_tag(tags, frame_ms, draw_calls, primitives)
 	report["hitches"] = _hitches(frame_ms, tags)
+	if ticked:
+		report["tick_correlation"] = _tick_correlation(frame_ms, ticks)
+	if frames_out != "":
+		DirAccess.make_dir_recursive_absolute(frames_out.get_base_dir())
+		var fo := FileAccess.open(frames_out, FileAccess.WRITE)
+		if fo != null:
+			fo.store_string(JSON.stringify({"frame_ms": frame_ms, "dtick": ticks}))
 	var text := JSON.stringify(report, "\t")
 	print("PERF_PROBE ", JSON.stringify(report))
 	if out_path != "":
@@ -103,6 +125,23 @@ func run() -> void:
 		if f != null:
 			f.store_string(text)
 	quit(0)
+
+
+## Yavaş karelerin (> 16,6 ms, ADR-0001 P95 hedefi) sim tick'iyle ilişkisi: tick'li/tick'siz karelerin ayrı istatistiği.
+func _tick_correlation(frame_ms: Array[float], dticks: Array[int]) -> Dictionary:
+	var with_tick: Array[float] = []
+	var without_tick: Array[float] = []
+	var slow := 0
+	var slow_with_tick := 0
+	for k in frame_ms.size():
+		var ticked_frame := k < dticks.size() and dticks[k] > 0
+		(with_tick if ticked_frame else without_tick).append(frame_ms[k])
+		if frame_ms[k] > 16.6:
+			slow += 1
+			slow_with_tick += 1 if ticked_frame else 0
+	return {"slow_threshold_ms": 16.6, "slow_frames": slow, "slow_frames_with_tick": slow_with_tick,
+			"tick_frames": with_tick.size(), "tick_frame_ms": _stats(with_tick),
+			"non_tick_frame_ms": _stats(without_tick)}
 
 
 ## Tek tek takılmalar: 50 ms üstü kareler (kare sırası ölçüm başından, etiket varsa o karedeki etiket). En çok 12.

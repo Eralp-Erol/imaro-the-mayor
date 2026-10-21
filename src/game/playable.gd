@@ -35,6 +35,11 @@ var _max_ms: float = 0.0
 var _smoke_save_load_checked: bool = false
 
 
+## perf_probe: kare başına sim günü (tick'li karelerin ayrı raporlanması için); sim yoksa -1.
+func perf_tick() -> int:
+	return _facade.current_tick() if _facade != null else -1
+
+
 func _ready() -> void:
 	super._ready()
 	_demo = _args.has("demo")

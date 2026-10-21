@@ -193,3 +193,50 @@ func _labels(node: Node) -> Array[Label]:
 			out.append(child)
 		out.append_array(_labels(child))
 	return out
+
+
+# --- Bildirim şeridi satırları yeniden kullanılır (her tick'te yeniden kurmak kareyi uzatıyordu) ---
+
+func _event(seq: int, key: StringName, reasons: PackedInt64Array = PackedInt64Array()) -> SimEvent:
+	var e := SimEvent.new()
+	e.seq = seq
+	e.kind = &"actor.decided"
+	e.message_key = key
+	e.reason_ids = reasons
+	return e
+
+
+func test_strip_reuses_row_nodes_and_updates_text_and_reason_button() -> void:
+	var hud := _hud(UiTestSupport.mock(), &"desktop", DESKTOP_SIZE)
+	var strip := hud.strip
+	var asked: Array[SimEvent] = []
+	strip.reason_requested.connect(func(e: SimEvent) -> void: asked.append(e))
+	strip.push_events([_event(1, &"event.investor.develop", PackedInt64Array([7]))])
+	assert_int(strip.get_child_count()).is_equal(1)
+	var first_row := strip.get_child(0)
+	# Gerekçesiz olay: aynı düğüm, "Nedenini gör" gizli.
+	strip.push_events([_event(2, &"event.investor.declined")])
+	assert_int(strip.get_child_count()).is_equal(2)
+	assert_object(strip.get_child(0)).is_same(first_row)  # düğüm konumla yeniden kullanılır; üst satır en yeni olay
+	assert_str(strip.row_texts()[1]).is_equal(UiText.event_text(_event(2, &"event.investor.declined")))
+	assert_int(UiTestSupport.visible_buttons(strip).size()).is_equal(1)  # yalnız gerekçeli 1. olay (alt satır)
+	strip.push_events([
+		_event(3, &"event.construction.started"),
+		_event(4, &"event.investor.develop", PackedInt64Array([9])),
+		_event(5, &"event.investor.declined"),
+		_event(6, &"event.investor.develop", PackedInt64Array([11])),
+	])
+	assert_int(strip.row_count()).is_equal(3)
+	assert_int(strip.get_child_count()).is_equal(3)  # üst sınır: satır sayısı hiç artmaz, düğüm sızmaz
+	var texts := Array(strip.row_texts())
+	assert_str(texts[0]).is_equal(UiText.event_text(_event(4, &"event.investor.develop")))
+	assert_str(texts[1]).is_equal(UiText.event_text(_event(5, &"event.investor.declined")))
+	# Düğme yalnız gerekçeli olayda görünür ve basılınca O satırın olayını bildirir.
+	var visible_whys := UiTestSupport.visible_buttons(strip)
+	assert_int(visible_whys.size()).is_equal(2)  # seq 4 ve 6 gerekçeli; 5 değil
+	visible_whys[0].pressed.emit()
+	assert_int(asked.size()).is_equal(1)
+	assert_int(asked[0].seq).is_equal(6)  # en yeni olay üstte
+	strip.clear()
+	assert_int(strip.get_child_count()).is_equal(0)
+	assert_bool(strip.visible).is_false()

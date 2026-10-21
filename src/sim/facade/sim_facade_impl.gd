@@ -191,7 +191,8 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 func events_since(after_seq: int, max_count: int = 0) -> Array[SimEvent]:
 	var out: Array[SimEvent] = []
 	var start := first_retained_event_seq()
-	for rec: Dictionary in SimEventLog.since(_state, maxi(after_seq, start - 1), max_count):
+	# Kopyasız okuma: `EventAdapter` DTO'ya kendi kopyasını alır (her kaydı bir kez daha derin kopyalamak gereksiz).
+	for rec: Dictionary in SimEventLog.records_after(_state, maxi(after_seq, start - 1), max_count):
 		out.append(EventAdapter.to_event(rec))
 	return out
 
@@ -209,10 +210,7 @@ func first_retained_event_seq() -> int:
 	if _retained_cache.get("key", null) != key:
 		var start := SimEventLog.first_seq(_state)
 		if first_reason > 1:  # gerekçe id'leri 1'den başlar: budama yoksa taranacak bir şey yok
-			for rec: Dictionary in SimEventLog.since(_state, 0):
-				for rid in rec["reason_ids"] as PackedInt64Array:
-					if rid < first_reason:
-						start = maxi(start, int(rec["seq"]) + 1)
+			start = maxi(start, SimEventLog.seq_after_pruned_reasons(_state, first_reason))
 		_retained_cache = {"key": key, "start": start}
 	return _retained_cache["start"]
 

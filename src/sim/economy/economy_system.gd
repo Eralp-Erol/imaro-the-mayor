@@ -9,6 +9,8 @@ extends SimSystem
 ## veren kaynakla yeniden kurulunca aynıdır. Rastgelelik yalnız `state.rng.stream(&"economy")`.
 
 const SYSTEM := &"economy"
+## Ön eleme önbelleğinde "bu imarda kullanım yok" işareti (talep değeri hiçbir zaman bu kadar küçük değildir).
+const PRESCREEN_NO_USE := -2147483648
 
 var _cfg: EconomyConfig
 var _stock: ExistingStockSource
@@ -315,6 +317,10 @@ func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Arra
 	var cursor: int = d["review_cursor"]
 	var scanned := 0
 	var reviews := 0
+	# Ön eleme talebi yalnız (bölge, imar) çiftine bağlıdır, parsele değil: aynı çift için tekrar hesaplanmaz.
+	# `_evaluate` bölge durumunu (boru hattı/talep) değiştirdiğinden her değerlendirmeden sonra önbellek sıfırlanır;
+	# sonuçlar önbelleksiz hesapla birebir aynıdır (sıra, RNG ve kayıt değişmez).
+	var demand_cache: Dictionary = {}
 	while scanned < scan_budget and reviews < max_reviews:
 		var i := cursor
 		cursor = (cursor + 1) % n
@@ -324,14 +330,23 @@ func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Arra
 		var r := _region_of[i]
 		if starts_today[r] >= max_starts:
 			continue
-		var uses: Array = _cfg.zone_profile(_effective_zone(overlay, i)).get("uses", [])
-		var best := 0
-		for use: int in uses:
-			best = maxi(best, EconomyMath.region_demand_pm(_cfg, regions, r, use, 0))
-		if uses.is_empty() or best < prescreen:
+		var zone := _effective_zone(overlay, i)
+		var by_zone: Dictionary = demand_cache.get(r, {})
+		if by_zone.is_empty():
+			demand_cache[r] = by_zone
+		var best: int = by_zone.get(zone, PRESCREEN_NO_USE)
+		if best == PRESCREEN_NO_USE and not by_zone.has(zone):
+			var uses: Array = _cfg.zone_profile(zone).get("uses", [])
+			if not uses.is_empty():
+				best = 0
+				for use: int in uses:
+					best = maxi(best, EconomyMath.region_demand_pm(_cfg, regions, r, use, 0))
+			by_zone[zone] = best
+		if best == PRESCREEN_NO_USE or best < prescreen:
 			continue
 		reviews += 1
 		_evaluate(state, d, i, 0, starts_today)
+		demand_cache.clear()
 	d["review_cursor"] = cursor
 
 

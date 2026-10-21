@@ -31,7 +31,24 @@ args=(--path "$root")
 args+=(--script res://tools/godot/capture_frame.gd -- "--out=$out" "--frames=$frames")
 [ -n "$scene" ] && args+=("--scene=$scene")
 [ $# -gt 0 ] && args+=("$@")
-"$root/tools/godot.sh" "${args[@]}" >/dev/null 2>"$root/artifacts/verify/capture.err.log" || {
-  echo "capture: Godot başarısız, bkz artifacts/verify/capture.err.log" >&2; exit 1; }
+# Pencereli yakalama bazen sonsuza dek takılır (macOS'ta pencere örtülünce/uykuya geçince kare akışı durabilir; saatlerce
+# gözlendi). Sınırlı süre (CAPTURE_TIMEOUT, sn; varsayılan 420) + BİR yeniden deneme; hâlâ takılırsa açık hata verir.
+# godot.sh `exec` kullandığından timeout doğrudan Godot'yu sonlandırır.
+timeout_s="${CAPTURE_TIMEOUT:-420}"
+attempt=1
+while :; do
+  rc=0
+  timeout -k 10 "$timeout_s" "$root/tools/godot.sh" "${args[@]}" >/dev/null 2>"$root/artifacts/verify/capture.err.log" || rc=$?
+  [ "$rc" -eq 0 ] && break
+  if [ "$rc" -eq 124 ] && [ "$attempt" -lt 2 ]; then
+    echo "capture: ${timeout_s}s içinde bitmedi (takılma); bir kez yeniden deneniyor" >&2
+    attempt=2
+    continue
+  fi
+  if [ "$rc" -eq 124 ]; then
+    echo "capture: ${timeout_s}s içinde bitmedi (iki deneme); pencere örtülü/uykuda olabilir, bkz artifacts/verify/capture.err.log" >&2; exit 124
+  fi
+  echo "capture: Godot başarısız, bkz artifacts/verify/capture.err.log" >&2; exit 1
+done
 [ -s "$out" ] || { echo "capture: PNG oluşmadı" >&2; exit 1; }
 echo "$out"

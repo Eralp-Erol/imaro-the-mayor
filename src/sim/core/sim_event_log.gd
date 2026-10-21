@@ -55,6 +55,30 @@ static func since(state: GameState, after_seq: int, max_count: int = 0) -> Array
 	return out
 
 
+## `since` ile aynı seçim, KOPYASIZ: dönen kayıtlar durumun kendi sözlükleridir. Çağıran SALT OKUMALI kullanır ve değeri
+## dışarı vermeden kopyalar (facade `EventAdapter` ile DTO'ya kopyalar); durumu değiştirmek için kullanılmaz.
+static func records_after(state: GameState, after_seq: int, max_count: int = 0) -> Array:
+	var out: Array = []
+	for rec: Dictionary in _records(state):
+		if int(rec["seq"]) <= after_seq:
+			continue
+		if max_count > 0 and out.size() >= max_count:
+			break
+		out.append(rec)
+	return out
+
+
+## `first_reason`'dan eski (budanmış) bir gerekçeye işaret eden en yeni olayın `seq + 1`i; böyle olay yoksa 0.
+## Salt okunur ve KOPYASIZ: facade saklama ufku hesabı her HUD yenilemesinde çağırır (`since` her kaydı derin kopyalar).
+static func seq_after_pruned_reasons(state: GameState, first_reason: int) -> int:
+	var after := 0
+	for rec: Dictionary in _records(state):
+		for rid in rec["reason_ids"] as PackedInt64Array:
+			if rid < first_reason:
+				after = maxi(after, int(rec["seq"]) + 1)
+	return after
+
+
 ## Kayıtlı olay verisinin (`systems["events"]`) biçim hatası; yoksa/geçerliyse "". GameState.validate_dict çağırır.
 static func validate_data(data: Variant) -> String:
 	if data == null:

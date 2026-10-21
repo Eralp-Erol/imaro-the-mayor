@@ -9,9 +9,12 @@ extends VBoxContainer
 
 signal reason_requested(event: SimEvent)
 
+const _EVENT_META := &"strip_event"
+
 var _ctx: UiContext = null
 var _max_rows: int = 3
 var _events: Array[SimEvent] = []
+var _rows: Array[PanelContainer] = []
 
 
 static func create(ctx: UiContext) -> NotificationStrip:
@@ -49,26 +52,39 @@ func row_texts() -> PackedStringArray:
 
 
 func _rebuild() -> void:
-	for child in get_children():
-		remove_child(child)
-		child.queue_free()
 	visible = not _events.is_empty()
+	var shown := _events.size()
+	# Satırlar yeniden kullanılır: her tick'te düğüm silip yaratmak (60 olay/gün rejiminde) kareyi ~2 ms uzatıyordu.
+	while _rows.size() < shown:
+		var row := _make_row()
+		_rows.append(row)
+		add_child(row)
+	while _rows.size() > shown:
+		var extra: PanelContainer = _rows.pop_back()
+		remove_child(extra)
+		extra.queue_free()
 	# Yeni olay üstte.
-	for i in range(_events.size() - 1, -1, -1):
-		add_child(_make_row(_events[i]))
+	for k in shown:
+		_fill_row(_rows[k], _events[shown - 1 - k])
 
 
-func _make_row(event: SimEvent) -> Control:
+func _make_row() -> PanelContainer:
 	var row := PanelContainer.new()
 	row.theme_type_variation = UiTheme.V_HUD_BAR
 	row.mouse_filter = Control.MOUSE_FILTER_STOP
 	var box := HBoxContainer.new()
 	row.add_child(box)
-	var text := UiFactory.label(UiText.event_text(event), &"", true)
-	box.add_child(text)
-	# Gerekçe kaydı olan olay ya da reddedilen komut ("neden kabul edilmedi", SIM-12).
-	if not event.reason_ids.is_empty() or event.kind == SimEvent.KIND_COMMAND_REJECTED:
-		var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), false)
-		why.pressed.connect(func() -> void: reason_requested.emit(event))
-		box.add_child(why)
+	box.add_child(UiFactory.label("", &"", true))
+	var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), false)
+	why.pressed.connect(func() -> void: reason_requested.emit(row.get_meta(_EVENT_META)))
+	box.add_child(why)
 	return row
+
+
+func _fill_row(row: PanelContainer, event: SimEvent) -> void:
+	var box := row.get_child(0) as HBoxContainer
+	(box.get_child(0) as Label).text = UiText.event_text(event)
+	# Gerekçe kaydı olan olay ya da reddedilen komut ("neden kabul edilmedi", SIM-12).
+	(box.get_child(1) as Button).visible = not event.reason_ids.is_empty() \
+			or event.kind == SimEvent.KIND_COMMAND_REJECTED
+	row.set_meta(_EVENT_META, event)

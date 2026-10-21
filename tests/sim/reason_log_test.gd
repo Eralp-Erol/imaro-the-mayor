@@ -248,3 +248,42 @@ func test_validate_dict_rejects_malformed_records() -> void:
 	float_value["records"][0]["factors"][0]["value"] = 1.5
 	assert_str(ReasonLog.validate_dict(float_value)).override_failure_message("float değer kaydı kabul edildi") \
 		.is_not_empty()
+
+
+# --- Doğrulama/normalizasyon hızlandırması (karar başına çağrılır): davranış değişmemeli ---
+
+## Referans: hızlandırmadan önceki `_is_ref` (SimContract.parse_ref üzerinden).
+func _reference_is_ref(value: String) -> bool:
+	var parsed := SimContract.parse_ref(StringName(value))
+	return not String(parsed["kind"]).is_empty() and int(parsed["id"]) >= 1
+
+
+func test_ref_validation_matches_the_reference_implementation() -> void:
+	var state := new_state()
+	var corpus := ["parcel.1", "actor.investor.12", "a.b.7", "vote.30", "", "parcel", "parcel.", ".5", "parcel.0",
+		"parcel.-3", "parcel.x", "parcel.1.5", "a b.2", "..", "a..3", "x.+4", "x. 5", "x.5 ", "x.007", "x.99999999999"]
+	for value in corpus:
+		assert_bool(ReasonLog._is_ref(value)).override_failure_message("'%s' eski gerçeklemeden farklı" % value) \
+				.is_equal(_reference_is_ref(value))
+	# Davranış: geçersiz özne kaydı reddeder.
+	assert_int(state.record_reason(A1, &"d", [], 0, &"", PackedStringArray(["parcel.0"]))).is_equal(-1)
+	assert_int(state.record_reason(A1, &"d", [], 0, &"", PackedStringArray(["parcel.4"]))).is_greater(0)
+
+
+func test_factor_names_keep_stringname_identity_and_defaults() -> void:
+	var state := new_state()
+	var id := state.record_reason(A1, &"d", [
+		{"name": &"yield", "value": 1000},
+		{"name": "risk", "value": -500, "weight": 2000, "is_estimate": true, "source_ref": &"parcel.4"},
+		{"name": &"cost", "value": 0, "source_ref": "parcel.9"},
+	], 0)
+	var factors: Array = state.reasons.by_id(id)["factors"]
+	assert_int(typeof(factors[0]["name"])).is_equal(TYPE_STRING_NAME)
+	assert_int(typeof(factors[1]["name"])).is_equal(TYPE_STRING_NAME)  # String girişi de StringName'e çevrilir
+	assert_str(str(factors[1]["name"])).is_equal("risk")
+	assert_int(typeof(factors[0]["source_ref"])).is_equal(TYPE_STRING_NAME)
+	assert_str(str(factors[0]["source_ref"])).is_equal("")
+	assert_str(str(factors[1]["source_ref"])).is_equal("parcel.4")
+	assert_str(str(factors[2]["source_ref"])).is_equal("parcel.9")
+	assert_int(factors[0]["weight"]).is_equal(SimContract.FIXED_SCALE)
+	assert_bool(factors[1]["is_estimate"]).is_true()

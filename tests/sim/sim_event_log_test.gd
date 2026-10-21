@@ -146,3 +146,45 @@ func test_reject_key_mapping() -> void:
 			"invalid_value", "invalid_target", "precondition"]:
 		assert_str(str(CommandReject.key_for(StringName(suffix)))).is_equal("command.reject." + suffix)
 	assert_str(str(CommandReject.key_for(&"insufficient_funds"))).is_equal("command.reject.precondition")
+
+
+# --- Kopyasız okumalar (HUD her tick'te çağırır; `since` her kaydı derin kopyalıyordu) ---
+
+## Referans: eski `SimFacadeImpl.first_retained_event_seq` taraması (`since` ile derin kopya).
+func _reference_after_pruned(state: GameState, first_reason: int) -> int:
+	var after := 0
+	for rec: Dictionary in SimEventLog.since(state, 0):
+		for rid in rec["reason_ids"] as PackedInt64Array:
+			if rid < first_reason:
+				after = maxi(after, int(rec["seq"]) + 1)
+	return after
+
+
+func test_seq_after_pruned_reasons_matches_the_reference_scan() -> void:
+	var state := _state()
+	# Eski bir gerekçeye geç dönen olay (ör. gündem kapanışı) dâhil karışık referanslar.
+	var refs: Array = [[], [5], [3, 9], [], [1], [12], [7, 2], [], [20], [4]]
+	for i in 30:
+		SimEventLog.emit(state, &"actor.decided", &"event.investor.develop", PackedStringArray(),
+			{}, PackedInt64Array(refs[i % refs.size()]))
+	for first_reason in [0, 1, 2, 3, 5, 8, 10, 13, 21, 99]:
+		assert_int(SimEventLog.seq_after_pruned_reasons(state, first_reason)) \
+				.override_failure_message("first_reason=%d" % first_reason) \
+				.is_equal(_reference_after_pruned(state, first_reason))
+	assert_int(SimEventLog.seq_after_pruned_reasons(_state(), 5)).is_equal(0)  # boş günlük
+
+
+func test_records_after_selects_exactly_what_since_does_without_mutating_state() -> void:
+	var state := _state()
+	for i in 12:
+		SimEventLog.emit(state, &"k", &"event.x", PackedStringArray(["parcel.%d" % (i + 1)]), {"n": i},
+				PackedInt64Array([i + 1]))
+	var before := state_hash_of(state)
+	for after_seq in [0, 3, 11, 12, 40]:
+		for max_count in [0, 1, 4]:
+			var a := SimEventLog.since(state, after_seq, max_count)
+			var b := SimEventLog.records_after(state, after_seq, max_count)
+			assert_int(b.size()).is_equal(a.size())
+			for k in a.size():
+				assert_dict(b[k]).is_equal(a[k])
+	assert_str(state_hash_of(state)).override_failure_message("okuma durumu değiştirmemeli").is_equal(before)

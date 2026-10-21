@@ -51,11 +51,11 @@ func record(tick: int, actor: Variant, decision: Variant, factors: Array, thresh
 	for factor: Dictionary in factors:
 		var weight: int = factor.get("weight", SimContract.FIXED_SCALE)
 		normalized.append({
-			"name": StringName(str(factor["name"])),
+			"name": _as_name(factor["name"]),
 			"value": factor["value"],
 			"weight": weight,
 			"is_estimate": bool(factor.get("is_estimate", false)),
-			"source_ref": StringName(str(factor.get("source_ref", ""))),
+			"source_ref": _as_name(factor.get("source_ref", "")),
 		})
 		score += SimContract.contribution(factor["value"], weight)
 	var id := _next_id
@@ -224,8 +224,16 @@ static func _is_name(value: Variant) -> bool:
 
 ## `<tür>.<n>` biçiminde geçerli referans mı (n >= 1)?
 static func _is_ref(value: String) -> bool:
-	var parsed := SimContract.parse_ref(StringName(value))
-	return not String(parsed["kind"]).is_empty() and int(parsed["id"]) >= 1
+	var dot := value.rfind(".")
+	if dot <= 0:
+		return false
+	var tail := value.substr(dot + 1)
+	return tail.is_valid_int() and int(tail) >= 1
+
+
+## StringName'e çevirir; zaten StringName ise yeniden dizgeye çevirmeden aynen döner (karar başına çok sayıda çağrı).
+static func _as_name(value: Variant) -> StringName:
+	return value if typeof(value) == TYPE_STRING_NAME else StringName(str(value))
 
 
 static func _validate(actor: Variant, decision: Variant, factors: Array, threshold: Variant,

@@ -327,6 +327,7 @@
 	"event.budget.approved": "Bütçe onaylandı",
 	"event.agenda.resolved": "Gündem öğesi karara bağlandı",
 	"event.agenda.expired": "Gündem öğesinin süresi doldu; varsayılan sonuç uygulandı",
+	"event.agenda.lapsed": "Gündem öğesi koşul ortadan kalktığı için kapandı",
 	"decision.investor.develop.positive": "Yatırımcı yatırım yaptı",
 	"decision.investor.develop.negative": "Yatırımcı vazgeçti",
 	"decision.group.support.positive": "Grup destek verdi",
