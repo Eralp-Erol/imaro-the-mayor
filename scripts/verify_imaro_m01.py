@@ -195,8 +195,21 @@ def check_files() -> None:
         "tamam" if not (missing or untracked) else f"eksik: {missing} | izlenmiyor: {untracked}")
 
 
-# Bilerek bozuk dosya yazan test (tests/app/platform_profile_test.gd, "corrupt_file_is_empty") motor ERROR'u basar; yalnız bu satır beklenir.
-EXPECTED_ERRORS = ("ConfigFile parse error at user://platform_profile_test/settings.cfg",)
+# Bilerek hatalı girdi veren NEGATİF testler (reddi doğrularlar) motor ERROR'u basar. Yalnız bu mesaj kalıpları beklenir;
+# SCRIPT ERROR / Parse Error / Abnormal exit ve listede olmayan her ERROR: satırı FAIL kalır.
+EXPECTED_ERRORS = (
+    "ConfigFile parse error at user://platform_profile_test/settings.cfg",  # platform_profile_test: bozuk ayar dosyası
+    "Error when trying to decode Variant.",  # sim_save_test, save_slot_test: bozuk kayıt baytı
+    "ERR_INVALID_DATA",  # aynı testlerin kesik/bozuk ikili girdisi
+    "StateHash: unsupported type",  # state_hash_test, sim_save_test: desteklenmeyen tip reddi
+    "StateHash: nesting deeper than 128",  # state_hash_test: döngüsel yapı reddi
+    "ReasonLog: ",  # reason_log_test: geçersiz neden kaydı doğrulaması
+    "CameraRig: district: 'D99'",  # camera_rig_pose_test: olmayan bölge kodu geri dönüşü
+    "Simulation: duplicate system id",  # sim_scheduler_test
+    "SimFacadeImpl: parsel kaynağı",  # sim_facade_impl_test: eksik/geçersiz kaynak
+    "Commands: params not serializable",  # commands_test
+    "ActorStore: invalid ActorConfig",  # actor_system_test
+)
 
 
 def scan_godot_errors(text: str) -> list[str]:
