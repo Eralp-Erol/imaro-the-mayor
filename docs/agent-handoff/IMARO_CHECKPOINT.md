@@ -2,7 +2,31 @@
 
 Tarih: 2026-10-20 (gece). Hazırlayan: Claude (Studio Director oturumu). Bu dosya başka sohbet geçmişine ihtiyaç duymadan okunabilir.
 
-## 1. Repo / dal / durum (gerçek, tespit edilmiş)
+## 0. GÜNCEL DURUM (2026-10-21, akşam) — M2'ye geçiş (bu bölüm eski §1–§7'nin ÜSTÜNDEDİR)
+**Yön değişti:** kullanıcı M1'deki "M02 YOK / DUR" kısıtını kaldırdı; M1'in bekleyen kullanıcı/cihaz kabulleri (Q-015, iPad, Windows, T-009/T-010,
+art-director, demo incelemesi) `docs/agent-handoff/M01_OPEN_ITEMS.md`'de AÇIK kayıtlı, yeni geliştirmeyi durdurmaz ve kullanıcı adına verilmedi.
+M2 sözleşmesi: **`production/M2-CONTRACT.md`** (M1'in `exit 2` durdurmasını KULLANMAZ). İlk M2 görevi: **`production/tasks/T-040.md`**
+(imar kararı → yatırımcı kararı → gerçek 3D yapı → ölçülebilir sonuç), kabul tanımı `production/acceptance/T-040.json`.
+
+**Çalışma dalı/worktree:** `agent/handover-imaro-m01-349562fb` (`/Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb`);
+`main` ve kullanıcının ana checkout'u (`dev/m1-parallel`) DOKUNULMADI. main'e merge / push / deploy yok.
+
+**M1 teknik durum (doğrulanmış / doğrulanmamış):** 22 zorunlu görev kanıtlı, GdUnit **1412 test 0 hata** (tam koşu), gdlint temiz, T-029 hash/kayıt
+(10k parselde 159 ms / 374 ms), K8 %2,5851, **`tools/smoke_playable.sh` SMOKE_OK** (son koşu: kare ort. 3,52 / P95 7,39 ms, 232 draw call, varsayılan pencere). Açık teknik
+durumlar (P95 karar rejimi, K8/yakalama takılması): `M01_OPEN_ITEMS.md`. Bu oturumda düzeltilenler: kamera girdisi (iki `InputProfile` → tek, `df81764`),
+HUD çevrilmemiş `event.agenda.*` anahtarları (resolved/expired/lapsed), ekonomi ön eleme önbelleği (8,8→3,3 ms/tick), olay saklama ufku taraması
+(8,1→0,8 ms), şerit satırı yeniden kullanımı (2,85→0,11 ms), `perf_probe` tick bağı (`tick_correlation`), `capture.sh` zaman aşımı.
+
+**Otomasyon (GERÇEK durum):** `agent_handover.py` yalnız TEK görevi kabul betiğine kadar sürer; görev zinciri, arka plan/PID, çökme kurtarma, bayat
+`running.lock` temizliği yoktur; `claude` komutu model sabitlemiyordu (artık `AGENT_HANDOVER_CLAUDE_MODEL` ile sabitlenir, Haiku reddedilir; test edildi).
+Görevler arası otonom devam eden gözetmen için TASLAK: `docs/agent-handoff/drafts/autonomy_supervisor.py.txt` — **çalıştırılmadı, test edilmedi, ETKİN DEĞİL.**
+Araç izin sınıflandırıcısı gözetmen betiğinin ve genel kabul betiğinin oluşturulmasını/çalıştırılmasını reddetti ("Create Unsafe Agents"); aşılmadı.
+Kullanıcının izin kuralı ya da açık onayı olmadan bu altyapı kurulmadı.
+
+**SIRADAKİ:** T-040 (M2). Önce `production/M2-CONTRACT.md` + `production/tasks/T-040.md` oku. Kabul: acceptance JSON'daki testler 0 hata, gerçek runtime
+yakalamaları, bağımsız QA raporu `production/qa/T-040-qa.md`. Sonra T-041 → T-042 → T-043 → T-044.
+
+## 1. Repo / dal / durum — ESKİ (2026-10-20 gece), tarihî kayıt
 - Repo (ana checkout, worktree DEĞİL): `/Users/eralperol/Documents/Projects/imaro-the-mayor` · remote `origin` = `https://github.com/Eralp-Erol/imaro-the-mayor.git`
 - Çalışma dalı: **`dev/m1-parallel`** (T-001 dalı `task/T-001-ismeral-world` üzerine kuruldu; ikisi de `main`'e MERGE EDİLMEDİ, `main` = `a0237b0`). HEAD SHA bu dosyayı içeren son commit'tir (`git log -1`).
 - Çalışma ağacı **TEMİZ DEĞİL** (bilinçli): T-017 ve T-028 yarım işleri commit'siz duruyor (bkz. §4). Yedekleri bu dizinde: `docs/agent-handoff/wip/` (yama + arşiv). Başka worktree'ler (`.claude/worktrees/*`, `../imaro-the-mayor.integration`) eski M0 artıkları: DOKUNMA.

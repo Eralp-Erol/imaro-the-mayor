@@ -1,0 +1,25 @@
+{
+  "task": "T-040",
+  "base_ref": "dev/m2-autonomy",
+  "require_files": [
+    "production/tasks/T-040.md",
+    "tests/game/m2_causal_loop_test.gd",
+    "tests/game/can03_guard_test.gd",
+    "tests/ui/m2_result_panel_test.gd"
+  ],
+  "gdunit": [
+    "res://tests/game",
+    "res://tests/ui/m2_result_panel_test.gd",
+    "res://tests/sim",
+    "res://tests/contracts"
+  ],
+  "require_artifacts": [
+    "artifacts/screenshots/captures/*m2-t040-before-district*.png",
+    "artifacts/screenshots/captures/*m2-t040-after-district*.png",
+    "artifacts/screenshots/captures/*m2-t040-after-street*.png"
+  ],
+  "open_user_items": [
+    "iPad dilimi cihaz testi (M2 kapısı)",
+    "art-director görsel kabulü (VIS-02/03) ve kullanıcı incelemesi"
+  ]
+}

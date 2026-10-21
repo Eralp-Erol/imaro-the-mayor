@@ -1,0 +1,691 @@
+#!/usr/bin/env python3
+"""Imaro otonom üretim gözetmeni (supervisor).
+
+`~/tools/agent-handover/agent_handover.py` TEK görevi kabul betiğine kadar sürer; görev ZİNCİRİ, arka plan süreci, PID,
+yeniden başlatma ve çökme kurtarması yoktur. Bu gözetmen onları ekler:
+
+  QUEUE.json (sıralı görevler) -> her görev: implementasyon (agent_handover autopilot) -> bağımsız QA (diğer sağlayıcı) ->
+  entegrasyon dalına birleştirme (main'e DOKUNMAZ) -> sıradaki görev.
+
+Komutlar: run (ön plan döngü; launchd bunu çalıştırır) | start | stop | restart | status | once | install-launchd |
+uninstall-launchd. Çalışma durumu repo DIŞINDA: ~/.local/state/imaro-autonomy (IMARO_AUTONOMY_HOME ile değişir).
+Sözleşme ve sınırlar: production/autonomy/README.md. Yalnız Python stdlib.
+"""
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import fcntl
+import json
+import os
+import re
+import shlex
+import signal
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+APP = "imaro-autonomy"
+LABEL = "com.eralperol.imaro-autonomy"
+HOME = Path(os.environ.get("IMARO_AUTONOMY_HOME", str(Path.home() / ".local" / "state" / APP))).expanduser()
+HANDOVER_HOME = Path(os.environ.get("AGENT_HANDOVER_HOME", str(Path.home() / ".local" / "state" / "agent-handover"))).expanduser()
+DEFAULT_HANDOVER = [sys.executable, str(Path.home() / "tools" / "agent-handover" / "agent_handover.py")]
+QUEUE_REL = "production/autonomy/QUEUE.json"
+TASK_VERIFY = "scripts/verify_imaro_task.py"
+QA_VERIFY = "scripts/verify_imaro_qa.py"
+FORBIDDEN_MODEL = "haiku"
+ALLOWED_CLAUDE_MODEL_WORDS = ("opus", "sonnet")
+
+
+def now() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+
+
+def handover_cmd() -> list[str]:
+    raw = os.environ.get("IMARO_HANDOVER_CMD")
+    return shlex.split(raw) if raw else list(DEFAULT_HANDOVER)
+
+
+# --------------------------------------------------------------------------------------------- dosyalar / durum
+def paths() -> dict[str, Path]:
+    return {k: HOME / v for k, v in {
+        "pid": "pid.json", "heartbeat": "heartbeat.json", "state": "state.json", "log": "supervisor.log",
+        "stop": "STOP", "lock": "supervisor.lock", "logs": "logs"}.items()}
+
+
+def ensure_home() -> None:
+    HOME.mkdir(parents=True, exist_ok=True, mode=0o700)
+    paths()["logs"].mkdir(parents=True, exist_ok=True)
+
+
+def log(msg: str) -> None:
+    ensure_home()
+    line = f"{now()} {msg}"
+    with paths()["log"].open("a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    print(line, flush=True)
+
+
+def read_json(path: Path, default):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return default
+
+
+def write_json(path: Path, value) -> None:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(json.dumps(value, ensure_ascii=False, indent=1), encoding="utf-8")
+    os.replace(tmp, path)
+
+
+def load_state() -> dict:
+    s = read_json(paths()["state"], {})
+    s.setdefault("tasks", {})
+    s.setdefault("rounds", {})
+    return s
+
+
+def save_state(state: dict) -> None:
+    ensure_home()
+    write_json(paths()["state"], state)
+
+
+def heartbeat(phase: str, **extra) -> None:
+    ensure_home()
+    write_json(paths()["heartbeat"], {"ts": now(), "epoch": time.time(), "pid": os.getpid(), "phase": phase, **extra})
+
+
+def git(args: list[str], cwd: Path, check: bool = True) -> str:
+    r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    if check and r.returncode != 0:
+        raise RuntimeError(f"git {' '.join(args)} (cwd={cwd}) -> {r.returncode}: {(r.stderr or r.stdout).strip()[:500]}")
+    return r.stdout.strip()
+
+
+# --------------------------------------------------------------------------------------------- süreç yardımcıları
+def pid_alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def proc_start_time(pid: int) -> str:
+    r = subprocess.run(["ps", "-o", "lstart=", "-p", str(pid)], capture_output=True, text=True)
+    return r.stdout.strip()
+
+
+def group_alive(pgid: int) -> bool:
+    try:
+        os.killpg(pgid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def kill_group(pgid: int, grace: float = 8.0) -> None:
+    """Yalnız KENDİ başlattığımız süreç grubunu sonlandırır (geniş desenli pkill yok)."""
+    if pgid <= 1 or not group_alive(pgid):
+        return
+    try:
+        os.killpg(pgid, signal.SIGTERM)
+    except ProcessLookupError:
+        return
+    end = time.time() + grace
+    while time.time() < end and group_alive(pgid):
+        time.sleep(0.25)
+    if group_alive(pgid):
+        try:
+            os.killpg(pgid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+
+
+def status_of_running() -> dict:
+    """Gözetmenin canlı olup olmadığı: PID + başlangıç zamanı (PID yeniden kullanımına karşı) + kalp atışı tazeliği."""
+    pid_info = read_json(paths()["pid"], {})
+    pid = int(pid_info.get("pid", 0) or 0)
+    alive = bool(pid) and pid_alive(pid) and (not pid_info.get("lstart") or proc_start_time(pid) == pid_info["lstart"])
+    hb = read_json(paths()["heartbeat"], {})
+    age = time.time() - float(hb.get("epoch", 0) or 0) if hb else None
+    return {"pid": pid or None, "alive": alive, "heartbeat_age_s": None if age is None else round(age, 1),
+            "heartbeat": hb, "stale": bool(alive and age is not None and age > 180)}
+
+
+# --------------------------------------------------------------------------------------------- yapılandırma / kuyruk
+class Config:
+    def __init__(self, integration: Path, queue: dict) -> None:
+        self.integration = integration
+        self.queue = queue
+        lim = queue.get("limits", {})
+        self.max_rounds = int(lim.get("max_rounds", 8))
+        self.verify_timeout = int(lim.get("verify_timeout", 3600))
+        self.max_task_attempts = int(lim.get("max_task_attempts", 3))
+        self.max_rounds_per_day = int(lim.get("max_rounds_per_day", 60))
+        self.poll_minutes = int(lim.get("poll_minutes", 20))
+        self.max_wait_hours = int(lim.get("max_wait_hours", 12))
+        self.qa_cycles = int(lim.get("qa_cycles", 2))
+        self.backoff_minutes = int(lim.get("backoff_minutes", 10))
+        prov = queue.get("providers", {})
+        self.impl = prov.get("impl", "codex")
+        self.qa = prov.get("qa", "claude")
+        self.claude_model = prov.get("claude_model", "claude-sonnet-5-5")
+        if FORBIDDEN_MODEL in self.claude_model.lower() or not any(w in self.claude_model.lower() for w in ALLOWED_CLAUDE_MODEL_WORDS):
+            raise SystemExit(f"Claude modeli yalnız Opus/Sonnet olabilir (Haiku yasak): {self.claude_model!r}")
+        self.branch = queue.get("integration_branch", "dev/m2-autonomy")
+
+
+def load_config(integration: Path) -> Config:
+    queue = read_json(integration / QUEUE_REL, None)
+    if not isinstance(queue, dict) or "tasks" not in queue:
+        raise SystemExit(f"Kuyruk okunamadı: {integration / QUEUE_REL}")
+    return Config(integration, queue)
+
+
+def next_task(cfg: Config, state: dict) -> dict | None:
+    done = {tid for tid, t in state["tasks"].items() if t.get("status") == "done"}
+    for t in cfg.queue["tasks"]:
+        st = state["tasks"].get(t["id"], {})
+        if st.get("status") in ("done", "blocked"):
+            continue
+        if all(d in done for d in t.get("depends_on", [])):
+            return t
+    return None
+
+
+def blocked_report(cfg: Config, state: dict) -> list[str]:
+    return [f"{t['id']}: {state['tasks'].get(t['id'], {}).get('status', 'pending')}" for t in cfg.queue["tasks"]
+            if state["tasks"].get(t["id"], {}).get("status") != "done"]
+
+
+# --------------------------------------------------------------------------------------------- görev metni
+RULES = """\
+OTONOM ÇALIŞMA KURALLARI (gözetmen tarafından eklendi; görev metninin parçasıdır)
+- Depo: Imaro: The Mayor (Godot 4.7.2 / GDScript). `CLAUDE.md`, `design/CANON.md`, `design/REQUIREMENTS.md`,
+  `production/LANES.md`, `docs/agent-handoff/IMARO_CHECKPOINT.md` ve `production/autonomy/README.md` bağlayıcıdır.
+- `design/foundation/` DEĞİŞTİRİLEMEZ. AÇIK yaratıcı kararları kesinleştirme: yapılandırılabilir veri/yer tutucu kullan,
+  `production/QUESTIONS.md`'ye gruplanmış soru ekle. Kullanıcı/cihaz onaylarını (Q-015, iPad, Windows, art-director kapısı)
+  UYDURMA; `docs/agent-handoff/M01_MANUAL_SIGNOFF.json`'a dokunma.
+- main'e merge, push, force push, deploy YOK. Dal değiştirme YOK. Yalnız bu worktree'de çalış, işini COMMIT'le
+  (kabul betiği temiz ağaç ister). `tools/autonomy/`, `production/autonomy/QUEUE.json`, `scripts/verify_imaro_*.py` ve
+  `design/foundation/` dosyalarını değiştirme.
+- Oyuncu özel bina spawn edemez (CAN-03): bina yalnız sim durumundan (yatırımcı kararı + inşaat) türetilir. HUD yalnız
+  gerçek sim verisi gösterir; sahte sayı, ölü buton, yalnız animasyonla temsil edilen sahte sonuç YOK.
+- Sim saf/deterministik/seed'li kalır (TEK-01/02). Çalıştırmadığın şeye "geçti" deme; doğrulanmış/varsayılan/test
+  edilmemiş ayrı yaz. Başarısız testi geçmiş gösterme, eşik gevşetme.
+- Kanıtı `production/tasks/<ID>.md` "Kanıt" bölümüne yaz (komut, sonuç, doğrulanmadı listesi) ve
+  `.agent-handover/HANDOFF.md`'yi güncel tut.
+- Token/zaman: odaklı testler (`tools/lane.sh verify <hat>`, ilgili GdUnit dizinleri); tam doğrulamayı tekrarlama.
+- Claude alt ajanı kullanırsan YALNIZ Opus/Sonnet; Haiku kesinlikle yasak.
+"""
+
+
+def compose_task(cfg: Config, task: dict, kind: str, extra: str = "") -> str:
+    body = (cfg.integration / task["task_file"]).read_text(encoding="utf-8")
+    acc = (cfg.integration / task.get("acceptance", "")).read_text(encoding="utf-8") if task.get("acceptance") else ""
+    head = f"ID: {task['id']}\nKIND: {kind}\nTITLE: {task['title']}\n\n"
+    return head + RULES + "\n" + body + ("\n\nKABUL (makine kontrol eder):\n```json\n" + acc + "\n```\n" if acc else "") + extra
+
+
+# --------------------------------------------------------------------------------------------- handover çağrıları
+def run_child(cmd: list[str], logfile: Path, state: dict, env_extra: dict | None = None, cwd: Path | None = None) -> int:
+    """Alt süreci KENDİ grubunda çalıştırır; grup kimliği durumda saklanır (çökmeden sonra temizlenir)."""
+    env = os.environ.copy()
+    env.update(env_extra or {})
+    with logfile.open("a", encoding="utf-8") as lf:
+        lf.write(f"\n--- {now()} {' '.join(shlex.quote(c) for c in cmd)}\n")
+        lf.flush()
+        proc = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=lf, stderr=subprocess.STDOUT,
+                                start_new_session=True)
+        state["child_pgid"] = proc.pid
+        save_state(state)
+        try:
+            while True:
+                try:
+                    return proc.wait(timeout=30)
+                except subprocess.TimeoutExpired:
+                    heartbeat("child", child_pid=proc.pid, log=str(logfile))
+                    if paths()["stop"].exists():
+                        kill_group(proc.pid)
+                        return 143
+        finally:
+            kill_group(proc.pid, grace=2.0)
+            state["child_pgid"] = None
+            save_state(state)
+
+
+def handover_env(cfg: Config) -> dict:
+    return {"AGENT_HANDOVER_CLAUDE_MODEL": cfg.claude_model, "IMARO_BASE_REF": cfg.branch}
+
+
+def prepare(cfg: Config, task_text: str, name: str, primary: str, repo: Path, state: dict) -> dict:
+    ensure_home()
+    tf = HOME / "logs" / f"{name}.task.md"
+    tf.write_text(task_text, encoding="utf-8")
+    cmd = handover_cmd() + ["prepare", "--repo", str(repo), "--task-file", str(tf), "--name", name, "--primary", primary]
+    r = subprocess.run(cmd, capture_output=True, text=True, env={**os.environ, **handover_env(cfg)})
+    if r.returncode != 0:
+        raise RuntimeError(f"prepare başarısız: {(r.stderr or r.stdout).strip()[-600:]}")
+    out = r.stdout
+    m = {k: re.search(rf"^{k}: (.+)$", out, re.M) for k in ("Prepared", "Worktree", "Branch")}
+    if not all(m.values()):
+        raise RuntimeError(f"prepare çıktısı ayrıştırılamadı: {out[-400:]}")
+    return {"id": m["Prepared"].group(1).strip(), "worktree": m["Worktree"].group(1).strip(),
+            "branch": m["Branch"].group(1).strip()}
+
+
+def clear_stale_lock(hid: str) -> None:
+    lock = HANDOVER_HOME / hid / "running.lock"
+    if lock.exists():
+        log(f"bayat running.lock siliniyor: {hid}")
+        lock.unlink(missing_ok=True)
+
+
+def handover_state(hid: str) -> dict:
+    return read_json(HANDOVER_HOME / hid / "state.json", {})
+
+
+def autopilot(cfg: Config, hid: str, verify: str, state: dict, label: str, task_id: str) -> str:
+    clear_stale_lock(hid)
+    before = len(handover_state(hid).get("attempts", []))
+    cmd = handover_cmd() + ["autopilot", hid, "--verify-script", verify, "--max-rounds", str(cfg.max_rounds),
+                            "--wait-on-quota", "--poll-minutes", str(cfg.poll_minutes),
+                            "--max-wait-hours", str(cfg.max_wait_hours), "--bypass-permissions",
+                            "--verify-timeout", str(cfg.verify_timeout)]
+    heartbeat("autopilot", task=task_id, handover=hid, label=label)
+    rc = run_child(cmd, paths()["logs"] / f"{task_id}-{label}-{hid}.log", state, handover_env(cfg), cwd=cfg.integration)
+    after = handover_state(hid)
+    today = dt.date.today().isoformat()
+    state["rounds"][today] = state["rounds"].get(today, 0) + max(0, len(after.get("attempts", [])) - before)
+    save_state(state)
+    log(f"autopilot {task_id}/{label} {hid}: rc={rc} status={after.get('status')}")
+    return str(after.get("status"))
+
+
+def day_budget_exhausted(cfg: Config, state: dict) -> bool:
+    return state["rounds"].get(dt.date.today().isoformat(), 0) >= cfg.max_rounds_per_day
+
+
+def sleep_interruptible(seconds: float, phase: str) -> None:
+    end = time.time() + seconds
+    while time.time() < end:
+        heartbeat(phase, sleeping_s=round(end - time.time()))
+        if paths()["stop"].exists():
+            return
+        time.sleep(min(30, max(1.0, end - time.time())))
+
+
+# --------------------------------------------------------------------------------------------- görev yaşam döngüsü
+def read_verdict(worktree: Path, task_id: str) -> tuple[str, str]:
+    report = worktree / "production" / "qa" / f"{task_id}-qa.md"
+    text = report.read_text(encoding="utf-8") if report.is_file() else ""
+    m = re.search(r"^VERDICT:\s*(PASS|FAIL)\s*$", text, re.M)
+    return (m.group(1) if m else "NONE"), text[:1500]
+
+
+def integrate(cfg: Config, branch: str, task: dict, st: dict) -> str:
+    wt = cfg.integration
+    if git(["status", "--porcelain"], wt):
+        raise RuntimeError("entegrasyon worktree'si kirli; birleştirme reddedildi")
+    cur = git(["rev-parse", "--abbrev-ref", "HEAD"], wt)
+    if cur != cfg.branch:
+        raise RuntimeError(f"entegrasyon worktree'si {cur!r} dalında, beklenen {cfg.branch!r}")
+    msg = f"autonomy: {task['id']} {task['title']} (impl={st.get('impl_branch')}, qa={st.get('qa_verdict')})"
+    r = subprocess.run(["git", "merge", "--no-ff", "-m", msg, branch], cwd=wt, capture_output=True, text=True)
+    if r.returncode != 0:
+        subprocess.run(["git", "merge", "--abort"], cwd=wt, capture_output=True)
+        raise RuntimeError(f"birleştirme çakışması/hatası: {(r.stderr or r.stdout).strip()[-400:]}")
+    return git(["rev-parse", "HEAD"], wt)
+
+
+def write_status_doc(cfg: Config, state: dict) -> None:
+    lines = ["# Otonom üretim durumu (otomatik üretilir)", "", f"Güncelleme: {now()} · entegrasyon dalı: `{cfg.branch}`", "",
+             "| Görev | Durum | Aşama | QA | Birleşme |", "|---|---|---|---|---|"]
+    for t in cfg.queue["tasks"]:
+        s = state["tasks"].get(t["id"], {})
+        lines.append(f"| {t['id']} {t['title']} | {s.get('status', 'pending')} | {s.get('phase', '-')} | "
+                     f"{s.get('qa_verdict', '-')} | {(s.get('merged_sha') or '-')[:10]} |")
+    lines += ["", "Engeller / notlar:"]
+    for t in cfg.queue["tasks"]:
+        for n in state["tasks"].get(t["id"], {}).get("notes", [])[-3:]:
+            lines.append(f"- {t['id']}: {n}")
+    doc = cfg.integration / "docs" / "agent-handoff" / "AUTONOMY_STATUS.md"
+    doc.parent.mkdir(parents=True, exist_ok=True)
+    doc.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    git(["add", str(doc.relative_to(cfg.integration))], cfg.integration)
+    if git(["status", "--porcelain", "--", str(doc.relative_to(cfg.integration))], cfg.integration):
+        git(["commit", "-q", "-m", "autonomy: durum belgesi güncellendi"], cfg.integration)
+
+
+def note(st: dict, text: str) -> None:
+    st.setdefault("notes", []).append(f"{now()} {text}")
+    log(text)
+
+
+def process_task(cfg: Config, task: dict, state: dict) -> None:
+    tid = task["id"]
+    st = state["tasks"].setdefault(tid, {"status": "running", "phase": "impl", "attempts": 0, "notes": []})
+    st["status"] = "running"
+    if st["attempts"] >= cfg.max_task_attempts:
+        st["status"] = "blocked"
+        note(st, f"{tid}: en çok deneme ({cfg.max_task_attempts}) aşıldı; engellendi, bağımsız göreve geçiliyor")
+        save_state(state)
+        return
+    save_state(state)
+
+    # --- implementasyon ---
+    if st["phase"] in ("impl", "fix"):
+        if not st.get("impl_id"):
+            kind = "impl" if st["phase"] == "impl" else "fix"
+            repo = Path(st["fix_repo"]) if st.get("fix_repo") else cfg.integration
+            extra = ("\n\nQA BULGULARI (önceki turdan; hepsini gider):\n" + st.get("qa_findings", "")) if kind == "fix" else ""
+            info = prepare(cfg, compose_task(cfg, task, kind, extra), f"{tid}-{kind}", cfg.impl, repo, state)
+            st.update(impl_id=info["id"], impl_worktree=info["worktree"], impl_branch=info["branch"])
+            save_state(state)
+        result = autopilot(cfg, st["impl_id"], TASK_VERIFY, state, "impl", tid)
+        if result != "acceptance_check_passed":
+            st["attempts"] += 1
+            st["last_status"] = result
+            note(st, f"{tid}: implementasyon kabul edilmedi (durum={result}, deneme {st['attempts']}/{cfg.max_task_attempts})")
+            save_state(state)
+            if st["attempts"] < cfg.max_task_attempts and not paths()["stop"].exists():
+                sleep_interruptible(cfg.backoff_minutes * 60 * st["attempts"], "backoff")
+            return
+        st["phase"] = "qa"
+        st["qa_cycle"] = st.get("qa_cycle", 0)
+        st["impl_id_done"] = st["impl_id"]
+        save_state(state)
+
+    # --- bağımsız QA ---
+    if st["phase"] == "qa":
+        if st.get("qa_cycle", 0) >= cfg.qa_cycles:
+            st["status"] = "blocked"
+            note(st, f"{tid}: QA {cfg.qa_cycles} turda PASS vermedi; birleştirilmedi, bağımsız göreve geçiliyor")
+            save_state(state)
+            return
+        if not st.get("qa_id"):
+            extra = ("\n\nQA GÖREVİ: bu görevin implementasyonunu BAĞIMSIZ doğrula (uygulayıcı sen değilsin). "
+                     f"`production/qa/{tid}-qa.md` yaz: ilk satırlar `VERDICT: PASS` veya `VERDICT: FAIL`, sonra `## Kanıt` "
+                     "(çalıştırdığın komutlar + sonuçlar), `## Bulgular` (hata/risk), `## Doğrulanmadı`. Kabul ölçütlerini tek tek "
+                     "çalıştır; gerçek runtime çıktısı olmayan ölçütü PASS sayma. Ürün kodunu DEĞİŞTİRME (yalnız test/rapor ekleyebilirsin). "
+                     "Sonucu commit'le.")
+            info = prepare(cfg, compose_task(cfg, task, "qa", extra), f"{tid}-qa", cfg.qa, Path(st["impl_worktree"]), state)
+            st.update(qa_id=info["id"], qa_worktree=info["worktree"], qa_branch=info["branch"])
+            save_state(state)
+        result = autopilot(cfg, st["qa_id"], QA_VERIFY, state, "qa", tid)
+        if result != "acceptance_check_passed":
+            st["attempts"] += 1
+            note(st, f"{tid}: QA raporu kabul edilmedi (durum={result})")
+            save_state(state)
+            return
+        verdict, snippet = read_verdict(Path(st["qa_worktree"]), tid)
+        qa_provider = (handover_state(st["qa_id"]).get("last_provider") or cfg.qa)
+        st["qa_verdict"] = verdict
+        st["qa_provider"] = qa_provider
+        note(st, f"{tid}: QA kararı {verdict} (sağlayıcı {qa_provider}{'' if qa_provider != cfg.impl else ', UYARI: uygulayıcıyla aynı sağlayıcı'})")
+        if verdict == "PASS":
+            st["phase"] = "integrate"
+        else:
+            st["qa_cycle"] = st.get("qa_cycle", 0) + 1
+            st.update(phase="fix", impl_id=None, qa_id=None, qa_findings=snippet, fix_repo=st["qa_worktree"])
+        save_state(state)
+        if st["phase"] != "integrate":
+            return
+
+    # --- entegrasyon ---
+    if st["phase"] == "integrate":
+        branch = st.get("qa_branch") or st["impl_branch"]
+        try:
+            st["merged_sha"] = integrate(cfg, branch, task, st)
+        except RuntimeError as e:
+            st["attempts"] += 1
+            note(st, f"{tid}: entegrasyon hatası: {e}")
+            save_state(state)
+            return
+        st["status"] = "done"
+        st["phase"] = "done"
+        note(st, f"{tid}: tamamlandı ve {cfg.branch} dalına birleştirildi ({st['merged_sha'][:10]})")
+        save_state(state)
+        write_status_doc(cfg, state)
+
+
+# --------------------------------------------------------------------------------------------- ana döngü
+def integration_path(arg: str | None) -> Path:
+    p = Path(arg or os.environ.get("IMARO_INTEGRATION", "")).expanduser()
+    if not p or not (p / ".git").exists():
+        raise SystemExit("--integration (ya da IMARO_INTEGRATION): entegrasyon worktree yolu gerekli")
+    return p.resolve()
+
+
+def recover(state: dict) -> None:
+    """Çökme sonrası: önceki çalıştırmanın artık çocuk grubunu temizle, bayat kilitleri bırak (autopilot siler)."""
+    pg = state.get("child_pgid")
+    if pg and group_alive(int(pg)):
+        log(f"önceki çalıştırmadan kalan süreç grubu {pg} sonlandırılıyor")
+        kill_group(int(pg))
+    state["child_pgid"] = None
+    for tid, st in state["tasks"].items():
+        if st.get("status") == "running":
+            log(f"{tid}: yarıda kalan görev kaldığı aşamadan ({st.get('phase')}) sürdürülecek")
+    save_state(state)
+
+
+def cmd_run(args: argparse.Namespace, once: bool = False) -> int:
+    ensure_home()
+    integ = integration_path(args.integration)
+    lockf = open(paths()["lock"], "w")
+    try:
+        fcntl.flock(lockf, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        print("Başka bir gözetmen zaten çalışıyor.", file=sys.stderr)
+        return 1
+    write_json(paths()["pid"], {"pid": os.getpid(), "lstart": proc_start_time(os.getpid()), "started": now(),
+                                "integration": str(integ)})
+    paths()["stop"].unlink(missing_ok=True) if not once else None
+    caff = None
+    if sys.platform == "darwin" and not once:
+        caff = subprocess.Popen(["caffeinate", "-i", "-w", str(os.getpid())], stdin=subprocess.DEVNULL,
+                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    stopping = {"flag": False}
+
+    def on_term(_sig, _frm):
+        stopping["flag"] = True
+        paths()["stop"].touch()
+    signal.signal(signal.SIGTERM, on_term)
+    signal.signal(signal.SIGINT, on_term)
+    log(f"gözetmen başladı pid={os.getpid()} integration={integ}")
+    state = load_state()
+    recover(state)
+    try:
+        while not stopping["flag"] and not paths()["stop"].exists():
+            heartbeat("idle")
+            cfg = load_config(integ)
+            task = next_task(cfg, state)
+            if task is None:
+                rest = blocked_report(cfg, state)
+                log("kuyruk tamamlandı" if not rest else f"çalıştırılabilir görev kalmadı; kalanlar: {rest}")
+                write_status_doc(cfg, state)
+                return 0
+            if day_budget_exhausted(cfg, state):
+                log(f"günlük tur bütçesi ({cfg.max_rounds_per_day}) doldu; yarına kadar bekleniyor")
+                sleep_interruptible(1800, "day-budget")
+                continue
+            try:
+                process_task(cfg, task, state)
+            except Exception as e:  # kontrollü: tek görev hatası döngüyü öldürmez, deneme sayılır
+                st = state["tasks"].setdefault(task["id"], {"attempts": 0, "notes": []})
+                st["attempts"] = st.get("attempts", 0) + 1
+                note(st, f"{task['id']}: beklenmeyen hata: {type(e).__name__}: {str(e)[:300]}")
+                if st["attempts"] >= cfg.max_task_attempts:
+                    st["status"] = "blocked"
+                save_state(state)
+                sleep_interruptible(60, "error-backoff")
+            if once:
+                return 0
+        log("durdurma isteği: temiz çıkış")
+        return 0
+    finally:
+        heartbeat("stopped")
+        if caff:
+            caff.terminate()
+        paths()["pid"].unlink(missing_ok=True)
+
+
+# --------------------------------------------------------------------------------------------- ctl
+def spawn_detached(integ: Path) -> int:
+    ensure_home()
+    out = open(paths()["logs"] / "supervisor.stdout.log", "a")
+    proc = subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "run", "--integration", str(integ)],
+                            stdin=subprocess.DEVNULL, stdout=out, stderr=out, start_new_session=True, close_fds=True,
+                            cwd=str(integ))
+    return proc.pid
+
+
+def launchd_loaded() -> bool:
+    r = subprocess.run(["launchctl", "list", LABEL], capture_output=True, text=True)
+    return r.returncode == 0
+
+
+def cmd_start(args) -> int:
+    integ = integration_path(args.integration)
+    st = status_of_running()
+    if st["alive"]:
+        print(json.dumps({"already_running": True, **st}, ensure_ascii=False))
+        return 0
+    paths()["stop"].unlink(missing_ok=True)
+    if launchd_loaded():
+        uid = os.getuid()
+        subprocess.run(["launchctl", "kickstart", "-k", f"gui/{uid}/{LABEL}"], check=False)
+        how = "launchd"
+    else:
+        spawn_detached(integ)
+        how = "detached"
+    for _ in range(40):
+        time.sleep(0.5)
+        st = status_of_running()
+        if st["alive"]:
+            print(json.dumps({"started": how, **st}, ensure_ascii=False))
+            return 0
+    print("gözetmen başlatılamadı; bkz. " + str(paths()["logs"] / "supervisor.stdout.log"), file=sys.stderr)
+    return 1
+
+
+def cmd_stop(_args) -> int:
+    ensure_home()
+    paths()["stop"].touch()
+    st = status_of_running()
+    if st["alive"] and st["pid"]:
+        os.kill(st["pid"], signal.SIGTERM)
+        for _ in range(60):
+            time.sleep(0.5)
+            if not status_of_running()["alive"]:
+                break
+    state = load_state()
+    if state.get("child_pgid"):
+        kill_group(int(state["child_pgid"]))
+    print(json.dumps({"stopped": not status_of_running()["alive"]}))
+    return 0
+
+
+def cmd_status(args) -> int:
+    st = status_of_running()
+    state = load_state()
+    out = {"supervisor": st, "launchd_loaded": launchd_loaded(), "rounds_today": state["rounds"].get(dt.date.today().isoformat(), 0),
+           "tasks": {k: {kk: v.get(kk) for kk in ("status", "phase", "attempts", "impl_id", "qa_id", "qa_verdict", "merged_sha")}
+                     for k, v in state["tasks"].items()}}
+    for k, v in out["tasks"].items():
+        for key in ("impl_id", "qa_id"):
+            if v.get(key):
+                hs = handover_state(v[key])
+                v[key + "_status"] = hs.get("status")
+                v[key + "_provider"] = hs.get("last_provider")
+                v[key + "_attempts"] = len(hs.get("attempts", []))
+    print(json.dumps(out, ensure_ascii=False, indent=1))
+    if args.heal and (not st["alive"] or st["stale"]):
+        print("healing: yeniden başlatılıyor", file=sys.stderr)
+        return cmd_start(args)
+    return 0 if st["alive"] else 3
+
+
+def plist_text(integ: Path) -> str:
+    path_env = os.environ.get("PATH", "/usr/bin:/bin")
+    for extra in (str(Path.home() / ".local" / "bin"), "/opt/homebrew/bin", "/usr/local/bin"):
+        if extra not in path_env.split(":"):
+            path_env += ":" + extra
+    env = {"PATH": path_env, "HOME": str(Path.home()), "IMARO_INTEGRATION": str(integ),
+           "IMARO_AUTONOMY_HOME": str(HOME), "AGENT_HANDOVER_HOME": str(HANDOVER_HOME)}
+    envx = "".join(f"    <key>{k}</key><string>{v}</string>\n" for k, v in env.items())
+    log_out = HOME / "logs" / "launchd.out.log"
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>{LABEL}</string>
+  <key>ProgramArguments</key><array><string>{sys.executable}</string><string>{Path(__file__).resolve()}</string><string>run</string><string>--integration</string><string>{integ}</string></array>
+  <key>WorkingDirectory</key><string>{integ}</string>
+  <key>EnvironmentVariables</key><dict>
+{envx}  </dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>ThrottleInterval</key><integer>60</integer>
+  <key>StandardOutPath</key><string>{log_out}</string>
+  <key>StandardErrorPath</key><string>{log_out}</string>
+</dict></plist>
+"""
+
+
+def cmd_install_launchd(args) -> int:
+    integ = integration_path(args.integration)
+    ensure_home()
+    plist = Path.home() / "Library" / "LaunchAgents" / f"{LABEL}.plist"
+    plist.write_text(plist_text(integ), encoding="utf-8")
+    uid = os.getuid()
+    subprocess.run(["launchctl", "bootout", f"gui/{uid}/{LABEL}"], capture_output=True)
+    r = subprocess.run(["launchctl", "bootstrap", f"gui/{uid}", str(plist)], capture_output=True, text=True)
+    print(json.dumps({"plist": str(plist), "bootstrap_rc": r.returncode, "stderr": r.stderr.strip()}))
+    return r.returncode
+
+
+def cmd_uninstall_launchd(_args) -> int:
+    uid = os.getuid()
+    subprocess.run(["launchctl", "bootout", f"gui/{uid}/{LABEL}"], capture_output=True)
+    (Path.home() / "Library" / "LaunchAgents" / f"{LABEL}.plist").unlink(missing_ok=True)
+    print(json.dumps({"uninstalled": True}))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    for name in ("run", "start", "stop", "restart", "status", "once", "install-launchd", "uninstall-launchd"):
+        p = sub.add_parser(name)
+        p.add_argument("--integration", help="entegrasyon worktree yolu (IMARO_INTEGRATION)")
+        if name == "status":
+            p.add_argument("--heal", action="store_true", help="ölü/bayat gözetmeni yeniden başlat")
+    a = ap.parse_args(argv)
+    if a.cmd == "run":
+        return cmd_run(a)
+    if a.cmd == "once":
+        return cmd_run(a, once=True)
+    if a.cmd == "start":
+        return cmd_start(a)
+    if a.cmd == "stop":
+        return cmd_stop(a)
+    if a.cmd == "restart":
+        cmd_stop(a)
+        return cmd_start(a)
+    if a.cmd == "status":
+        return cmd_status(a)
+    if a.cmd == "install-launchd":
+        return cmd_install_launchd(a)
+    return cmd_uninstall_launchd(a)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
