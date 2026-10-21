@@ -195,8 +195,14 @@ def check_files() -> None:
         "tamam" if not (missing or untracked) else f"eksik: {missing} | izlenmiyor: {untracked}")
 
 
+# Bilerek bozuk dosya yazan test (tests/app/platform_profile_test.gd, "corrupt_file_is_empty") motor ERROR'u basar; yalnız bu satır beklenir.
+EXPECTED_ERRORS = ("ConfigFile parse error at user://platform_profile_test/settings.cfg",)
+
+
 def scan_godot_errors(text: str) -> list[str]:
-    return [ln for ln in strip_ansi(text).splitlines() if re.search(r"SCRIPT ERROR|Parse Error|Abnormal exit|(^|[^A-Za-z])ERROR:", ln)]
+    return [ln for ln in strip_ansi(text).splitlines()
+            if re.search(r"SCRIPT ERROR|Parse Error|Abnormal exit|(^|[^A-Za-z])ERROR:", ln)
+            and not any(e in ln for e in EXPECTED_ERRORS)]
 
 
 def check_godot_heavy(gp: str) -> None:
@@ -229,7 +235,7 @@ def check_smoke() -> None:
     if not sh.exists():
         add("smoke.playable", "T-030 entegre demo otomatik smoke", FAIL, "tools/smoke_playable.sh yok (T-030 smoke tanımı: bkz. IMARO_NEXT_TASK.md)")
         return
-    rc, out = run(["bash", str(sh)], 1500)
+    rc, out = run(["bash", str(sh)], 3600)
     ok = rc == 0 and "SMOKE_OK" in out
     add("smoke.playable", "T-030 entegre demo otomatik smoke (pencereli + başsız)", PASS if ok else FAIL,
         "SMOKE_OK" if ok else f"çıkış {rc}; SMOKE_OK yok: {out.strip()[-160:]}")

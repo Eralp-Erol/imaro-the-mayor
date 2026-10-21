@@ -35,7 +35,7 @@ func fill_rect() -> Rect2:
 		return Rect2()
 	var half := size.x * 0.5
 	var length := half * absf(fraction)
-	return Rect2(half if fraction > 0.0 else half - length, 1.0, length, size.y - 2.0)
+	return Rect2(half if fraction > 0.0 else half - length, 1.0, length, maxf(0.0, size.y - 2.0))
 
 
 func _draw() -> void:
