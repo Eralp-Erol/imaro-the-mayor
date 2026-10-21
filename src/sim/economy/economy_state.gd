@@ -101,8 +101,10 @@ static func investor_ref(investor_id: int) -> ActorRef:
 
 
 ## `ParcelView`'a ekonomi alanlarını yazar (facade `parcel_views` çağırır). Ekonomi kurulu değilse ya da parsel
-## yoksa şablonu bırakır. Yalnız ekonomi durumunu OKUR.
-static func decorate_view(state: GameState, view: ParcelView) -> void:
+## yoksa şablonu bırakır. Yalnız ekonomi durumunu OKUR. Sözleşme v1.1: `use/units` (proje/yapı), `progress_pm`
+## (inşaat ilerlemesi ‰: `cfg` yoksa yolda olan projeler için 0), `developed_by_sim` (son karar `approved` ise: T0
+## stoku karar kaydı taşımaz, `last_code` 0 kalır).
+static func decorate_view(state: GameState, view: ParcelView, cfg: EconomyConfig = null) -> void:
 	var d := data(state)
 	if d.is_empty():
 		return
@@ -114,6 +116,23 @@ static func decorate_view(state: GameState, view: ParcelView) -> void:
 	var owner_id: int = (d["owner_id"] as PackedInt32Array)[i]
 	if owner_id > 0:
 		view.owner = investor_ref(owner_id)
+	var stage: int = (d["stage"] as PackedByteArray)[i]
+	var use: int = (d["use"] as PackedByteArray)[i]
+	var units: int = (d["units"] as PackedInt32Array)[i]
+	view.use = use_name(use)
+	view.units = units
+	view.developed_by_sim = stage != STAGE_VACANT and (d["last_code"] as PackedByteArray)[i] == CODE_APPROVED
+	view.progress_pm = progress_pm(stage, use, units, (d["days_left"] as PackedInt32Array)[i], cfg)
+
+
+## Aşama + kalan günden inşaat ilerlemesi ‰ (ParcelView.progress_pm): built 1000; under_construction/stalled geçen
+## inşaat süresi oranı (stalled iken `days_left` donar); vacant/planned 0.
+static func progress_pm(stage: int, use: int, units: int, days_left: int, cfg: EconomyConfig) -> int:
+	if stage == STAGE_BUILT:
+		return ParcelView.PROGRESS_FULL
+	if (stage == STAGE_UNDER_CONSTRUCTION or stage == STAGE_STALLED) and cfg != null:
+		return EconomyMath.construction_progress_pm(EconomyMath.construction_days(cfg, use, units), days_left)
+	return 0
 
 
 ## Kayıtlı ekonomi verisinin biçim hatası (Türkçe metin); yoksa/geçerliyse "". `d` = `systems["economy"]`;

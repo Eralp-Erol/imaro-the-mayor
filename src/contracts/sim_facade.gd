@@ -90,3 +90,10 @@ func is_mock() -> bool:
 
 ## Kimlikle gerekçe; yoksa null.
 @abstract func reason(reason_id: int) -> ReasonRecord
+
+
+## v1.1 (M2) · Ölçülebilir ekonomik sonuç özeti (bölge kohortları, yeni tamamlanan birimler, kümülatif sayaçlar).
+## Varsayılan: kaynak ekonomi sunmuyorsa `available == false` (mock dahil); uygulama geçersiz kılar. Okuma değer
+## kopyasıdır ve sim durumunu DEĞİŞTİRMEZ; önce/sonra farkı için iki okumanın `delta_since`'ı.
+func economy_outcome() -> EconomyOutcomeView:
+	return EconomyOutcomeView.unavailable(provenance(), current_tick())

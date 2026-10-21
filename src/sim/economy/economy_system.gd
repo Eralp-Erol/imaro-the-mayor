@@ -59,6 +59,35 @@ func system_id() -> StringName:
 	return SYSTEM
 
 
+## Yapılandırma (salt okunur sorgular için: ilerleme ‰ süre toplamını buradan hesaplar). Değiştirmeyin.
+func config() -> EconomyConfig:
+	return _cfg
+
+
+## Yalnız sim kararıyla geliştirilmiş (T0 stoku olmayan: `last_code == approved`) ve BİTMİŞ birimler, bölge sırasıyla
+## (`regions.codes`): [konut, ticaret] PackedInt64Array. SALT OKUNUR; O(parsel) — çağıran (facade) tamamlanma
+## sayacına bağlı önbellek tutar, her tick çağırmaz. Ekonomi durumu yoksa boş diziler.
+func sim_built_units(state: GameState) -> Array[PackedInt64Array]:
+	var res := PackedInt64Array()
+	var com := PackedInt64Array()
+	res.resize(_region_codes.size())
+	com.resize(_region_codes.size())
+	var d := EconomyState.data(state)
+	if not d.is_empty():
+		var stage: PackedByteArray = d["stage"]
+		var use_col: PackedByteArray = d["use"]
+		var units_col: PackedInt32Array = d["units"]
+		var last_code: PackedByteArray = d["last_code"]
+		for i in stage.size():
+			if stage[i] != EconomyState.STAGE_BUILT or last_code[i] != EconomyState.CODE_APPROVED:
+				continue
+			if use_col[i] == EconomyConfig.USE_RESIDENTIAL:
+				res[_region_of[i]] += units_col[i]
+			else:
+				com[_region_of[i]] += units_col[i]
+	return [res, com]
+
+
 func on_daily(state: GameState) -> void:
 	var d := _ensure_state(state)
 	var starts_today := PackedInt32Array()
@@ -521,8 +550,7 @@ func _tick_planned(state: GameState, d: Dictionary, i: int) -> void:
 	var use: int = (d["use"] as PackedByteArray)[i]
 	var stage: PackedByteArray = d["stage"]
 	stage[i] = EconomyState.STAGE_UNDER_CONSTRUCTION
-	days_left[i] = _cfg.use_param(use, "construction_base_days") \
-		+ (d["units"] as PackedInt32Array)[i] * _cfg.use_param(use, "construction_days_per_unit")
+	days_left[i] = EconomyMath.construction_days(_cfg, use, (d["units"] as PackedInt32Array)[i])
 	_emit_parcel_event(state, d, i, &"event.construction.started", int((d["reason_id"] as PackedInt64Array)[i]))
 
 

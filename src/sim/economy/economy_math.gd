@@ -48,6 +48,21 @@ static func project_units(area_m2: int, units_per_1000m2: int, density_pm: int, 
 	return maxi(1, base * floors / reference_floors)
 
 
+## İnşaat aşamasının toplam gün sayısı: taban + birim x birim başına gün (EconomySystem `_tick_planned` ve ilerleme
+## sorgusu aynı formülü kullanır).
+static func construction_days(cfg: EconomyConfig, use: int, units: int) -> int:
+	return cfg.use_param(use, "construction_base_days") + units * cfg.use_param(use, "construction_days_per_unit")
+
+
+## İnşaat ilerlemesi ‰ (0..999): `total_days` toplam, `days_left` kalan. Süre yapılandırması sonradan değiştiyse
+## taşma/negatif aralığa kırpılır. Tamamlanmış proje bu fonksiyonla ifade edilmez (1000'dir).
+@warning_ignore("integer_division")
+static func construction_progress_pm(total_days: int, days_left: int) -> int:
+	if total_days <= 0:
+		return 0
+	return clampi((total_days - days_left) * SCALE / total_days, 0, SCALE - 1)
+
+
 ## Aylık kesir birikimli oransal değişim: (değer * oran_pm + kalan) / 1000; yeni kalan ayrıca döner.
 ## Dönüş: [değişim, yeni_kalan]. Sıfıra doğru kesme yanlılığı kalan ile giderilir.
 @warning_ignore("integer_division")

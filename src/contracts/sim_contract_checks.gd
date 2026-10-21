@@ -74,11 +74,43 @@ static func check_parcels(facade: SimFacade, snap: SimSnapshot) -> PackedStringA
 	for i in range(1, ids.size()):
 		if ids[i] <= ids[i - 1]:
 			out.append("parcel_ids not strictly ascending at %d" % i)
+	out.append_array(check_parcel_projects(facade.parcel_views(ids)))
 	for p in facade.parcel_views(ids):
 		if p.provenance != facade.provenance():
 			out.append("parcel %d provenance %s" % [p.id, p.provenance])
 		for rid in p.reason_ids:
 			out.append_array(check_reason_id(facade, rid, "parcel %d" % p.id))
+	return out
+
+
+## v1.1: `ParcelView` proje alanlarının (`use/units/progress_pm/developed_by_sim`) aşamayla tutarlılığı.
+static func check_parcel_projects(views: Array[ParcelView]) -> PackedStringArray:
+	var out := PackedStringArray()
+	for p in views:
+		var where := "parcel %d" % p.id
+		if not [ParcelView.USE_NONE, ParcelView.USE_RESIDENTIAL, ParcelView.USE_COMMERCIAL].has(p.use):
+			out.append("%s use '%s' unknown" % [where, p.use])
+		if p.progress_pm < 0 or p.progress_pm > ParcelView.PROGRESS_FULL:
+			out.append("%s progress_pm %d outside 0..%d" % [where, p.progress_pm, ParcelView.PROGRESS_FULL])
+		if p.developed_by_sim and p.development == ParcelView.DEVELOPMENT_VACANT:
+			out.append("%s developed_by_sim on a vacant parcel" % where)
+		match p.development:
+			ParcelView.DEVELOPMENT_VACANT:
+				if p.use != ParcelView.USE_NONE or p.units != 0 or p.progress_pm != 0:
+					out.append("%s vacant but has project fields" % where)
+			ParcelView.DEVELOPMENT_PLANNED, ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION, \
+					ParcelView.DEVELOPMENT_STALLED, ParcelView.DEVELOPMENT_BUILT:
+				if p.use == ParcelView.USE_NONE or p.units < 1:
+					out.append("%s %s without use/units" % [where, p.development])
+				if p.development == ParcelView.DEVELOPMENT_PLANNED and p.progress_pm != 0:
+					out.append("%s planned but progress_pm %d" % [where, p.progress_pm])
+				if p.development == ParcelView.DEVELOPMENT_BUILT and p.progress_pm != ParcelView.PROGRESS_FULL:
+					out.append("%s built but progress_pm %d" % [where, p.progress_pm])
+				if p.development in [ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION, ParcelView.DEVELOPMENT_STALLED] \
+						and p.progress_pm >= ParcelView.PROGRESS_FULL:
+					out.append("%s under construction but progress_pm %d" % [where, p.progress_pm])
+			_:
+				out.append("%s unknown development '%s'" % [where, p.development])
 	return out
 
 

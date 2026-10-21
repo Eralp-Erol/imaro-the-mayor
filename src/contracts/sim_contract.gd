@@ -10,8 +10,8 @@ extends RefCounted
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 0
-const VERSION := "1.0"
+const VERSION_MINOR := 1
+const VERSION := "1.1"
 
 const FIXED_SCALE := 1000
 

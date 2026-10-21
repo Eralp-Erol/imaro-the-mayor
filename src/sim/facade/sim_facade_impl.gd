@@ -23,6 +23,8 @@ const SECTION_PARCELS := &"parcels"
 const SECTION_BUDGET := &"budget"
 const SECTION_COUNCIL := &"council"
 const SECTION_GROUPS := &"groups"
+const SECTION_ECONOMY := &"economy"
+const REASON_ECONOMY_NOT_STARTED := &"economy.not_started"
 const WORLD_SYSTEM := &"world"
 
 ## Senaryo/kampanya kimliği (CAN-09); kayıt yuvası bunu ayrıca saklar. Sim durumunun/hash'in parçası değildir.
@@ -37,6 +39,10 @@ var _max_speed_level: int = SPEED_FASTEST
 var _driver_speeds: Dictionary = {}  # hız adı (String) -> tick/sn (core_config.json driver.speeds)
 var _retained_cache: Dictionary = {}  # {"key": [last_seq, first_reason_id], "start": int}
 var _snapshot_provider: SnapshotProvider  # T-017: grup/meclis bölümlerini dolduran sağlayıcı (yoksa kurulmamış)
+var _economy: EconomySystem  # T-040: ekonomi kuruluysa salt okunur sorgular (ilerleme, sonuç özeti) buradan beslenir
+## T-040: sim-geliştirmeli bitmiş birim önbelleği {"completions": int, "units": Array[PackedInt64Array]}. Türetilmiştir
+## (durum/hash dışı); yalnız tamamlanma sayacı değişince yeniden hesaplanır, kayıt yüklenince silinir.
+var _sim_units_cache: Dictionary = {}
 
 
 ## Yeni oyun. Geçersiz yapılandırma/kaynak/hız tablosunda push_error + null.
@@ -61,6 +67,8 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
 	impl._sim.add_handler(UnbuiltCommandHandler.new(SimCommand.KIND_BUDGET_PROPOSE, SECTION_BUDGET))
 	for system in extra_systems:
 		impl._sim.add_system(system)
+		if system is EconomySystem:
+			impl._economy = system
 	for handler in extra_handlers:
 		impl._sim.add_handler(handler)
 	impl._driver = TickDriver.new(impl._sim, impl._state, sc.driver)
@@ -155,6 +163,7 @@ func snapshot() -> SimSnapshot:
 		AVAILABLE_PREFIX + String(SECTION_BUDGET): false,
 		AVAILABLE_PREFIX + String(SECTION_COUNCIL): false,
 		AVAILABLE_PREFIX + String(SECTION_GROUPS): false,
+		AVAILABLE_PREFIX + String(SECTION_ECONOMY): _economy != null,
 	}
 	if _snapshot_provider != null:
 		_snapshot_provider.fill(_state, s)
@@ -181,11 +190,60 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 		view.pending_zone = overlay.get("pending_zone", &"")
 		view.development = overlay.get("development", view.development)
 		# T-013: ekonomi kuruluysa gelişme/arsa değeri/sahip (CAN-03: bunları yalnız aktör kararı yazar)
-		EconomyState.decorate_view(_state, view)
+		EconomyState.decorate_view(_state, view, _economy.config() if _economy != null else null)
 		view.reason_ids = reason_index.get(String(SimContract.parcel_ref(id)), PackedInt64Array())
 		view.provenance = provenance()
 		out.append(view)
 	return out
+
+
+## T-040 · Ölçülebilir ekonomik sonuç özeti. SALT OKUNUR; O(bölge) (sim-geliştirmeli birimler tamamlanma sayacına
+## bağlı önbellekten gelir). Ekonomi kurulu değilse `economy.not_built`; kurulu ama ilk tick geçmediyse (durum ilk
+## günlük tick'te kurulur) `economy.not_started`. Belediye geliri/vergisi sim'de YOK: `municipal_revenue_available`
+## false + neden (T-014).
+func economy_outcome() -> EconomyOutcomeView:
+	if _economy == null:
+		return EconomyOutcomeView.unavailable(provenance(), _state.tick, EconomyOutcomeView.REASON_NOT_BUILT)
+	if not EconomyState.is_ready(_state):
+		return EconomyOutcomeView.unavailable(provenance(), _state.tick, REASON_ECONOMY_NOT_STARTED)
+	var o := EconomyOutcomeView.new()
+	o.provenance = provenance()
+	o.tick = _state.tick
+	o.available = true
+	o.unavailable_reason_key = &""
+	var totals := EconomyQuery.totals(_state)
+	o.investments_approved = int(totals.get("approvals", 0))
+	o.investments_declined = int(totals.get("declines", 0))
+	o.projects_completed = int(totals.get("completions", 0))
+	o.projects_stalled = int(totals.get("stalls", 0))
+	o.rent_income = int(totals.get("rent_income", 0))
+	o.land_sales = int(totals.get("land_sales", 0))
+	o.construction_spend = int(totals.get("construction_spend", 0))
+	var sim_units := _sim_built_units(int(totals.get("completions", 0)))
+	var rows := EconomyQuery.region_stats(_state, _economy.config())
+	for r in rows.size():
+		var row: Dictionary = rows[r]
+		var region := EconomyRegionOutcome.new()
+		region.region_code = row["code"]
+		region.households = int(row["latent_hh"])
+		region.housed_households = int(row["housed_hh"])
+		region.residential_units = int(row["res_built"])
+		region.commercial_units = int(row["com_built"])
+		region.residential_pipeline = int(row["res_pipe"])
+		region.commercial_pipeline = int(row["com_pipe"])
+		region.sim_residential_units = int(sim_units[0][r])
+		region.sim_commercial_units = int(sim_units[1][r])
+		region.demand_residential_pm = int(row["demand_res_pm"])
+		region.demand_commercial_pm = int(row["demand_com_pm"])
+		region.infrastructure_load_pm = int(row["infra_load_pm"])
+		o.regions.append(region)
+	return o
+
+
+func _sim_built_units(completions: int) -> Array[PackedInt64Array]:
+	if _sim_units_cache.get("completions", -1) != completions:
+		_sim_units_cache = {"completions": completions, "units": _economy.sim_built_units(_state)}
+	return _sim_units_cache["units"]
 
 
 func events_since(after_seq: int, max_count: int = 0) -> Array[SimEvent]:
@@ -258,6 +316,7 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 	_state = result.state
 	_driver.bind_state(_state)
 	_retained_cache = {}
+	_sim_units_cache = {}
 	return result
 
 

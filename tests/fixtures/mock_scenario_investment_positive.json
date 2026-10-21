@@ -237,7 +237,11 @@
      "type": "parcel",
      "parcel_id": 1,
      "set": {
-      "development": "planned"
+      "development": "planned",
+      "use": "residential",
+      "units": 12,
+      "progress_pm": 0,
+      "developed_by_sim": true
      },
      "reason_labels": [
       "r_investor"
@@ -249,6 +253,7 @@
      "parcel_id": 1,
      "set": {
       "development": "under_construction",
+      "progress_pm": 250,
       "owner": {
        "kind": "investor",
        "id": 1,
