@@ -120,13 +120,36 @@ static func _write_array(buffer: StreamPeerBuffer, value: Array, depth: int) -> 
 
 ## PackedByte/Int/Float/String arrays use the exact Array tag and element encoding by contract. Kept separate
 ## from `_write_array` solely to avoid materialising `Array(value)` for economy's columnar parcel state.
-static func _write_packed_scalar_array(buffer: StreamPeerBuffer, value: Variant, depth: int) -> String:
+static func _write_packed_scalar_array(buffer: StreamPeerBuffer, value: Variant, _depth: int) -> String:
 	buffer.put_u8(_TAG_ARRAY)
 	buffer.put_u32(value.size())
-	for i in value.size():
-		var failure := _write(buffer, value[i], depth + 1)
-		if not failure.is_empty():
-			return failure.replace("@@", "@@[%d]" % i)
+	# These arrays are hot in the columnar economy state.  Do not route every
+	# scalar through Variant dispatch: emit the same canonical Array element
+	# representation directly.  (There are no unsupported scalar elements here.)
+	match typeof(value):
+		TYPE_PACKED_BYTE_ARRAY:
+			for item: int in value as PackedByteArray:
+				buffer.put_u8(_TAG_INT)
+				buffer.put_64(item)
+		TYPE_PACKED_INT32_ARRAY:
+			for item: int in value as PackedInt32Array:
+				buffer.put_u8(_TAG_INT)
+				buffer.put_64(item)
+		TYPE_PACKED_INT64_ARRAY:
+			for item: int in value as PackedInt64Array:
+				buffer.put_u8(_TAG_INT)
+				buffer.put_64(item)
+		TYPE_PACKED_FLOAT32_ARRAY:
+			for item: float in value as PackedFloat32Array:
+				_write_float(buffer, item, true)
+		TYPE_PACKED_FLOAT64_ARRAY:
+			for item: float in value as PackedFloat64Array:
+				_write_float(buffer, item, true)
+		TYPE_PACKED_STRING_ARRAY:
+			for item: String in value as PackedStringArray:
+				_write_string(buffer, item)
+		_:
+			return "unsupported packed scalar array at @@"
 	return ""
 
 
