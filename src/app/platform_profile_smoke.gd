@@ -1,7 +1,8 @@
 extends Node
 ## Export duman sahnesi (T-007 ölçüt 5/6): boş sahne; platform/renderer/cihaz bilgisini loglar, profil katmanını
 ## çalıştırır, birkaç kare sonra çıkar. `tools/export.sh smoke macos` çıktıdaki `IMARO_SMOKE_OK` satırını arar.
-## Dışa aktarılmış ikiliyle: `<ikili> res://src/app/platform_profile_smoke.tscn` (isteğe bağlı `--quit-after`'a gerek yok).
+## Dışa aktarılmış ikiliyle: `<ikili> res://src/app/platform_profile_smoke.tscn`
+## (isteğe bağlı `--quit-after`'a gerek yok).
 
 const FRAMES_BEFORE_QUIT := 5
 

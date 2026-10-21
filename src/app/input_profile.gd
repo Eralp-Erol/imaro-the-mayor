@@ -13,7 +13,8 @@ extends RefCounted
 ##   func _process(dt): input.process(dt); _camera_move(input.held_pan_axis(), input.held_zoom_axis(), ...)
 ##   pencere odağı kaybolunca: input.reset()
 ## `_unhandled_input` kullanın: UI (Control) olayı önce tüketir, "UI dünyadan önce" kuralı (ADR-0004) böylece sağlanır.
-## UI'nin tükettiği bir basışın sonraki sürükleme/bırakma olayları da izlenmeyen olay olarak yok sayılır (durum izlenmez).
+## UI'nin tükettiği bir basışın sonraki sürükleme/bırakma olayları da
+## izlenmeyen olay olarak yok sayılır (durum izlenmez).
 ##
 ## FİİL SÖZLEŞMESİ (koordinatlar: viewport pikseli, y aşağı):
 ##   select_requested(screen_pos)       birincil eylem: tıklama / dokunma-bırakma (sürükleme olmadan)
@@ -22,7 +23,8 @@ extends RefCounted
 ##   zoom_requested(factor, anchor)     çarpan; > 1 yakınlaş, < 1 uzaklaş; `anchor` ekran konumu sabit kalmalı
 ##   rotate_requested(radians, anchor)  POZİTİF = sahne ekranda SAAT YÖNÜNDE döner; `anchor` etrafında
 ##   pause_toggle_requested             Boşluk
-##   speed_step_requested(direction)    +1 / -1 (= ve - tuşları, nümerik +/-); üst sınır `PlatformProfile.max_game_speed`
+##   speed_step_requested(direction)    +1 / -1 (= ve - tuşları, nümerik +/-);
+##                                      üst sınır `PlatformProfile.max_game_speed`
 ##   cancel_requested                   Esc
 ## SÜREKLİ (her karede yoklanır): held_pan_axis() (WASD/oklar, ekran yönü, y aşağı, uzunluk <= 1),
 ##   held_rotate_axis() (Q = -1, E = +1; saat yönü +), held_zoom_axis() (PageUp = +1 yakınlaş, PageDown = -1).
