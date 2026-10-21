@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+WORLD_PREVIEW {"buildings":{"buildings":54889,"cells":168,"drawn":54889,"dropped_water":0,"hlod1_nodes":168,"hlod1_tris_all":649668,"hlod2_tris_all":133650,"last_build_ms":3562.6,"last_plan_ms":149.5,"last_rebuilt_cells":168,"lod0_tris_all":11549596,"lod1_tris_all":1579446,"mmi_nodes":5286,"network_ms":4743.4,"parcels":37341,"settlement_ms":17121.9,"supers":26,"view_ms":3870.3},"cell_size_m":100.0,"control_load_ms":1.6,"post_terrain_ms":25773.6,"preset":"district","seed":1467,"sweep_frames":0,"terrain":{"chunk_cells":40,"chunk_size_m":4000.0,"chunks_x":10,"chunks_z":10,"data_ms":1102.2,"land_chunks":96,"land_triangles":199647,"land_vertices":598941,"lod_stride":1,"mesh_ms":79.4,"palette_ms":449.1,"threaded":true,"water_chunks":56,"water_triangles":126938},"terrain_build_ms":1630.9,"world_generate_ms":2079.8,"world_samples":160801}
+PLAYABLE {"sim_parcels":37341,"sim_setup_ms":5624.8,"t0_stock_parcels":24898}
+PLAYABLE_ACTION parsel [5359] → zone.mixed: queued
+PLAYABLE_SAVE_LOAD OK tick=20 bytes=3110348 hash=84152cfe0a64549e5bf87704f49826d2a94bfb82c2d0365186ba8e03b4ccd331
+PLAYABLE_SMOKE tick=59 events=2512 frames=120 avg_frame_ms=30.8 max_frame_ms=142.3
+PLAYABLE_SMOKE tick=119 events=6067 frames=240 avg_frame_ms=31.7 max_frame_ms=100.0
+PLAYABLE_SMOKE tick=149 events=6296 frames=360 avg_frame_ms=15.6 max_frame_ms=59.6
+PLAYABLE_SMOKE tick=189 events=8198 frames=480 avg_frame_ms=20.9 max_frame_ms=57.4
+PLAYABLE_SMOKE tick=224 events=9498 frames=600 avg_frame_ms=18.2 max_frame_ms=71.7
+PLAYABLE_SMOKE tick=253 events=10057 frames=720 avg_frame_ms=14.9 max_frame_ms=49.3
+PLAYABLE_SMOKE tick=279 events=10212 frames=840 avg_frame_ms=13.2 max_frame_ms=48.2
+PLAYABLE_SMOKE tick=305 events=10233 frames=960 avg_frame_ms=13.6 max_frame_ms=53.2
+PLAYABLE_SMOKE tick=331 events=10256 frames=1080 avg_frame_ms=14.0 max_frame_ms=51.0
+PLAYABLE_SMOKE tick=358 events=10283 frames=1200 avg_frame_ms=14.0 max_frame_ms=50.0
+PLAYABLE_SMOKE tick=388 events=10304 frames=1320 avg_frame_ms=15.2 max_frame_ms=57.7
+PLAYABLE_SMOKE tick=415 events=10334 frames=1440 avg_frame_ms=14.5 max_frame_ms=54.6
+QA_PLAY frames=1500 ticks=0->429 wall_ms=28693 t0_view_rebuild_signals=0 t0_cells=0 sim_view_rebuilds=76 sim_cells_total=178 sim_cells_max_per_rebuild=20 t0_total_cells=168 sim_rows=172
+QA_PLAY truth=142 shown=136 missing=6 extra=0 t0_by_sim=0 backlog=1 unresolved=0 unplaced=23 view_rows=172

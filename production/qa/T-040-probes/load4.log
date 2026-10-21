@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA_LOAD setup_ms=27158 parcels=37341 t0=24898 fpd=4
+QA_LOAD day=10 first_ret_seq=1 last_seq=90 approved=32 declined=58 completed=0 uc=0 built=0 stalled=0 planned=32 unplaceable=0 shown=0 missing=0 extra=0 stage_mismatch=0 backlog=0 busy=false audits=0 unresolved=0 step_max_ms=3.59
+QA_LOAD day=20 first_ret_seq=1 last_seq=722 approved=32 declined=658 completed=0 uc=32 built=0 stalled=0 planned=0 unplaceable=3 shown=16 missing=13 extra=0 stage_mismatch=0 backlog=6 busy=true audits=0 unresolved=0 step_max_ms=3.59
+QA_LOAD day=30 first_ret_seq=1 last_seq=894 approved=58 declined=801 completed=0 uc=32 built=0 stalled=0 planned=26 unplaceable=3 shown=29 missing=0 extra=0 stage_mismatch=0 backlog=1 busy=true audits=0 unresolved=0 step_max_ms=3.59
+QA_LOAD day=40 first_ret_seq=663 last_seq=1260 approved=74 declined=1125 completed=0 uc=58 built=0 stalled=0 planned=16 unplaceable=10 shown=40 missing=8 extra=0 stage_mismatch=0 backlog=6 busy=true audits=0 unresolved=0 step_max_ms=3.59
+QA_LOAD day=50 first_ret_seq=877 last_seq=1876 approved=74 declined=1725 completed=0 uc=74 built=0 stalled=0 planned=0 unplaceable=12 shown=59 missing=3 extra=0 stage_mismatch=0 backlog=8 busy=true audits=0 unresolved=0 step_max_ms=3.59
+QA_LOAD day=60 first_ret_seq=1517 last_seq=2476 approved=74 declined=2325 completed=0 uc=74 built=0 stalled=0 planned=0 unplaceable=12 shown=62 missing=0 extra=0 stage_mismatch=0 backlog=4 busy=true audits=0 unresolved=0 step_max_ms=3.59
+QA_LOAD day=70 first_ret_seq=3018 last_seq=3079 approved=80 declined=2907 completed=14 uc=60 built=14 stalled=0 planned=6 unplaceable=12 shown=62 missing=0 extra=0 stage_mismatch=11 backlog=5 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=80 first_ret_seq=3625 last_seq=3684 approved=80 declined=3507 completed=28 uc=52 built=28 stalled=0 planned=0 unplaceable=13 shown=67 missing=0 extra=0 stage_mismatch=6 backlog=5 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=90 first_ret_seq=4179 last_seq=4298 approved=80 declined=4107 completed=41 uc=39 built=41 stalled=0 planned=0 unplaceable=13 shown=67 missing=0 extra=0 stage_mismatch=8 backlog=3 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=100 first_ret_seq=4780 last_seq=4839 approved=87 declined=4617 completed=67 uc=13 built=67 stalled=0 planned=7 unplaceable=13 shown=67 missing=0 extra=0 stage_mismatch=12 backlog=3 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=110 first_ret_seq=5165 last_seq=5165 approved=87 declined=5217 completed=69 uc=18 built=69 stalled=0 planned=0 unplaceable=13 shown=70 missing=4 extra=0 stage_mismatch=0 backlog=1 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=120 first_ret_seq=5167 last_seq=5269 approved=87 declined=5817 completed=70 uc=17 built=70 stalled=0 planned=0 unplaceable=13 shown=70 missing=4 extra=0 stage_mismatch=0 backlog=1 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=130 first_ret_seq=5307 last_seq=5313 approved=96 declined=6246 completed=78 uc=9 built=78 stalled=0 planned=9 unplaceable=13 shown=70 missing=4 extra=0 stage_mismatch=2 backlog=2 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=140 first_ret_seq=5319 last_seq=5359 approved=96 declined=6846 completed=79 uc=17 built=79 stalled=0 planned=0 unplaceable=16 shown=75 missing=5 extra=0 stage_mismatch=0 backlog=1 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=150 first_ret_seq=5361 last_seq=5625 approved=96 declined=7446 completed=80 uc=16 built=80 stalled=0 planned=0 unplaceable=16 shown=75 missing=5 extra=0 stage_mismatch=0 backlog=3 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD day=160 first_ret_seq=5641 last_seq=5640 approved=103 declined=7983 completed=85 uc=11 built=85 stalled=0 planned=7 unplaceable=16 shown=75 missing=5 extra=0 stage_mismatch=0 backlog=2 busy=true audits=1 unresolved=0 step_max_ms=8.00
+QA_LOAD_T0 t0_by_sim=0 t0_stages={ "built": 24898 } shown_t0=0
+QA_LOAD_DRAINED steps=2394 missing=0 extra=0 stage_mismatch=0 sample_missing=[] unresolved=9
+QA_LOAD_EXACT missing=0 extra=0 stage=0 | fresh missing=0 extra=0 stage=0 | hash_equal=true rows=106 fresh_rows=106
+QA_LOAD_SUMMARY days=160 max_decisions_per_day=60 avg_decisions_per_day=51.2 max_concurrent_uc=74 transient_worst=13 unplaced=16
