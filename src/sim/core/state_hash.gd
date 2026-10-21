@@ -154,25 +154,52 @@ static func _write_packed_scalar_array(buffer: StreamPeerBuffer, value: Variant,
 
 
 static func _write_dictionary(buffer: StreamPeerBuffer, value: Dictionary, depth: int) -> String:
-	var entries: Array = []  # her biri [anahtar kodlaması (hex), anahtar baytları, değer baytları]
+	# Save-state dictionaries use textual field names.  Their canonical byte order is
+	# string length followed by UTF-8 bytes, so they can be ordered without allocating
+	# a canonical scratch buffer for every field.  Keep the generic path below for the
+	# public StateHash contract, whose dictionary keys may be any supported type.
+	var textual_keys := true
+	for key: Variant in value.keys():
+		if typeof(key) != TYPE_STRING and typeof(key) != TYPE_STRING_NAME:
+			textual_keys = false
+			break
+	if textual_keys:
+		# Cache UTF-8 lengths once.  `sort_custom` can call its comparator many
+		# times per record; repeated `to_utf8_buffer()` dominated reason-log hashes.
+		var entries: Array = []  # [asıl anahtar, metin anahtar, UTF-8 bayt sayısı]
+		for key: Variant in value.keys():
+			var text := str(key)
+			entries.append([key, text, text.to_utf8_buffer().size()])
+		entries.sort_custom(func(a: Array, b: Array) -> bool:
+			return a[2] < b[2] if a[2] != b[2] else a[1] < b[1])
+		buffer.put_u8(_TAG_DICT)
+		buffer.put_u32(entries.size())
+		for entry: Array in entries:
+			_write_string(buffer, entry[1])
+			var text_value_failure := _write(buffer, value[entry[0]], depth + 1)
+			if not text_value_failure.is_empty():
+				return text_value_failure.replace("@@", "@@[%s]" % var_to_str(entry[0]))
+		return ""
+	# Only keys need a scratch buffer in order to establish canonical ordering.  Writing
+	# each value into its own buffer and copying it again into `buffer` made deep event
+	# and reason logs quadratic in temporary byte traffic.  Keep the exact byte format,
+	# but encode values directly once their sorted keys are known.
+	var entries: Array = []  # her biri [anahtar kodlaması (hex), anahtar baytları, asıl anahtar]
 	for key: Variant in value.keys():
 		var key_buffer := StreamPeerBuffer.new()
 		key_buffer.big_endian = true
 		var key_failure := _write(key_buffer, key, depth + 1)
 		if not key_failure.is_empty():
 			return key_failure.replace("@@", "@@{key %s}" % str(key))
-		var value_buffer := StreamPeerBuffer.new()
-		value_buffer.big_endian = true
-		var value_failure := _write(value_buffer, value[key], depth + 1)
-		if not value_failure.is_empty():
-			return value_failure.replace("@@", "@@[%s]" % var_to_str(key))
-		entries.append([key_buffer.data_array.hex_encode(), key_buffer.data_array, value_buffer.data_array])
+		entries.append([key_buffer.data_array.hex_encode(), key_buffer.data_array, key])
 	entries.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
 	buffer.put_u8(_TAG_DICT)
 	buffer.put_u32(entries.size())
 	for entry: Array in entries:
 		buffer.put_data(entry[1])
-		buffer.put_data(entry[2])
+		var value_failure := _write(buffer, value[entry[2]], depth + 1)
+		if not value_failure.is_empty():
+			return value_failure.replace("@@", "@@[%s]" % var_to_str(entry[2]))
 	return ""
 
 
