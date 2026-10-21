@@ -173,9 +173,12 @@ func _build_labels_and_gulf() -> void:
 	var gulf_center: Vector2 = bay.get("centroid", bounds.get_center())
 	var best := {"gulf": INF, "open": INF, "main": INF}
 	var fallback := {"gulf": -INF, "open": -INF, "main": -INF}
+	# Küçük dünyada kenar payı sınırı aşabilir: boyut 0'a kıskaçlanır (has_point yanlış döner), negatif Rect2 üretilmez.
+	var inner_rect := Rect2(bounds.position + Vector2.ONE * LABEL_EDGE_MARGIN_M,
+			(bounds.size - Vector2.ONE * 2.0 * LABEL_EDGE_MARGIN_M).max(Vector2.ZERO))
 	for idx in world.heights.size():
 		var pos := world.cell_to_world(idx % world.width, idx / world.width)
-		var inner := bounds.grow(-LABEL_EDGE_MARGIN_M).has_point(pos)
+		var inner := inner_rect.has_point(pos)
 		var sd := world.shore_distance[idx]
 		if world.land_mask[idx] == 0:
 			if gulf_mask[idx] == 1:
