@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 4.1 ATI-7.0.25 - Compatibility - Using Device: ATI Technologies Inc. - AMD Radeon Pro 560X OpenGL Engine
+
+WORLD_PREVIEW {"buildings":{"buildings":54889,"cells":168,"drawn":54889,"dropped_water":0,"hlod1_nodes":168,"hlod1_tris_all":649668,"hlod2_tris_all":133650,"last_build_ms":3638.6,"last_plan_ms":139.9,"last_rebuilt_cells":168,"lod0_tris_all":11549596,"lod1_tris_all":1579446,"mmi_nodes":5286,"network_ms":4064.8,"parcels":37341,"settlement_ms":15132.6,"supers":26,"view_ms":3929.3},"cell_size_m":100.0,"control_load_ms":3.9,"post_terrain_ms":23163.8,"preset":"district","seed":1467,"sweep_frames":0,"terrain":{"chunk_cells":40,"chunk_size_m":4000.0,"chunks_x":10,"chunks_z":10,"data_ms":1130.2,"land_chunks":96,"land_triangles":199647,"land_vertices":598941,"lod_stride":1,"mesh_ms":80.5,"palette_ms":416.9,"threaded":true,"water_chunks":56,"water_triangles":126938},"terrain_build_ms":1627.9,"world_generate_ms":1991.1,"world_samples":160801}
+PLAYABLE {"sim_parcels":37341,"sim_setup_ms":6028.8,"t0_stock_parcels":24898}
+PLAYABLE_ACTION parsel [5359] → zone.mixed: queued
+PLAYABLE_SMOKE tick=88 events=4225 frames=120 avg_frame_ms=46.2 max_frame_ms=147.0
+PLAYABLE_SMOKE tick=210 events=9470 frames=240 avg_frame_ms=63.2 max_frame_ms=122.0
+PLAYABLE_SMOKE tick=281 events=10216 frames=360 avg_frame_ms=37.0 max_frame_ms=102.8
+PLAYABLE_SMOKE tick=320 events=10248 frames=480 avg_frame_ms=20.7 max_frame_ms=51.6
+PLAYABLE_SMOKE tick=362 events=10289 frames=600 avg_frame_ms=21.6 max_frame_ms=59.9
+PLAYABLE_SMOKE tick=404 events=10323 frames=720 avg_frame_ms=21.7 max_frame_ms=52.5
+PLAYABLE_SMOKE tick=441 events=10365 frames=840 avg_frame_ms=19.7 max_frame_ms=48.7
+PLAYABLE_SMOKE tick=483 events=10934 frames=960 avg_frame_ms=21.8 max_frame_ms=64.0
+PLAYABLE_SMOKE tick=520 events=10982 frames=1080 avg_frame_ms=19.3 max_frame_ms=45.5
+PLAYABLE_SMOKE tick=562 events=11015 frames=1200 avg_frame_ms=22.0 max_frame_ms=69.9
+QA2_PLAY frames=1200 ticks=0->562 wall_ms=37205 frames_per_day p50=2 min=1 max=6 full_sync_frames=0 full_syncs=0
+QA2_PLAY t0_view_rebuild_signals=0 sim_view_rebuilds=108 sim_cells_max_per_rebuild=21
+QA2_PLAY lag_days n=179 p50=2 p95=18 max=21 never=0 never_sample=[]
+QA2_PLAY end truth=179 shown=179 missing=0 extra=0 backlog=0 unplaced=22 reasons={ "t0_merged": 21, "lot_too_small": 1 } truth_unplaceable=22
