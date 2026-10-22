@@ -432,6 +432,24 @@ func _submit_demo(targets: PackedInt64Array = PackedInt64Array()) -> void:
 	print("PLAYABLE_ACTION ", _last_action)
 
 
+## Kayıt YÜKLENDİKTEN hemen sonra çağrılır (gerçek yükleme yolu ve `_smoke_save_load`): türetilmiş sim yapıları BİR
+## KEZ ve senkron yeniden kurulur (projector tam eşitlemesi; kare bütçesiyle yayılmaz) ve görünüm hemen
+## güncellenir. Süre `sim_stats["load_resync_ms"]` ve `PLAYABLE_LOAD_RESYNC` satırında.
+func resync_sim_buildings_after_load() -> void:
+	if _projector == null or _sim_buildings == null or _args.has("no-sim-buildings"):
+		return
+	var t0 := Time.get_ticks_usec()
+	var rep := _projector.sync()
+	if _pump.view_pending():
+		_apply_sim_view(_projector.columns(), _projector.version())
+		_pump.mark_view_version(_projector.version())
+	var ms := (Time.get_ticks_usec() - t0) / 1000.0
+	sim_stats["load_resync_ms"] = snappedf(ms, 0.1)
+	print("PLAYABLE_LOAD_RESYNC ms=%.1f resync=%s rows=%d full_sync_ms=%.1f parcel_reads=%d" % [ms,
+			str(rep.get("resync")), _projector.columns().count, float(_projector.stats.get("full_sync_ms", 0.0)),
+			int(_projector.stats.get("parcel_reads", 0))])
+
+
 func _smoke_save_load() -> void:
 	var impl := _facade as SimFacadeImpl
 	if impl == null:
@@ -441,6 +459,7 @@ func _smoke_save_load() -> void:
 	var before := impl.state_hash()
 	var bytes := impl.export_save()
 	var loaded := impl.import_save(bytes)
+	resync_sim_buildings_after_load()
 	var after := impl.state_hash()
 	if loaded.ok and not before.is_empty() and before == after:
 		print("PLAYABLE_SAVE_LOAD OK tick=%d bytes=%d hash=%s" % [impl.current_tick(), bytes.size(), before])

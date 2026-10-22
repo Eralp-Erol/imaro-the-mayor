@@ -19,6 +19,10 @@ const MAX_BACKLOG_DAYS := 4
 const FRAME_BUDGET_US := SimBuildingPump.BUDGET_US
 ## Eşzamanlı inşaat sayısını ~100'e çıkaran yük: fixture dünyasındaki T0 dışı yerleşebilir parsel sayısına yakın.
 const LOAD_PARCELS := 130
+## Sanal saat (B-004): her projector iş birimi bu kadar µs sayılır; bütçe duvar saatine/makine yüküne bağlı DEĞİL.
+const VIRTUAL_UNIT_US := 900
+## Kayıt yükleme/geri sarma sonrası, görünür satırların sim'e yetişmesi için en çok sim günü (B-005).
+const MAX_LAG_AFTER_LOAD_DAYS := 10
 
 var _plan_cache: Dictionary = {}
 
@@ -35,12 +39,14 @@ func _run(patch: Dictionary, n: int, wave_size: int = 0) -> Dictionary:
 	var h := M2RenderSupport.handle(patch)
 	var f := h.facade
 	var proj := M2RenderSupport.projector(f)
+	proj.virtual_unit_us = VIRTUAL_UNIT_US
 	var ids := M2RenderSupport.free_parcels(proj, n, true)
 	f.advance(2)
 	proj.sync()
 	if wave_size == 0:
 		_propose(f, ids)
-	return {"facade": f, "proj": proj, "ids": ids, "wave_size": wave_size, "proposed": 0}
+	return {"facade": f, "proj": proj, "ids": ids, "wave_size": wave_size, "proposed": 0, "save_day": -1,
+			"load_day": -1}
 
 
 ## Sim'in şimdiki durumundan beklenen toplam kat (projector kuralı: yerleşebilir inşaat/yapıldı/durmuş parsel).
@@ -92,7 +98,20 @@ func _drive(run: Dictionary, days: int, fpd: int) -> Dictionary:
 		live[int(pid)] = true
 	var lag_days := 0
 	var tracked_days := 0
+	var bytes := PackedByteArray()
+	var post_load_lag := 0
+	var loaded := false
 	for day in days:
+		if day == int(run["save_day"]):
+			bytes = (f as SimFacadeImpl).export_save()
+		if day == int(run["load_day"]):
+			assert_bool((f as SimFacadeImpl).import_save(bytes).ok).is_true()   # epoch++ (kare-60 smoke ile aynı)
+			run["wave_size"] = 0   # geri sarmada sonraki öneriler kayıtta yok
+			streak = {}
+			live = {}
+			for pid in ids:
+				live[int(pid)] = true
+			loaded = true
 		f.advance(1)
 		var wave := int(run["wave_size"])
 		if wave > 0 and int(run["proposed"]) < ids.size():
@@ -120,9 +139,11 @@ func _drive(run: Dictionary, days: int, fpd: int) -> Dictionary:
 				if int(streak[v.id]) > max_lag:
 					max_lag = int(streak[v.id])
 					worst_pid = v.id
+				if loaded:
+					post_load_lag = maxi(post_load_lag, int(streak[v.id]))
 		max_concurrent = maxi(max_concurrent, concurrent)
-	return {"max_lag": max_lag, "worst": worst_pid, "max_backlog": max_backlog, "max_concurrent": max_concurrent,
-			"built": built, "lag_days": lag_days, "tracked_days": tracked_days}
+	return {"post_load_lag": post_load_lag, "max_lag": max_lag, "worst": worst_pid, "max_backlog": max_backlog,
+			"max_concurrent": max_concurrent, "built": built, "lag_days": lag_days, "tracked_days": tracked_days}
 
 
 func test_feed_driven_sync_equals_exact_and_a_from_scratch_projector() -> void:
@@ -189,6 +210,90 @@ func test_low_frame_rates_never_leave_a_parcel_stale_longer_than_the_lag_bound()
 		assert_int(int(proj.stats["full_syncs"])).is_equal(0)
 
 
+## B-005: kayıt yükleme (epoch++) sonrası tam eşitleme tick'li karelerde de ilerler; satırlar sınırlı günde yetişir.
+## `rewind`: false = aynı durumu yeniden yükle (oynanabilirin kare-60 smoke'u); true = 40 gün ÖNCEKİ kayda geri sar.
+func _reload_case(fpd: int, rewind: bool) -> Dictionary:
+	var run := _run(ISOLATE, LOAD_PARCELS, 3)
+	run["save_day"] = 90 if rewind else 120
+	run["load_day"] = 130 if rewind else 120
+	var res := _drive(run, 260, fpd)
+	var proj: SimBuildingProjector = run["proj"]
+	print("RELOAD rewind=%s fpd=%d %s full_syncs=%d" % [str(rewind), fpd, str(res), int(proj.stats["full_syncs"])])
+	assert_int(int(proj.stats["full_syncs"])).override_failure_message("fpd=%d: tam eşitleme sayısı" % fpd) \
+			.is_equal(1)
+	assert_int(int(res["post_load_lag"])).override_failure_message(
+			"fpd=%d rewind=%s: yükleme sonrası %d gün gecikme (sınır %d) %s" % [fpd, str(rewind),
+			int(res["post_load_lag"]), MAX_LAG_AFTER_LOAD_DAYS, str(res)]).is_less_equal(MAX_LAG_AFTER_LOAD_DAYS)
+	var pump := SimBuildingPump.create(proj)
+	var guard := 0
+	while (proj.busy() or pump.view_pending()) and guard < 20000:
+		pump.frame(false, func(_c: BuildingColumns, _v: int) -> void: pass)
+		guard += 1
+	var settled := proj.columns().state_hash()
+	proj.sync(true)
+	assert_str(proj.columns().state_hash()).override_failure_message("fpd=%d: exact ile farklı" % fpd).is_equal(settled)
+	var fresh := M2RenderSupport.projector(run["facade"])
+	fresh.sync(true)
+	assert_str(fresh.columns().state_hash()).override_failure_message("fpd=%d: sıfırdan kurulandan farklı" % fpd) \
+			.is_equal(settled)
+	return res
+
+
+func test_after_a_save_load_the_rows_catch_up_within_the_bound_at_every_frame_rate() -> void:
+	for fpd in [2, 4, 15, 60]:
+		_reload_case(fpd, false)
+
+
+func test_after_rewinding_to_an_older_save_the_rows_catch_up_within_the_bound_at_every_frame_rate() -> void:
+	for fpd in [2, 4, 15, 60]:
+		_reload_case(fpd, true)
+
+
+func test_feed_changes_right_after_a_load_are_not_lost() -> void:
+	# Yüklemeden hemen sonra yeni onaylar/aşamalar gelir: tam eşitleme senkron biter, feed kaybolmaz; sonuç sıfırdan
+	# kurulanla aynı.
+	var run := _run(ISOLATE, 60, 4)
+	var f: SimFacadeImpl = run["facade"]
+	var proj: SimBuildingProjector = run["proj"]
+	var ids: PackedInt64Array = run["ids"]
+	var pump := SimBuildingPump.create(proj)
+	var noop := func(_c: BuildingColumns, _v: int) -> void: pass
+	for day in 30:
+		f.advance(1)
+		_propose(f, ids.slice(day * 2, day * 2 + 2))
+		pump.frame(false, noop)
+	var bytes := f.export_save()
+	assert_bool(f.import_save(bytes).ok).is_true()
+	for day in 120:
+		f.advance(1)
+		if day < 20 and 30 + day < ids.size():
+			_propose(f, ids.slice(30 + day, 31 + day))
+		for frame in 3:
+			pump.frame(frame == 0, noop)
+	assert_int(int(proj.stats["full_syncs"])).is_equal(1)
+	var guard := 0
+	while (proj.busy() or pump.view_pending()) and guard < 20000:
+		pump.frame(false, noop)
+		guard += 1
+	var settled := proj.columns().state_hash()
+	var fresh := M2RenderSupport.projector(f)
+	fresh.sync(true)
+	proj.sync(true)
+	assert_str(proj.columns().state_hash()).is_equal(settled)
+	assert_str(fresh.columns().state_hash()).is_equal(settled)
+
+
+func test_virtual_clock_makes_the_lag_measurement_independent_of_wall_time() -> void:
+	# Aynı koşu iki kez (arada gereksiz CPU yükü): sanal saat sonuçları BİREBİR aynı verir.
+	var a := _drive(_run(ISOLATE, 60, 3), 120, 2)
+	var burn := 0
+	for i in 400000:
+		burn += i
+	var b := _drive(_run(ISOLATE, 60, 3), 120, 2)
+	assert_str(str(a)).is_equal(str(b))
+	assert_int(burn).is_greater(0)
+
+
 func test_save_load_bumps_the_epoch_and_costs_exactly_one_full_sync_then_only_the_feed() -> void:
 	var run := _run(ISOLATE, 50)
 	var f: SimFacadeImpl = run["facade"]
@@ -242,13 +347,13 @@ func test_a_freshly_attached_projector_to_a_loaded_state_does_one_full_sync() ->
 	var fb := hb.facade
 	var proj_b := M2RenderSupport.projector(fb)
 	assert_bool(fb.import_save(bytes).ok).is_true()
-	# Bütçeli (dilimli) tam eşitleme de aynı sonuca varır; T0 stoku ham okumada atlanır.
+	# Bütçeli adım bile tam eşitlemeyi TEK adımda (senkron) bitirir; T0 stoku ham okumada atlanır.
 	var steps := 0
 	while proj_b.busy() and steps < 20000:
 		proj_b.step(FRAME_BUDGET_US)
 		steps += 1
 	assert_int(int(proj_b.stats["full_syncs"])).is_equal(1)
-	assert_int(steps).override_failure_message("tam eşitleme tek adıma sığdı: dilimleme yok").is_greater(5)
+	assert_int(steps).override_failure_message("tam eşitleme tek adımda bitmedi").is_less_equal(8)
 	assert_str(proj_b.columns().state_hash()).is_equal(proj.columns().state_hash())
 	assert_int(int(proj_b.stats["parcel_reads"])).is_less_equal(fb.parcel_ids().size())
 

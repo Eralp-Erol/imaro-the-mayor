@@ -72,11 +72,11 @@ func test_static_the_sim_view_is_fed_only_by_the_projector() -> void:
 	var calls := rx.search_all(text)
 	assert_int(calls.size()).override_failure_message("sim görünümüne tek besleme noktası beklenir").is_equal(1)
 	assert_str(calls[0].get_string(1)).starts_with("columns, version")
-	# O tek nokta (`_apply_sim_view`) yalnız iki yerden çağrılır: dev tam senkron (projector sütunları) ve kare
-	# dağıtıcısı (SimBuildingPump, yalnız projector.columns() verir).
+	# O tek nokta (`_apply_sim_view`) yalnız şu yerlerden çağrılır: dev tam senkron ve yükleme sonrası eşitleme (ikisi de
+	# projector sütunları) ve kare dağıtıcısı (SimBuildingPump, yalnız projector.columns() verir).
 	var uses := RegEx.create_from_string("_apply_sim_view").search_all(text)
-	assert_int(uses.size()).override_failure_message("_apply_sim_view: tanım + 2 kullanım beklenir").is_equal(3)
-	assert_bool(text.contains("_apply_sim_view(_projector.columns(), _projector.version())")).is_true()
+	assert_int(uses.size()).override_failure_message("_apply_sim_view: tanım + 3 kullanım beklenir").is_equal(4)
+	assert_int(text.split("_apply_sim_view(_projector.columns(), _projector.version())").size() - 1).is_equal(2)
 	assert_bool(text.contains("_pump.frame(ticked, _apply_sim_view)")).is_true()
 	var pump := _text("res://src/view/buildings/sim_building_pump.gd")
 	assert_bool(pump.contains("apply_view.call(projector.columns(), _seen_version)")).is_true()

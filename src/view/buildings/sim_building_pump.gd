@@ -5,15 +5,14 @@ extends RefCounted
 ##
 ## Kurallar (T-040 ölçüt 10, B-002):
 ##  - Tick'li karede (sim zaten ağır) iş yapılmaz; yalnız projector `MAX_BEHIND_DAYS`ten fazla geride kalırsa.
-##  - Diğer karelerde önce projector bütçeli dilim yürütür; pencere bu karede biterse (yeni sütunlar) görünüm AYNI
-##    karede kurulur (`apply_view`): ek bir kare beklenmez. Geride kalındıkça (`backlog_ticks`) bütçe büyür (en çok
-##    `MAX_SCALE`x): kuyruk bütçe sabit kalıp birikemez.
+##  - Diğer karelerde projector bütçeli dilim yürütür; pencere bu karede biterse (yeni sütunlar) görünüm AYNI
+##    karede kurulur (`apply_view`). Geride kalındıkça (`backlog_ticks`) bütçe büyür (en çok `MAX_SCALE`x).
+##  - Bu yalnız ARTIMLI (normal oyun) işlerdir. Kayıt yükleme tam eşitlemesi projector'da senkron/bütçesizdir
+##    (`SimBuildingProjector._full_sync`); sahne yükleme anında `sync()` çağırır.
 
 const BUDGET_US := 1200
 const MAX_BEHIND_DAYS := 2
 const MAX_SCALE := 6
-## Tam eşitleme (yükleme sonrası tek seferlik, ~12 bin parsel okuma) kare başına bütçesi.
-const FULL_SYNC_BUDGET_US := 3000
 
 var projector: SimBuildingProjector = null
 var stats: Dictionary = {"frames": 0, "view_builds": 0, "steps": 0, "behind_frames": 0}
@@ -43,16 +42,14 @@ func frame(had_tick: bool, apply_view: Callable) -> Dictionary:
 	var out := {"worked": false, "view_built": false, "stepped": false}
 	if projector == null:
 		return out
-	var full := projector.full_sync_active()
 	var backlog := projector.backlog_ticks()
-	var behind := backlog > MAX_BEHIND_DAYS and not full
+	var behind := backlog > MAX_BEHIND_DAYS
 	if had_tick and not behind:
 		return out
 	stats["frames"] += 1
 	if behind:
 		stats["behind_frames"] += 1
-	var budget := FULL_SYNC_BUDGET_US if full else BUDGET_US * clampi(backlog, 1, MAX_SCALE)
-	var res := projector.step(budget)
+	var res := projector.step(BUDGET_US * clampi(backlog, 1, MAX_SCALE))
 	out["stepped"] = bool(res.get("worked", false))
 	if out["stepped"]:
 		stats["steps"] += 1
