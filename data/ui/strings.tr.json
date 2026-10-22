@@ -551,6 +551,7 @@
 	"m2.investor.none": "Henüz karar yok",
 	"m2.investor.prior": "Önceki değerlendirme (öneriden önce):",
 	"m2.investor.waiting": "Yatırımcı öneriyi henüz değerlendirmedi",
+	"m2.investor.already": "Bu parsel zaten yatırım almış; yeni imar önerisi yatırımcı kararı doğurmaz",
 	"m2.investor.pruned": "Karar verildi — gerekçe kaydı kapasite nedeniyle budandı",
 	"m2.investor.approved": "Yatırım yaptı ({date})",
 	"m2.investor.declined": "Vazgeçti ({date})",

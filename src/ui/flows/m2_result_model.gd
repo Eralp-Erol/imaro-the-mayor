@@ -10,7 +10,7 @@ extends RefCounted
 ##   `m2.decline.<neden>`); gerekçe günlükten budandıysa `decision_reason_id == 0` (karar yine de gösterilir, "Nedenini
 ##   gör" yoktur). Gerekçe günlüğü (`reasons_for`) KARAR KAYNAĞI DEĞİLDİR.
 ##   `developed_by_sim`/aşama yalnız yardımcı bağlamdır.
-##   Öneri öncesi karar: `decision_tick < proposed_tick` ise bu "önceki değerlendirme"dir; yatırımcı öneriyi henüz
+##   Öneri öncesi karar: `decision_tick <= proposed_tick` ise bu "önceki değerlendirme"dir; yatırımcı öneriyi henüz
 ##   değerlendirmemiştir (kararsız/bekliyor sayılır, "vazgeçildi/yatırım aldı" sayılmaz).
 ## - Bölge/şehir: `economy_outcome()` (`metrics(region)`, `delta_since(baseline, region)`, sayaçlar,
 ##   `municipal_revenue_available`).
@@ -164,8 +164,10 @@ func _read_decision(row: ParcelRow) -> void:
 	row.tick = v.decision_tick
 	row.reason_id = v.decision_reason_id
 	row.cause = cause_of_code(v.decision_code) if raw == Decision.DECLINED else &""
-	# Öneri anından eski karar: yatırımcı öneriyi henüz değerlendirmedi (kararsız/bekliyor).
-	row.before_proposal = proposed_tick >= 0 and v.decision_tick < proposed_tick
+	# Öneri anından eski karar (B-003): `current_tick()==T` iken T'nin kararları verilmiştir; öneri `apply_tick=T+1`de
+	# yürürlüğe girer, dolayısıyla öneri SONRASI karar `decision_tick > proposed_tick` demektir (T'dekiler önceki).
+	# Öneri öncesi karar: yatırımcı öneriyi henüz değerlendirmedi (kararsız/bekliyor).
+	row.before_proposal = proposed_tick >= 0 and v.decision_tick <= proposed_tick
 	row.decision = Decision.NONE if row.before_proposal else raw
 
 

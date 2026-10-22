@@ -87,7 +87,11 @@ func _add_decision(inner: VBoxContainer, row: M2ResultModel.ParcelRow) -> void:
 	if row.before_proposal:
 		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.prior"), UiTheme.V_LABEL_MUTED, true))
 		_add_outcome_lines(inner, row, true)
-		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.waiting"), &"", true))
+		# Yatırım almış (aşama planned+) parsel yeniden değerlendirilmez: "bekliyor" demek yanıltıcı olur.
+		var already := row.recorded == M2ResultModel.Decision.APPROVED \
+				and v_development(row) != ParcelView.DEVELOPMENT_VACANT
+		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.already" if already else &"m2.investor.waiting"),
+				&"", true))
 		return
 	if row.decision == M2ResultModel.Decision.NONE:
 		inner.add_child(UiFactory.label(UiText.t(&"m2.investor.none"), UiTheme.V_LABEL_MUTED, true))
@@ -96,6 +100,10 @@ func _add_decision(inner: VBoxContainer, row: M2ResultModel.ParcelRow) -> void:
 
 
 ## Kayıtlı kararın satırları + (gerekçe kaydı varsa) "Nedenini gör" ya da dürüst "budandı" notu.
+func v_development(row: M2ResultModel.ParcelRow) -> StringName:
+	return row.view.development
+
+
 func _add_outcome_lines(inner: VBoxContainer, row: M2ResultModel.ParcelRow, prior: bool) -> void:
 	var date := UiText.tick_date(row.tick)
 	if row.recorded == M2ResultModel.Decision.APPROVED:

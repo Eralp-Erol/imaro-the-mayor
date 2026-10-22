@@ -68,7 +68,7 @@ func _log_rotated(f: SimFacade) -> bool:
 func _expected_counts(f: SimFacade, ids: PackedInt64Array, proposed: int) -> Dictionary:
 	var out := {"approved": 0, "declined": 0, "waiting": 0}
 	for v in f.parcel_views(ids):
-		if v.decision != "" and v.decision_tick >= proposed:
+		if v.decision != "" and v.decision_tick > proposed:
 			out["approved" if v.decision == ParcelView.DECISION_APPROVED else "declined"] += 1
 		else:
 			out["waiting"] += 1
@@ -161,7 +161,7 @@ func test_a_decline_before_the_proposal_is_not_counted_as_given_up() -> void:
 	var panel := _panel(scene)
 	var m: M2ResultModel = panel.model
 	for v in f.parcel_views(picked):
-		assert_bool(v.decision_tick < results.proposed_tick).override_failure_message(
+		assert_bool(v.decision_tick <= results.proposed_tick).override_failure_message(
 				"parsel %d kararı öneriden eski değil" % v.id).is_true()
 	assert_int(m.counts_decided()["declined"]).override_failure_message(
 			"öneri öncesi ret 'vazgeçildi' sayıldı").is_equal(0)
@@ -179,7 +179,7 @@ func test_a_decline_before_the_proposal_is_not_counted_as_given_up() -> void:
 		_step(scene, 1)
 		var cur := f.parcel_views(picked)
 		var fresh := cur.any(func(x: ParcelView) -> bool:
-			return x.decision != "" and x.decision_tick >= results.proposed_tick)
+			return x.decision != "" and x.decision_tick > results.proposed_tick)
 		if fresh:
 			break
 	var after: M2ResultModel = _panel(scene).model
@@ -200,3 +200,52 @@ func test_mock_facade_never_shows_a_decision_or_a_why_button() -> void:
 	assert_bool(panel.joined_text().contains(UiText.t(&"m2.investor.approved", {"date": ""}))).is_false()
 
 
+
+
+func test_same_tick_decline_is_a_prior_evaluation_not_an_answer_to_the_proposal() -> void:
+	# B-003: öneri tick'inde zaten kayıtlı ret (decision_tick == öneri tick'i) öneriye cevap DEĞİLDİR.
+	var scene := _default_scene({}, 0, 45)
+	var f: SimFacade = scene["facade"]
+	var pool := M2RenderSupport.free_parcels(M2RenderSupport.projector(f), 40, true)
+	var picked := PackedInt64Array()
+	for day in 60:
+		for v in f.parcel_views(pool):
+			if v.decision == ParcelView.DECISION_DECLINED and v.decision_tick == f.current_tick() \
+					and v.development == ParcelView.DEVELOPMENT_VACANT:
+				picked.append(v.id)
+		if not picked.is_empty():
+			break
+		_step(scene, 1)
+	assert_int(picked.size()).override_failure_message("aynı tick'te retli parsel bulunamadı").is_greater(0)
+	picked = picked.slice(0, 8)
+	scene["ids"] = picked
+	_propose(scene)
+	var results: M2Results = scene["results"]
+	var panel := _panel(scene)
+	var m: M2ResultModel = panel.model
+	for v in f.parcel_views(picked):
+		assert_int(v.decision_tick).is_equal(results.proposed_tick)
+	assert_int(m.counts_decided()["declined"]).override_failure_message("aynı-tick ret vazgeçildi sayıldı").is_equal(0)
+	assert_int(m.counts_decided()["waiting"]).is_equal(picked.size())
+	assert_bool(m.primary.before_proposal).is_true()
+	var text := panel.joined_text()
+	assert_str(text).contains(UiText.t(&"m2.investor.prior"))
+	assert_str(text).contains(UiText.t(&"m2.investor.waiting"))
+
+
+func test_a_built_parcel_gets_an_honest_already_invested_line_not_waiting() -> void:
+	var scene := _default_scene({}, 0, 50)
+	var f: SimFacade = scene["facade"]
+	var pool := M2RenderSupport.free_parcels(M2RenderSupport.projector(f), 40, true)
+	var picked := PackedInt64Array()
+	for v in f.parcel_views(pool):
+		if v.decision == ParcelView.DECISION_APPROVED and v.development != ParcelView.DEVELOPMENT_VACANT:
+			picked.append(v.id)
+			break
+	assert_int(picked.size()).override_failure_message("yatırım almış parsel yok").is_greater(0)
+	_step(scene, 1)
+	scene["ids"] = picked
+	_propose(scene)
+	var text := _panel(scene).joined_text()
+	assert_str(text).contains(UiText.t(&"m2.investor.already"))
+	assert_bool(text.contains(UiText.t(&"m2.investor.waiting"))).is_false()
