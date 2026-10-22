@@ -8,8 +8,6 @@ const DEFAULT_PATH := "res://data/view/sim_building_mapping.json"
 
 var units_per_floor: int = 1
 var max_buildings: int = 3
-## Devam eden inşaatların ilerleme yoklama dönemi (gün): her gün 1/dönem kadarı okunur.
-var progress_poll_days: int = 4
 var fallback_zone: StringName = &"dense"
 ## Kullanım adı (String) -> {"families": PackedStringArray, "ground_shop": bool}.
 var uses: Dictionary = {}
@@ -28,7 +26,6 @@ static func from_dict(d: Dictionary) -> SimBuildingMapping:
 		return m
 	m.units_per_floor = maxi(1, int(d.get("units_per_floor", 1)))
 	m.max_buildings = clampi(int(d.get("max_buildings_per_parcel", 3)), 1, 8)
-	m.progress_poll_days = maxi(1, int(d.get("progress_poll_days", 4)))
 	m.fallback_zone = StringName(str(d.get("fallback_zone", "dense")))
 	var uses_in: Dictionary = d.get("uses", {})
 	for key: String in uses_in:

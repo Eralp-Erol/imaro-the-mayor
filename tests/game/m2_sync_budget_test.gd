@@ -34,7 +34,8 @@ func _scenario(n: int = 6) -> Dictionary:
 
 
 func test_zero_budget_runs_at_most_one_unit_per_step_and_the_queue_drains() -> void:
-	var run := _scenario()
+	# 40 parsel: günlerce birikmiş iş TEK pencerede birleşir (feed), ama VIEW_CHUNK'tan büyük olduğu için dilimlenir.
+	var run := _scenario(40)
 	var f: SimFacade = run["facade"]
 	var proj: SimBuildingProjector = run["proj"]
 	f.advance(25)   # 25 günlük iş birikti (zoning + onay + planlı)
@@ -66,7 +67,7 @@ func test_budgeted_framed_run_settles_to_the_exact_and_to_a_fresh_projectors_row
 	var fresh := M2RenderSupport.projector(f)
 	fresh.sync(true)
 	assert_str(fresh.columns().state_hash()).is_equal(settled)
-	assert_int(int(proj.stats["unresolved_missing"])).is_equal(0)
+	assert_int(int(proj.stats["full_syncs"])).override_failure_message("feed ile tam eşitleme gerekmemeliydi").is_equal(0)
 
 
 func test_few_frames_per_day_still_settle_and_do_not_fall_behind_forever() -> void:

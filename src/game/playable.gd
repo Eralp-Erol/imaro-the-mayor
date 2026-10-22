@@ -16,6 +16,8 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --m2-batch=N     öneriye en yakın N boş uygun parsel katılır (varsayılan 1).  --m2-skip=K  ilk K adayı atla.
 ##   --m2-isolate     otonom yatırımcı taraması kapalı: yapı yalnız oyuncunun imar kararından doğar.
 ##   --demo-zone=Z    demo imar anahtarı (varsayılan zone.mixed).
+##   --no-smoke-save-load  --demo'nun kare 60'taki kayıt/yükleme smoke'unu atlar (ölçüm: yükleme sonrası tek
+##                    seferlik tam eşitleme sürekli-rejim kare maliyetinden ayrı raporlanabilsin).
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
 ##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
@@ -29,10 +31,6 @@ const NETWORK_PATH := "res://data/world/ismeral/network.json"
 const DEMO_LAND_USE := &"zone.mixed"
 ## Demo hedefi seçerken "bu parsele makul bir yapı sığar mı" sorusunun varsayılan birimi (sim gerçeğini kendisi verir).
 const DEMO_PROBE_UNITS := 3
-## Kare başına projector dilim bütçesi (µs): tick'li karede iş yapılmaz, sonraki karelere yayılır (T-040 ölçüt 10).
-const SIM_SYNC_BUDGET_US := 1200
-## Projector bu kadar sim günü geride kalırsa tick'li karede de dilim yürütülür.
-const MAX_SYNC_BACKLOG_DAYS := 6
 ## `--m2-advance` adım uzunluğu (gün): her adımdan sonra projector senkronlanır.
 const M2_ADVANCE_STEP_DAYS := 1
 const NOTE := "WASD/oklar: kaydır | Q/E: döndür | tekerlek/trackpad: yakınlaş | Boşluk: duraklat/sürdür\n" \
@@ -56,7 +54,7 @@ var _settlement: SettlementResult = null
 var _kit: BuildingKit = null
 var _sim_buildings: BuildingView = null
 var _projector: SimBuildingProjector = null
-var _view_version: int = 0
+var _pump: SimBuildingPump = null
 var _t0_occupied: Dictionary = {}
 var _m2_target: int = -1
 var _m2_targets: PackedInt64Array = PackedInt64Array()
@@ -154,6 +152,8 @@ func _start_sim() -> void:
 	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
 	if _projector == null:
 		push_error("playable: SimBuildingProjector kurulamadı; sim yapıları çizilmeyecek")
+	else:
+		_pump = SimBuildingPump.create(_projector)
 	sim_stats["sim_parcels"] = source.parcel_count()
 	sim_stats["t0_stock_parcels"] = stock.parcel_ids().size()
 
@@ -272,34 +272,23 @@ func _m2_target_report(days: int) -> String:
 
 ## Sim durumundan türeyen yapıları ikinci görünüme yansıtır. Sim'e yazmaz. İKİ kip:
 ##  - `full = true` (dev `--m2-advance` adımları): bütçesiz tam senkron + görünüm kurulumu.
-##  - `full = false` (kare yolu): KARE BAŞINA TEK iş: bekleyen sütunlar varsa görünümü kurar (`set_columns`), yoksa
-##    projector'ın bütçeli dilimini (`SIM_SYNC_BUDGET_US`) yürütür. Tick'li karede sim zaten ağırdır: iş sonraki
-##    karelere yayılır (kuyruk boşalana dek). `--m2-log` her görünüm kurulumunu yazdırır.
-func _sync_sim_buildings(full: bool = false) -> void:
+##  - `full = false` (kare yolu): iş dağıtımı `SimBuildingPump`ta (testlerle ORTAK kural): tick'li karede iş yok,
+##    bekleyen
+##    sütun varsa görünüm kurulumu, aksi halde projector'ın bütçeli dilimi; geride kalındıkça bütçe büyür.
+##    `--m2-log` her görünüm kurulumunu yazdırır.
+func _sync_sim_buildings(full: bool = false, ticked: bool = false) -> void:
 	if _projector == null or _sim_buildings == null or _args.has("no-sim-buildings"):
 		return
 	var t_all := Time.get_ticks_usec()
 	var worked := false
 	if full:
 		_projector.sync()
+		if _pump.view_pending():
+			_apply_sim_view(_projector.columns(), _projector.version())
+			_pump.mark_view_version(_projector.version())
 		worked = true
-	if _projector.version() != _view_version:
-		var t0 := Time.get_ticks_usec()
-		var res := _sim_buildings.set_columns(_projector.columns(), _projector.version())
-		var view_ms := (Time.get_ticks_usec() - t0) / 1000.0
-		_view_version = _projector.version()
-		worked = true
-		sim_stats["sim_buildings"] = _projector.columns().count
-		sim_stats["view_ms_sum"] = float(sim_stats.get("view_ms_sum", 0.0)) + view_ms
-		sim_stats["view_n"] = int(sim_stats.get("view_n", 0)) + 1
-		if not bool(res.get("ok", false)):
-			push_error("playable: sim yapı sütunları reddedildi: %s" % str(res.get("errors")))
-		if _args.has("m2-log"):
-			print("PLAYABLE_SIMBLD tick=%d rows=%d rebuilt_cells=%s view_ms=%.2f backlog=%d" % [
-					_facade.current_tick(), _projector.columns().count, str(res.get("rebuilt", -1)), view_ms,
-					_projector.backlog_ticks()])
-	elif not full:
-		worked = bool(_projector.step(SIM_SYNC_BUDGET_US).get("worked", false))
+	else:
+		worked = bool(_pump.frame(ticked, _apply_sim_view).get("worked", false))
 	if not worked:
 		return
 	var total_ms := (Time.get_ticks_usec() - t_all) / 1000.0
@@ -307,25 +296,44 @@ func _sync_sim_buildings(full: bool = false) -> void:
 	sim_stats["sync_ms_sum"] = float(sim_stats.get("sync_ms_sum", 0.0)) + total_ms
 	sim_stats["sync_ms_max"] = maxf(float(sim_stats.get("sync_ms_max", 0.0)), total_ms)
 	# perf_probe raporu (`scene_build_stats`) için: işli karelerin sayısı/ortalaması/azami süresi (projector dilimi VEYA
-	# görünüm kurulumu; kare başına tek iş), görünüm kurulumu ve kuyruk derinliği.
+	# görünüm kurulumu), görünüm kurulumu ve kuyruk derinliği.
 	var vn := maxi(int(sim_stats.get("view_n", 0)), 1)
 	build_stats["sim_sync"] = {"n": sim_stats["sync_n"],
 			"avg_ms": snappedf(float(sim_stats["sync_ms_sum"]) / int(sim_stats["sync_n"]), 0.01),
 			"max_ms": snappedf(float(sim_stats["sync_ms_max"]), 0.01),
 			"view_builds": int(sim_stats.get("view_n", 0)),
 			"view_avg_ms": snappedf(float(sim_stats.get("view_ms_sum", 0.0)) / vn, 0.01),
-			"audits": int(_projector.stats.get("full_scans", 0)), "rows": _projector.columns().count,
+			"full_syncs": int(_projector.stats.get("full_syncs", 0)), "rows": _projector.columns().count,
+			"stage_polls": int(_projector.stats.get("stage_polls", 0)),
+			"unplaced": _projector.unplaced_count(),
 			"windows": int(_projector.stats.get("windows", 0)),
 			"parcel_reads": int(_projector.stats.get("parcel_reads", 0)),
 			"backlog_max": int(_projector.stats.get("backlog_max", 0)),
 			"step_max_ms": snappedf(float(_projector.stats.get("step_ms_max", 0.0)), 0.01),
 			"begin_max_ms": snappedf(float(_projector.stats.get("begin_ms_max", 0.0)), 0.01),
-			"events_unit_max_ms": snappedf(float(_projector.stats.get("events_ms_max", 0.0)), 0.01),
 			"views_unit_max_ms": snappedf(float(_projector.stats.get("views_ms_max", 0.0)), 0.01),
+			"read_ms": snappedf(float(_projector.stats.get("read_us", 0)) / 1000.0, 0.1),
+			"apply_ms": snappedf(float(_projector.stats.get("apply_us", 0)) / 1000.0, 0.1),
 			"plan_n": int(_projector.stats.get("plan_n", 0)),
 			"plan_max_ms": snappedf(float(_projector.stats.get("plan_ms_max", 0.0)), 0.01),
-			"plan_avg_ms": snappedf(float(_projector.stats.get("plan_ms_sum", 0.0))
+			"plan_avg_ms": snappedf(float(_projector.stats.get("plan_us", 0)) / 1000.0
 					/ maxi(int(_projector.stats.get("plan_n", 0)), 1), 0.01)}
+
+
+## Projector sütunlarını ikinci BuildingView'a kurar (`SimBuildingPump` çağırır).
+func _apply_sim_view(columns: BuildingColumns, version: int) -> void:
+	var t0 := Time.get_ticks_usec()
+	var res := _sim_buildings.set_columns(columns, version)
+	var view_ms := (Time.get_ticks_usec() - t0) / 1000.0
+	sim_stats["sim_buildings"] = columns.count
+	sim_stats["view_ms_sum"] = float(sim_stats.get("view_ms_sum", 0.0)) + view_ms
+	sim_stats["view_n"] = int(sim_stats.get("view_n", 0)) + 1
+	if not bool(res.get("ok", false)):
+		push_error("playable: sim yapı sütunları reddedildi: %s" % str(res.get("errors")))
+	if _args.has("m2-log"):
+		print("PLAYABLE_SIMBLD tick=%d rows=%d rebuilt_cells=%s view_ms=%.2f backlog=%d" % [
+				_facade.current_tick(), columns.count, str(res.get("rebuilt", -1)), view_ms,
+				_projector.backlog_ticks()])
 
 
 func _process(delta: float) -> void:
@@ -338,11 +346,9 @@ func _process(delta: float) -> void:
 	_max_ms = maxf(_max_ms, delta * 1000.0)
 	var tick_before := _facade.current_tick()
 	_facade.drive_usec(int(delta * 1000000.0))
-	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır; kuyruk çok derinleşirse (yavaş kareler)
-	# tick'li karede de bir dilim yürür (sonsuz birikme yok).
-	var behind := _projector != null and _projector.backlog_ticks() > MAX_SYNC_BACKLOG_DAYS
-	if _facade.current_tick() == tick_before or behind:
-		_sync_sim_buildings()
+	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır (SimBuildingPump kuralı); kuyruk çok
+	# derinleşirse (yavaş kareler) tick'li karede de iş yürür (sonsuz birikme yok).
+	_sync_sim_buildings(false, _facade.current_tick() != tick_before)
 	if _facade.current_tick() != _seen_tick:
 		_seen_tick = _facade.current_tick()
 		if _hud != null:
@@ -352,7 +358,7 @@ func _process(delta: float) -> void:
 	# Başsız T-030 smoke, gerçek facade üzerinde kayıt baytını tekrar içe alıp
 	# kanonik hash'in korunduğunu denetler. Bu yalnız --demo ile çalışan bir
 	# doğrulama kancasıdır; normal oturumda kayıt durumu veya dosya üretmez.
-	if _demo and not _smoke_save_load_checked and _frames >= 60:
+	if _demo and not _smoke_save_load_checked and _frames >= 60 and not _args.has("no-smoke-save-load"):
 		_smoke_save_load_checked = true
 		_smoke_save_load()
 	if _status != null:
@@ -372,9 +378,10 @@ func _process(delta: float) -> void:
 	if _args.has("quit-after") and _frames >= maxi(1, int(str(_args["quit-after"]))):
 		var n := int(sim_stats.get("sync_n", 0))
 		if n > 0:
-			print("PLAYABLE_SIMBLD_SYNC n=%d avg_ms=%.2f max_ms=%.2f rows=%d audits=%d" % [n,
+			print("PLAYABLE_SIMBLD_SYNC n=%d avg_ms=%.2f max_ms=%.2f rows=%d full_syncs=%d unplaced=%d %s" % [n,
 					float(sim_stats["sync_ms_sum"]) / n, float(sim_stats["sync_ms_max"]),
-					_projector.columns().count, int(_projector.stats.get("full_scans", 0))])
+					_projector.columns().count, int(_projector.stats.get("full_syncs", 0)),
+					_projector.unplaced_count(), JSON.stringify(_projector.unplaced_reason_counts())])
 		print("PLAYABLE_QUIT frames=%d tick=%d" % [_frames, _facade.current_tick()])
 		get_tree().quit()
 

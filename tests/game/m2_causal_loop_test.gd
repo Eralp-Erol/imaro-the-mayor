@@ -258,9 +258,9 @@ func test_rewinding_the_same_facade_to_an_older_save_restores_the_older_rows() -
 	assert_str(proj.columns().state_hash()).is_equal(early_hash)
 
 
-func test_hidden_events_are_recovered_through_the_approval_counter_audit() -> void:
-	# Saklama ufku çok dar: onay olayları pencerede gizlenir; projector sim'in onay sayacından eksiği anlar ve
-	# denetim taramasıyla bulur. Sonuç, sıfırdan (tam denetimle) kurulan projector ile aynıdır.
+func test_hidden_events_do_not_matter_the_feed_is_independent_of_the_event_horizon() -> void:
+	# Saklama ufku çok dar: onay olayları pencerede gizlenir (B-002). Feed olay günlüğünden bağımsızdır: seyrek
+	# senkronla bile hiçbir onay kaçmaz, tam eşitleme GEREKMEZ ve sonuç sıfırdan kurulan projector ile aynıdır.
 	var h := M2RenderSupport.handle(ISOLATE, M2RenderSupport.SEED, M2RenderSupport.tiny_log_config(20))
 	var f := h.facade
 	var proj := M2RenderSupport.projector(f)
@@ -273,17 +273,18 @@ func test_hidden_events_are_recovered_through_the_approval_counter_audit() -> vo
 		f.advance(1)
 		if day % 6 == 5:
 			proj.sync()
+	assert_int(f.first_retained_event_seq()).override_failure_message("olay ufku daralmadı: senaryo anlamsız") \
+			.is_greater(1)
 	proj.sync(true)
-	assert_int(int(proj.stats["full_scans"])).override_failure_message("denetim hiç başlamadı").is_greater(0)
-	assert_int(int(proj.stats["unresolved_missing"])).is_equal(0)
+	assert_int(int(proj.stats["full_syncs"])).override_failure_message("tam eşitleme gerekmemeliydi").is_equal(0)
 	var fresh := M2RenderSupport.projector(f)
-	fresh.sync(true)   # ilk bağlanma + budanmış günlük: tam denetim (referans)
+	fresh.sync(true)   # ilk bağlanma: pencere tüm geçmişi kapsamıyorsa tam eşitleme, kapsıyorsa feed(-1) (referans)
 	assert_int(fresh.columns().count).is_greater(0)
 	assert_str(proj.columns().state_hash()).override_failure_message(
-			"gizlenen onaylar bulunamadı (%d / %d satır)" % [proj.columns().count, fresh.columns().count]) \
-			.is_equal(fresh.columns().state_hash())
+			"feed güdümlü satırlar sıfırdan kurulandan farklı (%d / %d satır)" % [proj.columns().count,
+			fresh.columns().count]).is_equal(fresh.columns().state_hash())
 
 
-func test_normal_log_needs_no_audit_when_synced_daily() -> void:
+func test_normal_log_needs_no_full_sync_when_synced_daily() -> void:
 	var run := _scenario(ISOLATE, 6, 120)
-	assert_int(int((run["proj"] as SimBuildingProjector).stats["full_scans"])).is_equal(0)
+	assert_int(int((run["proj"] as SimBuildingProjector).stats["full_syncs"])).is_equal(0)

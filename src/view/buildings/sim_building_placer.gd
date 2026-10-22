@@ -17,6 +17,25 @@ const SHORE_FAST_PATH_M := 150.0
 const FIT_EPS := 1.0e-4
 const FULL := 1000
 
+## `plan_failure()` kodları (yerleşememe nedeni; HUD/rapor için sayısal gruplama).
+const FAIL_NONE := &""
+const FAIL_UNKNOWN_USE := &"unknown_use"
+const FAIL_NO_PARCEL := &"no_parcel"
+## Çok parselli T0 yapısına katılmış parsel (T0 geometrisi zaten o parseli kaplıyor).
+const FAIL_T0_MERGED := &"t0_merged"
+const FAIL_NO_LOT := &"no_lot"
+const FAIL_NO_CANDIDATES := &"no_candidates"
+## Hiçbir kit modülü parselin cephe/derinlik/geri çekilme sınırına sığmıyor.
+const FAIL_LOT_TOO_SMALL := &"lot_too_small"
+## Sığan modül var ama ayak izi su/eğim/meydan denetiminden geçmedi.
+const FAIL_SITE_BLOCKED := &"site_blocked"
+
+## true: ilk iki deneme başarısızsa EK denemeler (hedef katı sığan en uzun modüle indirme; zonun geri çekme
+## aralığındaki en sığ değer). Sığdırma kuralları (sınır, geri çekme aralığı, site denetimi) GEVŞETİLMEZ; daha önce
+## yerleşenlerin sonucu
+## değişmez. false: yalnız eski iki deneme (karşılaştırma/ölçüm için).
+var extra_attempts: bool = true
+
 var _net: WorldNetwork
 var _world: WorldData
 var _rules: SettlementRules
@@ -30,6 +49,9 @@ var _back_margin: float = 0.6
 var _max_slope_deg: float = 14.0
 var _cand_cache: Dictionary = {}
 var _family_cache: Dictionary = {}
+var _fail: StringName = FAIL_NONE
+## `_pack` sırasında: geometrik olarak sığıp site denetiminde elenen modül görüldü mü.
+var _site_blocked: bool = false
 
 
 ## Parsel için hesaplanmış nihai yerleşim (parça listesi); ilerleme `rows_for` ile uygulanır.
@@ -108,35 +130,63 @@ static func create(settlement: SettlementResult, mapping: SimBuildingMapping, wo
 	return p
 
 
+## Son `plan()` çağrısı null döndüyse nedeni (`FAIL_*`); başarılıysa `FAIL_NONE`.
+func plan_failure() -> StringName:
+	return _fail
+
+
 ## Parsel + kullanım + birim için nihai yerleşim; yerleşemiyorsa (parsel yok, çok parselli T0 yapısına katılmış,
-## meydan, su/eğim, hiçbir modül sığmıyor) null.
+## meydan, su/eğim, hiçbir modül sığmıyor) null ve nedeni `plan_failure()`.
 func plan(parcel_id: int, use: StringName, units: int) -> Plan:
+	_fail = FAIL_NONE
 	if units < 1 or not _mapping.knows(use):
+		_fail = FAIL_UNKNOWN_USE
 		return null
 	var parcel: WorldParcel = _net.parcels.get(parcel_id)
-	if parcel == null or _consumed.has(parcel_id):
+	if parcel == null:
+		_fail = FAIL_NO_PARCEL
+		return null
+	if _consumed.has(parcel_id):
+		_fail = FAIL_T0_MERGED
 		return null
 	var lot := SettlementLot.from_parcel(parcel)
 	if lot == null:
+		_fail = FAIL_NO_LOT
 		return null
 	var zone := _zone_with_candidates(parcel_id, use)
 	if zone == null:
 		zone = _rules.zone(_mapping.fallback_zone)
 		if zone == null:
+			_fail = FAIL_NO_CANDIDATES
 			return null
+	var seed_text := "sim_building.%d.%s.%d" % [_seed, String(use), units]
 	var rng := RandomNumberGenerator.new()
-	rng.seed = NetworkRules.stream_seed(parcel.detail, "sim_building.%d.%s.%d" % [_seed, String(use), units])
+	rng.seed = NetworkRules.stream_seed(parcel.detail, seed_text)
 	var v0 := rng.randf_range(zone.setback_min, zone.setback_max)
-	var cand := _candidates(zone, use)
-	var result := _pack(parcel_id, use, units, lot, zone, cand, v0, rng)
+	_site_blocked = false
+	var zone_cands := _candidates(zone, use)
+	var result := _pack(parcel_id, use, units, lot, zone, zone_cands, v0, rng)
 	if result == null:
 		# Doku adayları bu parsele sığmadı: kullanıma uyan TÜM kit modülleri (küçük ev/dükkân dahil) denenir.
 		result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), v0, rng)
+	if result == null and extra_attempts:
+		# Sim'in birimi en uzun modülden çok büyükse (kat tercihi ağırlığı sıfıra çöker) hedef kat sığan en uzun modüle
+		# indirilir: geometri/site kuralları aynı, yalnız yumuşak tercih.
+		result = _pack(parcel_id, use, units, lot, zone, zone_cands, v0, rng, true)
+		if result == null:
+			result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), v0, rng, true)
+	if result == null and extra_attempts and v0 > zone.setback_min + 1.0e-6:
+		# Rastgele çekilen geri çekme sığ parseli kaçırmış olabilir: kural aralığının en sığ değeri (rastgelelik
+		# kullanılmaz: sonuç yine yalnız dünya + tohum + parsel + kullanım + birime bağlıdır).
+		rng.seed = NetworkRules.stream_seed(parcel.detail, seed_text + ".min_setback")
+		result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), zone.setback_min, rng, true)
+	if result == null:
+		_fail = FAIL_SITE_BLOCKED if _site_blocked else FAIL_LOT_TOO_SMALL
 	return result
 
 
 func _pack(parcel_id: int, use: StringName, units: int, lot: SettlementLot, zone: SettlementZone, cand: Dictionary,
-		v0: float, rng: RandomNumberGenerator) -> Plan:
+		v0: float, rng: RandomNumberGenerator, cap_target: bool = false) -> Plan:
 	var mods: Array[SettlementModule] = cand["mods"]
 	var weights: PackedFloat32Array = cand["weights"]
 	var target_total := maxi(1, units / _mapping.units_per_floor)
@@ -147,19 +197,27 @@ func _pack(parcel_id: int, use: StringName, units: int, lot: SettlementLot, zone
 	result.lot = lot
 	var cursor := -INF
 	var placed_floors := 0
+	var spans := _spans(lot, mods, v0)   # imleç/kalan kat bağımsız: bir kez
 	while result.pieces.size() < _mapping.max_buildings and placed_floors < target_total:
 		var remaining := target_total - placed_floors
 		var opt_idx: Array[int] = []
 		var opt_u: Array[float] = []
 		var opt_w := PackedFloat32Array()
+		var fit_idx: Array[int] = []
+		var fit_u: Array[float] = []
 		for ci in mods.size():
 			var m := mods[ci]
-			var span := usable(lot, m, v0)
+			var span := spans[ci]
 			if span.x > span.y:
 				continue
 			var u0 := maxf(span.x, cursor)
-			if u0 + m.w > span.y + FIT_EPS or not site_ok(lot, m, u0, v0):
+			if u0 + m.w > span.y + FIT_EPS:
 				continue
+			if not site_ok(lot, m, u0, v0):
+				_site_blocked = true
+				continue
+			fit_idx.append(ci)
+			fit_u.append(u0)
 			var df := (float(m.floors) - float(remaining)) / zone.floors_sigma
 			var w := weights[ci] * exp(-0.5 * df * df)
 			if w <= 1.0e-6:
@@ -167,6 +225,22 @@ func _pack(parcel_id: int, use: StringName, units: int, lot: SettlementLot, zone
 			opt_idx.append(ci)
 			opt_u.append(u0)
 			opt_w.append(w)
+		if cap_target and opt_idx.is_empty() and result.pieces.is_empty() and not fit_idx.is_empty():
+			# Sığan modül var ama kat tercihi ağırlığı sıfıra çöktü (sim'in birimi en uzun modülden çok büyük:
+			# 5 hektarlık tarla parseline 267 birim): hedef kat, sığan en uzun modüle indirilir. Yalnız İLK parça ve
+			# yalnız önceki denemeler başarısızsa (`plan`); daha önce yerleşebilen hiçbir parselin sonucu değişmez.
+			# Geometri/site kuralları aynı.
+			var tallest := 0
+			for ci in fit_idx:
+				tallest = maxi(tallest, mods[ci].floors)
+			for k in fit_idx.size():
+				var ci := fit_idx[k]
+				var df2 := (float(mods[ci].floors) - float(tallest)) / zone.floors_sigma
+				var w2 := weights[ci] * exp(-0.5 * df2 * df2)
+				if w2 > 1.0e-6:
+					opt_idx.append(ci)
+					opt_u.append(fit_u[k])
+					opt_w.append(w2)
 		if opt_idx.is_empty():
 			break
 		var pick := _weighted(opt_w, rng)
@@ -205,6 +279,19 @@ func rows_for(p: Plan, progress_pm: int) -> Array[Row]:
 	return out
 
 
+## Görünen kat kademesinin imzası (parça başına hedef kat; tamamda nihai kat). Aynı imza => aynı satırlar: ilerleme
+## aşama içinde değişse de satır üretimi (pahalı) gerekmez. `rows_for` ile aynı hedef formülü.
+func stage_key(p: Plan, progress_pm: int) -> String:
+	var parts := PackedStringArray()
+	for piece in p.pieces:
+		var f := piece.module.floors
+		var target := f
+		if progress_pm < FULL and f > 1:
+			target = clampi((f * maxi(progress_pm, 0) + FULL - 1) / FULL, 1, f - 1)
+		parts.append(str(target))
+	return ",".join(parts)
+
+
 ## İlerleme `progress_pm`'den SONRA, görünen kat hedefinin değişeceği ilk ilerleme (‰; en çok FULL). Yoklama zamanlaması
 ## için: kademe değişmeden satırlar değişmez, parsel okunmasına gerek yoktur.
 func next_stage_progress(p: Plan, progress_pm: int) -> int:
@@ -227,6 +314,28 @@ func usable(lot: SettlementLot, m: SettlementModule, v0: float) -> Vector2:
 	var front := lot.interval_at(v0 + FRONT_PROBE_M)
 	var rear := lot.interval_at(v0 + m.d)
 	var mid := lot.interval_at(minf(v0 + MID_PROBE_M, back))
+	return _span_from(front, rear, mid)
+
+
+## `usable`ın modül listesi için toplu hâli: ön/orta kesitler modülden bağımsızdır (bir kez), arka kesit derinliğe göre
+## önbelleklenir. Sonuç `usable` ile bit-bit aynıdır.
+func _spans(lot: SettlementLot, mods: Array[SettlementModule], v0: float) -> Array[Vector2]:
+	var back := lot.v_max - _back_margin
+	var front := lot.interval_at(v0 + FRONT_PROBE_M)
+	var mid := lot.interval_at(minf(v0 + MID_PROBE_M, back))
+	var rear_by_depth := {}
+	var out: Array[Vector2] = []
+	for m in mods:
+		if v0 + m.d > back:
+			out.append(Vector2(INF, -INF))
+			continue
+		if not rear_by_depth.has(m.d):
+			rear_by_depth[m.d] = lot.interval_at(v0 + m.d)
+		out.append(_span_from(front, rear_by_depth[m.d], mid))
+	return out
+
+
+func _span_from(front: Vector2, rear: Vector2, mid: Vector2) -> Vector2:
 	if front.x > front.y or rear.x > rear.y or mid.x > mid.y:
 		return Vector2(INF, -INF)
 	return Vector2(maxf(maxf(front.x, rear.x), mid.x) + _margin, minf(minf(front.y, rear.y), mid.y) - _margin)
