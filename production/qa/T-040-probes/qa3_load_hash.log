@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+WORLD_PREVIEW {"buildings":{"buildings":54889,"cells":168,"drawn":54889,"dropped_water":0,"hlod1_nodes":168,"hlod1_tris_all":649668,"hlod2_tris_all":133650,"last_build_ms":3926.9,"last_plan_ms":163.3,"last_rebuilt_cells":168,"lod0_tris_all":11549596,"lod1_tris_all":1579446,"mmi_nodes":5286,"network_ms":4742.9,"parcels":37341,"settlement_ms":18425.6,"supers":26,"view_ms":4235.0},"cell_size_m":100.0,"control_load_ms":2.3,"post_terrain_ms":27441.2,"preset":"district","seed":1467,"sweep_frames":0,"terrain":{"chunk_cells":40,"chunk_size_m":4000.0,"chunks_x":10,"chunks_z":10,"data_ms":1155.2,"land_chunks":96,"land_triangles":199647,"land_vertices":598941,"lod_stride":1,"mesh_ms":65.8,"palette_ms":453.4,"threaded":true,"water_chunks":56,"water_triangles":126938},"terrain_build_ms":1674.4,"world_generate_ms":2125.5,"world_samples":160801}
+PLAYABLE {"sim_parcels":37341,"sim_setup_ms":7076.1,"t0_stock_parcels":24898}
+PLAYABLE_ACTION parsel [5359] → zone.mixed: queued
+PLAYABLE_LOAD_RESYNC ms=1223.1 resync=true rows=103 full_sync_ms=1204.3 parcel_reads=18432
+QA3_LOAD days=120 tick=125 load_ok=true resync_ms=1223.3 rows=103->103 shown_parcels=80->80
+QA3_LOAD state_hash before=67d90cac594d8a4b4eb9a89c72593bafdb88821f263e4266e07247a06d2842fe after=67d90cac594d8a4b4eb9a89c72593bafdb88821f263e4266e07247a06d2842fe equal=true
+QA3_LOAD row_hash  before=ad725408cc3c059a67d696834a8243383784fe4bde5b0d615e5fddbcc9c28e08 after=ad725408cc3c059a67d696834a8243383784fe4bde5b0d615e5fddbcc9c28e08 after_exact=ad725408cc3c059a67d696834a8243383784fe4bde5b0d615e5fddbcc9c28e08 equal=true equal_exact=true
