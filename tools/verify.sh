@@ -85,7 +85,8 @@ s_unit() {
   local rc=0 errs
   rm -rf "$out/gdunit"
   # -d (debugger) kullanılmaz: parse hatasında Godot "debug>" isteminde asılı kalabiliyor.
-  run_to 300 "$out/unit.log" "$godot" --headless --path "$root" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd \
+  # Zaman aşımı test sayısıyla büyür (M0: ~300 test/300 sn; şimdi 1700+ test, tam koşu ~7-10 dk): kalite eşiği DEĞİL, yalnız takılma koruması.
+  run_to "${VERIFY_UNIT_TIMEOUT:-1500}" "$out/unit.log" "$godot" --headless --path "$root" -s res://addons/gdUnit4/bin/GdUnitCmdTool.gd \
     -a res://tests -c --ignoreHeadlessMode -rd artifacts/verify/gdunit -rc 1 || rc=$?
   SUMMARY="$(strip_ansi "$out/unit.log" | grep 'Overall Summary' | head -n1 | sed 's/Overall Summary: //')"
   # Çıkış kodu tek başına güvenilmez: GdUnit4 çöktüğünde de 0 dönebiliyor (2026-10-20 E2E-B bulgusu).
