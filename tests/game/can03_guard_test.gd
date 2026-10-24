@@ -85,6 +85,14 @@ func test_static_the_sim_view_is_fed_only_by_the_projector() -> void:
 	assert_bool(text.contains("_sim_buildings.set_columns(cols")).is_false()
 
 
+func test_static_sim_view_uses_the_same_lod_config_object_as_the_t0_view() -> void:
+	# T-012 LOD sözleşmesi: SimBuildings, T0 görünümüyle AYNI BuildingViewConfig örneğini kullanır (mesafe LOD0/LOD1/HLOD).
+	var text := _text("res://src/game/playable.gd")
+	assert_bool(text.contains("_buildings.setup(_world, _kit, config)")).is_true()
+	assert_bool(text.contains("_sim_buildings.setup(_world, _kit, config)")).is_true()
+	assert_int(RegEx.create_from_string("BuildingViewConfig\\.new\\(\\)").search_all(text).size()).is_equal(1)
+
+
 func test_static_command_hud_contract_sim_and_app_code_never_touch_building_geometry() -> void:
 	var offenders := PackedStringArray()
 	for dir in FORBIDDEN_DIRS:

@@ -345,14 +345,18 @@ func _process(delta: float) -> void:
 	_acc_n += 1
 	_max_ms = maxf(_max_ms, delta * 1000.0)
 	var tick_before := _facade.current_tick()
+	var t_drive := Time.get_ticks_usec()
 	_facade.drive_usec(int(delta * 1000000.0))
+	var drive_us := Time.get_ticks_usec() - t_drive
 	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır (SimBuildingPump kuralı); kuyruk çok
 	# derinleşirse (yavaş kareler) tick'li karede de iş yürür (sonsuz birikme yok).
 	_sync_sim_buildings(false, _facade.current_tick() != tick_before)
 	if _facade.current_tick() != _seen_tick:
 		_seen_tick = _facade.current_tick()
+		var t_poll := Time.get_ticks_usec()
 		if _hud != null:
 			_hud.poll()
+		_note_tick_cost(drive_us, Time.get_ticks_usec() - t_poll)
 	if _demo and _frames == 10 and not _args.has("m2-advance"):
 		_submit_demo()
 	# Başsız T-030 smoke, gerçek facade üzerinde kayıt baytını tekrar içe alıp
@@ -384,6 +388,22 @@ func _process(delta: float) -> void:
 					_projector.unplaced_count(), JSON.stringify(_projector.unplaced_reason_counts())])
 		print("PLAYABLE_QUIT frames=%d tick=%d" % [_frames, _facade.current_tick()])
 		get_tree().quit()
+
+
+## Tick'li karenin sim ve HUD payı (perf_probe `scene_build_stats.tick_cost`): sim tick'i ile `hud.poll` ayrı
+## raporlanır (ısınma kareleri dahil: ilk tick'ler ekonomi durumunu kurduğu için pahalıdır).
+func _note_tick_cost(drive_us: int, poll_us: int) -> void:
+	var n := int(sim_stats.get("tick_cost_n", 0)) + 1
+	sim_stats["tick_cost_n"] = n
+	sim_stats["drive_us_sum"] = int(sim_stats.get("drive_us_sum", 0)) + drive_us
+	sim_stats["poll_us_sum"] = int(sim_stats.get("poll_us_sum", 0)) + poll_us
+	sim_stats["drive_us_max"] = maxi(int(sim_stats.get("drive_us_max", 0)), drive_us)
+	sim_stats["poll_us_max"] = maxi(int(sim_stats.get("poll_us_max", 0)), poll_us)
+	build_stats["tick_cost"] = {"ticked_frames": n,
+			"sim_drive_avg_ms": snappedf(float(sim_stats["drive_us_sum"]) / n / 1000.0, 0.01),
+			"sim_drive_max_ms": snappedf(float(sim_stats["drive_us_max"]) / 1000.0, 0.01),
+			"hud_poll_avg_ms": snappedf(float(sim_stats["poll_us_sum"]) / n / 1000.0, 0.01),
+			"hud_poll_max_ms": snappedf(float(sim_stats["poll_us_max"]) / 1000.0, 0.01)}
 
 
 func _unhandled_input(event: InputEvent) -> void:

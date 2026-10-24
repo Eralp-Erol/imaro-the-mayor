@@ -46,6 +46,10 @@ static func config_for(views: Array[ParcelView], stock: ExistingStockSource, pat
 		entry["initial_households"] = base_households + res * latent / 1000
 		overrides[String(code)] = entry
 	(raw["regions"] as Dictionary)["overrides"] = overrides
+	# Geçici tempo verisi (kare bütçesi): yalnız `decision.*` sayıları; karar KURALLARI değişmez.
+	var pace: Variant = (tune as Dictionary).get("decision", {})
+	if pace is Dictionary:
+		raw["decision"] = _merge(raw["decision"], pace)
 	var cfg := EconomyConfig.from_dict(_merge(raw as Dictionary, patch))
 	if not cfg.is_valid():
 		push_error("playable_economy: türetilen yapılandırma geçersiz: %s" % cfg.error)

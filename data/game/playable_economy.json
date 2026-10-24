@@ -2,5 +2,7 @@
 	"_header": "T-040 · Entegre oynanabilir sahne için BAŞLANGIÇ KOŞULU ayarı (ÇM; F05-D ölçek/altyapı/talep AÇIK, kanon DEĞİL, karar kuralı DEĞİL). Ekonomi varsayılan yapılandırması (data/sim/economy/economy_config.json) küçük fixture dünyaları içindir: bölge başına altyapı kapasitesi 1000 birim iken gerçek T0 stoğu bölge başına 4-55 bin birimdir; bu yüzden her yatırım 'infrastructure_exhausted' ile reddedilir ve döngü hiç başlamaz. Bu dosya bölge başına kapasiteyi ve gizli hane talebini T0 stoğundan türetir. Sonuçları ZORLAMAZ: yatırımcı kararı yine sim kurallarıyla verilir (talep düşük/kapasite dar bölgelerde ret doğal olarak sürer). Açık soru: production/QUESTIONS.md Q-016.",
 	"schema_version": 1,
 	"infra_headroom_pm": 300,
-	"latent_demand_pm": 250
+	"latent_demand_pm": 250,
+	"_decision_note": "GEÇİCİ TEMPO (kare bütçesi gerekçesi; denge kararı DEĞİL, kullanıcıya açık: Q-016). decision.max_reviews_per_tick: tick başına tam yatırımcı değerlendirmesi. Sim varsayılanı 60 (günde ~57 karar, çoğu ret; sim tick ort ~17 ms, 60 ms+ tepe) 16,6 ms kare bütçesini aşar; 8 ile günde ~8 karar, sim tick ort 4,3 ms (erken günler, smoke penceresi; 15 ile 6,9 ms, 60 ile 15+ ms). 180 günde onay 105 -> 69, ret 9181 -> 1297 (kararların %95-98'i ret). Oyuncunun imar önerisi sonrası gelişme zamanı DEĞİŞMEZ (8 parsel: gün 40 inşaat, gün 100 7/8 yapıldı; 60/15/8 aynı).",
+	"decision": {"max_reviews_per_tick": 8}
 }
