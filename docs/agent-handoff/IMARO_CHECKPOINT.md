@@ -24,6 +24,8 @@ Araç izin sınıflandırıcısı gözetmen betiğinin ve genel kabul betiğinin
 Kullanıcının izin kuralı ya da açık onayı olmadan bu altyapı kurulmadı. Reddedilen işlemler ve yetkili çözüm yolları: **`docs/agent-handoff/AUTONOMY_BLOCKER.md`**.
 Görevler bu oturumdan sırayla sürüyor (T-040: sim turu `cc5bfbb` commit'li; render turu → HUD → bağımsız QA sırada).
 
+**T-040 KAPANDI (2026-10-24):** bağımsız QA 3. tur PASS + kapanış smoke SMOKE_OK (kare ort 6,86 / P95 13,01 ms, üçgen 471k, K8 %2,59). T-045 (olay ufku/`parcel_changes_since`) de tamam. Açık kayıtlar: `production/tasks/T-040.md` KAPANIŞ bölümü (geçici tempo günde ~8 karar/Q-016, tick'siz +0,4–1,1 ms, T-046, iPad/cihaz…). **SIRADAKİ: T-041** (denetçi paneli; küçük dilim, QA baştan VARSAYILAN rejimde, kare ölçümü tek tekrar + eşik; kapanışta smoke bir kez).
+
 **DEVİR DOĞRULAMASI (2026-10-24, gerçek):** Codex ayağı izole testte ÇALIŞTI (commit için bypass gerekir); Claude ayağı da ÇALIŞTI (kullanıcı `claude auth login` yaptıktan sonra; Sonnet 5.5 sabitli, Claude bypass'sız commit atabildi). Oturum süresi dolarsa `claude auth status` loggedIn:false olur. Gerçek kota geçişi (Codex↔Claude) DOĞRULANAMADI (stub testleri). Ayrıntı: `docs/agent-handoff/AUTONOMY_BLOCKER.md`.
 
 **DURAKLATILDI (2026-10-23, kullanıcı isteğiyle, güvenli) — GÜNCEL DURUM, aşağıdaki 2026-10-22 notunun ÜSTÜNDEDİR:**

@@ -5,11 +5,11 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 
 | ID | Görev | Bağımlılık | Durum | Deneme | Not |
 |---|---|---|---|---|---|
-| T-040 | İlk nedensel döngü: imar → yatırımcı → inşaat → gerçek 3D yapı → ölçülebilir sonuç | — | in-progress (DURAKLATILDI 2026-10-23, kullanıcı isteğiyle) | 0 | commit'li: sim `3244bee` · HUD `8db6b21`,`b91cfaa` · render `92cec20`,`4e5e26e` · kapı `91d9596`; QA tur 1/2 FAIL, **tur 3 (dar) yarıda durdu, VERDICT yok** — devam: dar QA#3 → smoke bir kez → `done` → T-041. Ayrıntı: `IMARO_CHECKPOINT.md` §0 |
+| T-040 | İlk nedensel döngü: imar → yatırımcı → inşaat → gerçek 3D yapı → ölçülebilir sonuç | — | **done** (2026-10-24) | 0 | QA tur 3 PASS · kapanış smoke SMOKE_OK (ort 6,86 / P95 13,01 ms) · açık kayıtlar: `production/tasks/T-040.md` KAPANIŞ |
 | T-041 | Parsel/bölge denetçisi + nedensellik zinciri (metro/ilçe/sokak zoom) | T-040 | ready | 0 | görev dosyası: `production/tasks/T-041.md` |
 | T-042 | Oyuncu yol/kamusal alan çizimi → altyapı kapasitesi → yatırımcı kararı | T-040 | ready | 0 | `production/tasks/T-042.md` |
 | T-043 | Orven (D2) başlangıcı + ≥2 ilçe kimliğiyle başlatma testi | T-040 | ready | 0 | `production/tasks/T-043.md` |
-| T-045 | Olay saklama ufku yük altında: değişen parselleri güvenilir sorgulama (sim) | T-040 | ready | 0 | `production/tasks/T-045.md`; T-040 projector geçici çözümünü kalıcıya çevirir |
+| T-045 | Olay saklama ufku yük altında: değişen parselleri güvenilir sorgulama (sim) | T-040 | **done** (3244bee + projector geçişi 4e5e26e) | 0 | `production/tasks/T-045.md` |
 | T-046 | macOS dokunmatik profil pencereli HUD yerleşim hatası (güvenli alan) | T-040 | ready | 0 | `production/tasks/T-046.md`; T-040 HUD turunda bulundu |
 | T-044 | M2 kapı raporu (F03 eşleme, bağımsız QA özeti, açık kullanıcı/cihaz kabulleri) | T-040..T-043, T-045, T-046 | ready | 0 | `production/tasks/T-044.md` dosyası henüz yazılmadı (ilk işi: bunu yazmak) |
 | M3-1 | M3 kapsamı (yaşayan metropol) için görev tanımı | T-044 | ready | 0 | ROADMAP M3: yalnız T-044 `done` olunca; ilk iş görev dosyalarını `design-director` + `technical-director` ile yazmak |
