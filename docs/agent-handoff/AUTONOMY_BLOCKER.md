@@ -45,11 +45,10 @@ Dolanma yapılmadı: reddedilen işlemler başka araç/yolla tekrar denenmedi, g
 |---|---|---|
 | Codex birincil | **ÇALIŞIYOR**: prepare → izole worktree → Codex görevi yaptı → kabul betiği çıkış 0 → `acceptance_check_passed` | state.json: attempts=[codex exited_ok], status acceptance_check_passed |
 | Codex commit | **bypass olmadan atamaz**: `git add` → `index.lock … outside writable` (`.git/worktrees/…` sandbox dışı); işi commit'siz bırakır, HANDOFF'a nedenini yazar | HANDOFF.md BLOCKERS satırı |
-| Claude birincil (Sonnet 5.5 sabitli) | **ÇALIŞMIYOR**: `Failed to authenticate: OAuth session expired and could not be refreshed`; araç bunu "non-quota error" sayıp durur (otomatik geçiş yok) | `claude auth status` → `loggedIn: false` |
+| Claude birincil (Sonnet 5.5 sabitli) | **ÇALIŞIYOR (kullanıcı `claude auth login` yaptıktan sonra, 2026-10-24)**: acceptance_check_passed, `hello.txt` doğru, Claude bypass OLMADAN commit de attı (`55ad40d`); ilk deneme `OAuth session expired` (loggedIn:false) ile `error` olmuştu | state b09d27b4 (attempts=[claude exited_ok]); `claude auth status` → loggedIn:true; stdout'ta 5× `claude-sonnet-5-5` |
 | Model sabitleme | Çalışıyor: `--model claude-sonnet-5-5` komuta giriyor (Haiku adı reddedilir) | 01-claude-stdout.jsonl `"model":"claude-sonnet-5-5"` |
 | Gerçek kota geçişi (Claude↔Codex) | **DOĞRULANMADI**: gerçek kota olayı tetiklenemez; yalnız stub testleri (30 test) | — |
 
-**Sonuç:** Codex→Claude otomatik geçiş şu an GERÇEKTE çalışmaz (Claude CLI çıkışlı). Düzeltme kullanıcıdadır (etkileşimli OAuth): terminalde `claude auth login`
-(durum: `claude auth status`). Kota geçişinin kendisi gerçek bir kota olayı yaşanmadan kanıtlanamaz.
+**Sonuç:** iki sağlayıcı da başsız olarak görev alıp kabul betiğini geçti (Claude girişi `claude auth login` ile yenilendi; oturum süresi dolarsa `claude auth status` loggedIn:false olur ve Claude ayağı `error` ile durur). Kota geçişinin KENDİSİ gerçek bir kota olayı yaşanmadan kanıtlanamaz (yalnız stub testleri).
 Proje görevlerinde Codex'ten commit alınacaksa: (a) `--bypass-permissions` (kullanıcı onaylı; sınıflandırıcı altyapı kurulumunu reddediyor) ya da (b) Codex yalnız dosyaları düzenler, commit'i koordinatör atar
 (kabul betiği bu durumda "temiz ağaç" şartı aramaz).
