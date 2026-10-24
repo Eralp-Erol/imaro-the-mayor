@@ -12,6 +12,7 @@ const SIM_CODE_TO_CAUSE := {
 
 
 func before_test() -> void:
+	M2Results.default_interval_msec = 0  # testler adım adım ilerler; yenileme sınırı kapalı
 	UiText.reset()
 	UiText.report_missing = false
 
@@ -249,3 +250,56 @@ func test_a_built_parcel_gets_an_honest_already_invested_line_not_waiting() -> v
 	var text := _panel(scene).joined_text()
 	assert_str(text).contains(UiText.t(&"m2.investor.already"))
 	assert_bool(text.contains(UiText.t(&"m2.investor.waiting"))).is_false()
+
+
+func _first_meter(node: Node) -> MeterBar:
+	for child in node.get_children():
+		if child is MeterBar:
+			return child
+		var inner := _first_meter(child)
+		if inner != null:
+			return inner
+	return null
+
+
+func test_value_only_changes_reuse_the_nodes_and_stay_exact() -> void:
+	var scene := _default_scene({}, 8, 2)
+	_propose(scene)
+	var f: SimFacade = scene["facade"]
+	var panel := _panel(scene)
+	for i in 250:
+		_step(scene, 1)
+		var pv := f.parcel_views(PackedInt64Array([panel.model.primary.id()]))[0]
+		if pv.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION and pv.progress_pm > 0 \
+				and pv.progress_pm < 900 and pv.pending_zone != &"":
+			break
+	assert_int(panel.model.primary.view.progress_pm).is_greater(0)
+	var body_child := panel._body.get_child(0)
+	var meter := _first_meter(panel)
+	var before_pm := panel.model.primary.view.progress_pm
+	_step(scene, 3)
+	var v := f.parcel_views(PackedInt64Array([panel.model.primary.id()]))[0]
+	assert_int(v.progress_pm).is_not_equal(before_pm)
+	assert_bool(panel._body.get_child(0) == body_child).override_failure_message("düğümler yeniden kuruldu").is_true()
+	assert_bool(_first_meter(panel) == meter).is_true()
+	assert_int(meter.permille).is_equal(v.progress_pm)
+	assert_str(panel.joined_text()).contains(
+			UiText.t(&"format.percent", {"value": UiText.number(v.progress_pm / 10)}))
+	var o := f.economy_outcome()
+	assert_int(panel.model.metric(&"investments_approved").value).is_equal(o.metrics()["investments_approved"])
+
+
+func test_refresh_rate_is_capped_but_the_first_and_forced_refreshes_are_exact() -> void:
+	var scene := _default_scene({}, 4, 2)
+	M2Results.default_interval_msec = 60000
+	_propose(scene)
+	var results: M2Results = scene["results"]
+	var panel := _panel(scene)
+	var tick0 := panel.model.tick
+	_step(scene, 5)
+	assert_int(panel.model.tick).override_failure_message("sınır içinde yeniden hesap yapıldı").is_equal(tick0)
+	results.build_model()  # doğrudan okuma sınırdan etkilenmez
+	assert_int(results.build_model().tick).is_equal(tick0 + 5)
+	M2Results.default_interval_msec = 0
+	_step(scene, 1)
+	assert_int(panel.model.tick).is_equal(tick0 + 6)

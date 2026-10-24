@@ -18,6 +18,9 @@ const ROW_REACTION := "reaction"
 var model: M2ResultModel = null
 
 var _results: M2Results = null
+var _structure: String = ""
+## Değeri her yenilemede güncellenen düğümler (yeniden kurma yok): her biri model'den metni/çubuğu yeniden okur.
+var _dyn: Array[Callable] = []
 
 
 static func create(ctx: UiContext, facade: SimFacade, results: M2Results) -> M2ResultPanel:
@@ -32,7 +35,18 @@ func refresh() -> void:
 	if _body == null or _results == null:
 		return
 	model = _results.build_model()
-	refresh_if_changed(model.signature())
+	var structure := model.structure_signature()
+	var sig := structure + "#" + model.values_signature()
+	if sig == _signature:
+		return
+	if structure == _structure and not _dyn.is_empty():
+		# Yalnız değerler değişti: düğümler yeniden kullanılır (odak/kaydırma kaybı ve sil-yarat maliyeti yok).
+		_signature = sig
+		for update in _dyn:
+			update.call()
+		return
+	_structure = structure
+	refresh_if_changed(sig)
 
 
 func _render() -> void:
@@ -41,6 +55,7 @@ func _render() -> void:
 	if model == null:
 		model = _results.build_model()
 	var focus_role := _begin_render()
+	_dyn = []
 	state_view.show_normal()
 	_add_parcel_section()
 	_add_outcome_section()
@@ -135,11 +150,25 @@ func _add_stage(inner: VBoxContainer, v: ParcelView) -> void:
 	inner.add_child(_muted(UiText.t(&"m2.progress")))
 	var bar := HBoxContainer.new()
 	bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	bar.add_child(MeterBar.create(_ctx, v.progress_pm))
-	var pct := UiFactory.label(UiText.t(&"format.percent", {"value": UiText.number(v.progress_pm / 10)}))
+	var meter := MeterBar.create(_ctx, v.progress_pm)
+	bar.add_child(meter)
+	var pct := UiFactory.label(_pct_text(v.progress_pm))
 	pct.autowrap_mode = TextServer.AUTOWRAP_OFF
 	bar.add_child(pct)
 	inner.add_child(bar)
+	_dyn.append(func() -> void:
+		var pm := model.primary.view.progress_pm
+		_set_meter(meter, pm)
+		pct.text = _pct_text(pm))
+
+
+func _pct_text(permille: int) -> String:
+	return UiText.t(&"format.percent", {"value": UiText.number(permille / 10)})
+
+
+func _set_meter(meter: MeterBar, permille: int) -> void:
+	meter.permille = clampi(permille, 0, 1000)
+	meter.queue_redraw()
 
 
 func _add_others() -> void:
@@ -173,9 +202,9 @@ func _add_outcome_section() -> void:
 	var inner: VBoxContainer = parts[1]
 	for r in model.metrics:
 		inner.add_child(_metric_pair(r))
-	inner.add_child(_named(_pair(UiText.t(&"m2.row.pipeline"), UiText.t(&"m2.row.pipeline_value",
-			{"res": UiText.number(model.pipeline_residential), "com": UiText.number(model.pipeline_commercial)})),
-			ROW_METRIC))
+	var pipe := _pair(UiText.t(&"m2.row.pipeline"), _pipeline_text())
+	inner.add_child(_named(pipe, ROW_METRIC))
+	_bind_value(pipe, _pipeline_text)
 	_body.add_child(parts[0])
 	if model.region_code != &"":
 		_body.add_child(UiFactory.label(UiText.t(&"m2.city.title"), UiTheme.V_LABEL_HEADING, true))
@@ -188,9 +217,22 @@ func _add_outcome_section() -> void:
 	_body.add_child(city[0])
 
 
+func _pipeline_text() -> String:
+	return UiText.t(&"m2.row.pipeline_value",
+			{"res": UiText.number(model.pipeline_residential), "com": UiText.number(model.pipeline_commercial)})
+
+
+## Satırın sağ değer etiketini her yenilemede `text_fn` ile günceller.
+func _bind_value(row: Control, text_fn: Callable) -> void:
+	var val := row.get_child(1) as Label
+	_dyn.append(func() -> void: val.text = text_fn.call())
+
+
 func _add_municipal(inner: VBoxContainer) -> void:
 	if model.municipal_available:
-		inner.add_child(_named(_pair(UiText.t(&"m2.row.municipal"), UiText.money(model.municipal_value)), ROW_METRIC))
+		var row := _pair(UiText.t(&"m2.row.municipal"), UiText.money(model.municipal_value))
+		inner.add_child(_named(row, ROW_METRIC))
+		_bind_value(row, func() -> String: return UiText.money(model.municipal_value))
 	else:
 		var key := model.municipal_reason_key if model.municipal_reason_key != &"" \
 				else EconomyOutcomeView.REASON_MUNICIPAL_REVENUE_NOT_BUILT
@@ -200,16 +242,22 @@ func _add_municipal(inner: VBoxContainer) -> void:
 
 func _metric_pair(r: M2ResultModel.MetricRow) -> Control:
 	var caption := UiText.t(StringName("m2.metric.%s" % r.key))
-	var value := ""
+	var key := r.key
+	var row := _pair(caption, _metric_value(r))
+	_bind_value(row, func() -> String: return _metric_value(model.metric(key)))
+	return _named(row, ROW_METRIC)
+
+
+func _metric_value(r: M2ResultModel.MetricRow) -> String:
 	if r.key == &"housed_households":
-		value = UiText.t(&"m2.row.housed_value", {"housed": UiText.number(r.value), "total": UiText.number(r.total)})
+		var value := UiText.t(&"m2.row.housed_value", {"housed": UiText.number(r.value),
+				"total": UiText.number(r.total)})
 		if r.delta_valid:
 			value += " (%s)" % delta_text(r.delta)
-	elif r.key == &"rent_income":
-		value = delta_money(r.delta) if r.delta_valid else UiText.money(r.value)
-	else:
-		value = delta_text(r.delta) if r.delta_valid else UiText.number(r.value)
-	return _named(_pair(caption, value), ROW_METRIC)
+		return value
+	if r.key == &"rent_income":
+		return delta_money(r.delta) if r.delta_valid else UiText.money(r.value)
+	return delta_text(r.delta) if r.delta_valid else UiText.number(r.value)
 
 
 ## İşaretli tamsayı: +3, 0, −2.
@@ -236,16 +284,29 @@ func _add_political_section() -> void:
 	_body.add_child(_section(&"m2.political.section"))
 	if model.reactions.is_empty():
 		_body.add_child(_muted(UiText.t(&"m2.political.none")))
-	for g in model.reactions:
-		_body.add_child(_reaction_card(g))
+	for i in model.reactions.size():
+		_body.add_child(_reaction_card(model.reactions[i], i))
 	if model.reactions_hidden > 0:
 		_body.add_child(_muted(UiText.t(&"m2.political.more", {"n": model.reactions_hidden})))
 	if model.council_built:
-		_body.add_child(UiFactory.label(UiText.t(&"m2.council.line", {"open": model.council_open,
-				"done": model.council_done}), &"", true))
+		var council := UiFactory.label(_council_text(), &"", true)
+		_body.add_child(council)
+		_dyn.append(func() -> void: council.text = _council_text())
 
 
-func _reaction_card(g: GroupReactionView) -> Control:
+func _intensity_text(intensity: int) -> String:
+	return UiText.t(&"m2.political.intensity", {"value": _pct_text(intensity)})
+
+
+func _stance_text(stance: int) -> String:
+	return UiText.t(&"m2.political.stance", {"value": UiText.fixed(stance, true)})
+
+
+func _council_text() -> String:
+	return UiText.t(&"m2.council.line", {"open": model.council_open, "done": model.council_done})
+
+
+func _reaction_card(g: GroupReactionView, index: int) -> Control:
 	var parts := _card()
 	parts[0].set_meta(META_ROW, ROW_REACTION)
 	var inner: VBoxContainer = parts[1]
@@ -259,14 +320,19 @@ func _reaction_card(g: GroupReactionView) -> Control:
 		_:
 			inner.add_child(_direction_row(ReasonGlyph.Kind.FLAT, "text_muted", UiTheme.V_LABEL_MUTED, text))
 	var bar := HBoxContainer.new()
-	bar.add_child(MeterBar.create(_ctx, g.intensity))
-	var inten := UiFactory.label(UiText.t(&"m2.political.intensity",
-			{"value": UiText.t(&"format.percent", {"value": UiText.number(g.intensity / 10)})}))
+	var meter := MeterBar.create(_ctx, g.intensity)
+	bar.add_child(meter)
+	var inten := UiFactory.label(_intensity_text(g.intensity))
 	inten.autowrap_mode = TextServer.AUTOWRAP_OFF
 	bar.add_child(inten)
 	inner.add_child(bar)
-	inner.add_child(UiFactory.label(UiText.t(&"m2.political.stance", {"value": UiText.fixed(g.stance, true)}),
-			UiTheme.V_LABEL_MUTED, true))
+	var stance := UiFactory.label(_stance_text(g.stance), UiTheme.V_LABEL_MUTED, true)
+	inner.add_child(stance)
+	_dyn.append(func() -> void:
+		var cur := model.reactions[index]
+		_set_meter(meter, cur.intensity)
+		inten.text = _intensity_text(cur.intensity)
+		stance.text = _stance_text(cur.stance))
 	if not g.cause_refs.is_empty():
 		var refs := PackedStringArray()
 		for ref in g.cause_refs.slice(0, 3):

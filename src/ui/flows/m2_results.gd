@@ -15,6 +15,9 @@ extends RefCounted
 
 const PANEL_ID := &"m2_results"
 const PANEL_REASON := &"reason"
+## Panel açıkken tick'te yenileme üst sınırı (duvar saati, ms): sim günü başına ağır yeniden hesap yok (T-040 smoke).
+## Süre dolunca TEK bir kuyruklu yenileme son durumu gösterir (duraklatılmış sim'de bayat veri kalmaz). 0 = sınırsız.
+static var default_interval_msec: int = 250
 
 var hud: HudRoot = null
 var facade: SimFacade = null
@@ -26,6 +29,8 @@ var baseline_tick: int = -1
 var proposed_tick: int = -1
 
 var _panel: M2ResultPanel = null
+var _last_refresh_msec: int = -1000000
+var _flush_pending: bool = false
 var _reason_panel: ReasonPanel = null
 var _reason_nav: Array = []
 var _reason_initial: Callable = Callable()
@@ -112,6 +117,7 @@ func _on_event_reason(event: SimEvent) -> void:
 # --- İç ---
 
 func _build_results(ctx: UiContext) -> Control:
+	_last_refresh_msec = Time.get_ticks_msec()
 	_panel = M2ResultPanel.create(ctx, facade, self)
 	_panel.reason_requested.connect(open_reason)
 	return _panel
@@ -137,7 +143,7 @@ func _on_tool_selected(tool_id: StringName) -> void:
 func _on_refreshed() -> void:
 	_follow_zoning_flow()
 	if results_panel() != null:
-		_refresh_panel()
+		_refresh_throttled()
 	var rp := reason_panel()
 	if rp != null:
 		rp.refresh()
@@ -146,7 +152,22 @@ func _on_refreshed() -> void:
 func _refresh_panel() -> void:
 	var p := results_panel()
 	if p != null:
+		_last_refresh_msec = Time.get_ticks_msec()
 		p.refresh()
+
+
+## Yenileme üst sınırı: sınır içindeyse tek bir kuyruklu yenileme planlanır (panel kapalıyken hiç iş yok).
+func _refresh_throttled() -> void:
+	var wait := default_interval_msec - (Time.get_ticks_msec() - _last_refresh_msec)
+	if default_interval_msec <= 0 or wait <= 0:
+		_refresh_panel()
+		return
+	if _flush_pending or not hud.is_inside_tree():
+		return
+	_flush_pending = true
+	hud.get_tree().create_timer(float(wait) / 1000.0).timeout.connect(func() -> void:
+		_flush_pending = false
+		_refresh_panel())
 
 
 ## Karar akışında gönderilmiş (reddedilmemiş) imar önerisinin parselleri otomatik izlenir.

@@ -89,19 +89,39 @@ static func stage_key(development: StringName) -> StringName:
 	return StringName("parcel.development.%s" % development)
 
 
-## Panelin yeniden çizim imzası: gösterilen değerlerin özeti (tick tek başına yeniden çizdirmez).
+## Panelin yeniden çizim imzası = yapı + değerler (tick tek başına yeniden çizdirmez).
 func signature() -> String:
-	var parts: Array[String] = [str(outcome_available), str(baseline_valid), str(region_code)]
+	return structure_signature() + "#" + values_signature()
+
+
+## DÜĞÜM KÜMESİNİ belirleyen alanlar: değişirse panel yeniden kurulur (aksi halde yalnız değerler güncellenir).
+func structure_signature() -> String:
+	var parts: Array[String] = [str(outcome_available), str(baseline_valid), str(region_code), str(baseline_tick),
+			str(parcels.size()), str(parcels_capped)]
 	for p in parcels:
-		parts.append("%d:%s:%d:%d:%s:%s:%d:%d:%s" % [p.id(), p.view.development, p.view.progress_pm, p.decision,
-				p.view.pending_zone, p.code, p.tick, p.reason_id, p.before_proposal])
+		parts.append("%d:%s:%s:%s:%s:%d:%d:%s:%s:%d:%d:%s" % [p.id(), p.view.development, p.view.pending_zone,
+				p.view.zone, p.view.use, p.view.units, p.decision, p.code, p.before_proposal, p.tick, p.reason_id,
+				p.recorded])
 	for r in metrics + counters:
-		parts.append("%s=%d/%d" % [r.key, r.value, r.delta])
-	parts.append("%d/%d" % [pipeline_residential, pipeline_commercial])
-	parts.append("%s%d" % [municipal_available, municipal_value])
+		parts.append("%s:%s" % [r.key, r.delta_valid])
+	parts.append(str(municipal_available))
 	for g in reactions:
-		parts.append(var_to_str(g.to_dict()))
-	parts.append("%d/%d/%d/%s" % [reactions_hidden, council_open, council_done, council_built])
+		parts.append("%d/%s/%s/%s" % [g.group.id, g.reaction, g.cause_refs, g.reason_ids])
+	parts.append("%d/%s" % [reactions_hidden, council_built])
+	return "|".join(parts)
+
+
+## Yalnız GÖSTERİLEN DEĞERLER (etiket metni/çubuk): değişirse düğümler yeniden kullanılıp güncellenir.
+func values_signature() -> String:
+	var parts: Array[String] = []
+	for p in parcels:
+		parts.append(str(p.view.progress_pm))
+	for r in metrics + counters:
+		parts.append("%d/%d/%d" % [r.value, r.delta, r.total])
+	parts.append("%d/%d/%d" % [pipeline_residential, pipeline_commercial, municipal_value])
+	for g in reactions:
+		parts.append("%d/%d" % [g.intensity, g.stance])
+	parts.append("%d/%d" % [council_open, council_done])
 	return "|".join(parts)
 
 

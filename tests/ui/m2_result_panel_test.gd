@@ -23,6 +23,7 @@ func before() -> void:
 
 
 func before_test() -> void:
+	M2Results.default_interval_msec = 0  # testler adım adım ilerler; yenileme sınırı kapalı
 	UiText.reset()
 	UiText.report_missing = false
 	_selects = []
