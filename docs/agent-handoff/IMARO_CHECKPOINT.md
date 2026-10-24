@@ -24,6 +24,8 @@ Araç izin sınıflandırıcısı gözetmen betiğinin ve genel kabul betiğinin
 Kullanıcının izin kuralı ya da açık onayı olmadan bu altyapı kurulmadı. Reddedilen işlemler ve yetkili çözüm yolları: **`docs/agent-handoff/AUTONOMY_BLOCKER.md`**.
 Görevler bu oturumdan sırayla sürüyor (T-040: sim turu `cc5bfbb` commit'li; render turu → HUD → bağımsız QA sırada).
 
+**DEVİR DOĞRULAMASI (2026-10-24, gerçek):** Codex ayağı izole testte ÇALIŞTI (commit için bypass gerekir); Claude CLI çıkışlı (`claude auth status` loggedIn:false → kullanıcı `claude auth login` yapmalı) — Codex→Claude otomatik geçiş şu an GERÇEKTE çalışmaz; gerçek kota geçişi doğrulanamadı. Ayrıntı: `docs/agent-handoff/AUTONOMY_BLOCKER.md`.
+
 **DURAKLATILDI (2026-10-23, kullanıcı isteğiyle, güvenli) — GÜNCEL DURUM, aşağıdaki 2026-10-22 notunun ÜSTÜNDEDİR:**
 T-040 `in-progress` (kapanışa çok yakın). Commit'li ve bağımsız doğrulanmış: sim `3244bee` (T-045: ParcelView v1.2 + `parcel_changes_since`), HUD `8db6b21` + `b91cfaa` (B-001/B-003), render `92cec20` + `4e5e26e` (B-002/B-005/B-004),
 kapı `91d9596` (verify.sh unit zaman aşımı 1500 sn; `verify quick` PASS 1540 test). Testler (son doğrulama 4e5e26e): game 45 · view 205 · contracts 86 · ui 251 · gdlint temiz.

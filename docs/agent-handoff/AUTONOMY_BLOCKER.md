@@ -38,3 +38,18 @@ Dolanma yapılmadı: reddedilen işlemler başka araç/yolla tekrar denenmedi, g
    checkpoint bırak" istemi çalışır. Kurulum kullanıcıya ait bir ürün özelliğidir; ben bunu kullanıcı açıkça istemedikçe oluşturmadım.
 4. **Mevcut düzen:** bu oturumdan sıralı çalışma (şu an uygulanan). Her aşamada commit + `IMARO_CHECKPOINT.md` + görev dosyası kanıtı bırakılır;
    oturum kesilirse yeni oturum checkpoint'ten sürdürür (`production/M2-CONTRACT.md` protokolü).
+
+## Gerçek doğrulama sonuçları (2026-10-24; yalıtılmış geçici depoda, bypass YOK, kullanıcının `agent_handover.py` aracıyla)
+Önemsiz görev ("hello.txt oluştur") + `check.sh` kabul betiği; kanıt: `~/.local/state/agent-handover/b06b6504` (Codex) ve `…/3f6420a5` (Claude).
+| Ayak | Sonuç | Kanıt |
+|---|---|---|
+| Codex birincil | **ÇALIŞIYOR**: prepare → izole worktree → Codex görevi yaptı → kabul betiği çıkış 0 → `acceptance_check_passed` | state.json: attempts=[codex exited_ok], status acceptance_check_passed |
+| Codex commit | **bypass olmadan atamaz**: `git add` → `index.lock … outside writable` (`.git/worktrees/…` sandbox dışı); işi commit'siz bırakır, HANDOFF'a nedenini yazar | HANDOFF.md BLOCKERS satırı |
+| Claude birincil (Sonnet 5.5 sabitli) | **ÇALIŞMIYOR**: `Failed to authenticate: OAuth session expired and could not be refreshed`; araç bunu "non-quota error" sayıp durur (otomatik geçiş yok) | `claude auth status` → `loggedIn: false` |
+| Model sabitleme | Çalışıyor: `--model claude-sonnet-5-5` komuta giriyor (Haiku adı reddedilir) | 01-claude-stdout.jsonl `"model":"claude-sonnet-5-5"` |
+| Gerçek kota geçişi (Claude↔Codex) | **DOĞRULANMADI**: gerçek kota olayı tetiklenemez; yalnız stub testleri (30 test) | — |
+
+**Sonuç:** Codex→Claude otomatik geçiş şu an GERÇEKTE çalışmaz (Claude CLI çıkışlı). Düzeltme kullanıcıdadır (etkileşimli OAuth): terminalde `claude auth login`
+(durum: `claude auth status`). Kota geçişinin kendisi gerçek bir kota olayı yaşanmadan kanıtlanamaz.
+Proje görevlerinde Codex'ten commit alınacaksa: (a) `--bypass-permissions` (kullanıcı onaylı; sınıflandırıcı altyapı kurulumunu reddediyor) ya da (b) Codex yalnız dosyaları düzenler, commit'i koordinatör atar
+(kabul betiği bu durumda "temiz ağaç" şartı aramaz).
