@@ -19,6 +19,7 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --no-smoke-save-load  --demo'nun kare 60'taki kayıt/yükleme smoke'unu atlar (ölçüm: yükleme sonrası tek
 ##                    seferlik tam eşitleme sürekli-rejim kare maliyetinden ayrı raporlanabilsin).
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
+##   --no-roads  yol görünümü kapalı (karşılaştırmalı ölçüm).
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
 ##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
 ##   --t47-flow=built|empty  (yakalama) kamerayı odağa en yakın YAPILI (T0 stoku) ya da BOŞ parsele taşır, parseli
@@ -44,6 +45,7 @@ const DEV_NOTE := "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kad
 
 var sim_stats: Dictionary = {}
 
+var _roads: RoadView
 var _net: WorldNetwork
 var _facade: SimFacade
 var _hud: HudRoot
@@ -78,6 +80,12 @@ func perf_tick() -> int:
 
 func _ready() -> void:
 	super._ready()
+	if _net != null and not _args.has("no-roads"):
+		_roads = RoadView.new()
+		_roads.name = "Roads"
+		_view_root.add_child(_roads)
+		_roads.build(_net)
+		print("ROADS ", JSON.stringify(_roads.stats))
 	_demo = _args.has("demo")
 	if _net == null:
 		push_error("playable: ağ kurulamadı, sim bağlanmadı")
