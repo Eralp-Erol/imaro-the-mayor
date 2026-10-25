@@ -235,11 +235,18 @@ func _organic_fill(p: WorldParcel) -> float:
 	if _net.edges.has(p.frontage_edge):
 		var cls := String((_net.edges[p.frontage_edge] as WorldRoadEdge).road_class)
 		prob *= 1.0 + float((_occ.get("road_access", {}) as Dictionary).get(cls, 0.0))
+	# Kenar saçağı/kümeleşme ayrı bölge ölçeği (`edge_scale`): D1/D6 kesinti (eğim/kıyı/cep) ölçeği düşük kalırken
+	# çevreleri yine seyrekleşir (T-049 A2: dışa doğru azalan yoğunluk; çekirdek t < fray.t0 dolu kalır, WLD-04).
+	var edge_scale := float((_occ.get("edge_scale", {}) as Dictionary).get(String(p.region_code), reg_scale))
 	var ca: Dictionary = _occ.get("cluster_amp", {})
-	var amp := lerpf(float(ca.get("core", 0.0)), float(ca.get("edge", 0.0)), t) * reg_scale
+	var amp := lerpf(float(ca.get("core", 0.0)), float(ca.get("edge", 0.0)), t) * edge_scale
 	var cells: Array = _occ.get("cluster_cell_m", [260.0])
 	var nz := NetworkNoise.fbm(_occ_seed, p.centroid, cells, _occ.get("cluster_octave_amp", [1.0]))
 	prob *= 1.0 + amp * nz
+	var fr: Dictionary = _occ.get("fray", {})
+	if not fr.is_empty():
+		var fray := smoothstep(float(fr["t0"]), 1.0, t) * edge_scale
+		prob *= lerpf(1.0, float(fr["keep"]), clampf(fray, 0.0, 1.0))
 	var pk: Dictionary = _occ.get("pocket", {})
 	if not pk.is_empty():
 		var w := NetworkNoise.value(_occ_seed + 7919, p.centroid, float(pk.get("cell_m", 700.0)))

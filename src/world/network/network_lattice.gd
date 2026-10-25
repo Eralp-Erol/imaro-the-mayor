@@ -20,16 +20,22 @@ static func build(net: WorldNetwork, fp: NetworkFootprint, cfg: Dictionary, excl
 	var bu := float(block_m[0])
 	var bv := float(block_m[1])
 	var angle := _resolve_angle(world, fp, cfg)
-	var u := Vector2.from_angle(angle)
-	var v := Vector2(-u.y, u.x)
 	var ref := fp.center if fp.shape == NetworkFootprint.SHAPE_ELLIPSE else (fp.seg_a + fp.seg_b) * 0.5
-	var range_ij := _index_range(fp.bounds(), ref, u, v, bu, bv)
+	var fp_hash := NetworkRules.stream_seed(layout_seed, "layout:" + String(fp.id))
+	var frame := NetworkLatticeFrame.create(ref, angle, bu, bv, cfg.get("bend", {}),
+			NetworkRules.stream_seed(layout_seed, "bend:" + String(fp.id)))
+	var u := frame.u
+	var v := frame.v
+	var bounds := fp.bounds()
+	bounds = bounds.grow(frame.max_shift(maxf(bounds.size.x, bounds.size.y) * 0.75))
+	var range_ij := _index_range(bounds, ref, u, v, bu, bv)
+	var pockets: Dictionary = cfg.get("pockets", {})
+	var pocket_seed := NetworkRules.stream_seed(layout_seed, "pocket:" + String(fp.id))
 	var jitter := float(cfg.get("jitter_m", 0.0))
 	var max_slope := float(cfg.get("max_slope_deg", 9.0))
 	var margin := float(cfg.get("shore_margin_m", 120.0))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = NetworkRules.stream_seed(world_seed, "lattice:" + String(fp.id))
-	var fp_hash := NetworkRules.stream_seed(layout_seed, "layout:" + String(fp.id))
 
 	# 1) Geçerli ızgara noktaları (jitter tohumlu RNG'den HER ZAMAN çekilir: geçerlilikten bağımsız sıra).
 	var pos := {}
@@ -38,8 +44,9 @@ static func build(net: WorldNetwork, fp: NetworkFootprint, cfg: Dictionary, excl
 		for i in range(range_ij.position.x, range_ij.end.x + 1):
 			var jx := rng.randf_range(-jitter, jitter)
 			var jz := rng.randf_range(-jitter, jitter)
-			var base := ref + u * (float(i) * bu) + v * (float(j) * bv)
-			if _point_ok(world, base, fp, excludes, max_slope, margin):
+			var base := frame.point(i, j)
+			if _point_ok(world, base, fp, excludes, max_slope, margin) \
+					and not _in_pocket(fp, base, pockets, pocket_seed):
 				pos[Vector2i(i, j)] = base
 				jit[Vector2i(i, j)] = Vector2(jx, jz)
 	# 2) Adaylar kenarlar (i yönü, j yönü) + isteğe bağlı seyreltme.
@@ -58,7 +65,7 @@ static func build(net: WorldNetwork, fp: NetworkFootprint, cfg: Dictionary, excl
 				continue
 			for axis in 2:
 				var nb := Vector2i(i + 1, j) if axis == 0 else Vector2i(i, j + 1)
-				if not pos.has(nb) or not _edge_ok(world, ref, u, v, bu, bv, k, nb, margin):
+				if not pos.has(nb) or not _edge_ok(world, frame, k, nb, margin):
 					continue
 				var collector := (axis == 0 and every_v > 0 and posmod(j, every_v) == 0) or \
 						(axis == 1 and every_u > 0 and posmod(i, every_u) == 0)
@@ -69,7 +76,7 @@ static func build(net: WorldNetwork, fp: NetworkFootprint, cfg: Dictionary, excl
 				(adj[nb] as Array).append(k)
 				edge_list.append([k, nb, collector])
 	# 3) Ölü uçları buda, merkeze en yakın bileşeni tut.
-	var alive := _prune_and_pick_component(adj, pos, ref, u, v, bu, bv)
+	var alive := _prune_and_pick_component(adj, pos, frame, int(cfg.get("keep_component_min_nodes", 0)))
 	# 4) Ağa yaz (deterministik sıra: j, i).
 	var ids := {}
 	var node_ids := PackedInt32Array()
@@ -93,7 +100,7 @@ static func build(net: WorldNetwork, fp: NetworkFootprint, cfg: Dictionary, excl
 	var hub := -1
 	var best := INF
 	for k: Vector2i in alive:
-		var d := (ref + u * (float(k.x) * bu) + v * (float(k.y) * bv)).distance_to(ref)
+		var d := frame.point(k.x, k.y).distance_to(ref)
 		if d < best or (d == best and int(ids[k]) < hub):
 			best = d
 			hub = int(ids[k])
@@ -153,10 +160,10 @@ static func _point_ok(world: WorldData, p: Vector2, fp: NetworkFootprint, exclud
 
 
 ## Kenarın orta ve çeyrek noktaları (jittersiz) kara, kıyı payı yarısı içinde ve eğim sınırı dahilinde.
-static func _edge_ok(world: WorldData, ref: Vector2, u: Vector2, v: Vector2, bu: float, bv: float, a: Vector2i,
-		b: Vector2i, margin: float) -> bool:
-	var pa := ref + u * (float(a.x) * bu) + v * (float(a.y) * bv)
-	var pb := ref + u * (float(b.x) * bu) + v * (float(b.y) * bv)
+static func _edge_ok(world: WorldData, frame: NetworkLatticeFrame, a: Vector2i, b: Vector2i,
+		margin: float) -> bool:
+	var pa := frame.point(a.x, a.y)
+	var pb := frame.point(b.x, b.y)
 	for t in [0.25, 0.5, 0.75]:
 		var p := pa.lerp(pb, t)
 		var idx := world.world_to_index(p.x, p.y)
@@ -184,8 +191,10 @@ static func _hash01(seed_hash: int, i: int, j: int, axis: int) -> float:
 
 
 ## Derecesi ≤ 1 olan noktaları yinelemeli buda; merkeze (ızgara orijini) en yakın kalan noktanın bileşenini döndürür.
-static func _prune_and_pick_component(adj: Dictionary, pos: Dictionary, ref: Vector2, u: Vector2, v: Vector2,
-		bu: float, bv: float) -> Dictionary:
+## `keep_min_nodes` > 0 ise en az o kadar düğümlü diğer bileşenler de (uydu mahalleler) tutulur; ana ağa
+## `_connect_components` bağlar (T-049 A2).
+static func _prune_and_pick_component(adj: Dictionary, pos: Dictionary, frame: NetworkLatticeFrame,
+		keep_min_nodes: int = 0) -> Dictionary:
 	var removed := {}
 	var changed := true
 	while changed:
@@ -206,7 +215,7 @@ static func _prune_and_pick_component(adj: Dictionary, pos: Dictionary, ref: Vec
 	for k: Vector2i in pos:
 		if removed.has(k):
 			continue
-		var d := (ref + u * (float(k.x) * bu) + v * (float(k.y) * bv)).distance_to(ref)
+		var d := frame.point(k.x, k.y).distance_to(frame.ref)
 		if d < best or (d == best and (k.y < start.y or (k.y == start.y and k.x < start.x))):
 			best = d
 			start = k
@@ -214,12 +223,40 @@ static func _prune_and_pick_component(adj: Dictionary, pos: Dictionary, ref: Vec
 	var alive := {}
 	if not found:
 		return alive
+	_flood(adj, removed, start, alive)
+	if keep_min_nodes > 0:
+		for k: Vector2i in pos:
+			if removed.has(k) or alive.has(k):
+				continue
+			var comp := {}
+			_flood(adj, removed, k, comp)
+			if comp.size() >= keep_min_nodes:
+				alive.merge(comp)
+	return alive
+
+
+static func _flood(adj: Dictionary, removed: Dictionary, start: Vector2i, into: Dictionary) -> void:
 	var stack: Array[Vector2i] = [start]
-	alive[start] = true
+	into[start] = true
 	while not stack.is_empty():
 		var cur: Vector2i = stack.pop_back()
 		for nb: Vector2i in adj[cur]:
-			if not removed.has(nb) and not alive.has(nb):
-				alive[nb] = true
+			if not removed.has(nb) and not into.has(nb):
+				into[nb] = true
 				stack.append(nb)
-	return alive
+
+
+## Boşluk/park/tarla cebi (T-049 A2): çekirdek dışında (`t >= t_min`) gürültü eşiğini aşan ızgara noktaları hiç
+## yaratılmaz; çevresindeki yüzler birleşip `max_block_area_m2` üstü AÇIK arazi olur (parselsiz yeşil cep). Eşik
+## çekirdekten kenara `thr_inner` -> `thr_outer` iner: kenarda daha çok cep, çekirdek (t < t_min) dolu kalır (WLD-04).
+static func _in_pocket(fp: NetworkFootprint, p: Vector2, pockets: Dictionary, seed_hash: int) -> bool:
+	if pockets.is_empty():
+		return false
+	var t := fp.norm_dist(p)
+	var t_min := float(pockets.get("t_min", 0.5))
+	if t < t_min:
+		return false
+	var ramp := smoothstep(t_min, float(pockets.get("t_full", 1.0)), t)
+	var thr := lerpf(float(pockets.get("thr_inner", 0.7)), float(pockets.get("thr_outer", 0.1)), ramp)
+	var n := NetworkNoise.fbm(seed_hash, p, pockets.get("cell_m", [600.0]), pockets.get("amp", [1.0]))
+	return n > thr

@@ -11,6 +11,9 @@ extends RefCounted
 
 const DEFAULT_CELL_M := 80.0
 const REACH_PAD_CELLS := 2
+## `organic` verisinden ızgara ayarına (fp.lattice) geçen anahtarlar (T-049 A2): bend = ızgara bükülmesi (twist/disp),
+## pockets = boşluk/park cepleri, keep_component_min_nodes = uydu mahalle bileşen eşiği. Bkz NetworkLattice/Frame.
+const LATTICE_KEYS := ["bend", "pockets", "keep_component_min_nodes"]
 
 
 ## Tüm elips ayak izlerini pişirir. `control` = network.json; `organic` yoksa/devre dışıysa ayak izleri saf elips kalır.
@@ -29,6 +32,9 @@ static func bake_all(world: WorldData, footprints: Array[NetworkFootprint], cont
 			continue
 		var cfg := _merged(defaults, overrides.get(String(fp.id), {}))
 		var dirs := _link_directions(control.get("links", []), fp, centers)
+		for key in LATTICE_KEYS:
+			if cfg.has(key):
+				fp.lattice[key] = (cfg[key].duplicate(true) if cfg[key] is Dictionary else cfg[key])
 		_bake(world, fp, cfg, dirs, NetworkRules.stream_seed(layout_seed, "shape:" + String(fp.id)))
 
 

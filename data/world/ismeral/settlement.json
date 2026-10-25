@@ -9,7 +9,7 @@
 		"zones[ad]: family_weights = aile ağırlıkları (aile içinde kimlikler eşit; id_weights çarpanı), floors_shift = kat hedef kayması, floors_sigma = kat tercih genişliği, gf_main/gf_local = zemin kat dükkân varyantı çarpanı (ana cadde / yerel sokak), setback_m = cephe çekmesi [min,max], gap_m = aynı lotta yan yana yapı aralığı, adjacent = bitişik nizam (boşluk toleransı gap_tol_m), units_max, rows (derinlikte sıra sayısı: sanayi avlusu), wide_p/wide_weights = lot başına çok parselli (ayak izi tek lota sığmayan) sivil yapı / atölye-depo olasılığı ve aile ağırlıkları, heritage_p = tarihî çekirdek miras bayrağı olasılığı.",
 		"tower: saat kulesi + meydan kuralları (kit spec §4, WLD-07): kule D1'de, bölge merkez düğümüne en yakın uygun bloğun merkezinde; meydan = size_m dikdörtgeni (yapı yok); frame_radius_m çevresinde en yüksek yapı (parapet üstü) 23 / frame_ratio aralığında kalır.",
 		"placement.tile_rows + zones[].tile_cap: 500 m hücrede kiremit çatı alanı payı bütçesi (kit §3.2: kentsel pencere <= %55); aşılınca kiremit modüllerinin ağırlığı kısılır. Köy/yamaç/tarla dokuları kendi aralığında (%55-70) kalır, bütçe yok.",
-		"occupancy (T-049 A, ÇM): T0 doluluk olasılığı = bölge fill(center->edge, t=organik sınır alanı) x (1 + road_access[cephe yolu sınıfı]) x (1 + cluster_amp(t) x gürültü) x boşluk/tarla cebi (pocket: gürültü > threshold ve t > t_min ise olasılık `keep` çarpanına iner; çekirdek etkilenmez) x eğim kesintisi (slope) x kıyı kesintisi (shore). region_scale = bölgeye göre gürültü/cep/eğim/kıyı kesinti çarpanı (D1+D6 kompakt çekirdek düşük, WLD-04). Gürültü tohumu network.json layout_seed'dir (yerleşim tohumundan bağımsız).",
+		"occupancy (T-049 A, ÇM): T0 doluluk olasılığı = bölge fill(center->edge, t=organik sınır alanı) x (1 + road_access[cephe yolu sınıfı]) x (1 + cluster_amp(t) x gürültü) x boşluk/tarla cebi (pocket: gürültü > threshold ve t > t_min ise olasılık `keep` çarpanına iner; çekirdek etkilenmez) x eğim kesintisi (slope) x kıyı kesintisi (shore) x kenar saçağı (fray, A2: t0 üstünde `keep` oranına doğru seyrekleşir; edge_scale = saçak/kümeleşme bölge ölçeği). region_scale = bölgeye göre gürültü/cep/eğim/kıyı kesinti çarpanı (D1+D6 kompakt çekirdek düşük, WLD-04). Gürültü tohumu network.json layout_seed'dir (yerleşim tohumundan bağımsız).",
 		"zones[].rows/second_row_p/row_gap_m: arka sıra (iç blok): ön sıradan row_gap_m kadar geriye ikinci bir yapı sırası olasılığı; blok içini dolu gösterir (yalnız cephe şeridi değil). Komşu/pencere kuralları sıra başına ayrı sayılır."
 	],
 	"schema_version": 1,
@@ -128,7 +128,7 @@
 			},
 			"fill": {
 				"center": 0.97,
-				"edge": 0.82
+				"edge": 0.95
 			},
 			"bands": [
 				{
@@ -152,7 +152,7 @@
 			},
 			"fill": {
 				"center": 0.97,
-				"edge": 0.82
+				"edge": 0.95
 			},
 			"bands": [
 				{
@@ -252,6 +252,8 @@
 	},
 	"occupancy": {
 		"region_scale": {"D1": 0.1, "D6": 0.1, "D2": 1.0, "D3": 0.8, "D4": 1.2, "D5": 1.0},
+		"edge_scale": {"D1": 0.1, "D6": 0.1, "D2": 1.0, "D3": 0.8, "D4": 1.2, "D5": 1.0},
+		"fray": {"t0": 0.72, "keep": 0.3},
 		"road_access": {"arterial": 0.08, "collector": 0.05, "local": 0.0, "field": -0.15},
 		"cluster_cell_m": [240.0, 100.0],
 		"cluster_octave_amp": [0.7, 0.3],
