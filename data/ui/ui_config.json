@@ -12,6 +12,8 @@
 		"zone.industrial"
 	],
 	"zoning._note": "ADR-0005 Ek B anahtarlari + gosterim denemesi icin industrial. Sozlesmede arazi kullanimi sorgusu YOK (v1.1 istegi); sim listede olmayan kullanimi gerekceyle reddeder.",
+	"zoning.no_private_use": ["zone.green"],
+	"zoning._no_private_use_note": "Sim economy_config'te izinli ozel kullanimi olmayan imarlar (zone.green: uses []). UI metni bu listeden turer; sim degisirse burasi guncellenir.",
 	"hud.notification_rows": 3,
 	"settings.auto_pause_agenda": false,
 	"settings._note": "Gundem ogesinde otomatik duraklatma yalniz AYAR; varsayilani ACIK SORU (Q-011/AS-11) - false yer tutucudur.",

@@ -30,14 +30,19 @@ var vote_ref: StringName = &""
 var vote_passed: bool = false
 var reason_ids: PackedInt64Array = PackedInt64Array()
 
+## Parselde sim dışı (T0 stok) yapı var mı: `Callable(parcel_id: int) -> bool`. İlk günlük tick'ten önce T0 stoku
+## parselleri sim'de `vacant` görünür; sahne (playable) dünya yapı verisinden bunu enjekte eder. Boş = yalnız sim.
+var structure_probe: Callable = Callable()
+
 var _facade: SimFacade = null
 var _phase: Phase = Phase.PICK_AREA
 var _effective_ticks: Dictionary = {}  # parsel referansı (String) -> tick
 
 
-static func create(facade: SimFacade) -> ZoningFlowModel:
+static func create(facade: SimFacade, probe: Callable = Callable()) -> ZoningFlowModel:
 	var m := ZoningFlowModel.new()
 	m._facade = facade
+	m.structure_probe = probe
 	return m
 
 
@@ -192,6 +197,45 @@ func path_text() -> String:
 	return UiText.t(&"zoning.path.council" if UiPrefs.zoning_requires_council() else &"zoning.path.direct")
 
 
+## Alandaki yapılı parseller: sim aşaması `vacant` değil (planlı/inşaatta/yapılı/durmuş) YA DA enjekte sorgu
+## "yapı var" der.
+func structure_parcels() -> PackedInt64Array:
+	var out := PackedInt64Array()
+	if parcel_ids.is_empty():
+		return out
+	var by_id := {}
+	for v in _facade.parcel_views(parcel_ids):
+		by_id[v.id] = v
+	for id in parcel_ids:
+		var v := by_id.get(id) as ParcelView
+		var built := v != null and v.development != ParcelView.DEVELOPMENT_VACANT
+		if not built and structure_probe.is_valid():
+			built = bool(structure_probe.call(id))
+		if built:
+			out.append(id)
+	return out
+
+
+## Seçili kullanım özel yatırıma izin vermiyorsa (yeşil alan) kısa not; yoksa "".
+func no_private_use_note() -> String:
+	if land_use == &"":
+		return ""
+	var raw: Variant = UiConfig.value("zoning.no_private_use", [])
+	if raw is Array and (raw as Array).has(String(land_use)):
+		return UiText.t(&"zoning.note.no_private_use", {"zone": UiText.t(land_use)})
+	return ""
+
+
+## Yapılı parsel uyarısı (imar etiketi yapıyı kaldırmaz); yapılı parsel yoksa "".
+func structure_warning() -> String:
+	var n := structure_parcels().size()
+	if n == 0:
+		return ""
+	if parcel_ids.size() == 1:
+		return UiText.t(&"zoning.warn.structure_one")
+	return UiText.t(&"zoning.warn.structure_many", {"n": n})
+
+
 func submit_label() -> String:
 	return UiText.t(&"zoning.submit" if UiPrefs.zoning_requires_council() else &"zoning.submit_direct")
 
@@ -221,7 +265,14 @@ func status_text() -> String:
 			Phase.EFFECTIVE:
 				key = &"zoning.status.effective"
 				args = {"days": effective_days()}
-	return UiText.t(key, args) if key != &"" else ""
+				if not structure_parcels().is_empty():
+					key = &"zoning.status.effective_structure"
+	var text := UiText.t(key, args) if key != &"" else ""
+	if text != "" and _phase >= Phase.SENT:
+		var warn := structure_warning()
+		if warn != "":
+			text += "\n" + warn
+	return text
 
 
 func refusal_text() -> String:

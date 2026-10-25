@@ -24,6 +24,8 @@ var last_submit: CommandResult:
 var _verdict: Label = null
 var _send: ActionButton = null
 var _status: Label = null
+var _warning: Label = null
+var _notes: Label = null
 var _use_buttons: Dictionary = {}
 
 
@@ -86,6 +88,8 @@ func _render() -> void:
 	_verdict = null
 	_send = null
 	_status = null
+	_warning = null
+	_notes = null
 	_body.add_child(UiFactory.label(UiText.t(&"zoning.step_line", {"n": model.step_number(),
 		"total": ZoningFlowModel.step_count(), "name": UiText.t(model.step_name_key())}), UiTheme.V_LABEL_MUTED, true))
 	_add_area()
@@ -177,6 +181,7 @@ func _add_send_and_status() -> void:
 	if model.phase() == ZoningFlowModel.Phase.READY:
 		_body.add_child(UiFactory.label(UiText.t(&"zoning.summary", {"parcels": _area_text(),
 			"use": UiText.t(model.land_use)}), &"", true))
+	_add_honesty_notes()
 	if not model.is_locked():
 		_body.add_child(_muted(model.path_text()))
 		_send = ActionButton.create(_ctx, model.submit_label(), true)
@@ -190,6 +195,30 @@ func _add_send_and_status() -> void:
 		_status.theme_type_variation = UiTheme.V_LABEL_DANGER
 	_body.add_child(_status)
 	_add_followups()
+
+
+## Onay adımında (gönderimden önce) yapılı parsel uyarısı ve "özel yatırım yapılmaz" notu; sim davranışından türer.
+## Gönderim sonrası yapı uyarısı durum satırında (model.status_text) tekrar yazılır.
+func _add_honesty_notes() -> void:
+	if model.land_use == &"":
+		return
+	var note := model.no_private_use_note()
+	if note != "":
+		_notes = UiFactory.label(note, UiTheme.V_LABEL_MUTED, true)
+		_body.add_child(_notes)
+	if not model.is_locked():
+		var warn := model.structure_warning()
+		if warn != "":
+			_warning = UiFactory.label(warn, UiTheme.V_LABEL_DANGER, true)
+			_body.add_child(_warning)
+
+
+func warning_text() -> String:
+	return _warning.text if _warning != null and is_instance_valid(_warning) else ""
+
+
+func note_text() -> String:
+	return _notes.text if _notes != null and is_instance_valid(_notes) else ""
 
 
 func _add_followups() -> void:

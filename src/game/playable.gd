@@ -21,6 +21,11 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
 ##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
+##   --t47-flow=built|empty  (yakalama) kamerayı odağa en yakın YAPILI (T0 stoku) ya da BOŞ parsele taşır, parseli
+##                    seçer ve imar akışını açıp `--demo-zone` (varsayılan zone.green) kullanımını seçer; göndermez.
+##   --t47-send=N     (yakalama) yukarıdaki akışta öneriyi gönderir ve N gün ilerletir (sonuç/durum satırı için).
+##   --dev-notes      alt metne geliştirici notlarını (T0 aktarımı, olay sayacı, son eylem) ekler; yoksa yalnız
+##                    kısa kontrol yardımı.
 ##   --m2-open-results  "Döngü sonucu" panelini (HUD) başlangıçta açar (yakalama için).
 
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
@@ -33,9 +38,8 @@ const DEMO_LAND_USE := &"zone.mixed"
 const DEMO_PROBE_UNITS := 3
 ## `--m2-advance` adım uzunluğu (gün): her adımdan sonra projector senkronlanır.
 const M2_ADVANCE_STEP_DAYS := 1
-const NOTE := "WASD/oklar: kaydır | Q/E: döndür | tekerlek/trackpad: yakınlaş | Boşluk: duraklat/sürdür\n" \
-		+ "Tıklama: parseli seç (imar akışı) | Z: seçili/odaktaki parsele imar önerisi\n" \
-		+ "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kademesi dahil) ikinci BuildingView'da " \
+## Geliştirici notu (yalnız `--dev-notes`); oyuncu metni `HudHelp`te.
+const DEV_NOTE := "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kademesi dahil) ikinci BuildingView'da " \
 		+ "yalnız sim aşamasından çizilir; oyuncu yapı koymaz."
 
 var sim_stats: Dictionary = {}
@@ -83,6 +87,7 @@ func _ready() -> void:
 	_start_hud()
 	_on_hud_ready()
 	_m2_dev_setup()
+	_t47_dev_setup()
 	sim_stats["sim_setup_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
 	print("PLAYABLE ", JSON.stringify(sim_stats))
 
@@ -191,19 +196,55 @@ func _start_hud() -> void:
 	assert(shared_input != null, "playable: CameraRig girdi profili yok")
 	_hud.bind_input(shared_input)
 	_hud.setup(_facade, PlatformProfile.current())
-	_decisions = DecisionPanels.attach(_hud, _facade)
+	# T-047: oynanabilir sahnede yalnız çalışan araçlar kayıtlıdır (İmar önerisi + Döngü sonucu); Bütçe/Meclis/Gündem
+	# gerçek sim'de henüz kurulu değil, kaydedilmez. T0 stoku için "parselde yapı var mı" sorgusu dünya verisinden gelir.
+	_decisions = DecisionPanels.attach(_hud, _facade, _has_t0_structure, false)
 	shared_input.select_requested.connect(_on_select_requested)
 	_status = Label.new()
-	# Sol altta, araç çubuğunun üstünde: sağdaki yan panel ve soldaki bildirim şeridiyle çakışmaz.
-	_status.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_status.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_status.offset_left = 12.0
-	_status.offset_bottom = -96.0
-	_status.custom_minimum_size = Vector2(380, 0)
+	# Yer `_place_status` ile HUD boş harita dikdörtgeninden hesaplanır (araç çubuğu/panelle çakışmaz).
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
 	_status.add_theme_font_size_override("font_size", 13)
+	# Okunabilirlik: 3B sahne üstünde yarı saydam koyu zemin (HUD token'ı değil, yalnız bu yardım etiketi).
+	var plate := StyleBoxFlat.new()
+	plate.bg_color = Color(0.05, 0.07, 0.10, 0.62)
+	plate.set_corner_radius_all(4)
+	plate.content_margin_left = 8.0
+	plate.content_margin_right = 8.0
+	plate.content_margin_top = 4.0
+	plate.content_margin_bottom = 4.0
+	_status.add_theme_stylebox_override("normal", plate)
 	layer.add_child(_status)
+
+
+## Parselde T0 başlangıç yapısı var mı (ilk günlük tick'ten önce sim bu parselleri `vacant` gösterir).
+func _has_t0_structure(parcel_id: int) -> bool:
+	return _t0_occupied.has(parcel_id)
+
+
+## Alt köşe metni (`HudHelp`): oyuncuya kısa kontrol yardımı + sim günü; `--dev-notes` ile geliştirici satırları.
+func status_text() -> String:
+	var dev := "%s\nolay %d | son eylem: %s" % [DEV_NOTE, _facade.last_event_seq(), _last_action]
+	var touch := PlatformProfile.current().input_profile == PlatformProfile.INPUT_TOUCH
+	return HudHelp.status_text(_facade.current_tick(), _args.has("dev-notes"), dev, touch)
+
+
+## Yardım etiketini HUD'un boş harita dikdörtgenine yerleştirir (araç çubuğu/panel dışında).
+func _place_status() -> void:
+	if _status == null or _hud == null or _hud.layout == null:
+		return
+	var h := _status.get_combined_minimum_size().y
+	var r := HudHelp.status_rect(_hud.free_map_rect(), h)  # genişlik zemin dolgusu dahil
+	_status.custom_minimum_size = Vector2(r.size.x, 0.0)
+	_status.position = r.position
+	_status.size = Vector2(r.size.x, h)
+	# Olay şeridinin GÖRÜNÜR satırlarıyla çakışıyorsa gösterme: yardım metni hiçbir öğenin üstüne binmez.
+	_status.visible = true
+	if _hud.strip != null:
+		for row in _hud.strip.get_children():
+			var c := row as Control
+			if c != null and c.visible and r.intersects(c.get_global_rect()):
+				_status.visible = false
 
 
 ## T-040 UI KANCASI: HUD kurulduktan sonra çağrılır. "Döngü sonucu" paneli + gerekçe paneli bağı (UI payı; render/
@@ -245,6 +286,48 @@ func _m2_dev_setup() -> void:
 		if _args.has("m2-pause"):
 			_facade.set_speed(SimFacade.SPEED_PAUSED)
 		print(_m2_target_report(days))
+
+
+## `--t47-flow` / `--t47-send` (dev, yakalama): oyuncunun tıklama yolunu taklit eder (parsel seç -> imar akışı).
+func _t47_dev_setup() -> void:
+	if _facade == null or _decisions == null or not _args.has("t47-flow"):
+		return
+	var want_built := str(_args["t47-flow"]) != "empty"
+	var focus := _camera.current_state()
+	var at := Vector2(focus.focus_x, focus.focus_z)
+	var best := -1
+	var best_d := INF
+	if want_built:
+		for v in _views:
+			if _t0_occupied.has(v.id) and v.center.distance_squared_to(at) < best_d:
+				best_d = v.center.distance_squared_to(at)
+				best = v.id
+	else:
+		var pick := _pick_demo_parcels(1, 0)
+		best = int(pick[0]) if not pick.is_empty() else -1
+	if best <= 0:
+		print("PLAYABLE_T47 parsel bulunamadı")
+		return
+	var wp: WorldParcel = _net.parcels.get(best)
+	var st := _camera.target_state()
+	st.focus_x = wp.centroid.x
+	st.focus_z = wp.centroid.y
+	_camera.apply_state(st, true)
+	_apply_camera_overrides(_args)
+	_selected_parcel_id = best
+	_decisions.open_zoning(PackedInt64Array([best]))
+	var zone := StringName(str(_args.get("demo-zone", "zone.green")))
+	_decisions.zoning_panel().choose_use(zone)
+	if _args.has("t47-send"):
+		_decisions.zoning_panel().send()
+		var left := _arg_int(_args, "t47-send", 0, 0, 3650)
+		while left > 0:
+			_facade.advance(1)
+			left -= 1
+		_hud.refresh()
+		_facade.set_speed(SimFacade.SPEED_PAUSED)
+	print("PLAYABLE_T47 parcel=%d built=%s zone=%s tick=%d" % [best, str(want_built), String(zone),
+			_facade.current_tick()])
 
 
 ## `--m2-advance` sonrası hedef parselin sim durumu ve karar gerekçeleri sayımı (konsol; yakalama doğrulaması için).
@@ -366,8 +449,8 @@ func _process(delta: float) -> void:
 		_smoke_save_load_checked = true
 		_smoke_save_load()
 	if _status != null:
-		_status.text = "%s\nsim: gün %d | olay %d | son eylem: %s" % [
-				NOTE, _facade.current_tick(), _facade.last_event_seq(), _last_action]
+		_status.text = status_text()
+		_place_status()
 	if _frames % 120 == 0:
 		print("PLAYABLE_SMOKE tick=%d events=%d frames=%d avg_frame_ms=%.1f max_frame_ms=%.1f" % [
 				_facade.current_tick(), _facade.last_event_seq(), _frames, _acc_ms / maxf(_acc_n, 1), _max_ms])
@@ -410,7 +493,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and _facade != null:
 		var key := (event as InputEventKey).keycode
 		if key == KEY_Z:
-			_submit_demo()
+			# Z: imar akışını açar (seçili parselle); öneri onay adımıyla gönderilir, sessizce gönderilmez.
+			if _decisions != null:
+				_decisions.open_zoning(PackedInt64Array([_selected_parcel_id]) if _selected_parcel_id > 0
+						else PackedInt64Array())
 			return
 	# Boşluk/duraklat InputProfile -> HudRoot fiilidir (tek yönlendirme); burada ikinci bir yol YOK.
 	super._unhandled_input(event)

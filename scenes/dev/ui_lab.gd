@@ -69,6 +69,7 @@ func _ready() -> void:
 	hud.panel_closed.connect(_on_panel_closed)
 	hud.setup(facade, _platform)
 	decisions = DecisionPanels.attach(hud, facade)
+	hud.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_INSPECT)  # ui_lab denetçiyi kendisi açar
 	decisions.reason_wanted.connect(_open_reason)
 	_after_profile()
 	if args.has("demo"):

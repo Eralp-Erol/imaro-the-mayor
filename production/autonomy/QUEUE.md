@@ -6,8 +6,8 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 | ID | Görev | Bağımlılık | Durum | Deneme | Not |
 |---|---|---|---|---|---|
 | T-040 | İlk nedensel döngü: imar → yatırımcı → inşaat → gerçek 3D yapı → ölçülebilir sonuç | — | **done** (2026-10-24) | 0 | QA tur 3 PASS · kapanış smoke SMOKE_OK (ort 6,86 / P95 13,01 ms) · açık kayıtlar: `production/tasks/T-040.md` KAPANIŞ |
-| T-047 | **GÖRÜNÜR OYUN 1/4** Dürüst arayüz + çalışan işlevler (yapılı parsele imar uyarısı, ölü düğme yok, sade alt metin) | T-040 | in-progress (DURAKLATILDI 2026-10-25, kullanıcı bilgisayarı yeniden başlatacak) | 0 | YARIM: çalışma ağacında commit'siz (12 dosya + yeni `hud_help.gd`, `honest_ui_test`, `honest_zoning_test`); yedek `docs/agent-handoff/wip/t047-wip-*`; kanıt/QA/yakalama yok. `production/tasks/T-047.md` |
-| T-048 | **GÖRÜNÜR OYUN 2/4** Yolların çizimi (ağ verisi dünyada görünür) | T-047 | ready | 0 | `production/tasks/T-048.md` |
+| T-047 | **GÖRÜNÜR OYUN 1/4** Dürüst arayüz + çalışan işlevler | T-040 | **done** (2026-10-25) | 0 | koordinatör doğrulaması (ui 262 / game 49, gerçek yakalamalar); açık: 480 px düzeni (T-046), Q-017 yıkım/yeniden yapılaşma kararı |
+| T-048 | **GÖRÜNÜR OYUN 2/4** Yolların çizimi (ağ verisi dünyada görünür) | T-047 | ready (Codex'e devredilecek, kullanıcı seçimi 2026-10-25) | 0 | `production/tasks/T-048.md` |
 | T-049 | **GÖRÜNÜR OYUN 3/4** Arazi + şehir görünümü (piksel zemin, daire damgası) | T-048 | ready | 0 | `production/tasks/T-049.md`; art-director kapısı |
 | T-050 | **GÖRÜNÜR OYUN 4/4** Araç ve insan: ilk yaşam belirtisi (sim verisine bağlı) | T-048 | ready | 0 | `production/tasks/T-050.md` |
 | T-041 | Parsel/bölge denetçisi + nedensellik zinciri (metro/ilçe/sokak zoom) | T-040 | ready | 0 | görev dosyası: `production/tasks/T-041.md` |

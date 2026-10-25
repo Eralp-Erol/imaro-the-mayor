@@ -1,13 +1,11 @@
 class_name ModeToolbar
 extends VBoxContainer
 ## Mod/araç çubuğu (L1, altta): [İnşa | İmar | Yönetim] + seçili modun araçları. Yalnız belediye başkanı
-## fiilleri
-## (CAN-03): "özel bina yerleştir" aracı hiçbir modda yoktur. Kurulmamış sistemin sekmesi GİZLENMEZ ama
-## dürüstçe
-## etiketlidir ("Henüz kurulmadı") ve devre dışıdır; sahte araç yok.
-## Mevcut gerçek yetenek: İmar modu (imar önerisi + denetçi) ve Yönetim modu (bütçe, meclis, gündem panelleri;
-## T-022). Panel açılır ama sim bölümü kurulmamışsa panel dürüstçe "Henüz kurulmadı" der (sahte içerik yok).
-## İnşa (kamusal yol/park) komut/ekran bakımından kurulmamıştır.
+## fiilleri (CAN-03): "özel bina yerleştir" aracı hiçbir modda yoktur.
+## T-047 DÜRÜSTLÜK KURALI: bir araç yalnız yeteneği gerçekten bağlayan sahip `add_tool` (HudRoot.register_tool) ile
+## kaydedince görünür; hiç aracı kayıtlı olmayan mod da görünmez (ölü düğme yok, "Henüz kurulmadı" etiketli düğme de
+## yok). Tek görünür mod varsa mod düğmesi gizlenir (seçilecek bir şey yok).
+## `MODES` yalnız KATALOGdur (hangi araç hangi moda aittir); görünürlüğü kayıt belirler.
 ## Dikey dokunmatikte iki satır: modlar üstte, araçlar altta; yatay/masaüstünde tek satır.
 
 signal mode_changed(mode_id: StringName)
@@ -24,11 +22,11 @@ const TOOL_AGENDA := &"tool.agenda"
 ## Sonuç paneli (T-040): yalnız bir sahip `add_tool` ile kaydederse görünür (ölü düğme yok).
 const TOOL_RESULTS := &"tool.results"
 
-## Mod → {built: bool, tools: [tool_id]}. Kurulu olmayan mod devre dışı etiketlidir.
+## Katalog: mod -> {tools: [tool_id]} (kayıtlı olanlar görünür).
 const MODES := {
-	&"mode.build": {"built": false, "tools": []},
-	&"mode.plan": {"built": true, "tools": [&"tool.inspect", &"tool.zone"]},
-	&"mode.manage": {"built": true, "tools": [&"tool.budget", &"tool.council", &"tool.agenda"]},
+	&"mode.build": {"tools": []},
+	&"mode.plan": {"tools": [&"tool.inspect", &"tool.zone"]},
+	&"mode.manage": {"tools": [&"tool.budget", &"tool.council", &"tool.agenda"]},
 }
 
 var current_mode: StringName = MODE_PLAN
@@ -55,12 +53,7 @@ static func create(ctx: UiContext) -> ModeToolbar:
 	tb.add_child(tb._row_modes)
 	tb.add_child(tb._row_tools)
 	for mode_id: StringName in MODES:
-		var spec: Dictionary = MODES[mode_id]
-		var label := UiText.t(mode_id)
-		if not spec["built"]:
-			label += "\n" + UiText.t(&"state.not_built_short")
-		var b := UiFactory.button(ctx, label, true, true)
-		b.disabled = not spec["built"]
+		var b := UiFactory.button(ctx, UiText.t(mode_id), true, true)
 		b.tooltip_text = UiText.t(StringName(String(mode_id) + ".hint"))
 		b.pressed.connect(tb._on_mode_pressed.bind(mode_id))
 		tb._mode_buttons[mode_id] = b
@@ -69,6 +62,7 @@ static func create(ctx: UiContext) -> ModeToolbar:
 	tb._row_modes.add_child(tb._sep)
 	tb._rebuild_tools()
 	tb._sync()
+	tb._refresh_modes()
 	tb.set_rows(1)
 	return tb
 
@@ -78,7 +72,7 @@ func set_rows(rows: int) -> void:
 	if rows == _rows:
 		return
 	_rows = rows
-	_sep.visible = rows == 1
+	_sep.visible = rows == 1 and _visible_modes().size() > 1
 	if _row_tools.get_parent() != null:
 		_row_tools.get_parent().remove_child(_row_tools)
 	if _rows == 1:
@@ -99,10 +93,12 @@ func tool_button(tool_id: StringName) -> Button:
 	return _tool_buttons.get(tool_id) as Button
 
 
+## Görünür (gösterilen) düğmeler.
 func all_buttons() -> Array[Button]:
 	var out: Array[Button] = []
 	for b: Button in _mode_buttons.values():
-		out.append(b)
+		if b.visible:
+			out.append(b)
 	for b: Button in _tool_buttons.values():
 		out.append(b)
 	return out
@@ -113,10 +109,11 @@ func add_tool(mode_id: StringName, tool_id: StringName) -> void:
 	if not MODES.has(mode_id):
 		return
 	var list: Array = _extra_tools.get(mode_id, [])
-	if list.has(tool_id) or (MODES[mode_id]["tools"] as Array).has(tool_id):
+	if list.has(tool_id):
 		return
 	list.append(tool_id)
 	_extra_tools[mode_id] = list
+	_refresh_modes()
 	if mode_id == current_mode:
 		var keep := current_tool
 		_rebuild_tools()
@@ -124,8 +121,30 @@ func add_tool(mode_id: StringName, tool_id: StringName) -> void:
 		_sync()
 
 
+## Aracı olan (görünür) modlar, katalog sırasıyla.
+func _visible_modes() -> Array[StringName]:
+	var out: Array[StringName] = []
+	for mode_id: StringName in MODES:
+		if not (_extra_tools.get(mode_id, []) as Array).is_empty():
+			out.append(mode_id)
+	return out
+
+
+func _refresh_modes() -> void:
+	var visible_modes := _visible_modes()
+	if not visible_modes.is_empty() and not visible_modes.has(current_mode):
+		current_mode = visible_modes[0]
+		current_tool = &""
+		_rebuild_tools()
+	for mode_id: StringName in _mode_buttons:
+		(_mode_buttons[mode_id] as Button).visible = visible_modes.size() > 1 and visible_modes.has(mode_id)
+	if _sep != null:
+		_sep.visible = _rows == 1 and visible_modes.size() > 1
+	_sync()
+
+
 func select_mode(mode_id: StringName) -> void:
-	if not MODES.has(mode_id) or not MODES[mode_id]["built"]:
+	if not _visible_modes().has(mode_id):
 		return
 	current_mode = mode_id
 	current_tool = &""
@@ -139,9 +158,7 @@ func _rebuild_tools() -> void:
 		b.get_parent().remove_child(b)
 		b.queue_free()
 	_tool_buttons.clear()
-	var spec: Dictionary = MODES[current_mode]
-	var tools: Array = (spec["tools"] as Array).duplicate()
-	tools.append_array(_extra_tools.get(current_mode, []))
+	var tools: Array = (_extra_tools.get(current_mode, []) as Array).duplicate()
 	for tool_id: StringName in tools:
 		var b := UiFactory.button(_ctx, UiText.t(tool_id), true, true)
 		b.pressed.connect(_on_tool_pressed.bind(tool_id))

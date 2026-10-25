@@ -22,6 +22,9 @@ func after_test() -> void:
 func _hud(facade: SimFacade, profile_name: StringName, window: Vector2, extra: Dictionary = {}) -> HudRoot:
 	var hud := HudRoot.new()
 	add_child(hud)
+	hud.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_ZONE)  # araç çubuğu yalnız kayıtlı araçları gösterir
+	hud.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_INSPECT)
+	hud.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
 	hud.setup(facade, UiTestSupport.platform(profile_name, extra))
 	hud.set_anchors_preset(Control.PRESET_TOP_LEFT)
 	hud.size = window

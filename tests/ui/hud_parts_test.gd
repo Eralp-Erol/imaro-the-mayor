@@ -66,20 +66,38 @@ func test_time_controls_pause_toggle_and_selected_state() -> void:
 
 # --- ModeToolbar ---
 
-func test_mode_toolbar_unbuilt_modes_are_disabled_and_honestly_labelled() -> void:
+func _registered_toolbar() -> ModeToolbar:
 	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
-	# Yönetim modu T-022 ile kuruldu (bütçe/meclis/gündem panelleri); yalnız İnşa kurulmamıştır.
-	for mode_id in [ModeToolbar.MODE_BUILD]:
-		var b := tb.mode_button(mode_id)
-		assert_bool(b.disabled).is_true()
-		assert_str(b.text).contains("Henüz kurulmadı")
-	assert_bool(tb.mode_button(ModeToolbar.MODE_PLAN).disabled).is_false()
+	tb.add_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_ZONE)
+	tb.add_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_INSPECT)
+	return tb
+
+
+func test_mode_toolbar_shows_nothing_until_a_tool_is_registered() -> void:
+	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
+	assert_int(tb.all_buttons().size()).is_equal(0)
+	assert_object(tb.tool_button(ModeToolbar.TOOL_ZONE)).is_null()
 	tb.select_mode(ModeToolbar.MODE_BUILD)
-	assert_that(tb.current_mode).is_equal(ModeToolbar.MODE_PLAN)  # kurulmamış moda geçilmez
+	assert_that(tb.current_mode).is_equal(ModeToolbar.MODE_PLAN)  # aracı olmayan moda geçilmez
+
+
+func test_mode_toolbar_unregistered_modes_and_not_built_labels_never_appear() -> void:
+	var tb := _registered_toolbar()
+	for b in tb.all_buttons():
+		assert_str(b.text).is_not_equal("")
+		assert_bool(b.text.contains("Henüz kurulmadı")).override_failure_message(b.text).is_false()
+	# Tek görünür mod: mod düğmeleri gizli (İnşa/Yönetim hiç yok), araçlar görünür.
+	for mode_id: StringName in ModeToolbar.MODES:
+		assert_bool(tb.mode_button(mode_id).visible).override_failure_message(String(mode_id)).is_false()
+	assert_bool(tb.tool_button(ModeToolbar.TOOL_ZONE).visible).is_true()
+	tb.add_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
+	assert_bool(tb.mode_button(ModeToolbar.MODE_PLAN).visible).is_true()
+	assert_bool(tb.mode_button(ModeToolbar.MODE_MANAGE).visible).is_true()
+	assert_bool(tb.mode_button(ModeToolbar.MODE_BUILD).visible).is_false()
 
 
 func test_mode_toolbar_has_no_private_building_tool_and_only_mayor_verbs() -> void:
-	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
+	var tb := _registered_toolbar()
 	var forbidden := ["bina", "yerleştir", "mutluluk", "puan", "skor"]
 	for b in tb.all_buttons():
 		for word in forbidden:
@@ -89,7 +107,7 @@ func test_mode_toolbar_has_no_private_building_tool_and_only_mayor_verbs() -> vo
 
 
 func test_mode_toolbar_rows_switch_between_one_and_two() -> void:
-	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
+	var tb := _registered_toolbar()
 	assert_int(tb.rows()).is_equal(1)
 	tb.set_rows(2)
 	assert_int(tb.rows()).is_equal(2)
@@ -99,7 +117,7 @@ func test_mode_toolbar_rows_switch_between_one_and_two() -> void:
 
 
 func test_mode_toolbar_tool_signal() -> void:
-	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
+	var tb := _registered_toolbar()
 	var tools := []
 	tb.tool_selected.connect(func(t: StringName) -> void: tools.append(t))
 	tb.tool_button(ModeToolbar.TOOL_ZONE).pressed.emit()

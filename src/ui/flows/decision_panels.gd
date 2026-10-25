@@ -21,6 +21,7 @@ var hud: HudRoot = null
 var facade: SimFacade = null
 var zoning: ZoningFlowModel = null
 var budget_draft: BudgetDraft = BudgetDraft.new()
+var structure_probe: Callable = Callable()
 
 var _zoning_panel: ZoningFlowPanel = null
 var _council_panel: CouncilPanel = null
@@ -30,10 +31,21 @@ var _seen_agenda: Dictionary = {}
 var _agenda_ready: bool = false
 
 
-static func attach(hud_in: HudRoot, facade_in: SimFacade) -> DecisionPanels:
+## `structure_probe`: parselde sim dışı (T0 stok) yapı var mı (`Callable(parcel_id) -> bool`; ZoningFlowModel'e geçer).
+## `with_manage_tools`: Bütçe/Meclis/Gündem araçlarını araç çubuğuna kaydet (ui_lab/test). Oynanabilir sahne bunları
+## kaydetmez: gerçek sim'de bu sistemler henüz kurulu değil (ölü düğme yok, T-047). İmar önerisi aracı her zaman
+## kayıtlıdır.
+static func attach(hud_in: HudRoot, facade_in: SimFacade, structure_probe: Callable = Callable(),
+		with_manage_tools: bool = true) -> DecisionPanels:
 	var d := DecisionPanels.new()
 	d.hud = hud_in
 	d.facade = facade_in
+	d.structure_probe = structure_probe
+	hud_in.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_ZONE)
+	if with_manage_tools:
+		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
+		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_COUNCIL)
+		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_AGENDA)
 	hud_in.refreshed.connect(d._on_refreshed)
 	hud_in.events_received.connect(d._on_events)
 	hud_in.panel_closed.connect(d._on_panel_closed)
@@ -58,7 +70,7 @@ func rebind(facade_in: SimFacade) -> void:
 ## ve süren bir öneri varsa korunur (ilerleme görünür kalır).
 func open_zoning(parcel_ids: PackedInt64Array = PackedInt64Array()) -> void:
 	if zoning == null or not zoning.is_locked() or zoning.is_finished():
-		zoning = ZoningFlowModel.create(facade)
+		zoning = ZoningFlowModel.create(facade, structure_probe)
 		for id in parcel_ids:
 			zoning.add_parcel(id)
 	hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning)
@@ -88,6 +100,12 @@ func open_agenda() -> void:
 ## Yönetim araçları (bütçe, meclis, gündem). Ele alındıysa true.
 func on_tool_selected(tool_id: StringName) -> bool:
 	match tool_id:
+		ModeToolbar.TOOL_ZONE:
+			# Haritadan parsel seçilene dek boş akış ("Önce bir parsel seçin"); süren/hazırlanan akış korunur.
+			if zoning != null and not zoning.is_finished():
+				hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning)
+			else:
+				open_zoning()
 		ModeToolbar.TOOL_BUDGET:
 			open_budget()
 		ModeToolbar.TOOL_COUNCIL:

@@ -97,7 +97,7 @@ func _assert_clean_text(text: String) -> void:
 func test_manage_mode_is_built_and_tools_open_the_decision_panels() -> void:
 	var d := _setup(_council_facade())
 	d.hud.toolbar.select_mode(ModeToolbar.MODE_MANAGE)
-	assert_bool(d.hud.toolbar.mode_button(ModeToolbar.MODE_MANAGE).disabled).is_false()
+	assert_bool(d.hud.toolbar.mode_button(ModeToolbar.MODE_MANAGE).visible).is_true()
 	var cases := {ModeToolbar.TOOL_BUDGET: &"budget", ModeToolbar.TOOL_COUNCIL: &"council",
 		ModeToolbar.TOOL_AGENDA: &"agenda"}
 	for tool_id: StringName in cases:
