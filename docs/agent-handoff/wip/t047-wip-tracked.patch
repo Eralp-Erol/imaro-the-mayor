@@ -1,0 +1,674 @@
+diff --git a/data/ui/strings.tr.json b/data/ui/strings.tr.json
+index 99a2e6c..5e16926 100644
+--- a/data/ui/strings.tr.json
++++ b/data/ui/strings.tr.json
+@@ -445,6 +445,12 @@
+ 	"zoning.summary": "{parcels} için önerilen arazi kullanımı: {use}",
+ 	"zoning.path.council": "Bu öneri meclis oylamasına sunulur",
+ 	"zoning.path.direct": "Bu öneri meclis oylaması olmadan işlenir",
++	"hud.controls_help": "WASD: kaydır · Q/E: döndür · tekerlek: yakınlaş · Boşluk: duraklat · Tıklama: parsel seç · Z: imar önerisi",
++	"hud.sim_day": "Gün {day}",
++	"zoning.warn.structure_one": "Bu parselde yapı var; imar değişikliği mevcut yapıyı KALDIRMAZ — yalnız yeniden gelişme olursa geçerli olur (yıkım/yeniden yapılaşma henüz modellenmiyor).",
++	"zoning.warn.structure_many": "Seçili {n} parselde yapı var; imar değişikliği mevcut yapıları KALDIRMAZ — yalnız yeniden gelişme olursa geçerli olur (yıkım/yeniden yapılaşma henüz modellenmiyor).",
++	"zoning.note.no_private_use": "{zone}: özel yatırım yapılmaz; boş parselde yeni yapı gelmez.",
++	"zoning.status.effective_structure": "İmar kaydı yürürlüğe girdi (komuttan {days} gün sonra); mevcut yapı yerinde kalır, yeni yapı doğmaz.",
+ 	"zoning.status.sent": "Öneri sıraya alındı; komut {date} tarihinde işlenir",
+ 	"zoning.status.applied": "Komut işlendi; imar değişikliği yürürlüğe girmeyi bekliyor",
+ 	"zoning.status.awaiting_vote": "Meclis oylaması bekleniyor",
+diff --git a/data/ui/ui_config.json b/data/ui/ui_config.json
+index 42f65a2..3635bb8 100644
+--- a/data/ui/ui_config.json
++++ b/data/ui/ui_config.json
+@@ -12,6 +12,8 @@
+ 		"zone.industrial"
+ 	],
+ 	"zoning._note": "ADR-0005 Ek B anahtarlari + gosterim denemesi icin industrial. Sozlesmede arazi kullanimi sorgusu YOK (v1.1 istegi); sim listede olmayan kullanimi gerekceyle reddeder.",
++	"zoning.no_private_use": ["zone.green"],
++	"zoning._no_private_use_note": "Sim economy_config'te izinli ozel kullanimi olmayan imarlar (zone.green: uses []). UI metni bu listeden turer; sim degisirse burasi guncellenir.",
+ 	"hud.notification_rows": 3,
+ 	"settings.auto_pause_agenda": false,
+ 	"settings._note": "Gundem ogesinde otomatik duraklatma yalniz AYAR; varsayilani ACIK SORU (Q-011/AS-11) - false yer tutucudur.",
+diff --git a/production/QUESTIONS.md b/production/QUESTIONS.md
+index 1e033ff..7dd465d 100644
+--- a/production/QUESTIONS.md
++++ b/production/QUESTIONS.md
+@@ -63,3 +63,12 @@ Kaynak: T-040 render payı (godot-engineer). Hiçbiri kanonlaştırılmadı; hep
+ - **GEÇİCİ TEMPO (2026-10-24, kare bütçesi gerekçesi; denge kararı kullanıcıya AÇIK):** sim varsayılanı `max_reviews_per_tick = 60` günde ~57 yatırımcı kararı (%98'i ret) üretir ve sim tick'ini ort ~17 ms (tepe 60+ ms) yapar; kare bütçesi (16,6 ms) aşılır. `data/game/playable_economy.json` `decision.max_reviews_per_tick = 8` (yalnız oynanabilir; sim varsayılanı/kural değişmedi): günde ~8 karar, tick ort 4,3 ms (gün 10-45; 15 ile 6,9 ms, 60 ile 15+ ms); 180 günde onay 105 -> 69, ret 9181 -> 1297. Oyuncu imar önerisi sonrası gelişme zamanı DEĞİŞMEDİ (8 parsel: gün 40 inşaat, gün 100'de 7/8 yapıldı). Gerçek denge (günde kaç karar, otonom büyüme hızı) F05-D'de AÇIK; sim hızı/tick maliyeti düşerse değer yükseltilebilir.
+ - **Demo imarı:** salt ticaret önerisi (`zone.commercial`) T0 dükkân arzı hane ihtiyacının çok üstünde olduğundan talep nedeniyle reddedilir; demo `zone.mixed` kullanır.
+ Beklerken stüdyo ne yapar: tüm sayılar veri dosyalarında; test ve yakalamalar bu değerlere değil davranışa (olumlu/olumsuz yol, kademe, hücre-yerel) bağlıdır.
++
++### Q-017 · Yıkım / yeniden yapılaşma / dönüşüm kuralı ve "yeşil alan/park" kimin işi? (T-047; status: open — engellemiyor; karar BEKLİYOR, uygulanmaz)
++Kaynak: T-047 (ui-engineer), kullanıcının gerçek oyun denemesi (2026-10-25: yapılı parsele "Yeşil alan" imarı verildi, 11 oyun yılı sonra bina yerinde; arayüz "yürürlükte" demişti). Kanon "dönüşüm"e atıf yapar (kanon belgeleri 01, 02, 03: "dönüşüm ve yeni lojistik gelişimi", "Oyuncunun dönüştürebildikleri: … sanayi kapasitesi ve dönüşümü … Tarihî yapıların değişimi varsa politik/hukuki/ekonomik bağlamda anlamlı olmalıdır", "yoğunluk ve dönüşüm") ama kural tanımlamaz. Şu anki sim gerçeği (kodda doğrulandı, değiştirilmedi): imar komutu yalnız parselin imar etiketini (bekleyen imar) değiştirir; yatırımcı yalnız BOŞ parselleri değerlendirir; yıkım/yeniden yapılaşma yoktur; `zone.green` izinli özel kullanım içermez (`uses: []`).
++Sorular (gruplu):
++1. **Mevcut yapı imarla uyumsuz hale gelirse ne olur?** (a) Hiçbir şey: yapı "mevcut kullanım hakkı" ile kalır, yalnız yeniden gelişmede yeni imar geçerli (bugünkü davranış). (b) Yatırımcı kararı: sahip, getiri/talep yeterliyse yıkıp yeniden yapar (yeni sim kararı, gerekçeli). (c) Belediye kamulaştırma + yıkım: bütçe/siyasi maliyet, grup tepkisi (CAN-05). (d) Zorunlu yıkım emri (hukuki süreç, süre, itiraz).
++2. **"Yeşil alan/park" kimin eylemi?** (a) Yalnız imar etiketi (bugün; özel yatırım olmaz ama alan kendiliğinden park olmaz). (b) Belediye inşası: CAN-04 kamusal yapı/mekân; bütçe harcamasıyla park yapılır (İnşa modunun ilk gerçek aracı). (c) İkisi: etiket + belediye isteğe bağlı park inşa eder.
++3. **Dönüşümde bedel/gecikme/tepki:** yıkım bedeli kimin, süre, hangi grup nasıl tepki verir (SIM-12 gereği gerekçeli; tarihî yapı, işçi mahallesi)?
++ÖNERİLEN VARSAYILAN (yalnız öneri, kanon değil): 1(a) şimdilik + arayüzde dürüst uyarı (T-047 uyguladı); ileride 1(b) "yatırımcı kararı" (yeni gerekçeli karar anahtarı), belediye kamulaştırması ayrı ve pahalı seçenek 1(c); 2(b): park/yeşil alan belediye inşası olarak CAN-04 altında (etiket tek başına park yaratmaz).
++Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulmaz; imar akışı yapılı parselde "mevcut yapıyı KALDIRMAZ" der; kullanıcı yanıtlayınca `design/decisions/` altına kendi sözleriyle kaydedilir.
+diff --git a/scenes/dev/ui_lab.gd b/scenes/dev/ui_lab.gd
+index d66df85..37b12fe 100644
+--- a/scenes/dev/ui_lab.gd
++++ b/scenes/dev/ui_lab.gd
+@@ -69,6 +69,7 @@ func _ready() -> void:
+ 	hud.panel_closed.connect(_on_panel_closed)
+ 	hud.setup(facade, _platform)
+ 	decisions = DecisionPanels.attach(hud, facade)
++	hud.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_INSPECT)  # ui_lab denetçiyi kendisi açar
+ 	decisions.reason_wanted.connect(_open_reason)
+ 	_after_profile()
+ 	if args.has("demo"):
+diff --git a/src/game/playable.gd b/src/game/playable.gd
+index 9bbd69d..5084180 100644
+--- a/src/game/playable.gd
++++ b/src/game/playable.gd
+@@ -21,6 +21,11 @@ extends "res://scenes/dev/world_preview.gd"
+ ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
+ ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
+ ##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
++##   --t47-flow=built|empty  (yakalama) kamerayı odağa en yakın YAPILI (T0 stoku) ya da BOŞ parsele taşır, parseli
++##                    seçer ve imar akışını açıp `--demo-zone` (varsayılan zone.green) kullanımını seçer; göndermez.
++##   --t47-send=N     (yakalama) yukarıdaki akışta öneriyi gönderir ve N gün ilerletir (sonuç/durum satırı için).
++##   --dev-notes      alt metne geliştirici notlarını (T0 aktarımı, olay sayacı, son eylem) ekler; yoksa yalnız
++##                    kısa kontrol yardımı.
+ ##   --m2-open-results  "Döngü sonucu" panelini (HUD) başlangıçta açar (yakalama için).
+ 
+ const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
+@@ -33,9 +38,8 @@ const DEMO_LAND_USE := &"zone.mixed"
+ const DEMO_PROBE_UNITS := 3
+ ## `--m2-advance` adım uzunluğu (gün): her adımdan sonra projector senkronlanır.
+ const M2_ADVANCE_STEP_DAYS := 1
+-const NOTE := "WASD/oklar: kaydır | Q/E: döndür | tekerlek/trackpad: yakınlaş | Boşluk: duraklat/sürdür\n" \
+-		+ "Tıklama: parseli seç (imar akışı) | Z: seçili/odaktaki parsele imar önerisi\n" \
+-		+ "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kademesi dahil) ikinci BuildingView'da " \
++## Geliştirici notu (yalnız `--dev-notes`); oyuncu metni `HudHelp`te.
++const DEV_NOTE := "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kademesi dahil) ikinci BuildingView'da " \
+ 		+ "yalnız sim aşamasından çizilir; oyuncu yapı koymaz."
+ 
+ var sim_stats: Dictionary = {}
+@@ -83,6 +87,7 @@ func _ready() -> void:
+ 	_start_hud()
+ 	_on_hud_ready()
+ 	_m2_dev_setup()
++	_t47_dev_setup()
+ 	sim_stats["sim_setup_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
+ 	print("PLAYABLE ", JSON.stringify(sim_stats))
+ 
+@@ -191,21 +196,57 @@ func _start_hud() -> void:
+ 	assert(shared_input != null, "playable: CameraRig girdi profili yok")
+ 	_hud.bind_input(shared_input)
+ 	_hud.setup(_facade, PlatformProfile.current())
+-	_decisions = DecisionPanels.attach(_hud, _facade)
++	# T-047: oynanabilir sahnede yalnız çalışan araçlar kayıtlıdır (İmar önerisi + Döngü sonucu); Bütçe/Meclis/Gündem
++	# gerçek sim'de henüz kurulu değil, kaydedilmez. T0 stoku için "parselde yapı var mı" sorgusu dünya verisinden gelir.
++	_decisions = DecisionPanels.attach(_hud, _facade, _has_t0_structure, false)
+ 	shared_input.select_requested.connect(_on_select_requested)
+ 	_status = Label.new()
+-	# Sol altta, araç çubuğunun üstünde: sağdaki yan panel ve soldaki bildirim şeridiyle çakışmaz.
+-	_status.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+-	_status.grow_vertical = Control.GROW_DIRECTION_BEGIN
+-	_status.offset_left = 12.0
+-	_status.offset_bottom = -96.0
+-	_status.custom_minimum_size = Vector2(380, 0)
++	# Yer `_place_status` ile HUD boş harita dikdörtgeninden hesaplanır (araç çubuğu/panelle çakışmaz).
+ 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+ 	_status.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.9))
+ 	_status.add_theme_font_size_override("font_size", 13)
++	# Okunabilirlik: 3B sahne üstünde yarı saydam koyu zemin (HUD token'ı değil, yalnız bu yardım etiketi).
++	var plate := StyleBoxFlat.new()
++	plate.bg_color = Color(0.05, 0.07, 0.10, 0.62)
++	plate.set_corner_radius_all(4)
++	plate.content_margin_left = 8.0
++	plate.content_margin_right = 8.0
++	plate.content_margin_top = 4.0
++	plate.content_margin_bottom = 4.0
++	_status.add_theme_stylebox_override("normal", plate)
+ 	layer.add_child(_status)
+ 
+ 
++## Parselde T0 başlangıç yapısı var mı (ilk günlük tick'ten önce sim bu parselleri `vacant` gösterir).
++func _has_t0_structure(parcel_id: int) -> bool:
++	return _t0_occupied.has(parcel_id)
++
++
++## Alt köşe metni (`HudHelp`): oyuncuya kısa kontrol yardımı + sim günü; `--dev-notes` ile geliştirici satırları.
++func status_text() -> String:
++	var dev := "%s\nolay %d | son eylem: %s" % [DEV_NOTE, _facade.last_event_seq(), _last_action]
++	var touch := PlatformProfile.current().input_profile == PlatformProfile.INPUT_TOUCH
++	return HudHelp.status_text(_facade.current_tick(), _args.has("dev-notes"), dev, touch)
++
++
++## Yardım etiketini HUD'un boş harita dikdörtgenine yerleştirir (araç çubuğu/panel dışında).
++func _place_status() -> void:
++	if _status == null or _hud == null or _hud.layout == null:
++		return
++	var h := _status.get_combined_minimum_size().y
++	var r := HudHelp.status_rect(_hud.free_map_rect(), h)  # genişlik zemin dolgusu dahil
++	_status.custom_minimum_size = Vector2(r.size.x, 0.0)
++	_status.position = r.position
++	_status.size = Vector2(r.size.x, h)
++	# Olay şeridinin GÖRÜNÜR satırlarıyla çakışıyorsa gösterme: yardım metni hiçbir öğenin üstüne binmez.
++	_status.visible = true
++	if _hud.strip != null:
++		for row in _hud.strip.get_children():
++			var c := row as Control
++			if c != null and c.visible and r.intersects(c.get_global_rect()):
++				_status.visible = false
++
++
+ ## T-040 UI KANCASI: HUD kurulduktan sonra çağrılır. "Döngü sonucu" paneli + gerekçe paneli bağı (UI payı; render/
+ ## projector koduna dokunmaz). `--m2-open-results` (dev) paneli başlangıçta açar.
+ func _on_hud_ready() -> void:
+@@ -247,6 +288,48 @@ func _m2_dev_setup() -> void:
+ 		print(_m2_target_report(days))
+ 
+ 
++## `--t47-flow` / `--t47-send` (dev, yakalama): oyuncunun tıklama yolunu taklit eder (parsel seç -> imar akışı).
++func _t47_dev_setup() -> void:
++	if _facade == null or _decisions == null or not _args.has("t47-flow"):
++		return
++	var want_built := str(_args["t47-flow"]) != "empty"
++	var focus := _camera.current_state()
++	var at := Vector2(focus.focus_x, focus.focus_z)
++	var best := -1
++	var best_d := INF
++	if want_built:
++		for v in _views:
++			if _t0_occupied.has(v.id) and v.center.distance_squared_to(at) < best_d:
++				best_d = v.center.distance_squared_to(at)
++				best = v.id
++	else:
++		var pick := _pick_demo_parcels(1, 0)
++		best = int(pick[0]) if not pick.is_empty() else -1
++	if best <= 0:
++		print("PLAYABLE_T47 parsel bulunamadı")
++		return
++	var wp: WorldParcel = _net.parcels.get(best)
++	var st := _camera.target_state()
++	st.focus_x = wp.centroid.x
++	st.focus_z = wp.centroid.y
++	_camera.apply_state(st, true)
++	_apply_camera_overrides(_args)
++	_selected_parcel_id = best
++	_decisions.open_zoning(PackedInt64Array([best]))
++	var zone := StringName(str(_args.get("demo-zone", "zone.green")))
++	_decisions.zoning_panel().choose_use(zone)
++	if _args.has("t47-send"):
++		_decisions.zoning_panel().send()
++		var left := _arg_int(_args, "t47-send", 0, 0, 3650)
++		while left > 0:
++			_facade.advance(1)
++			left -= 1
++		_hud.refresh()
++		_facade.set_speed(SimFacade.SPEED_PAUSED)
++	print("PLAYABLE_T47 parcel=%d built=%s zone=%s tick=%d" % [best, str(want_built), String(zone),
++			_facade.current_tick()])
++
++
+ ## `--m2-advance` sonrası hedef parselin sim durumu ve karar gerekçeleri sayımı (konsol; yakalama doğrulaması için).
+ func _m2_target_report(days: int) -> String:
+ 	var tv: Array[ParcelView] = _facade.parcel_views(PackedInt64Array([_m2_target]))
+@@ -366,8 +449,8 @@ func _process(delta: float) -> void:
+ 		_smoke_save_load_checked = true
+ 		_smoke_save_load()
+ 	if _status != null:
+-		_status.text = "%s\nsim: gün %d | olay %d | son eylem: %s" % [
+-				NOTE, _facade.current_tick(), _facade.last_event_seq(), _last_action]
++		_status.text = status_text()
++		_place_status()
+ 	if _frames % 120 == 0:
+ 		print("PLAYABLE_SMOKE tick=%d events=%d frames=%d avg_frame_ms=%.1f max_frame_ms=%.1f" % [
+ 				_facade.current_tick(), _facade.last_event_seq(), _frames, _acc_ms / maxf(_acc_n, 1), _max_ms])
+@@ -410,7 +493,10 @@ func _unhandled_input(event: InputEvent) -> void:
+ 	if event is InputEventKey and event.pressed and not event.echo and _facade != null:
+ 		var key := (event as InputEventKey).keycode
+ 		if key == KEY_Z:
+-			_submit_demo()
++			# Z: imar akışını açar (seçili parselle); öneri onay adımıyla gönderilir, sessizce gönderilmez.
++			if _decisions != null:
++				_decisions.open_zoning(PackedInt64Array([_selected_parcel_id]) if _selected_parcel_id > 0
++						else PackedInt64Array())
+ 			return
+ 	# Boşluk/duraklat InputProfile -> HudRoot fiilidir (tek yönlendirme); burada ikinci bir yol YOK.
+ 	super._unhandled_input(event)
+diff --git a/src/ui/flows/decision_panels.gd b/src/ui/flows/decision_panels.gd
+index 015210d..9755455 100644
+--- a/src/ui/flows/decision_panels.gd
++++ b/src/ui/flows/decision_panels.gd
+@@ -21,6 +21,7 @@ var hud: HudRoot = null
+ var facade: SimFacade = null
+ var zoning: ZoningFlowModel = null
+ var budget_draft: BudgetDraft = BudgetDraft.new()
++var structure_probe: Callable = Callable()
+ 
+ var _zoning_panel: ZoningFlowPanel = null
+ var _council_panel: CouncilPanel = null
+@@ -30,10 +31,21 @@ var _seen_agenda: Dictionary = {}
+ var _agenda_ready: bool = false
+ 
+ 
+-static func attach(hud_in: HudRoot, facade_in: SimFacade) -> DecisionPanels:
++## `structure_probe`: parselde sim dışı (T0 stok) yapı var mı (`Callable(parcel_id) -> bool`; ZoningFlowModel'e geçer).
++## `with_manage_tools`: Bütçe/Meclis/Gündem araçlarını araç çubuğuna kaydet (ui_lab/test). Oynanabilir sahne bunları
++## kaydetmez: gerçek sim'de bu sistemler henüz kurulu değil (ölü düğme yok, T-047). İmar önerisi aracı her zaman
++## kayıtlıdır.
++static func attach(hud_in: HudRoot, facade_in: SimFacade, structure_probe: Callable = Callable(),
++		with_manage_tools: bool = true) -> DecisionPanels:
+ 	var d := DecisionPanels.new()
+ 	d.hud = hud_in
+ 	d.facade = facade_in
++	d.structure_probe = structure_probe
++	hud_in.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_ZONE)
++	if with_manage_tools:
++		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
++		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_COUNCIL)
++		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_AGENDA)
+ 	hud_in.refreshed.connect(d._on_refreshed)
+ 	hud_in.events_received.connect(d._on_events)
+ 	hud_in.panel_closed.connect(d._on_panel_closed)
+@@ -58,7 +70,7 @@ func rebind(facade_in: SimFacade) -> void:
+ ## ve süren bir öneri varsa korunur (ilerleme görünür kalır).
+ func open_zoning(parcel_ids: PackedInt64Array = PackedInt64Array()) -> void:
+ 	if zoning == null or not zoning.is_locked() or zoning.is_finished():
+-		zoning = ZoningFlowModel.create(facade)
++		zoning = ZoningFlowModel.create(facade, structure_probe)
+ 		for id in parcel_ids:
+ 			zoning.add_parcel(id)
+ 	hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning)
+@@ -88,6 +100,12 @@ func open_agenda() -> void:
+ ## Yönetim araçları (bütçe, meclis, gündem). Ele alındıysa true.
+ func on_tool_selected(tool_id: StringName) -> bool:
+ 	match tool_id:
++		ModeToolbar.TOOL_ZONE:
++			# Haritadan parsel seçilene dek boş akış ("Önce bir parsel seçin"); süren/hazırlanan akış korunur.
++			if zoning != null and not zoning.is_finished():
++				hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning)
++			else:
++				open_zoning()
+ 		ModeToolbar.TOOL_BUDGET:
+ 			open_budget()
+ 		ModeToolbar.TOOL_COUNCIL:
+diff --git a/src/ui/flows/zoning_flow_model.gd b/src/ui/flows/zoning_flow_model.gd
+index c4c38f4..e2f561f 100644
+--- a/src/ui/flows/zoning_flow_model.gd
++++ b/src/ui/flows/zoning_flow_model.gd
+@@ -30,14 +30,19 @@ var vote_ref: StringName = &""
+ var vote_passed: bool = false
+ var reason_ids: PackedInt64Array = PackedInt64Array()
+ 
++## Parselde sim dışı (T0 stok) yapı var mı: `Callable(parcel_id: int) -> bool`. İlk günlük tick'ten önce T0 stoku
++## parselleri sim'de `vacant` görünür; sahne (playable) dünya yapı verisinden bunu enjekte eder. Boş = yalnız sim.
++var structure_probe: Callable = Callable()
++
+ var _facade: SimFacade = null
+ var _phase: Phase = Phase.PICK_AREA
+ var _effective_ticks: Dictionary = {}  # parsel referansı (String) -> tick
+ 
+ 
+-static func create(facade: SimFacade) -> ZoningFlowModel:
++static func create(facade: SimFacade, probe: Callable = Callable()) -> ZoningFlowModel:
+ 	var m := ZoningFlowModel.new()
+ 	m._facade = facade
++	m.structure_probe = probe
+ 	return m
+ 
+ 
+@@ -192,6 +197,45 @@ func path_text() -> String:
+ 	return UiText.t(&"zoning.path.council" if UiPrefs.zoning_requires_council() else &"zoning.path.direct")
+ 
+ 
++## Alandaki yapılı parseller: sim aşaması `vacant` değil (planlı/inşaatta/yapılı/durmuş) YA DA enjekte sorgu
++## "yapı var" der.
++func structure_parcels() -> PackedInt64Array:
++	var out := PackedInt64Array()
++	if parcel_ids.is_empty():
++		return out
++	var by_id := {}
++	for v in _facade.parcel_views(parcel_ids):
++		by_id[v.id] = v
++	for id in parcel_ids:
++		var v := by_id.get(id) as ParcelView
++		var built := v != null and v.development != ParcelView.DEVELOPMENT_VACANT
++		if not built and structure_probe.is_valid():
++			built = bool(structure_probe.call(id))
++		if built:
++			out.append(id)
++	return out
++
++
++## Seçili kullanım özel yatırıma izin vermiyorsa (yeşil alan) kısa not; yoksa "".
++func no_private_use_note() -> String:
++	if land_use == &"":
++		return ""
++	var raw: Variant = UiConfig.value("zoning.no_private_use", [])
++	if raw is Array and (raw as Array).has(String(land_use)):
++		return UiText.t(&"zoning.note.no_private_use", {"zone": UiText.t(land_use)})
++	return ""
++
++
++## Yapılı parsel uyarısı (imar etiketi yapıyı kaldırmaz); yapılı parsel yoksa "".
++func structure_warning() -> String:
++	var n := structure_parcels().size()
++	if n == 0:
++		return ""
++	if parcel_ids.size() == 1:
++		return UiText.t(&"zoning.warn.structure_one")
++	return UiText.t(&"zoning.warn.structure_many", {"n": n})
++
++
+ func submit_label() -> String:
+ 	return UiText.t(&"zoning.submit" if UiPrefs.zoning_requires_council() else &"zoning.submit_direct")
+ 
+@@ -221,7 +265,14 @@ func status_text() -> String:
+ 			Phase.EFFECTIVE:
+ 				key = &"zoning.status.effective"
+ 				args = {"days": effective_days()}
+-	return UiText.t(key, args) if key != &"" else ""
++				if not structure_parcels().is_empty():
++					key = &"zoning.status.effective_structure"
++	var text := UiText.t(key, args) if key != &"" else ""
++	if text != "" and _phase >= Phase.SENT:
++		var warn := structure_warning()
++		if warn != "":
++			text += "\n" + warn
++	return text
+ 
+ 
+ func refusal_text() -> String:
+diff --git a/src/ui/flows/zoning_flow_panel.gd b/src/ui/flows/zoning_flow_panel.gd
+index 9fc493e..c2b8bcf 100644
+--- a/src/ui/flows/zoning_flow_panel.gd
++++ b/src/ui/flows/zoning_flow_panel.gd
+@@ -24,6 +24,8 @@ var last_submit: CommandResult:
+ var _verdict: Label = null
+ var _send: ActionButton = null
+ var _status: Label = null
++var _warning: Label = null
++var _notes: Label = null
+ var _use_buttons: Dictionary = {}
+ 
+ 
+@@ -86,6 +88,8 @@ func _render() -> void:
+ 	_verdict = null
+ 	_send = null
+ 	_status = null
++	_warning = null
++	_notes = null
+ 	_body.add_child(UiFactory.label(UiText.t(&"zoning.step_line", {"n": model.step_number(),
+ 		"total": ZoningFlowModel.step_count(), "name": UiText.t(model.step_name_key())}), UiTheme.V_LABEL_MUTED, true))
+ 	_add_area()
+@@ -177,6 +181,7 @@ func _add_send_and_status() -> void:
+ 	if model.phase() == ZoningFlowModel.Phase.READY:
+ 		_body.add_child(UiFactory.label(UiText.t(&"zoning.summary", {"parcels": _area_text(),
+ 			"use": UiText.t(model.land_use)}), &"", true))
++	_add_honesty_notes()
+ 	if not model.is_locked():
+ 		_body.add_child(_muted(model.path_text()))
+ 		_send = ActionButton.create(_ctx, model.submit_label(), true)
+@@ -192,6 +197,30 @@ func _add_send_and_status() -> void:
+ 	_add_followups()
+ 
+ 
++## Onay adımında (gönderimden önce) yapılı parsel uyarısı ve "özel yatırım yapılmaz" notu; sim davranışından türer.
++## Gönderim sonrası yapı uyarısı durum satırında (model.status_text) tekrar yazılır.
++func _add_honesty_notes() -> void:
++	if model.land_use == &"":
++		return
++	var note := model.no_private_use_note()
++	if note != "":
++		_notes = UiFactory.label(note, UiTheme.V_LABEL_MUTED, true)
++		_body.add_child(_notes)
++	if not model.is_locked():
++		var warn := model.structure_warning()
++		if warn != "":
++			_warning = UiFactory.label(warn, UiTheme.V_LABEL_DANGER, true)
++			_body.add_child(_warning)
++
++
++func warning_text() -> String:
++	return _warning.text if _warning != null and is_instance_valid(_warning) else ""
++
++
++func note_text() -> String:
++	return _notes.text if _notes != null and is_instance_valid(_notes) else ""
++
++
+ func _add_followups() -> void:
+ 	if model.can_open_reason():
+ 		var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), true)
+diff --git a/src/ui/hud/mode_toolbar.gd b/src/ui/hud/mode_toolbar.gd
+index f59c11b..3f72704 100644
+--- a/src/ui/hud/mode_toolbar.gd
++++ b/src/ui/hud/mode_toolbar.gd
+@@ -1,13 +1,11 @@
+ class_name ModeToolbar
+ extends VBoxContainer
+ ## Mod/araç çubuğu (L1, altta): [İnşa | İmar | Yönetim] + seçili modun araçları. Yalnız belediye başkanı
+-## fiilleri
+-## (CAN-03): "özel bina yerleştir" aracı hiçbir modda yoktur. Kurulmamış sistemin sekmesi GİZLENMEZ ama
+-## dürüstçe
+-## etiketlidir ("Henüz kurulmadı") ve devre dışıdır; sahte araç yok.
+-## Mevcut gerçek yetenek: İmar modu (imar önerisi + denetçi) ve Yönetim modu (bütçe, meclis, gündem panelleri;
+-## T-022). Panel açılır ama sim bölümü kurulmamışsa panel dürüstçe "Henüz kurulmadı" der (sahte içerik yok).
+-## İnşa (kamusal yol/park) komut/ekran bakımından kurulmamıştır.
++## fiilleri (CAN-03): "özel bina yerleştir" aracı hiçbir modda yoktur.
++## T-047 DÜRÜSTLÜK KURALI: bir araç yalnız yeteneği gerçekten bağlayan sahip `add_tool` (HudRoot.register_tool) ile
++## kaydedince görünür; hiç aracı kayıtlı olmayan mod da görünmez (ölü düğme yok, "Henüz kurulmadı" etiketli düğme de
++## yok). Tek görünür mod varsa mod düğmesi gizlenir (seçilecek bir şey yok).
++## `MODES` yalnız KATALOGdur (hangi araç hangi moda aittir); görünürlüğü kayıt belirler.
+ ## Dikey dokunmatikte iki satır: modlar üstte, araçlar altta; yatay/masaüstünde tek satır.
+ 
+ signal mode_changed(mode_id: StringName)
+@@ -24,11 +22,11 @@ const TOOL_AGENDA := &"tool.agenda"
+ ## Sonuç paneli (T-040): yalnız bir sahip `add_tool` ile kaydederse görünür (ölü düğme yok).
+ const TOOL_RESULTS := &"tool.results"
+ 
+-## Mod → {built: bool, tools: [tool_id]}. Kurulu olmayan mod devre dışı etiketlidir.
++## Katalog: mod -> {tools: [tool_id]} (kayıtlı olanlar görünür).
+ const MODES := {
+-	&"mode.build": {"built": false, "tools": []},
+-	&"mode.plan": {"built": true, "tools": [&"tool.inspect", &"tool.zone"]},
+-	&"mode.manage": {"built": true, "tools": [&"tool.budget", &"tool.council", &"tool.agenda"]},
++	&"mode.build": {"tools": []},
++	&"mode.plan": {"tools": [&"tool.inspect", &"tool.zone"]},
++	&"mode.manage": {"tools": [&"tool.budget", &"tool.council", &"tool.agenda"]},
+ }
+ 
+ var current_mode: StringName = MODE_PLAN
+@@ -55,12 +53,7 @@ static func create(ctx: UiContext) -> ModeToolbar:
+ 	tb.add_child(tb._row_modes)
+ 	tb.add_child(tb._row_tools)
+ 	for mode_id: StringName in MODES:
+-		var spec: Dictionary = MODES[mode_id]
+-		var label := UiText.t(mode_id)
+-		if not spec["built"]:
+-			label += "\n" + UiText.t(&"state.not_built_short")
+-		var b := UiFactory.button(ctx, label, true, true)
+-		b.disabled = not spec["built"]
++		var b := UiFactory.button(ctx, UiText.t(mode_id), true, true)
+ 		b.tooltip_text = UiText.t(StringName(String(mode_id) + ".hint"))
+ 		b.pressed.connect(tb._on_mode_pressed.bind(mode_id))
+ 		tb._mode_buttons[mode_id] = b
+@@ -69,6 +62,7 @@ static func create(ctx: UiContext) -> ModeToolbar:
+ 	tb._row_modes.add_child(tb._sep)
+ 	tb._rebuild_tools()
+ 	tb._sync()
++	tb._refresh_modes()
+ 	tb.set_rows(1)
+ 	return tb
+ 
+@@ -78,7 +72,7 @@ func set_rows(rows: int) -> void:
+ 	if rows == _rows:
+ 		return
+ 	_rows = rows
+-	_sep.visible = rows == 1
++	_sep.visible = rows == 1 and _visible_modes().size() > 1
+ 	if _row_tools.get_parent() != null:
+ 		_row_tools.get_parent().remove_child(_row_tools)
+ 	if _rows == 1:
+@@ -99,10 +93,12 @@ func tool_button(tool_id: StringName) -> Button:
+ 	return _tool_buttons.get(tool_id) as Button
+ 
+ 
++## Görünür (gösterilen) düğmeler.
+ func all_buttons() -> Array[Button]:
+ 	var out: Array[Button] = []
+ 	for b: Button in _mode_buttons.values():
+-		out.append(b)
++		if b.visible:
++			out.append(b)
+ 	for b: Button in _tool_buttons.values():
+ 		out.append(b)
+ 	return out
+@@ -113,10 +109,11 @@ func add_tool(mode_id: StringName, tool_id: StringName) -> void:
+ 	if not MODES.has(mode_id):
+ 		return
+ 	var list: Array = _extra_tools.get(mode_id, [])
+-	if list.has(tool_id) or (MODES[mode_id]["tools"] as Array).has(tool_id):
++	if list.has(tool_id):
+ 		return
+ 	list.append(tool_id)
+ 	_extra_tools[mode_id] = list
++	_refresh_modes()
+ 	if mode_id == current_mode:
+ 		var keep := current_tool
+ 		_rebuild_tools()
+@@ -124,8 +121,30 @@ func add_tool(mode_id: StringName, tool_id: StringName) -> void:
+ 		_sync()
+ 
+ 
++## Aracı olan (görünür) modlar, katalog sırasıyla.
++func _visible_modes() -> Array[StringName]:
++	var out: Array[StringName] = []
++	for mode_id: StringName in MODES:
++		if not (_extra_tools.get(mode_id, []) as Array).is_empty():
++			out.append(mode_id)
++	return out
++
++
++func _refresh_modes() -> void:
++	var visible_modes := _visible_modes()
++	if not visible_modes.is_empty() and not visible_modes.has(current_mode):
++		current_mode = visible_modes[0]
++		current_tool = &""
++		_rebuild_tools()
++	for mode_id: StringName in _mode_buttons:
++		(_mode_buttons[mode_id] as Button).visible = visible_modes.size() > 1 and visible_modes.has(mode_id)
++	if _sep != null:
++		_sep.visible = _rows == 1 and visible_modes.size() > 1
++	_sync()
++
++
+ func select_mode(mode_id: StringName) -> void:
+-	if not MODES.has(mode_id) or not MODES[mode_id]["built"]:
++	if not _visible_modes().has(mode_id):
+ 		return
+ 	current_mode = mode_id
+ 	current_tool = &""
+@@ -139,9 +158,7 @@ func _rebuild_tools() -> void:
+ 		b.get_parent().remove_child(b)
+ 		b.queue_free()
+ 	_tool_buttons.clear()
+-	var spec: Dictionary = MODES[current_mode]
+-	var tools: Array = (spec["tools"] as Array).duplicate()
+-	tools.append_array(_extra_tools.get(current_mode, []))
++	var tools: Array = (_extra_tools.get(current_mode, []) as Array).duplicate()
+ 	for tool_id: StringName in tools:
+ 		var b := UiFactory.button(_ctx, UiText.t(tool_id), true, true)
+ 		b.pressed.connect(_on_tool_pressed.bind(tool_id))
+diff --git a/tests/ui/decision_panels_test.gd b/tests/ui/decision_panels_test.gd
+index 9edc61b..a4b0870 100644
+--- a/tests/ui/decision_panels_test.gd
++++ b/tests/ui/decision_panels_test.gd
+@@ -97,7 +97,7 @@ func _assert_clean_text(text: String) -> void:
+ func test_manage_mode_is_built_and_tools_open_the_decision_panels() -> void:
+ 	var d := _setup(_council_facade())
+ 	d.hud.toolbar.select_mode(ModeToolbar.MODE_MANAGE)
+-	assert_bool(d.hud.toolbar.mode_button(ModeToolbar.MODE_MANAGE).disabled).is_false()
++	assert_bool(d.hud.toolbar.mode_button(ModeToolbar.MODE_MANAGE).visible).is_true()
+ 	var cases := {ModeToolbar.TOOL_BUDGET: &"budget", ModeToolbar.TOOL_COUNCIL: &"council",
+ 		ModeToolbar.TOOL_AGENDA: &"agenda"}
+ 	for tool_id: StringName in cases:
+diff --git a/tests/ui/hud_parts_test.gd b/tests/ui/hud_parts_test.gd
+index 9a09a8a..63743b4 100644
+--- a/tests/ui/hud_parts_test.gd
++++ b/tests/ui/hud_parts_test.gd
+@@ -66,20 +66,38 @@ func test_time_controls_pause_toggle_and_selected_state() -> void:
+ 
+ # --- ModeToolbar ---
+ 
+-func test_mode_toolbar_unbuilt_modes_are_disabled_and_honestly_labelled() -> void:
++func _registered_toolbar() -> ModeToolbar:
+ 	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
+-	# Yönetim modu T-022 ile kuruldu (bütçe/meclis/gündem panelleri); yalnız İnşa kurulmamıştır.
+-	for mode_id in [ModeToolbar.MODE_BUILD]:
+-		var b := tb.mode_button(mode_id)
+-		assert_bool(b.disabled).is_true()
+-		assert_str(b.text).contains("Henüz kurulmadı")
+-	assert_bool(tb.mode_button(ModeToolbar.MODE_PLAN).disabled).is_false()
++	tb.add_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_ZONE)
++	tb.add_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_INSPECT)
++	return tb
++
++
++func test_mode_toolbar_shows_nothing_until_a_tool_is_registered() -> void:
++	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
++	assert_int(tb.all_buttons().size()).is_equal(0)
++	assert_object(tb.tool_button(ModeToolbar.TOOL_ZONE)).is_null()
+ 	tb.select_mode(ModeToolbar.MODE_BUILD)
+-	assert_that(tb.current_mode).is_equal(ModeToolbar.MODE_PLAN)  # kurulmamış moda geçilmez
++	assert_that(tb.current_mode).is_equal(ModeToolbar.MODE_PLAN)  # aracı olmayan moda geçilmez
++
++
++func test_mode_toolbar_unregistered_modes_and_not_built_labels_never_appear() -> void:
++	var tb := _registered_toolbar()
++	for b in tb.all_buttons():
++		assert_str(b.text).is_not_equal("")
++		assert_bool(b.text.contains("Henüz kurulmadı")).override_failure_message(b.text).is_false()
++	# Tek görünür mod: mod düğmeleri gizli (İnşa/Yönetim hiç yok), araçlar görünür.
++	for mode_id: StringName in ModeToolbar.MODES:
++		assert_bool(tb.mode_button(mode_id).visible).override_failure_message(String(mode_id)).is_false()
++	assert_bool(tb.tool_button(ModeToolbar.TOOL_ZONE).visible).is_true()
++	tb.add_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
++	assert_bool(tb.mode_button(ModeToolbar.MODE_PLAN).visible).is_true()
++	assert_bool(tb.mode_button(ModeToolbar.MODE_MANAGE).visible).is_true()
++	assert_bool(tb.mode_button(ModeToolbar.MODE_BUILD).visible).is_false()
+ 
+ 
+ func test_mode_toolbar_has_no_private_building_tool_and_only_mayor_verbs() -> void:
+-	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
++	var tb := _registered_toolbar()
+ 	var forbidden := ["bina", "yerleştir", "mutluluk", "puan", "skor"]
+ 	for b in tb.all_buttons():
+ 		for word in forbidden:
+@@ -89,7 +107,7 @@ func test_mode_toolbar_has_no_private_building_tool_and_only_mayor_verbs() -> vo
+ 
+ 
+ func test_mode_toolbar_rows_switch_between_one_and_two() -> void:
+-	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
++	var tb := _registered_toolbar()
+ 	assert_int(tb.rows()).is_equal(1)
+ 	tb.set_rows(2)
+ 	assert_int(tb.rows()).is_equal(2)
+@@ -99,7 +117,7 @@ func test_mode_toolbar_rows_switch_between_one_and_two() -> void:
+ 
+ 
+ func test_mode_toolbar_tool_signal() -> void:
+-	var tb := _themed(ModeToolbar.create(_ctx)) as ModeToolbar
++	var tb := _registered_toolbar()
+ 	var tools := []
+ 	tb.tool_selected.connect(func(t: StringName) -> void: tools.append(t))
+ 	tb.tool_button(ModeToolbar.TOOL_ZONE).pressed.emit()
+diff --git a/tests/ui/hud_profile_test.gd b/tests/ui/hud_profile_test.gd
+index 882ffdc..a8f2b4a 100644
+--- a/tests/ui/hud_profile_test.gd
++++ b/tests/ui/hud_profile_test.gd
+@@ -22,6 +22,9 @@ func after_test() -> void:
+ func _hud(facade: SimFacade, profile_name: StringName, window: Vector2, extra: Dictionary = {}) -> HudRoot:
+ 	var hud := HudRoot.new()
+ 	add_child(hud)
++	hud.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_ZONE)  # araç çubuğu yalnız kayıtlı araçları gösterir
++	hud.register_tool(ModeToolbar.MODE_PLAN, ModeToolbar.TOOL_INSPECT)
++	hud.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
+ 	hud.setup(facade, UiTestSupport.platform(profile_name, extra))
+ 	hud.set_anchors_preset(Control.PRESET_TOP_LEFT)
+ 	hud.size = window
