@@ -1,0 +1,46 @@
+# tools/library — varlık kütüphanesi araçları (T-052)
+
+Katalog: `data/library/catalog.json` (şema: `data/library/SCHEMA.md`). Sayfalar: `design/library/sheets/`.
+
+| Araç | Ne yapar |
+|---|---|
+| `build_catalog.py` | `kit_manifest.json` + GLB dosyalarından kataloğu üretir. Boyut ve üçgen sayısı GLB'den ÖLÇÜLÜR. Idempotent; kullanıcı alanlarını (`approval*`, `user_note`, `user_*`) ve kit dışı kayıtları korur; `approved/rejected` ASLA yazmaz. |
+| `validate_catalog.py` | Şema, çift kimlik, eksik GLB/üreteç, manifest↔katalog, GLB'den sürüklenme, bütçe, onay sahipliği kuralları. Çıkış 1 = hata. |
+| `render_sheets.sh` | Kontak sayfaları: Blender (headless, EEVEE) görünümleri + Pillow ile etiketli sayfa. |
+| `glb_info.py` | Bağımlılıksız GLB okuyucu (üçgen sayısı, bbox). |
+| `blender_render_views.py` | Blender içi işçi (doğrudan çalıştırılmaz). |
+
+## Komutlar (repo kökünden)
+
+```
+python3 tools/library/build_catalog.py            # ne değişirdi? (yazmaz)
+python3 tools/library/build_catalog.py --write    # katalogu güncelle (manifest/GLB değişince)
+python3 tools/library/build_catalog.py --check    # bayatsa çıkış 1
+python3 -I tools/library/validate_catalog.py      # doğrula
+python3 -I tests/library/test_catalog.py          # birim testleri (yalnız stdlib)
+tools/library/render_sheets.sh                    # tüm kategorilerin sayfaları
+tools/library/render_sheets.sh --category building --force   # yalnız bina, önbelleği yok say
+```
+
+`render_sheets.sh` önce katalog güncel mi diye bakar; bayatsa durur. Gereksinim: Blender 4.5 (`BLENDER=` ortam
+değişkeni ya da `/Applications/Blender.app`) ve Pillow'lu `python3` (`python3 -m pip install pillow`; `-I` KULLANMA).
+Görünüm önbelleği `artifacts/library/views/` (çalışma ağacı dışı); anahtar = GLB sha256 + palet + işçi betiği + ölçek.
+Tam bina seti ilk koşuda ~3 dk, önbellekle birkaç sn.
+
+## Sayfa düzeni
+
+`design/library/sheets/<kategori>-NN.png` (+ `index.json`: kimlik → sayfa/satır/ölçek). Her satır bir varlık:
+sol sütun kimlik, aile · dönem · çatı, ölçü (m, GLB'den), üçgenler (LOD0/LOD1/PROXY), onay durumu. Beş görünüm:
+ön (14° eğim), 3/4 ön-sağ, 3/4 arka-sol, tepeden (ön = aşağı, 10 m çubuk), ve "ölçek" (7 m'lik yakın kare, bina
+köşesinin yanında 1,75 m insan). Ölçek sayfa başına sabittir ve başlıkta yazar (kenar = N m); büyük yapılar için sayfa
+ölçeği küçük figürü okunmaz yapar, bu yüzden "ölçek" görünümü eklenmiştir.
+
+Işık/renk: sabit tek güneş (52° yükseklik, dünya sabit), düz mat, Standard görüntü dönüşümü, nötr gri zemin/arka plan;
+renkler `assets/kit/kit_palette.json`'dan (duvar/çatı/aksan için manifestte ilk listelenen satır; oyunda örnek başına
+değişir). Oyun gölgelendiricisi (`mat_kit`) değil Blender malzemesi kullanılır: renk eşleşir, tam piksel değildir.
+
+## Kapsam sınırları (dürüstlük)
+
+- Yeni insan/araç/yol varlığı ÜRETMEZ; yalnız mevcut kit'i listeler. `proposed` şablon kayıtları art-director onayına bağlı.
+- `region` alanı şimdilik `null` (bölge karakteri kararı yok).
+- Kategoriler `road_section`, `ground`, `street_furniture`, `marking` henüz boş (sayfa üretilmez).

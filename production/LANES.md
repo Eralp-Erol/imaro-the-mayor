@@ -50,3 +50,4 @@ LANE|chars|systems-designer|design/specs/characters,design/specs/politics,design
 LANE|playable|godot-engineer|src/game/,scenes/game/,tests/game/,tools/smoke_playable|tests/game|T-030 entegre oynanabilir sahne (yalnız bağlama; alt sistemlere dokunmaz)
 LANE|ux|ui-engineer|design/specs/ux/,src/ui/,scenes/ui/,scenes/dev/ui_lab,tests/ui/,data/ui/|tests/ui|T-018..T-022
 LANE|qa|qa-engineer|tests/qa/,production/qa/|tests/qa|bağımsız doğrulama
+LANE|library|technical-artist|data/library/,tools/library/,design/library/sheets/,tests/library/|tests/library|T-052 (varlık kütüphanesi; design/library/README.md ve templates-v0.md art-director)

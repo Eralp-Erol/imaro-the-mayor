@@ -1,0 +1,3289 @@
+{
+  "catalog_version": 1,
+  "schema": "data/library/SCHEMA.md",
+  "generated_by": "tools/library/build_catalog.py",
+  "generated_from": "assets/models/buildings/kit_manifest.json",
+  "kit_version": 1,
+  "palette": "res://assets/kit/kit_palette.json",
+  "categories": [
+    {
+      "id": "building",
+      "label_tr": "Bina"
+    },
+    {
+      "id": "roof_equipment",
+      "label_tr": "Cati / ekipman"
+    },
+    {
+      "id": "vegetation",
+      "label_tr": "Bitki"
+    },
+    {
+      "id": "vehicle",
+      "label_tr": "Arac"
+    },
+    {
+      "id": "human",
+      "label_tr": "Insan"
+    },
+    {
+      "id": "road_section",
+      "label_tr": "Yol kesiti"
+    },
+    {
+      "id": "ground",
+      "label_tr": "Zemin / kent dokusu"
+    },
+    {
+      "id": "street_furniture",
+      "label_tr": "Sokak donatisi"
+    },
+    {
+      "id": "marking",
+      "label_tr": "Isaret / cizgi"
+    }
+  ],
+  "entries": [
+    {
+      "id": "bld_civ_hall_a",
+      "category": "building",
+      "family": "civ_hall",
+      "variant": "a",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/civ_hall/bld_civ_hall_a.glb",
+      "glb_sha256": "ec21d15f74acaea7491e29aa1b47bd4cee9196c87cd166121f8b6de7a9b30869",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 40.0,
+        "depth_z": 30.4,
+        "height_above_ground": 12.9,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -20.0,
+          -2.5,
+          -12.0
+        ],
+        "bbox_max": [
+          20.0,
+          12.9,
+          18.4
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 498,
+        "LOD1": 36,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W2",
+          "W8",
+          "W11"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only civ_hall",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_civ_hall_b",
+      "category": "building",
+      "family": "civ_hall",
+      "variant": "b",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/civ_hall/bld_civ_hall_b.glb",
+      "glb_sha256": "a4eba9f70160759a9617f82a2f187b46c37dab0de0a1205e3c06596fd9f86a9f",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 44.0,
+        "depth_z": 28.0,
+        "height_above_ground": 12.9,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -22.0,
+          -2.5,
+          -14.0
+        ],
+        "bbox_max": [
+          22.0,
+          12.9,
+          14.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 698,
+        "LOD1": 54,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W2",
+          "W8",
+          "W11"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only civ_hall",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_civ_hall_c",
+      "category": "building",
+      "family": "civ_hall",
+      "variant": "c",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/civ_hall/bld_civ_hall_c.glb",
+      "glb_sha256": "dd4e6851752eb16c8865560cee31399d89ac9ce7881036ad49439ab5558ddd69",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 36.0,
+        "depth_z": 22.0,
+        "height_above_ground": 17.5,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -18.0,
+          -2.5,
+          -11.0
+        ],
+        "bbox_max": [
+          18.0,
+          17.5,
+          11.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 548,
+        "LOD1": 32,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R8",
+          "R5"
+        ],
+        "wall_rows": [
+          "W2",
+          "W8",
+          "W11"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only civ_hall",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_ind_heritage_a",
+      "category": "building",
+      "family": "ind_heritage",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/ind_heritage/bld_ind_heritage_a.glb",
+      "glb_sha256": "48119a77a03cd5382697fd731c2fc81439976d1b2cc3b89831d765ddf06be87c",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 30.3,
+        "depth_z": 18.6,
+        "height_above_ground": 13.636,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -15.15,
+          -2.5,
+          -9.3
+        ],
+        "bbox_max": [
+          15.15,
+          13.636,
+          9.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 308,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R4",
+          "R5",
+          "R8"
+        ],
+        "wall_rows": [
+          "W10",
+          "W11"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only ind_heritage",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_ind_heritage_b",
+      "category": "building",
+      "family": "ind_heritage",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:sawtooth"
+      ],
+      "glb": "res://assets/models/buildings/ind_heritage/bld_ind_heritage_b.glb",
+      "glb_sha256": "3f760b8d9cd870f2356255dc2cc2b9d6e7d76fe4ca452b199898b1c5e5ebc0a9",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 32.55,
+        "depth_z": 23.55,
+        "height_above_ground": 17.0,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -16.4,
+          -2.5,
+          -11.65
+        ],
+        "bbox_max": [
+          16.15,
+          17.0,
+          11.9
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 466,
+        "LOD1": 46,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R7",
+          "R8"
+        ],
+        "wall_rows": [
+          "W10",
+          "W11"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only ind_heritage",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_ind_shed_a",
+      "category": "building",
+      "family": "ind_shed",
+      "variant": "a",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/ind_shed/bld_ind_shed_a.glb",
+      "glb_sha256": "3091b6a01da89f99038ba5d76da97e3a07d90a006b8d0555ab76a219b9d09283",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 40.0,
+        "depth_z": 24.6,
+        "height_above_ground": 9.616,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -20.0,
+          -2.5,
+          -12.3
+        ],
+        "bbox_max": [
+          20.0,
+          9.616,
+          12.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 166,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R6",
+          "R7"
+        ],
+        "wall_rows": [
+          "W9",
+          "W12",
+          "W13"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only ind_shed",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_ind_shed_b",
+      "category": "building",
+      "family": "ind_shed",
+      "variant": "b",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:sawtooth"
+      ],
+      "glb": "res://assets/models/buildings/ind_shed/bld_ind_shed_b.glb",
+      "glb_sha256": "b4b927f111ff4d4276a0181d22a9b8f25289cc9b3c07be623ed6184923467f39",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 36.0,
+        "depth_z": 28.0,
+        "height_above_ground": 8.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -18.0,
+          -2.5,
+          -14.0
+        ],
+        "bbox_max": [
+          18.0,
+          8.6,
+          14.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 180,
+        "LOD1": 26,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R6",
+          "R7",
+          "R8"
+        ],
+        "wall_rows": [
+          "W9",
+          "W12",
+          "W13"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only ind_shed",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_ind_shed_c",
+      "category": "building",
+      "family": "ind_shed",
+      "variant": "c",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/ind_shed/bld_ind_shed_c.glb",
+      "glb_sha256": "db40c701f56246bede3800e4f5384375c85fcd2647e340b89dda8c050324a0e7",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 56.25,
+        "depth_z": 33.3,
+        "height_above_ground": 10.608,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -28.0,
+          -2.5,
+          -15.3
+        ],
+        "bbox_max": [
+          28.25,
+          10.608,
+          18.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 248,
+        "LOD1": 44,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R6",
+          "R7"
+        ],
+        "wall_rows": [
+          "W9",
+          "W12",
+          "W13"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only ind_shed",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_lmk_clocktower",
+      "category": "building",
+      "family": "lmk_clocktower",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "landmark"
+      ],
+      "glb": "res://assets/models/buildings/lmk_clocktower/bld_lmk_clocktower.glb",
+      "glb_sha256": "69e7fc47fddc1afd232f2713758d117560a7b31d578406f088b90e3da4f96866",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 9.0,
+        "depth_z": 9.0,
+        "height_above_ground": 23.0,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -4.5,
+          -2.5,
+          -4.5
+        ],
+        "bbox_max": [
+          4.5,
+          23.0,
+          4.5
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 318,
+        "LOD1": 84,
+        "PROXY": 12
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R8"
+        ],
+        "wall_rows": [
+          "W2",
+          "W11"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_props.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only lmk_clocktower",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_house_a",
+      "category": "building",
+      "family": "res_house",
+      "variant": "a",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_house/bld_res_house_a.glb",
+      "glb_sha256": "abdc4e1109f2f723880b5d5d77a586ea077fdf4832e7af45cad135a441140535",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 8.0,
+        "depth_z": 10.0,
+        "height_above_ground": 5.3,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -4.0,
+          -2.5,
+          -5.0
+        ],
+        "bbox_max": [
+          4.0,
+          5.3,
+          5.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 116,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W8",
+          "W3",
+          "W4"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_house",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_house_b",
+      "category": "building",
+      "family": "res_house",
+      "variant": "b",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/res_house/bld_res_house_b.glb",
+      "glb_sha256": "4dd05de50105a150533b21bfbfb44ac03dc024c6f167aecf77d6b0385df3a1d7",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 8.5,
+        "depth_z": 9.6,
+        "height_above_ground": 8.245,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -4.25,
+          -2.5,
+          -4.25
+        ],
+        "bbox_max": [
+          4.25,
+          8.245,
+          5.35
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 196,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W8",
+          "W3",
+          "W4"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_house",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_house_c",
+      "category": "building",
+      "family": "res_house",
+      "variant": "c",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_house/bld_res_house_c.glb",
+      "glb_sha256": "ab78c272ec160abb36d9f7da3060976354c4596be94afa701b1e850074f4e184",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 11.3,
+        "depth_z": 10.0,
+        "height_above_ground": 8.41,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -5.55,
+          -2.5,
+          -5.0
+        ],
+        "bbox_max": [
+          5.75,
+          8.41,
+          5.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 188,
+        "LOD1": 44,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W8",
+          "W3",
+          "W4"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_house",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_house_d",
+      "category": "building",
+      "family": "res_house",
+      "variant": "d",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/res_house/bld_res_house_d.glb",
+      "glb_sha256": "b50d5f56a5a582c82700614f99dbb796db8a16a019dd232edebfecddde5724b0",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 10.0,
+        "depth_z": 9.5,
+        "height_above_ground": 8.3,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -5.0,
+          -2.5,
+          -4.75
+        ],
+        "bbox_max": [
+          5.0,
+          8.3,
+          4.75
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 238,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W8",
+          "W3",
+          "W4"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_house",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_house_e",
+      "category": "building",
+      "family": "res_house",
+      "variant": "e",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/res_house/bld_res_house_e.glb",
+      "glb_sha256": "e69e4fe484147ddcc2e296294490b7a450b3c594f96eb6b496f9ea6dad8f6332",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 7.5,
+        "depth_z": 11.9,
+        "height_above_ground": 5.245,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -3.75,
+          -2.5,
+          -5.5
+        ],
+        "bbox_max": [
+          3.75,
+          5.245,
+          6.4
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 144,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W8",
+          "W3",
+          "W4"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_house",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_late_a",
+      "category": "building",
+      "family": "res_late",
+      "variant": "a",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_late/bld_res_late_a.glb",
+      "glb_sha256": "b40e239e812924cb9ba3d0c229925d34db32f727af8c35d300b03a8d02dfd12d",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 18.0,
+        "depth_z": 17.3,
+        "height_above_ground": 20.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -9.0,
+          -2.5,
+          -8.0
+        ],
+        "bbox_max": [
+          9.0,
+          20.6,
+          9.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 452,
+        "LOD1": 38,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W5",
+          "W9",
+          "W2",
+          "W4",
+          "W7"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_late",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_late_a_gf",
+      "category": "building",
+      "family": "res_late",
+      "variant": "a_gf",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:flat",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_late/bld_res_late_a_gf.glb",
+      "glb_sha256": "89d56076259b8c79eabe887a8798332664ba59298f394dac850fee9f9da012d6",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 18.0,
+        "depth_z": 17.3,
+        "height_above_ground": 21.8,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -9.0,
+          -2.5,
+          -8.0
+        ],
+        "bbox_max": [
+          9.0,
+          21.8,
+          9.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 442,
+        "LOD1": 40,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W5",
+          "W9",
+          "W2",
+          "W4",
+          "W7"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_late",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_late_b",
+      "category": "building",
+      "family": "res_late",
+      "variant": "b",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_late/bld_res_late_b.glb",
+      "glb_sha256": "54bc3b47fc6ed366af44230184beecb1f4786c05dd7433f23cdf592a237f72b7",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 25.0,
+        "depth_z": 15.8,
+        "height_above_ground": 23.0,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -12.5,
+          -2.5,
+          -7.5
+        ],
+        "bbox_max": [
+          12.5,
+          23.0,
+          8.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 532,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W5",
+          "W9",
+          "W2",
+          "W4",
+          "W7"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_late",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_late_b_gf",
+      "category": "building",
+      "family": "res_late",
+      "variant": "b_gf",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:hip",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_late/bld_res_late_b_gf.glb",
+      "glb_sha256": "1761da4b6105c6157b27567d26df94e80476bc37d0211895a9af8b52681d1c46",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 25.0,
+        "depth_z": 15.8,
+        "height_above_ground": 24.2,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -12.5,
+          -2.5,
+          -7.5
+        ],
+        "bbox_max": [
+          12.5,
+          24.2,
+          8.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 536,
+        "LOD1": 24,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W5",
+          "W9",
+          "W2",
+          "W4",
+          "W7"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_late",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_late_c",
+      "category": "building",
+      "family": "res_late",
+      "variant": "c",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "era:late",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_late/bld_res_late_c.glb",
+      "glb_sha256": "42722f0af58f7fed2b2195186ad0287ca1db193904393bde20937fe6ee16da52",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 16.0,
+        "depth_z": 13.3,
+        "height_above_ground": 17.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -8.0,
+          -2.5,
+          -6.0
+        ],
+        "bbox_max": [
+          8.0,
+          17.6,
+          7.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 350,
+        "LOD1": 38,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W5",
+          "W9",
+          "W2",
+          "W4",
+          "W7"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_late",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_a",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "a",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_a.glb",
+      "glb_sha256": "3315958fa1af345b3e6a10e6d5768a68da32e761a03da4096f9ff5b120905cf6",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 14.0,
+        "depth_z": 11.0,
+        "height_above_ground": 14.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -7.0,
+          -2.5,
+          -5.5
+        ],
+        "bbox_max": [
+          7.0,
+          14.6,
+          5.5
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 224,
+        "LOD1": 28,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_a_gf",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "a_gf",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_a_gf.glb",
+      "glb_sha256": "5d52ca726b8c18653514907e4337918b64091ee6d6cab5f47b03bb17514c467c",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 14.0,
+        "depth_z": 12.2,
+        "height_above_ground": 15.8,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -7.0,
+          -2.5,
+          -5.5
+        ],
+        "bbox_max": [
+          7.0,
+          15.8,
+          6.7
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 226,
+        "LOD1": 30,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_b",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "b",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_b.glb",
+      "glb_sha256": "c5107041e4b6b44929e7b5cb8b6b3f314e9f501343d8f40f4ac4eb5c3d3ec1b8",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 18.0,
+        "depth_z": 12.0,
+        "height_above_ground": 17.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -9.0,
+          -2.5,
+          -6.0
+        ],
+        "bbox_max": [
+          9.0,
+          17.6,
+          6.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 396,
+        "LOD1": 38,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_b_gf",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "b_gf",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_b_gf.glb",
+      "glb_sha256": "b418ccbf98b3d9d3618eb8de0931b21c40d96c8ab4f5061b5b5fff16b1157b2f",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 18.0,
+        "depth_z": 13.2,
+        "height_above_ground": 18.8,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -9.0,
+          -2.5,
+          -6.0
+        ],
+        "bbox_max": [
+          9.0,
+          18.8,
+          7.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 388,
+        "LOD1": 40,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_c",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "c",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_c.glb",
+      "glb_sha256": "a2ae3ba0894e5ee29640713ae0b6a8e4999a290aaa650ea79890f2bbd3424e11",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 12.0,
+        "depth_z": 10.0,
+        "height_above_ground": 17.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -6.0,
+          -2.5,
+          -5.0
+        ],
+        "bbox_max": [
+          6.0,
+          17.6,
+          5.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 280,
+        "LOD1": 38,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_c_gf",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "c_gf",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_c_gf.glb",
+      "glb_sha256": "b8ebb230404a905d017e7df057e5ffcf3dbe0a6a1deb6aeae3693176d557a4e7",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 12.0,
+        "depth_z": 11.2,
+        "height_above_ground": 18.8,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -6.0,
+          -2.5,
+          -5.0
+        ],
+        "bbox_max": [
+          6.0,
+          18.8,
+          6.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 284,
+        "LOD1": 40,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_d",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "d",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_d.glb",
+      "glb_sha256": "31f7fe18e172e144f44536de5c58b57a5af37a274a7de57fa188b192a9d59308",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 20.0,
+        "depth_z": 14.0,
+        "height_above_ground": 20.6,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -10.0,
+          -2.5,
+          -7.0
+        ],
+        "bbox_max": [
+          10.0,
+          20.6,
+          7.0
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 368,
+        "LOD1": 38,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_e",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "e",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_e.glb",
+      "glb_sha256": "25305828e248159e811baed6d52b6d28821ff292afe73c090c67e6dd0ef156cf",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 15.2,
+        "depth_z": 12.2,
+        "height_above_ground": 14.3,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -7.6,
+          -2.5,
+          -6.1
+        ],
+        "bbox_max": [
+          7.6,
+          14.3,
+          6.1
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 194,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_e_gf",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "e_gf",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_e_gf.glb",
+      "glb_sha256": "fb2a706e06f7d1dfe6c1c59e2092b8a83dd8618bdde8220b880438cfe95f48c7",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 15.2,
+        "depth_z": 12.8,
+        "height_above_ground": 15.5,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -7.6,
+          -2.5,
+          -6.1
+        ],
+        "bbox_max": [
+          7.6,
+          15.5,
+          6.7
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 196,
+        "LOD1": 24,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_f",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "f",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_f.glb",
+      "glb_sha256": "7a55d9904813e878fb1b47d44aa2404a4ddf4abba224478baed4bbf43c75a2b0",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 19.2,
+        "depth_z": 13.2,
+        "height_above_ground": 17.55,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -9.6,
+          -2.5,
+          -6.6
+        ],
+        "bbox_max": [
+          9.6,
+          17.55,
+          6.6
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 280,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_f_gf",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "f_gf",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:hip",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_f_gf.glb",
+      "glb_sha256": "6bc5c8d27026273743aeb4e7e20f4228d11a3fb720dc9cd704a8b33605906045",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 19.2,
+        "depth_z": 13.8,
+        "height_above_ground": 18.75,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -9.6,
+          -2.5,
+          -6.6
+        ],
+        "bbox_max": [
+          9.6,
+          18.75,
+          7.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 272,
+        "LOD1": 24,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_mid_g",
+      "category": "building",
+      "family": "res_mid",
+      "variant": "g",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "era:mid",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/res_mid/bld_res_mid_g.glb",
+      "glb_sha256": "90fb03aa928890410d8321411d22db9b6a4318d446664e196d4e579f10d2970b",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 12.0,
+        "depth_z": 11.2,
+        "height_above_ground": 14.4,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -6.0,
+          -2.5,
+          -5.6
+        ],
+        "bbox_max": [
+          6.0,
+          14.4,
+          5.6
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 204,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W1",
+          "W2",
+          "W5",
+          "W6",
+          "W4",
+          "W3",
+          "W7",
+          "W9"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_mid",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_a",
+      "category": "building",
+      "family": "res_old",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_old/bld_res_old_a.glb",
+      "glb_sha256": "db09a44a80a83a6561eb7f4b5c5a7a59130dee16f0215a94b088a8554560df34",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 7.9,
+        "depth_z": 13.25,
+        "height_above_ground": 11.2,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -3.95,
+          -2.5,
+          -6.45
+        ],
+        "bbox_max": [
+          3.95,
+          11.2,
+          6.8
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 136,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_a_gf",
+      "category": "building",
+      "family": "res_old",
+      "variant": "a_gf",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_old/bld_res_old_a_gf.glb",
+      "glb_sha256": "b509f47ca385e5da19f5892471424a2a0ebdf1139dd20a1e7861cd9a0000d469",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 7.9,
+        "depth_z": 13.65,
+        "height_above_ground": 12.4,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -3.95,
+          -2.5,
+          -6.45
+        ],
+        "bbox_max": [
+          3.95,
+          12.4,
+          7.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 142,
+        "LOD1": 24,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_b",
+      "category": "building",
+      "family": "res_old",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:gable"
+      ],
+      "glb": "res://assets/models/buildings/res_old/bld_res_old_b.glb",
+      "glb_sha256": "d287e14d8fa9d84587909921e6d167c844b1e90d68c90d31474b1e2259c7fbac",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 8.0,
+        "depth_z": 12.25,
+        "height_above_ground": 8.5,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -4.0,
+          -2.5,
+          -5.95
+        ],
+        "bbox_max": [
+          4.0,
+          8.5,
+          6.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 116,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_c",
+      "category": "building",
+      "family": "res_old",
+      "variant": "c",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:flat"
+      ],
+      "glb": "res://assets/models/buildings/res_old/bld_res_old_c.glb",
+      "glb_sha256": "da1547f37f74f285c993917562823c345aac54a8c7904e00233cae177f194d11",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 7.0,
+        "depth_z": 13.8,
+        "height_above_ground": 10.5,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -3.5,
+          -2.5,
+          -6.5
+        ],
+        "bbox_max": [
+          3.5,
+          10.5,
+          7.3
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 196,
+        "LOD1": 28,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_c_gf",
+      "category": "building",
+      "family": "res_old",
+      "variant": "c_gf",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:flat",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_old/bld_res_old_c_gf.glb",
+      "glb_sha256": "41c4589b7f5a15d1bd1ebe57df3c6cd58f728b0db063d19a8fd568debb97dcdf",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 7.0,
+        "depth_z": 14.2,
+        "height_above_ground": 11.7,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -3.5,
+          -2.5,
+          -6.5
+        ],
+        "bbox_max": [
+          3.5,
+          11.7,
+          7.7
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 202,
+        "LOD1": 30,
+        "PROXY": 10
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R1",
+          "R2"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_d",
+      "category": "building",
+      "family": "res_old",
+      "variant": "d",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_old/bld_res_old_d.glb",
+      "glb_sha256": "488bcdd4ed9c372ff26f1e38fd6ace8f233a0ee6739f690ea9e47207c93a7b2e",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 7.9,
+        "depth_z": 10.9,
+        "height_above_ground": 8.3,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -3.95,
+          -2.5,
+          -5.45
+        ],
+        "bbox_max": [
+          3.95,
+          8.3,
+          5.45
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 104,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_town_a",
+      "category": "building",
+      "family": "res_old_town",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_old_town/bld_res_old_town_a.glb",
+      "glb_sha256": "ff20074e27a0ebce56f94d05bb54aa1878efec1c28fb557e9e134c63176c87d3",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 13.2,
+        "depth_z": 13.2,
+        "height_above_ground": 11.1,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -6.6,
+          -2.5,
+          -6.6
+        ],
+        "bbox_max": [
+          6.6,
+          11.1,
+          6.6
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 368,
+        "LOD1": 20,
+        "PROXY": 12
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old_town",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_town_a_gf",
+      "category": "building",
+      "family": "res_old_town",
+      "variant": "a_gf",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_old_town/bld_res_old_town_a_gf.glb",
+      "glb_sha256": "5b94c11c4fa2d33b4dc9e1de23fb4977dd7f9b7f9743f2014a5417ca606ae719",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 13.2,
+        "depth_z": 13.8,
+        "height_above_ground": 12.3,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -6.6,
+          -2.5,
+          -6.6
+        ],
+        "bbox_max": [
+          6.6,
+          12.3,
+          7.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 376,
+        "LOD1": 22,
+        "PROXY": 12
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old_town",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_town_b",
+      "category": "building",
+      "family": "res_old_town",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_old_town/bld_res_old_town_b.glb",
+      "glb_sha256": "ef8492a50b557b94786cb7020048fbbf2ad7878f700e7dbc4059822670da31ac",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 15.2,
+        "depth_z": 14.35,
+        "height_above_ground": 14.4,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -7.6,
+          -2.5,
+          -7.1
+        ],
+        "bbox_max": [
+          7.6,
+          14.4,
+          7.25
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 490,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old_town",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_town_c",
+      "category": "building",
+      "family": "res_old_town",
+      "variant": "c",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip"
+      ],
+      "glb": "res://assets/models/buildings/res_old_town/bld_res_old_town_c.glb",
+      "glb_sha256": "31126acb9db09d53aad2871034c99df3e7b543cf28af03ff582d78163eeedb6d",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 16.2,
+        "depth_z": 13.35,
+        "height_above_ground": 14.3,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -8.1,
+          -2.5,
+          -6.6
+        ],
+        "bbox_max": [
+          8.1,
+          14.3,
+          6.75
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 562,
+        "LOD1": 22,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old_town",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "bld_res_old_town_c_gf",
+      "category": "building",
+      "family": "res_old_town",
+      "variant": "c_gf",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "era:old",
+        "roof:hip",
+        "ground-floor-shop"
+      ],
+      "glb": "res://assets/models/buildings/res_old_town/bld_res_old_town_c_gf.glb",
+      "glb_sha256": "4b5a4d0e684846eec4171bede7c7f3a24fb7159982fc00c3dcd8927a2340524b",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 16.2,
+        "depth_z": 13.8,
+        "height_above_ground": 15.5,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -8.1,
+          -2.5,
+          -6.6
+        ],
+        "bbox_max": [
+          8.1,
+          15.5,
+          7.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 572,
+        "LOD1": 24,
+        "PROXY": 14
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A3",
+          "A4"
+        ],
+        "roof_rows": [
+          "R3",
+          "R4",
+          "R5",
+          "R9"
+        ],
+        "wall_rows": [
+          "W2",
+          "W1",
+          "W8",
+          "W3",
+          "W4",
+          "W6"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_buildings.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only res_old_town",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "prop_chimney",
+      "category": "roof_equipment",
+      "family": "prop_chimney",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [],
+      "glb": "res://assets/models/props/prop_chimney.glb",
+      "glb_sha256": "99d6838874871e5ccd53b1573b6b32efdb5248f4bdb0c61caa9d9554a740e57d",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 2.5,
+        "depth_z": 2.5,
+        "height_above_ground": 30.0,
+        "foundation_skirt_depth": 2.5,
+        "bbox_min": [
+          -1.25,
+          -2.5,
+          -1.25
+        ],
+        "bbox_max": [
+          1.25,
+          30.0,
+          1.25
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 54,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R2"
+        ],
+        "wall_rows": [
+          "W10"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_props.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only prop_chimney",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "veg_plane",
+      "category": "vegetation",
+      "family": "veg_plane",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [],
+      "glb": "res://assets/models/vegetation/veg_plane.glb",
+      "glb_sha256": "b8d6f6829023ca38208554b03227d5ca8e9a270f7439b950694f44c8939f1334",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 9.482,
+        "depth_z": 9.389,
+        "height_above_ground": 14.026,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -4.674,
+          0.0,
+          -4.8
+        ],
+        "bbox_max": [
+          4.808,
+          14.026,
+          4.588
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 72,
+        "LOD1": 32,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "P2",
+          "P3",
+          "P4"
+        ],
+        "wall_rows": [
+          "W1"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_props.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only veg_plane",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "veh_car",
+      "category": "vehicle",
+      "family": "veh_car",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [],
+      "glb": "res://assets/models/vehicles/veh_car.glb",
+      "glb_sha256": "c6162a318c0759d825980c39596550cd0c49de548f63da5ad1133e78b246bf22",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 1.84,
+        "depth_z": 4.4,
+        "height_above_ground": 1.5,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -0.92,
+          0.02,
+          -2.2
+        ],
+        "bbox_max": [
+          0.92,
+          1.5,
+          2.2
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 28,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R2"
+        ],
+        "wall_rows": [
+          "W5",
+          "W7",
+          "W9",
+          "W2",
+          "W6",
+          "W1",
+          "W12"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_props.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only veh_car",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    },
+    {
+      "id": "prop_human",
+      "category": "human",
+      "family": "prop_human",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [],
+      "glb": "res://assets/models/props/prop_human.glb",
+      "glb_sha256": "8286149babdbfafe37fa962e8b09ed0e618797eee492cb3b5720f75d668ddc05",
+      "materials": [
+        "mat_kit"
+      ],
+      "dimensions_m": {
+        "width_x": 0.5,
+        "depth_z": 0.26,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -0.25,
+          0.0,
+          -0.13
+        ],
+        "bbox_max": [
+          0.25,
+          1.75,
+          0.13
+        ],
+        "measured_from": "LOD0 POSITION accessor min/max in the GLB"
+      },
+      "triangles": {
+        "LOD0": 28,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [
+          "A1",
+          "A2",
+          "A3"
+        ],
+        "roof_rows": [
+          "R2",
+          "R7",
+          "R5",
+          "R1"
+        ],
+        "wall_rows": [
+          "W2",
+          "W5",
+          "W6",
+          "W7",
+          "W9",
+          "W3"
+        ]
+      },
+      "source": {
+        "kind": "kit",
+        "generator": "art/blender/generators/kit_props.py",
+        "manifest": "assets/models/buildings/kit_manifest.json",
+        "rebuild": "art/blender/rebuild_kit.sh --only prop_human",
+        "spec": "design/specs/art/building-kit-v1.md"
+      },
+      "manifest_present": true,
+      "approval": "provisional-in-use",
+      "approval_by": null,
+      "approval_date": "2026-10-25",
+      "user_note": ""
+    }
+  ]
+}
