@@ -24,6 +24,7 @@ Durumlar:
 | Q-015 | Ismeral coğrafyasının yaratıcı onayı: T-001 çıktısı (körfez, ada dizisi, D1–D6 yerleşimi, D1 kuzey kıyıda çıkarımı, liman sahası) kullanıcı tarafından onaylandı mı? | **open** | yalnız KALICI koordinata bağlı işler (aşağıda) |
 | Q-016 | Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları: ekonomi birimi↔kit katı oranı, inşaat kademesinin görünümü (iskele modülü var mı), başlangıç altyapı kapasitesi/hane talebi, otonom yatırımcı büyümesi oynanabilirde açık mı | **open** | — (engellemiyor) |
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
+| Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
 - Kullanıcı eski POC'yi referans görselleriyle birlikte sildi; kullanılmaz.
@@ -53,6 +54,17 @@ Onay gelene kadar kural: **hiçbir görev kalıcı şehir/mahalle/liman/yol/yerl
 
 ### Q-013 ek · Çatı payı kuralı çelişkisi (T-005 raporu, art-director kararı gerekir)
 Kit §3.2: küçük merkez/köy/yamaç/tarlada kiremit payı %55–70; aynı spec'te "her 500 m pencerede ≤%55" kuralı var. T-005 yorumu: 500 m kuralı yalnız yoğun/orta yoğun pencereler için geçerli. Onay art-director'da (sanat kuralı), kullanıcı kararı değil. Beklerken: yorum uygulandı.
+
+### Q-018 · Varlık kütüphanesi şablon kararları (T-052; status: open — kontak sayfalarıyla birlikte sorulacak)
+Kaynak: art-director, `design/library/README.md` + `design/library/templates-v0.md` (her kategorinin sonunda tam soru listesi). Kullanıcı 2026-10-25: insan, araç, yol çizimi şablonları önceden çizilip onaya sunulacak; dünyada onaysız hiçbir şey yaratılmayacak. Aşağıdakiler kanondan çözülemeyen ve kontak sayfasıyla birlikte sorulacak kararlardır (hiçbiri uydurulmadı):
+1. **Onay biçimi:** kimlik bazında mı, aile/kategori bazında toplu onay da olsun mu? Onaylanan bir şablonun görünümü sonradan değişirse yeniden onay gereksin mi (öneri: evet, içerik özetine bağlı)?
+2. **İnsan:** stilizasyon seviyesi A piyon / B blok figür (öneri) / C faset; gövde tipi sayısı; kalabalıkta kültürel/dini okunabilecek giyim öğeleri (Q-010 ile bağlı); üniformalı kamu personeli; protagonist/adlı karakterler kütüphane dışı mı (Q-005)?
+3. **Araç:** tamamen jenerik mi, dönem karakteri (eski sedan) istenir mi; taksi ayrı mı ve rengi; Ismeral kamu taşıtlarının renk kimliği; vapur gövde rengi; acil durum araçları; sokak yoğunluk hissi.
+4. **Ulaşım T0 içeriği:** T0'da tramvay, banliyö treni, araba vapuru var mı? (Bugünkü T0 ağı: yol, yük/ray hattı, D1↔D6 yolcu feribotu; tramvay yok.)
+5. **Yol kesitleri:** önerilen genişlikler; yeni sınıflar (`ped`, `boulevard`, `coast`, daraltılmış yamaç sokağı); oyuncu kesit mi sınıf mı seçer; kesit dönüşümü (refüj → tramvay) oynanış mı; bisiklet yolu rengi; park şeridi; promenad içeriği; işaretleme düzeyi.
+6. **Bitki/zemin/donatı:** palmiye türü; fıstık çamı; çiçek vurgusu; meydan döşeme tonu; asfalt tonu; donatı metal rengi; kiosk/simit arabası; reklam/tabela; şantiye görünümü (Q-016 iskele sorusuyla birlikte); gece aydınlatması.
+7. **Mevsim/hava:** oyunda mevsim var mı (giyim, yaprak)? Karar yoksa yaz görünümü sabit.
+Beklerken stüdyo ne yapar: şablonlar katalogda `proposed`; kontak sayfaları üretilir; hiçbir `proposed` şablon oyuna girmez; her seçenek veri (palet satırı, kesit tablosu, sınıf genişliği) olarak tutulur, kullanıcı cevabı yalnız veriyi değiştirir. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
 ### Q-016 · Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları (T-040; status: open — engellemiyor)
 Kaynak: T-040 render payı (godot-engineer). Hiçbiri kanonlaştırılmadı; hepsi yapılandırılabilir ÇM verisidir.
