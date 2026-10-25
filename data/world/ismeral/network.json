@@ -8,6 +8,7 @@
 		"links: bölge/saha merkezleri arası kara yolu. style 'coast' = kıyı konturunu izler (kıyı yolu). Güzergâh WorldData üzerinde A* ile bulunur (eğim/su/kıyı maliyeti); yollar suya ve adalara kurulmaz (WLD-03).",
 		"rail: ray hatları (liman limanından D4'e vb.); 'port' = T0 liman düğümü. ferries: D1 <-> D6 feribot hattı; iki iskele kıyıdan kurulur, hat suyun üstünden geçer, doldurma yoktur (WLD-05).",
 		"connectors: ana ağdan kopuk kalan parçalar (örn. tarla yolları) en yakın düğüme toplayıcıyla bağlanır; enabled=false testlerde bozulmuş varyant içindir.",
+		"organic (T-049 A, ÇM): her elips ayak izinin sınırı saf elips değil `warp` ölçek alanıdır: warp = 1 + noise (tohum = layout_seed + ayak izi kimliği; cell_m = özellik boyu m, amp = genlik) + terrain (eğim slope_lo_deg altında flat_gain kadar yayılır, slope_hi_deg üstünde steep_cut kadar çekilir) + shore (kıyıdan near_m..far_m şeridinde gain kadar: kıyı boyu uzama) + ribbon (`links` ile bağlı komşu merkeze doğru şerit/lob: gain = ek ölçek, sigma_m = lob genişliği, start_norm = merkezden başlama oranı). scale_min/scale_max kelepçe, cell_m raster adımı. defaults tüm dokulara; fabrics[kod] kısmi geçersiz kılma (WLD-04: D1+D6 kompakt çekirdek = düşük oynaklık/lob, D2-D5 daha oynak). Koordinat YOK; enabled=false saf elips verir.",
 		"parcel_templates: lot_width_m/jitter = cephe genişliği, max_depth_m = tek sıra lot derinliği, min_area_m2/min_frontage_m = alt eşikler, max_block_area_m2 = bundan büyük yüz parselsiz AÇIK arazi (kama/yeşil kuşak) sayılır. Kentsel şablonlar (core/compact/mixed) T-005 yerleşimi içindir; 'industrial' T0 liman/sanayi sahası; 'rural' tarla parselleri. Bunlar arazi KULLANIMI değil, parsel geometrisidir (imar/yapı: sim/T-005)."
 	],
 	"schema_version": 1,
@@ -26,6 +27,26 @@
 		"cell_m": 250.0, "road_max_slope_deg": 13.0, "rail_max_slope_deg": 6.0, "slope_cost_per_deg": 0.22,
 		"shore_margin_m": 90.0, "footprint_penalty": 7.0, "footprint_inflate_m": 150.0, "simplify_m": 150.0,
 		"coast_offset_m": 280.0, "coast_weight": 3.0, "relax_steps": [1.0, 1.4, 2.0]
+	},
+	"organic": {
+		"enabled": true,
+		"defaults": {
+			"cell_m": 80.0,
+			"scale_min": 0.4,
+			"scale_max": 2.0,
+			"noise": {"cell_m": [1300.0, 500.0], "amp": [0.24, 0.1]},
+			"terrain": {"slope_lo_deg": 2.0, "slope_hi_deg": 8.0, "flat_gain": 0.1, "steep_cut": 0.5},
+			"shore": {"near_m": 150.0, "far_m": 800.0, "gain": 0.1},
+			"ribbon": {"gain": 0.7, "sigma_m": 330.0, "start_norm": 0.4}
+		},
+		"fabrics": {
+			"D1": {"noise": {"amp": [0.2, 0.08]}, "ribbon": {"gain": 0.55}},
+			"D6": {"noise": {"amp": [0.2, 0.08]}, "ribbon": {"gain": 0.55}},
+			"D2": {"noise": {"amp": [0.32, 0.14]}, "ribbon": {"gain": 0.9}},
+			"D3": {"noise": {"amp": [0.32, 0.14]}, "ribbon": {"gain": 0.9}},
+			"D4": {"noise": {"amp": [0.34, 0.14]}, "ribbon": {"gain": 1.1}},
+			"D5": {"noise": {"amp": [0.32, 0.14]}, "ribbon": {"gain": 0.9}}
+		}
 	},
 	"parcel_templates": {
 		"core": {"lot_width_m": 18.0, "lot_width_jitter": 0.12, "max_depth_m": 34.0, "min_area_m2": 130.0, "min_frontage_m": 7.0, "max_block_area_m2": 60000.0},

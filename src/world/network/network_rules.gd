@@ -43,6 +43,7 @@ static func from_control(world: WorldData, net_control: Dictionary) -> NetworkRu
 		var fp := _footprint_from_entry(world, entry)
 		if fp != null:
 			rules.footprints.append(fp)
+	NetworkShape.bake_all(world, rules.footprints, net_control)
 	return rules
 
 

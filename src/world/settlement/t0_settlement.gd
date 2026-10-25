@@ -44,6 +44,9 @@ var _frame_cap_top: float = INF
 var _frame_radius: float = 0.0
 var _frame_target: float = 4.6
 var _stats: Dictionary = {}
+## `settlement.json` occupancy (T-049 A) ve gürültü tohumu (network.json layout_seed + etiket).
+var _occ: Dictionary = {}
+var _occ_seed: int = 0
 ## Sokak yönü ile lot `u` ekseni ters mi (birim sırası sokak sırasına çevrilir).
 var _flip: bool = false
 var _cur_attempts: int = 8
@@ -123,6 +126,8 @@ func _run(world: WorldData, net: WorldNetwork, kit_manifest: Dictionary, settle_
 	_accept_score = float(pl.get("accept_score", 0.75))
 	_diverge_boost = float(pl.get("floor_diverge_boost", 2.0))
 	_diverge_dist = float(pl.get("floor_diverge_dist_m", 1.5))
+	_occ = (control.get("occupancy", {}) as Dictionary)
+	_occ_seed = NetworkRules.stream_seed(int(net.rules.control.get("layout_seed", 0)), "occupancy")
 	_stats = {"parcels": 0, "zoned": 0, "lottery_built": 0, "units": 0, "dropped_water": 0, "dropped_slope": 0,
 			"dropped_fit": 0, "dropped_plaza": 0, "wide": 0, "consumed": 0, "farms": 0}
 	for fp in net.rules.footprints:
@@ -212,10 +217,45 @@ func _occupied(p: WorldParcel, zone: SettlementZone) -> bool:
 	elif zone.name == &"farm":
 		prob = float(_rules.farm.get("house_p", 0.3))
 	else:
-		var rc: Dictionary = _rules.regions[String(p.region_code)]
-		var t := clampf(float(_t_of.get(p.id, 1.0)), 0.0, 1.0)
-		prob = lerpf(float(rc["fill"]["center"]), float(rc["fill"]["edge"]), t)
+		prob = _organic_fill(p)
 	return _lottery(p, "occupancy") < prob
+
+
+## T-049 A organik doluluk olasılığı: bölge merkez->kenar eğrisi (t = organik sınır alanı) x cephe yolu erişimi x yerel
+## kümeleşme x boşluk/tarla cepleri x eğim/kıyı kesintisi. Parametreler `settlement.json` `occupancy` (ÇM). Çekirdek
+## (t küçük) ve D1/D6 `region_scale` ile kompakt kalır (WLD-04); gürültü tohumu `layout_seed` (yerleşim tohumundan
+## bağımsız).
+func _organic_fill(p: WorldParcel) -> float:
+	var rc: Dictionary = _rules.regions[String(p.region_code)]
+	var t := clampf(float(_t_of.get(p.id, 1.0)), 0.0, 1.0)
+	var prob := lerpf(float(rc["fill"]["center"]), float(rc["fill"]["edge"]), t)
+	if _occ.is_empty():
+		return prob
+	var reg_scale := float((_occ.get("region_scale", {}) as Dictionary).get(String(p.region_code), 1.0))
+	if _net.edges.has(p.frontage_edge):
+		var cls := String((_net.edges[p.frontage_edge] as WorldRoadEdge).road_class)
+		prob *= 1.0 + float((_occ.get("road_access", {}) as Dictionary).get(cls, 0.0))
+	var ca: Dictionary = _occ.get("cluster_amp", {})
+	var amp := lerpf(float(ca.get("core", 0.0)), float(ca.get("edge", 0.0)), t) * reg_scale
+	var cells: Array = _occ.get("cluster_cell_m", [260.0])
+	var nz := NetworkNoise.fbm(_occ_seed, p.centroid, cells, _occ.get("cluster_octave_amp", [1.0]))
+	prob *= 1.0 + amp * nz
+	var pk: Dictionary = _occ.get("pocket", {})
+	if not pk.is_empty():
+		var w := NetworkNoise.value(_occ_seed + 7919, p.centroid, float(pk.get("cell_m", 700.0)))
+		var soft := float(pk.get("softness", 0.2))
+		var ramp := smoothstep(float(pk["t_min"]), float(pk["t_min"]) + float(pk.get("t_ramp", 0.2)), t)
+		var amount := smoothstep(float(pk["threshold"]) - soft, float(pk["threshold"]) + soft, w) * ramp * reg_scale
+		prob *= lerpf(1.0, float(pk["keep"]), clampf(amount, 0.0, 1.0))
+	var sl: Dictionary = _occ.get("slope", {})
+	if not sl.is_empty():
+		var deg := _world.slope_degrees_at(p.centroid.x, p.centroid.y)
+		prob *= 1.0 - float(sl["cut"]) * reg_scale * smoothstep(float(sl["lo_deg"]), float(sl["hi_deg"]), deg)
+	var sh: Dictionary = _occ.get("shore", {})
+	if not sh.is_empty():
+		var sd := float(_world.shore_distance[_world.world_to_index(p.centroid.x, p.centroid.y)])
+		prob *= 1.0 - float(sh["cut"]) * reg_scale * (1.0 - smoothstep(0.0, float(sh["band_m"]), sd))
+	return clampf(prob, 0.0, 1.0)
 
 
 func _target_floors(p: WorldParcel, zone: SettlementZone, road_class: StringName) -> float:
