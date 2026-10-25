@@ -12,6 +12,9 @@ extends RefCounted
 ## (5) feribot → (6) bağlantısız parçaları bağla → (7) mühürle (bloklar + parseller).
 
 const ROAD := &"road"
+## `_closest_pair` ızgara hücresi ve azami arama yarıçapı (m).
+const CLOSEST_CELL_M := 400.0
+const CLOSEST_MAX_RADIUS_M := 40000.0
 
 
 static func generate(world: WorldData, control: Dictionary, world_seed: int) -> WorldNetwork:
@@ -285,29 +288,72 @@ static func _connect_components(net: WorldNetwork, control: Dictionary, router: 
 
 
 ## `comp`taki düğümlerden ana bileşendeki en yakın düğüme (x = comp düğümü, y = ana düğüm); yoksa (-1, -1).
+## Ana bileşen düğümleri tek seferlik ızgaraya (hücre CLOSEST_CELL_M) konur; her comp düğümü için halka halka
+## aranır ve halka yarıçapı o ana kadarki en iyi uzaklığı (genel en iyi dahil) aşınca durur. Sonuç tam en yakın
+## çifttir (eşitlikte küçük comp kimliği, sonra küçük ana kimliği). T-049 A3: önceki sürüm her comp düğümü için
+## büyüyen dikdörtgendeki TÜM düğümlerde bileşen sorgusu yapıyordu (~25 s).
 static func _closest_pair(net: WorldNetwork, comp: PackedInt32Array, main_index: int) -> Vector2i:
+	var main: PackedInt32Array = net.components(WorldNetwork.MODE_ROAD)[main_index]
+	if main.is_empty():
+		return Vector2i(-1, -1)
+	var grid := {}
+	var main_pos := PackedVector2Array()
+	main_pos.resize(main.size())
+	var lo := Vector2i(1 << 30, 1 << 30)
+	var hi := Vector2i(-(1 << 30), -(1 << 30))
+	for k in main.size():
+		var p := net.node_pos(main[k])
+		main_pos[k] = p
+		var cell := _closest_cell(p)
+		lo = Vector2i(mini(lo.x, cell.x), mini(lo.y, cell.y))
+		hi = Vector2i(maxi(hi.x, cell.x), maxi(hi.y, cell.y))
+		var bucket: PackedInt32Array = grid.get(cell, PackedInt32Array())
+		bucket.append(k)
+		grid[cell] = bucket
 	var best := Vector2i(-1, -1)
 	var best_d := INF
 	for nid in comp:
 		var pos := net.node_pos(nid)
-		var radius := 400.0
-		while radius <= 40000.0:
-			var found := -1
-			var found_d := INF
-			for other in net.node_ids_in_rect(Rect2(pos, Vector2.ZERO).grow(radius)):
-				if net.component_of(other, WorldNetwork.MODE_ROAD) != main_index:
-					continue
-				var d := net.node_pos(other).distance_to(pos)
-				if d < found_d or (d == found_d and other < found):
-					found_d = d
-					found = other
-			if found >= 0 and found_d <= radius:
-				if found_d < best_d or (found_d == best_d and nid < best.x):
-					best_d = found_d
-					best = Vector2i(nid, found)
+		var home := _closest_cell(pos)
+		var max_ring := maxi(maxi(absi(home.x - lo.x), absi(home.x - hi.x)),
+				maxi(absi(home.y - lo.y), absi(home.y - hi.y)))
+		max_ring = mini(max_ring, int(CLOSEST_MAX_RADIUS_M / CLOSEST_CELL_M))
+		var found := -1
+		var found_d := best_d
+		for ring in range(0, max_ring + 1):
+			if found_d <= float(ring - 1) * CLOSEST_CELL_M:
 				break
-			radius *= 2.0
+			for cell in _ring_cells(home, ring):
+				if not grid.has(cell):
+					continue
+				for k in (grid[cell] as PackedInt32Array):
+					var d := main_pos[k].distance_to(pos)
+					if d < found_d or (found >= 0 and d == found_d and main[k] < found):
+						found_d = d
+						found = main[k]
+		if found >= 0 and found_d <= CLOSEST_MAX_RADIUS_M and found_d < best_d:
+			best_d = found_d
+			best = Vector2i(nid, found)
 	return best
+
+
+static func _closest_cell(p: Vector2) -> Vector2i:
+	return Vector2i(int(floor(p.x / CLOSEST_CELL_M)), int(floor(p.y / CLOSEST_CELL_M)))
+
+
+## `home` çevresindeki Chebyshev halkası (ring 0 = hücrenin kendisi).
+static func _ring_cells(home: Vector2i, ring: int) -> Array[Vector2i]:
+	var out: Array[Vector2i] = []
+	if ring == 0:
+		out.append(home)
+		return out
+	for dx in range(-ring, ring + 1):
+		out.append(home + Vector2i(dx, -ring))
+		out.append(home + Vector2i(dx, ring))
+	for dy in range(-ring + 1, ring):
+		out.append(home + Vector2i(-ring, dy))
+		out.append(home + Vector2i(ring, dy))
+	return out
 
 
 # --- yardımcılar ---
