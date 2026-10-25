@@ -10,6 +10,9 @@ varsayılan katsayı 1, ağın parsel cephesini belirleyen `edge.width` koridoru
 1 km chunk başına yakın ve metro meshleri bir kez kurulur. Yakın görünüm ilçe/sokakta gerçek genişliktedir;
 metro daha ince ve daha seyrek segmentlidir. Godot mesafe görünürlüğü seçer; kare başına script yoktur.
 Arazi üçgenlerine kırpma (TerrainMeshBuilder köşegeni, stride=1) yüzeyin içine gömülmeyi engeller.
+Kırpma Geometry2D yerine hücre ızgarası + görünür köşegen boyunca yarım-düzlem bölmesidir; yükseklik çokgenin
+düştüğü arazi üçgeninin düzleminden gelir. Yalnız kavşak dolgusundan çıkan (içbükey olabilen) parçalar ve dünya
+sınırı Geometry2D'ye düşer. Kavşak dolgusu, şeridin uç çizgisinin gerisinde kalıyorsa (olağan kavşak) hiç kırpılmaz.
 Köşe ve üçgen içi yükseklik görünür arazi düzlemi + veri ofsetidir; bilineer `height_at` ile eğri hücrelerde
 kasıtlı olarak farklıdır. `--stride` arazi deneyi >1 bu görünümün kapsamı dışındadır.
 
@@ -19,6 +22,13 @@ uç düğümlerin eski/yeni `junction_keys` ve kavşak trimi etkilenen komşu ke
 Bu birleşimi `rebuild_chunks(keys)` çağrısına verir. Eski plan geçerliliğini korur; yalnız verilen chunkların
 mesh/düğüm kaynakları değiştirilir. İndeks yenileme O(ağ), mesh yenileme yalnız istenen chunklar içindir.
 Silinen son kenar chunk düğümünü de kaldırır. Delta sinyal bağlaması T-042'ye aittir.
+
+**Kurulum süresi (T-048 sonrası perf):** chunk verisi (yakın + metro) saf fonksiyondur; `RoadView.build` /
+`rebuild_chunks` ≥ `MIN_THREADED_CHUNKS` (4) chunk için `WorkerThreadPool` kullanır, düğümler/mesh nesneleri
+ana iş parçacığında ve anahtar sırasıyla kurulur. Sonuç iş parçacığı sayısından bağımsızdır
+(`use_threads = false` aynı mesh'leri çıkarır; test var). Kavşak dolgusu bir toplu işte önbelleklenir,
+`build` planı bir kez çıkarır. Üçgenleme ilk köşeye göre yerel koordinatta yapılır: 30 km'de float32 mutlak
+koordinat Godot üçgenlemesini bozup çokgeni sessizce atıyordu (eski sürümde yol üçgenlerinin ~%5'i eksikti).
 
 `stats` mantıksal yol/şerit sayısını (chunk sınırındaki parçalar tekrarlanmaz), chunk sayısını,
 yakın/metro toplam üçgenlerini ve son kurulum süresini verir. Bunlar tüm dünya toplamıdır;

@@ -201,3 +201,74 @@ func test_acute_junction_has_a_single_surface_in_overlap_region() -> void:
 				if Geometry2D.is_point_in_polygon(probe, triangle):
 					hits += 1
 			assert_int(hits).is_between(0, 1)
+
+
+func _xz_area(vertices: PackedVector3Array) -> float:
+	var area := 0.0
+	for i in range(0, vertices.size(), 3):
+		var u := Vector2(vertices[i + 1].x - vertices[i].x, vertices[i + 1].z - vertices[i].z)
+		var v := Vector2(vertices[i + 2].x - vertices[i].x, vertices[i + 2].z - vertices[i].z)
+		area += absf(u.cross(v)) * 0.5
+	return area
+
+
+func _total_area(view: RoadView, metro: bool) -> float:
+	var total := 0.0
+	for chunk: Node3D in view.get_children():
+		var node := chunk.get_node_or_null("Metro" if metro else "Near") as MeshInstance3D
+		if node != null:
+			total += _xz_area(node.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX])
+	return total
+
+
+func test_strip_area_is_complete_on_rough_terrain_across_cells_and_chunks() -> void:
+	# Düzensiz (köşegen seçimi değişen) arazi; eğik şeritler hücre ve chunk sınırlarını keser.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 48
+	for i in _world.heights.size():
+		_world.heights[i] = rng.randf_range(0.0, 40.0)
+	var expected := 0.0
+	for pair in [[Vector2(80, 130), Vector2(2910, 2260), 12.0], [Vector2(2950, 90), Vector2(310, 2850), 10.0],
+			[Vector2(40, 1000), Vector2(2990, 1030), 20.0]]:
+		_edge(pair[0], pair[1], &"local", pair[2])
+		expected += (pair[0] as Vector2).distance_to(pair[1]) * float(pair[2])
+	var view := _view()
+	# Üç şerit kesiştiği için çakışan alan kavşak dolgusu/trim ile temizlenir; tam kapsama aranır.
+	assert_float(_total_area(view, false)).is_between(expected * 0.97, expected * 1.001)
+
+
+func test_far_from_origin_strip_is_not_dropped_by_float32_triangulation() -> void:
+	# 30 km'de float32 çokgen alanı çöker; eski üçgenleme yer yer parçaları sessizce atıyordu
+	# (gerçek T0 ağındaki arterial kenarın kavşak kırpmasından sonraki uçları; şerit hücre sınırını keser).
+	_world = NetworkTestSupport.flat_world(34000.0, 100.0)
+	_net = NetworkTestSupport.empty_network(_world)
+	var a := Vector2(32628.75, 23076.17)
+	var b := Vector2(32408.05, 23256.46)
+	_edge(a, b, &"arterial", 22.0)
+	var view := _view()
+	assert_float(_total_area(view, false)).is_between(a.distance_to(b) * 22.0 * 0.999, a.distance_to(b) * 22.0 * 1.001)
+
+
+func test_threaded_and_inline_builds_produce_identical_meshes() -> void:
+	for pair in [[Vector2(100, 100), Vector2(2900, 300)], [Vector2(150, 900), Vector2(2800, 1500)],
+			[Vector2(200, 2000), Vector2(2700, 2900)], [Vector2(1500, 50), Vector2(1450, 2950)],
+			[Vector2(60, 2500), Vector2(2950, 1800)]]:
+		_edge(pair[0], pair[1], &"collector", 14.0)
+	var threaded: RoadView = auto_free(RoadView.new())
+	add_child(threaded)
+	threaded.build(_net, _style)
+	var inline: RoadView = auto_free(RoadView.new())
+	inline.use_threads = false
+	add_child(inline)
+	inline.build(_net, _style)
+	assert_int(threaded.get_child_count()).is_greater_equal(RoadView.MIN_THREADED_CHUNKS)
+	assert_int(inline.get_child_count()).is_equal(threaded.get_child_count())
+	for chunk: Node3D in threaded.get_children():
+		for node: MeshInstance3D in chunk.get_children():
+			var other := inline.get_node("%s/%s" % [chunk.name, node.name]) as MeshInstance3D
+			var a: Array = node.mesh.surface_get_arrays(0)
+			var b: Array = other.mesh.surface_get_arrays(0)
+			assert_bool(a[Mesh.ARRAY_VERTEX] == b[Mesh.ARRAY_VERTEX]).is_true()
+			assert_bool(a[Mesh.ARRAY_NORMAL] == b[Mesh.ARRAY_NORMAL]).is_true()
+			assert_bool(a[Mesh.ARRAY_COLOR] == b[Mesh.ARRAY_COLOR]).is_true()
+	assert_int(int(threaded.stats["near_triangles"])).is_equal(int(inline.stats["near_triangles"]))

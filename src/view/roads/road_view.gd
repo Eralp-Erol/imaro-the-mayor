@@ -5,8 +5,13 @@ extends Node3D
 
 signal chunks_rebuilt(keys: Array[Vector2i])
 
+## Bu sayıdan az chunk yeniden kurulurken iş parçacığı kullanılmaz (yerel düzenleme yolu).
+const MIN_THREADED_CHUNKS := 4
+
 var stats: Dictionary = {}
 var style: RoadStyle
+## false: tüm hesap çağıran iş parçacığında (hata ayıklama / karşılaştırma). Sonuç aynıdır.
+var use_threads: bool = true
 
 var _net: WorldNetwork
 var _plan: RoadChunkPlan
@@ -22,8 +27,9 @@ func build(net: WorldNetwork, road_style: RoadStyle = null) -> void:
 	_material.vertex_color_use_as_albedo = true
 	_material.roughness = 1.0
 	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	var started := Time.get_ticks_usec()
 	_plan = RoadChunkPlan.build(net, style)
-	rebuild_chunks(_plan.keys())
+	_rebuild_with_plan(_plan.keys(), started)
 
 
 func clear() -> void:
@@ -51,10 +57,17 @@ func rebuild_chunks(keys: Array[Vector2i]) -> void:
 		return
 	var started := Time.get_ticks_usec()
 	_plan = RoadChunkPlan.build(_net, style)
+	_rebuild_with_plan(keys, started)
+
+
+func _rebuild_with_plan(keys: Array[Vector2i], started: int) -> void:
 	var unique: Array[Vector2i] = []
+	var seen: Dictionary = {}
 	for key in keys:
-		if not unique.has(key):
+		if not seen.has(key):
+			seen[key] = true
 			unique.append(key)
+	var meshes := _build_chunk_data(unique)
 	for key in unique:
 		var old := chunk_node(key)
 		if old != null:
@@ -68,7 +81,7 @@ func rebuild_chunks(keys: Array[Vector2i]) -> void:
 		var origin := _plan.rect(key).position
 		chunk.position = Vector3(origin.x, 0.0, origin.y)
 		for metro in [false, true]:
-			var data := RoadMeshBuilder.build(_net, style, _plan, key, metro)
+			var data: Dictionary = (meshes[key] as Array)[1 if metro else 0]
 			if (data["vertices"] as PackedVector3Array).is_empty():
 				continue
 			var node := _mesh_node(data)
@@ -101,6 +114,32 @@ func rebuild_chunks(keys: Array[Vector2i]) -> void:
 		"metro_triangles": metro_tris, "last_rebuilt": unique.size(),
 		"last_build_ms": (Time.get_ticks_usec() - started) / 1000.0}
 	chunks_rebuilt.emit(unique)
+
+
+## Chunk verisi saf fonksiyondur (ağ/plan/dünya salt okunur): çok chunk'ta WorkerThreadPool'a dağıtılır.
+## Sonuç anahtar sırasından ve iş parçacığı sayısından bağımsızdır; düğümler ana iş parçacığında kurulur.
+func _build_chunk_data(keys: Array[Vector2i]) -> Dictionary:
+	var todo: Array[Vector2i] = []
+	for key in keys:
+		if _plan.cells.has(key):
+			todo.append(key)
+	var results: Array = []
+	results.resize(todo.size())
+	var job := func(index: int) -> void:
+		var patch_cache: Dictionary = {}
+		results[index] = [
+			RoadMeshBuilder.build(_net, style, _plan, todo[index], false, patch_cache),
+			RoadMeshBuilder.build(_net, style, _plan, todo[index], true, patch_cache)]
+	if use_threads and todo.size() >= MIN_THREADED_CHUNKS:
+		var group := WorkerThreadPool.add_group_task(job, todo.size(), -1, true, "RoadView chunks")
+		WorkerThreadPool.wait_for_group_task_completion(group)
+	else:
+		for index in todo.size():
+			job.call(index)
+	var meshes: Dictionary = {}
+	for index in todo.size():
+		meshes[todo[index]] = results[index]
+	return meshes
 
 
 func _mesh_node(data: Dictionary) -> MeshInstance3D:
