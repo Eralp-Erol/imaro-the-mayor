@@ -246,6 +246,1203 @@
       "user_note": ""
     },
     {
+      "id": "bld_hero_civ_hero_a",
+      "category": "building",
+      "family": "hero_civ_hero",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_civic_a.glb",
+      "glb_sha256": "4a972a59a35f049679e612280284a881e3bd2c2ccb98eaf3538a094d0ed86d05",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 21.725,
+        "depth_z": 18.563,
+        "height_above_ground": 24.6,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -10.863,
+          0,
+          -15.863
+        ],
+        "bbox_max": [
+          10.863,
+          24.6,
+          2.7
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 4090,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh civic",
+        "spec": "design/specs/art/hero-building/families/civic"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_civ_hero_b",
+      "category": "building",
+      "family": "hero_civ_hero",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_civic_b.glb",
+      "glb_sha256": "75dd0c0c04c6179c19e2b3f4b90159d4778c01ed28314fe534e03c5c07e66d27",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 21.725,
+        "depth_z": 18.563,
+        "height_above_ground": 24.6,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -10.863,
+          0,
+          -15.863
+        ],
+        "bbox_max": [
+          10.863,
+          24.6,
+          2.7
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 4090,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh civic",
+        "spec": "design/specs/art/hero-building/families/civic"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_civ_hero_c",
+      "category": "building",
+      "family": "hero_civ_hero",
+      "variant": "c",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_civic_c.glb",
+      "glb_sha256": "1c4097ba852873a17f691355d147c8bce8e10a9849df6d402f1d9b3c4698640d",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 21.725,
+        "depth_z": 18.563,
+        "height_above_ground": 24.6,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -10.863,
+          0,
+          -15.863
+        ],
+        "bbox_max": [
+          10.863,
+          24.6,
+          2.7
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 4090,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh civic",
+        "spec": "design/specs/art/hero-building/families/civic"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_com_bazaar_a",
+      "category": "building",
+      "family": "hero_com_bazaar",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_bazaar_a.glb",
+      "glb_sha256": "c6f2ebc2ebec8bbcf5749916477ead11fc504fda7d571f90508c1853c3b82d44",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 12.335,
+        "depth_z": 14.117,
+        "height_above_ground": 13.896,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -6.167,
+          0,
+          -12.767
+        ],
+        "bbox_max": [
+          6.167,
+          13.896,
+          1.35
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 3065,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh bazaar",
+        "spec": "design/specs/art/hero-building/families/bazaar"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_com_bazaar_b",
+      "category": "building",
+      "family": "hero_com_bazaar",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_bazaar_b.glb",
+      "glb_sha256": "72f94fe35bc86c189d6f60e31283dbef8265f66d60ca7df7bcf60c904546d9e1",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 12.335,
+        "depth_z": 14.117,
+        "height_above_ground": 13.896,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -6.167,
+          0,
+          -12.767
+        ],
+        "bbox_max": [
+          6.167,
+          13.896,
+          1.35
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 3065,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh bazaar",
+        "spec": "design/specs/art/hero-building/families/bazaar"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_com_bazaar_c",
+      "category": "building",
+      "family": "hero_com_bazaar",
+      "variant": "c",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_bazaar_c.glb",
+      "glb_sha256": "0a6c42a27f81a99dd254b73b08726f04ad90796a65e6dcf7e6538e2a4f5def2c",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 12.335,
+        "depth_z": 14.117,
+        "height_above_ground": 13.896,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -6.167,
+          0,
+          -12.767
+        ],
+        "bbox_max": [
+          6.167,
+          13.896,
+          1.35
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 3065,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh bazaar",
+        "spec": "design/specs/art/hero-building/families/bazaar"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_ind_hero_a",
+      "category": "building",
+      "family": "hero_ind_hero",
+      "variant": "a",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:mid"
+      ],
+      "glb": "res://assets/hero/fam/hero_industrial_a.glb",
+      "glb_sha256": "30882a611aa49473cd6b22df5b6cb4cb2bacdfaef01c6c2af8fc22147c88263e",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 22.08,
+        "depth_z": 39.54,
+        "height_above_ground": 15.35,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -11.04,
+          0,
+          -30.5
+        ],
+        "bbox_max": [
+          11.04,
+          15.35,
+          9.04
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 2350,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh industrial",
+        "spec": "design/specs/art/hero-building/families/industrial"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_ind_hero_b",
+      "category": "building",
+      "family": "hero_ind_hero",
+      "variant": "b",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:mid"
+      ],
+      "glb": "res://assets/hero/fam/hero_industrial_b.glb",
+      "glb_sha256": "440bb0742283549bd40805883dec93d0d2301568aac9779035a853fb32e9ce81",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 22.08,
+        "depth_z": 39.34,
+        "height_above_ground": 15.35,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -11.04,
+          0,
+          -30.3
+        ],
+        "bbox_max": [
+          11.04,
+          15.35,
+          9.04
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 2140,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh industrial",
+        "spec": "design/specs/art/hero-building/families/industrial"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_ind_hero_c",
+      "category": "building",
+      "family": "hero_ind_hero",
+      "variant": "c",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:mid"
+      ],
+      "glb": "res://assets/hero/fam/hero_industrial_c.glb",
+      "glb_sha256": "b6dd917934df013cb09f29a26edc6378e88e051cd20b4b075a8c21f970ed280a",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 22.08,
+        "depth_z": 39.54,
+        "height_above_ground": 15.35,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -11.04,
+          0,
+          -30.5
+        ],
+        "bbox_max": [
+          11.04,
+          15.35,
+          9.04
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 2360,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh industrial",
+        "spec": "design/specs/art/hero-building/families/industrial"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_old_core_a",
+      "category": "building",
+      "family": "hero_old_core",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/hero_a.glb",
+      "glb_sha256": "d0db0d8eff8273e9faf5ea9b1e35ea4eabcc8d6ff4efba7bc3d58437af43fc6d",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 11.139,
+        "depth_z": 13.02,
+        "height_above_ground": 16.338,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -5.57,
+          0,
+          -11.77
+        ],
+        "bbox_max": [
+          5.57,
+          16.338,
+          1.25
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 4233,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/hero_building.py",
+        "manifest": null,
+        "rebuild": "python3 art/blender/hero/hero_atlas.py assets/hero && Blender --background --factory-startup --python art/blender/hero/hero_building.py -- --atlas assets/hero/hero_atlas_a.png --layout assets/hero/hero_atlas_layout.json --out assets/hero/hero_a.glb",
+        "spec": "design/specs/art/hero-building/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_old_core_b",
+      "category": "building",
+      "family": "hero_old_core",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/hero_b.glb",
+      "glb_sha256": "4b2fec58e01b38e4decd56fc1caaddc1c36cd9eab2987dac3352eef17320e4ef",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 11.139,
+        "depth_z": 13.02,
+        "height_above_ground": 16.338,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -5.57,
+          0,
+          -11.77
+        ],
+        "bbox_max": [
+          5.57,
+          16.338,
+          1.25
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 4233,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/hero_building.py",
+        "manifest": null,
+        "rebuild": "python3 art/blender/hero/hero_atlas.py assets/hero && Blender --background --factory-startup --python art/blender/hero/hero_building.py -- --atlas assets/hero/hero_atlas_b.png --layout assets/hero/hero_atlas_layout.json --out assets/hero/hero_b.glb",
+        "spec": "design/specs/art/hero-building/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_old_core_c",
+      "category": "building",
+      "family": "hero_old_core",
+      "variant": "c",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/hero_c.glb",
+      "glb_sha256": "ac63f4318c2dd004cd62a4e8fcf128f392d5ac07f8a052a1baf15b4b1e710a9c",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 11.139,
+        "depth_z": 13.02,
+        "height_above_ground": 16.338,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -5.57,
+          0,
+          -11.77
+        ],
+        "bbox_max": [
+          5.57,
+          16.338,
+          1.25
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 4233,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/hero_building.py",
+        "manifest": null,
+        "rebuild": "python3 art/blender/hero/hero_atlas.py assets/hero && Blender --background --factory-startup --python art/blender/hero/hero_building.py -- --atlas assets/hero/hero_atlas_c.png --layout assets/hero/hero_atlas_layout.json --out assets/hero/hero_c.glb",
+        "spec": "design/specs/art/hero-building/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_house_a",
+      "category": "building",
+      "family": "hero_res_house",
+      "variant": "a",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_house_a.glb",
+      "glb_sha256": "98166a6e88928eb557fe4065a0eac0b8becce905912fab417ff67b178056fad2",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 10.25,
+        "depth_z": 13.654,
+        "height_above_ground": 9.022,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -5.125,
+          0,
+          -9.674
+        ],
+        "bbox_max": [
+          5.125,
+          9.022,
+          3.98
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 1572,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh house",
+        "spec": "design/specs/art/hero-building/families/house"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_house_b",
+      "category": "building",
+      "family": "hero_res_house",
+      "variant": "b",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_house_b.glb",
+      "glb_sha256": "7567793e956ceed96fb84e0f576ec1238f8742aa5279010ba26fbf593fffef78",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 10.25,
+        "depth_z": 13.654,
+        "height_above_ground": 9.022,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -5.125,
+          0,
+          -9.674
+        ],
+        "bbox_max": [
+          5.125,
+          9.022,
+          3.98
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 1572,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh house",
+        "spec": "design/specs/art/hero-building/families/house"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_house_c",
+      "category": "building",
+      "family": "hero_res_house",
+      "variant": "c",
+      "era": "old",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:old"
+      ],
+      "glb": "res://assets/hero/fam/hero_house_c.glb",
+      "glb_sha256": "8b9b0919f123bb3600ac9bc9771640536421d4fcebe58d506539af5385f34dbb",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 10.25,
+        "depth_z": 13.654,
+        "height_above_ground": 9.022,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -5.125,
+          0,
+          -9.674
+        ],
+        "bbox_max": [
+          5.125,
+          9.022,
+          3.98
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 1572,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh house",
+        "spec": "design/specs/art/hero-building/families/house"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_late_a",
+      "category": "building",
+      "family": "hero_res_late",
+      "variant": "a",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:late"
+      ],
+      "glb": "res://assets/hero/fam/hero_res_late_a.glb",
+      "glb_sha256": "d0064065df1b22b5825c57cd3a440051ea52372dbbad979f830f8a69e459b24f",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 14.24,
+        "depth_z": 17.06,
+        "height_above_ground": 27.93,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -7.12,
+          0,
+          -16.06
+        ],
+        "bbox_max": [
+          7.12,
+          27.93,
+          1
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 6738,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh res_late",
+        "spec": "design/specs/art/hero-building/families/res_late"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_late_b",
+      "category": "building",
+      "family": "hero_res_late",
+      "variant": "b",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:late"
+      ],
+      "glb": "res://assets/hero/fam/hero_res_late_b.glb",
+      "glb_sha256": "40f554bec37c8f04534ee7d07f81c4436a8ccd3c5b0171b011c1934bc3accb9a",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 14.24,
+        "depth_z": 17.06,
+        "height_above_ground": 27.93,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -7.12,
+          0,
+          -16.06
+        ],
+        "bbox_max": [
+          7.12,
+          27.93,
+          1
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 6738,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh res_late",
+        "spec": "design/specs/art/hero-building/families/res_late"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_late_c",
+      "category": "building",
+      "family": "hero_res_late",
+      "variant": "c",
+      "era": "late",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:late"
+      ],
+      "glb": "res://assets/hero/fam/hero_res_late_c.glb",
+      "glb_sha256": "9cd424bb50529eec5628dd29cde67db126ea2ff65a19fdfe667c6d9d05bb6225",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 14.24,
+        "depth_z": 17.06,
+        "height_above_ground": 27.93,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -7.12,
+          0,
+          -16.06
+        ],
+        "bbox_max": [
+          7.12,
+          27.93,
+          1
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 6738,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh res_late",
+        "spec": "design/specs/art/hero-building/families/res_late"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_mid_a",
+      "category": "building",
+      "family": "hero_res_mid",
+      "variant": "a",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:mid"
+      ],
+      "glb": "res://assets/hero/fam/hero_res_mid_a.glb",
+      "glb_sha256": "6cdf373945b85ca997140756517b25041fc5f15c4a99e4c9930475c26477a7a4",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 12.52,
+        "depth_z": 15.26,
+        "height_above_ground": 22.13,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -6.12,
+          0,
+          -14.06
+        ],
+        "bbox_max": [
+          6.4,
+          22.13,
+          1.2
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 6558,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh res_mid",
+        "spec": "design/specs/art/hero-building/families/res_mid"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_mid_b",
+      "category": "building",
+      "family": "hero_res_mid",
+      "variant": "b",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:mid"
+      ],
+      "glb": "res://assets/hero/fam/hero_res_mid_b.glb",
+      "glb_sha256": "187b3f1576cc22956ba6cafb1e3aa452350615b71f7bd26f8bb1e5970398e0d6",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 12.52,
+        "depth_z": 15.26,
+        "height_above_ground": 22.13,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -6.12,
+          0,
+          -14.06
+        ],
+        "bbox_max": [
+          6.4,
+          22.13,
+          1.2
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 6558,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh res_mid",
+        "spec": "design/specs/art/hero-building/families/res_mid"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
+      "id": "bld_hero_res_mid_c",
+      "category": "building",
+      "family": "hero_res_mid",
+      "variant": "c",
+      "era": "mid",
+      "region": null,
+      "tags": [
+        "hero",
+        "textured_atlas",
+        "era:mid"
+      ],
+      "glb": "res://assets/hero/fam/hero_res_mid_c.glb",
+      "glb_sha256": "11f5ec138b15fca2b6842f78a5303457d85bae80b500548f4e2d98b618da8323",
+      "materials": [
+        "mat_hero_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 13.53,
+        "depth_z": 15.965,
+        "height_above_ground": 21.854,
+        "foundation_skirt_depth": 0.0,
+        "bbox_min": [
+          -6.765,
+          0,
+          -14.765
+        ],
+        "bbox_max": [
+          6.765,
+          21.854,
+          1.2
+        ],
+        "measured_from": "GLB POSITION accessor min/max (glTF +Y up; front faces +Z)"
+      },
+      "triangles": {
+        "LOD0": 6416,
+        "LOD1": null,
+        "PROXY": null
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero",
+        "generator": "art/blender/hero/fam_build.py",
+        "manifest": null,
+        "rebuild": "art/blender/hero/build_families.sh res_mid",
+        "spec": "design/specs/art/hero-building/families/res_mid"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "Hero kanit calismasi; kit manifest'inde YOK, oyuna bagli degil. Dokulu atlas materyali (mat_kit degil)."
+    },
+    {
       "id": "bld_ind_heritage_a",
       "category": "building",
       "family": "ind_heritage",
