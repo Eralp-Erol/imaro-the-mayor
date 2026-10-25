@@ -21,3 +21,7 @@ build/
 
 # Üretilen doğrulama raporları (izlenmez)
 artifacts/verify/*-latest.json
+
+# Üretilen perf/doğrulama çıktıları (izlenmez; kanıt özetleri görev dosyalarındadır). Zaten izlenen dosyalar etkilenmez.
+artifacts/perf/
+artifacts/verify/*
