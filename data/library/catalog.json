@@ -4481,6 +4481,790 @@
       "approval_by": null,
       "approval_date": "2026-10-25",
       "user_note": ""
+    },
+    {
+      "id": "gnd_tex_asphalt_new",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "asphalt_new",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:U2"
+      ],
+      "png": "res://assets/ground/tex/gnd_asphalt_new.png",
+      "glb": null,
+      "png_sha256": "93dd1747efd80acb6c04557c5a652739878377671b04a44e783070d4bd3c1638",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 6.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "U2"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.3357,
+        "v_p5": 0.2823,
+        "v_p95": 0.393,
+        "s_mean": 0.0544,
+        "s_p99": 0.0589,
+        "s_max": 0.061,
+        "h_mean_deg": 33.3542,
+        "seam_ratio": 0.9728
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_asphalt_worn",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "asphalt_worn",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:U2"
+      ],
+      "png": "res://assets/ground/tex/gnd_asphalt_worn.png",
+      "glb": null,
+      "png_sha256": "5355bf1eb0cd3117f64aadfb0f9e498728e35f869378d1860a4b4ac3413916ca",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 6.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "U2"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.3427,
+        "v_p5": 0.2414,
+        "v_p95": 0.438,
+        "s_mean": 0.0699,
+        "s_p99": 0.0909,
+        "s_max": 0.0909,
+        "h_mean_deg": 27.3868,
+        "seam_ratio": 1.0364
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_beach_sand",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "beach_sand",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:TS"
+      ],
+      "png": "res://assets/ground/tex/gnd_beach_sand.png",
+      "glb": null,
+      "png_sha256": "a30ec11c79af4e8ced915b4aa46359120ec68f33013e15aae00ede56afb296d5",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 4.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "TS"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.6891,
+        "v_p5": 0.628,
+        "v_p95": 0.7517,
+        "s_mean": 0.3025,
+        "s_p99": 0.3097,
+        "s_max": 0.3098,
+        "h_mean_deg": 42.0824,
+        "seam_ratio": 0.9628
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_dirt_courtyard",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "dirt_courtyard",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:U4/U9"
+      ],
+      "png": "res://assets/ground/tex/gnd_dirt_courtyard.png",
+      "glb": null,
+      "png_sha256": "f81ed7d293e80890944393af13f4026da4ccc0e17ef366d9d66d3108b47ed797",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 6.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "U4/U9"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.4901,
+        "v_p5": 0.4044,
+        "v_p95": 0.5811,
+        "s_mean": 0.2574,
+        "s_p99": 0.3204,
+        "s_max": 0.3248,
+        "h_mean_deg": 38.2122,
+        "seam_ratio": 1.0984
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_field_plowed",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "field_plowed",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:T1"
+      ],
+      "png": "res://assets/ground/tex/gnd_field_plowed.png",
+      "glb": null,
+      "png_sha256": "e260429878c7505e93c70368576f361097eb58b72eb2aa434aef8152acdd7c81",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 8.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "T1"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.4768,
+        "v_p5": 0.365,
+        "v_p95": 0.6144,
+        "s_mean": 0.4026,
+        "s_p99": 0.4414,
+        "s_max": 0.4414,
+        "h_mean_deg": 34.0057,
+        "seam_ratio": 1.0335
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_field_stubble",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "field_stubble",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:T1"
+      ],
+      "png": "res://assets/ground/tex/gnd_field_stubble.png",
+      "glb": null,
+      "png_sha256": "a06a45e006b29b40590164d8b178713fc84eb0032cf32fb2feee78f038f71237",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 8.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "T1"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.6058,
+        "v_p5": 0.5343,
+        "v_p95": 0.6791,
+        "s_mean": 0.467,
+        "s_p99": 0.5311,
+        "s_max": 0.5357,
+        "h_mean_deg": 45.8685,
+        "seam_ratio": 0.9752
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_grass_dry",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "grass_dry",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:T2"
+      ],
+      "png": "res://assets/ground/tex/gnd_grass_dry.png",
+      "glb": null,
+      "png_sha256": "52da185d4239f1a1dc33bae8e4743f3a314fb93c835c90d218b0b1fe8a6061c3",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 6.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "T2"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.5679,
+        "v_p5": 0.4741,
+        "v_p95": 0.6683,
+        "s_mean": 0.3921,
+        "s_p99": 0.4093,
+        "s_max": 0.4094,
+        "h_mean_deg": 48.8401,
+        "seam_ratio": 0.9518
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_grass_green",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "grass_green",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:U5"
+      ],
+      "png": "res://assets/ground/tex/gnd_grass_green.png",
+      "glb": null,
+      "png_sha256": "5073a973a4c5a6103fa958195f62332aa116a1f8a67ff4849a587ccf97cebba2",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 6.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "U5"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.5356,
+        "v_p5": 0.4673,
+        "v_p95": 0.6064,
+        "s_mean": 0.3811,
+        "s_p99": 0.4085,
+        "s_max": 0.4174,
+        "h_mean_deg": 69.1564,
+        "seam_ratio": 0.9866
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_gravel",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "gravel",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:TS/T6"
+      ],
+      "png": "res://assets/ground/tex/gnd_gravel.png",
+      "glb": null,
+      "png_sha256": "1ad2f4ae73aca4193a05a0236d0c3b78d3e3b16d26c5b41a609a99ca6d4a4c49",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 3.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "TS/T6"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.4075,
+        "v_p5": 0.308,
+        "v_p95": 0.5484,
+        "s_mean": 0.1841,
+        "s_p99": 0.1915,
+        "s_max": 0.1915,
+        "h_mean_deg": 36.6667,
+        "seam_ratio": 1.2481
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_olive_ground",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "olive_ground",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:T3"
+      ],
+      "png": "res://assets/ground/tex/gnd_olive_ground.png",
+      "glb": null,
+      "png_sha256": "7fcbbb6ee330d7232072236a35cea4f3291123df9d33cca9abe00b9adfddf26a",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 8.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "T3"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.5132,
+        "v_p5": 0.4147,
+        "v_p95": 0.5933,
+        "s_mean": 0.3983,
+        "s_p99": 0.4053,
+        "s_max": 0.4054,
+        "h_mean_deg": 45.0986,
+        "seam_ratio": 0.929
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_plaza_stone_a",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "plaza_stone_a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:U1"
+      ],
+      "png": "res://assets/ground/tex/gnd_plaza_stone_a.png",
+      "glb": null,
+      "png_sha256": "fa457fbfc71708d7f62bf852fcbdbf32d1a38b918080c8445e459bd0cd081f5f",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 4.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "U1"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.6518,
+        "v_p5": 0.4688,
+        "v_p95": 0.7553,
+        "s_mean": 0.2003,
+        "s_p99": 0.2636,
+        "s_max": 0.2791,
+        "h_mean_deg": 38.26,
+        "seam_ratio": 0.5346
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_rock_cliff",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "rock_cliff",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:T6"
+      ],
+      "png": "res://assets/ground/tex/gnd_rock_cliff.png",
+      "glb": null,
+      "png_sha256": "306aca94bfed44ed377041402f2a29c0e188eeeeadde833908a2bd842158366f",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 8.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "T6"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.5114,
+        "v_p5": 0.4116,
+        "v_p95": 0.597,
+        "s_mean": 0.2083,
+        "s_p99": 0.2647,
+        "s_max": 0.2887,
+        "h_mean_deg": 38.1033,
+        "seam_ratio": 0.9318
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_scrub_maquis",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "scrub_maquis",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:T3"
+      ],
+      "png": "res://assets/ground/tex/gnd_scrub_maquis.png",
+      "glb": null,
+      "png_sha256": "0906b360adfa0c1bac5b33cc2a336e0da84084dd5efc2823aef0f5b880e9c554",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 8.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "T3"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.4752,
+        "v_p5": 0.3342,
+        "v_p95": 0.5902,
+        "s_mean": 0.3924,
+        "s_p99": 0.4149,
+        "s_max": 0.4375,
+        "h_mean_deg": 48.6754,
+        "seam_ratio": 0.9648
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "gnd_tex_sidewalk_cobble",
+      "category": "ground",
+      "family": "gnd_tex",
+      "variant": "sidewalk_cobble",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "texture",
+        "tileable",
+        "palette:U3"
+      ],
+      "png": "res://assets/ground/tex/gnd_sidewalk_cobble.png",
+      "glb": null,
+      "png_sha256": "e9451292482b26953bfb927fa4cce9b692915657308859c99de7bd65b094bd3c",
+      "materials": [
+        "ground_lab.gdshader"
+      ],
+      "dimensions_m": null,
+      "triangles": null,
+      "texture": {
+        "tile_m": 3.0,
+        "size_px": 512,
+        "measured_from": "ground_layers.json"
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "ground_rows": [
+          "U3"
+        ]
+      },
+      "hsv": {
+        "v_mean": 0.5889,
+        "v_p5": 0.4315,
+        "v_p95": 0.6772,
+        "s_mean": 0.1646,
+        "s_p99": 0.1833,
+        "s_max": 0.1884,
+        "h_mean_deg": 37.7001,
+        "seam_ratio": 1.2278
+      },
+      "source": {
+        "kind": "texture",
+        "generator": "art/blender/ground/ground_tex.py",
+        "manifest": "assets/ground/tex/ground_layers.json",
+        "rebuild": "python3 art/blender/ground/ground_tex.py",
+        "spec": "design/specs/art/ground/"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
     }
   ]
 }

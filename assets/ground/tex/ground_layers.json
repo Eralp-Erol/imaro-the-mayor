@@ -1,0 +1,333 @@
+{
+ "version": 1,
+ "size_px": 512,
+ "macro": {
+  "file": "gnd_macro.png",
+  "size_px": 256,
+  "world_period_m": 96.0
+ },
+ "layers": [
+  {
+   "index": 0,
+   "id": "plaza_stone_a",
+   "file": "gnd_plaza_stone_a.png",
+   "tile_m": 4.0,
+   "palette_zone": "U1",
+   "palette_ref": "#B9AE9C",
+   "mean_srgb": [
+    0.6518,
+    0.6047,
+    0.5215
+   ],
+   "hsv": {
+    "v_mean": 0.6518,
+    "v_p5": 0.4688,
+    "v_p95": 0.7553,
+    "s_mean": 0.2003,
+    "s_p99": 0.2636,
+    "s_max": 0.2791,
+    "h_mean_deg": 38.26,
+    "seam_ratio": 0.5346
+   }
+  },
+  {
+   "index": 1,
+   "id": "sidewalk_cobble",
+   "file": "gnd_sidewalk_cobble.png",
+   "tile_m": 3.0,
+   "palette_zone": "U3",
+   "palette_ref": "#A69C8B",
+   "mean_srgb": [
+    0.5889,
+    0.5531,
+    0.4925
+   ],
+   "hsv": {
+    "v_mean": 0.5889,
+    "v_p5": 0.4315,
+    "v_p95": 0.6772,
+    "s_mean": 0.1646,
+    "s_p99": 0.1833,
+    "s_max": 0.1884,
+    "h_mean_deg": 37.7001,
+    "seam_ratio": 1.2278
+   }
+  },
+  {
+   "index": 2,
+   "id": "asphalt_new",
+   "file": "gnd_asphalt_new.png",
+   "tile_m": 6.0,
+   "palette_zone": "U2",
+   "palette_ref": "#5F5D5A",
+   "mean_srgb": [
+    0.3357,
+    0.3276,
+    0.3175
+   ],
+   "hsv": {
+    "v_mean": 0.3357,
+    "v_p5": 0.2823,
+    "v_p95": 0.393,
+    "s_mean": 0.0544,
+    "s_p99": 0.0589,
+    "s_max": 0.061,
+    "h_mean_deg": 33.3542,
+    "seam_ratio": 0.9728
+   }
+  },
+  {
+   "index": 3,
+   "id": "asphalt_worn",
+   "file": "gnd_asphalt_worn.png",
+   "tile_m": 6.0,
+   "palette_zone": "U2",
+   "palette_ref": "#5F5D5A",
+   "mean_srgb": [
+    0.3427,
+    0.3297,
+    0.3185
+   ],
+   "hsv": {
+    "v_mean": 0.3427,
+    "v_p5": 0.2414,
+    "v_p95": 0.438,
+    "s_mean": 0.0699,
+    "s_p99": 0.0909,
+    "s_max": 0.0909,
+    "h_mean_deg": 27.3868,
+    "seam_ratio": 1.0364
+   }
+  },
+  {
+   "index": 4,
+   "id": "dirt_courtyard",
+   "file": "gnd_dirt_courtyard.png",
+   "tile_m": 6.0,
+   "palette_zone": "U4/U9",
+   "palette_ref": "#8A7D68",
+   "mean_srgb": [
+    0.4901,
+    0.4449,
+    0.3645
+   ],
+   "hsv": {
+    "v_mean": 0.4901,
+    "v_p5": 0.4044,
+    "v_p95": 0.5811,
+    "s_mean": 0.2574,
+    "s_p99": 0.3204,
+    "s_max": 0.3248,
+    "h_mean_deg": 38.2122,
+    "seam_ratio": 1.0984
+   }
+  },
+  {
+   "index": 5,
+   "id": "grass_dry",
+   "file": "gnd_grass_dry.png",
+   "tile_m": 6.0,
+   "palette_zone": "T2",
+   "palette_ref": "#958A58",
+   "mean_srgb": [
+    0.5679,
+    0.5227,
+    0.3457
+   ],
+   "hsv": {
+    "v_mean": 0.5679,
+    "v_p5": 0.4741,
+    "v_p95": 0.6683,
+    "s_mean": 0.3921,
+    "s_p99": 0.4093,
+    "s_max": 0.4094,
+    "h_mean_deg": 48.8401,
+    "seam_ratio": 0.9518
+   }
+  },
+  {
+   "index": 6,
+   "id": "grass_green",
+   "file": "gnd_grass_green.png",
+   "tile_m": 6.0,
+   "palette_zone": "U5",
+   "palette_ref": "#7D8551",
+   "mean_srgb": [
+    0.5057,
+    0.5356,
+    0.3319
+   ],
+   "hsv": {
+    "v_mean": 0.5356,
+    "v_p5": 0.4673,
+    "v_p95": 0.6064,
+    "s_mean": 0.3811,
+    "s_p99": 0.4085,
+    "s_max": 0.4174,
+    "h_mean_deg": 69.1564,
+    "seam_ratio": 0.9866
+   }
+  },
+  {
+   "index": 7,
+   "id": "scrub_maquis",
+   "file": "gnd_scrub_maquis.png",
+   "tile_m": 8.0,
+   "palette_zone": "T3",
+   "palette_ref": "#6B7048",
+   "mean_srgb": [
+    0.4671,
+    0.4405,
+    0.289
+   ],
+   "hsv": {
+    "v_mean": 0.4752,
+    "v_p5": 0.3342,
+    "v_p95": 0.5902,
+    "s_mean": 0.3924,
+    "s_p99": 0.4149,
+    "s_max": 0.4375,
+    "h_mean_deg": 48.6754,
+    "seam_ratio": 0.9648
+   }
+  },
+  {
+   "index": 8,
+   "id": "olive_ground",
+   "file": "gnd_olive_ground.png",
+   "tile_m": 8.0,
+   "palette_zone": "T3",
+   "palette_ref": "#948558",
+   "mean_srgb": [
+    0.5132,
+    0.4668,
+    0.3088
+   ],
+   "hsv": {
+    "v_mean": 0.5132,
+    "v_p5": 0.4147,
+    "v_p95": 0.5933,
+    "s_mean": 0.3983,
+    "s_p99": 0.4053,
+    "s_max": 0.4054,
+    "h_mean_deg": 45.0986,
+    "seam_ratio": 0.929
+   }
+  },
+  {
+   "index": 9,
+   "id": "field_plowed",
+   "file": "gnd_field_plowed.png",
+   "tile_m": 8.0,
+   "palette_zone": "T1",
+   "palette_ref": "#8F7558",
+   "mean_srgb": [
+    0.4768,
+    0.394,
+    0.2871
+   ],
+   "hsv": {
+    "v_mean": 0.4768,
+    "v_p5": 0.365,
+    "v_p95": 0.6144,
+    "s_mean": 0.4026,
+    "s_p99": 0.4414,
+    "s_max": 0.4414,
+    "h_mean_deg": 34.0057,
+    "seam_ratio": 1.0335
+   }
+  },
+  {
+   "index": 10,
+   "id": "field_stubble",
+   "file": "gnd_field_stubble.png",
+   "tile_m": 8.0,
+   "palette_zone": "T1",
+   "palette_ref": "#BFA962",
+   "mean_srgb": [
+    0.6058,
+    0.5386,
+    0.3239
+   ],
+   "hsv": {
+    "v_mean": 0.6058,
+    "v_p5": 0.5343,
+    "v_p95": 0.6791,
+    "s_mean": 0.467,
+    "s_p99": 0.5311,
+    "s_max": 0.5357,
+    "h_mean_deg": 45.8685,
+    "seam_ratio": 0.9752
+   }
+  },
+  {
+   "index": 11,
+   "id": "beach_sand",
+   "file": "gnd_beach_sand.png",
+   "tile_m": 4.0,
+   "palette_zone": "TS",
+   "palette_ref": "#B8A77F",
+   "mean_srgb": [
+    0.6891,
+    0.6271,
+    0.4809
+   ],
+   "hsv": {
+    "v_mean": 0.6891,
+    "v_p5": 0.628,
+    "v_p95": 0.7517,
+    "s_mean": 0.3025,
+    "s_p99": 0.3097,
+    "s_max": 0.3098,
+    "h_mean_deg": 42.0824,
+    "seam_ratio": 0.9628
+   }
+  },
+  {
+   "index": 12,
+   "id": "gravel",
+   "file": "gnd_gravel.png",
+   "tile_m": 3.0,
+   "palette_zone": "TS/T6",
+   "palette_ref": "#8D8576",
+   "mean_srgb": [
+    0.4069,
+    0.3795,
+    0.3328
+   ],
+   "hsv": {
+    "v_mean": 0.4075,
+    "v_p5": 0.308,
+    "v_p95": 0.5484,
+    "s_mean": 0.1841,
+    "s_p99": 0.1915,
+    "s_max": 0.1915,
+    "h_mean_deg": 36.6667,
+    "seam_ratio": 1.2481
+   }
+  },
+  {
+   "index": 13,
+   "id": "rock_cliff",
+   "file": "gnd_rock_cliff.png",
+   "tile_m": 8.0,
+   "palette_zone": "T6",
+   "palette_ref": "#9C907C",
+   "mean_srgb": [
+    0.5114,
+    0.4739,
+    0.4046
+   ],
+   "hsv": {
+    "v_mean": 0.5114,
+    "v_p5": 0.4116,
+    "v_p95": 0.597,
+    "s_mean": 0.2083,
+    "s_p99": 0.2647,
+    "s_max": 0.2887,
+    "h_mean_deg": 38.1033,
+    "seam_ratio": 0.9318
+   }
+  }
+ ]
+}
