@@ -25,3 +25,6 @@ artifacts/verify/*-latest.json
 # Üretilen perf/doğrulama çıktıları (izlenmez; kanıt özetleri görev dosyalarındadır). Zaten izlenen dosyalar etkilenmez.
 artifacts/perf/
 artifacts/verify/*
+
+__pycache__/
+*.pyc

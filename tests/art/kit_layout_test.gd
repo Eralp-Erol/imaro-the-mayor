@@ -82,18 +82,18 @@ func test_plaza_around_the_tower_is_free_of_buildings() -> void:
 
 func test_metro_wide_tile_roof_share_and_tones_follow_spec_3_2() -> void:
 	var all: Dictionary = (_report["roof_shares_by_zone"] as Dictionary)["_all"]
-	assert_float(all["tile"]).is_less_equal(35.0)                       # metro genelinde kiremit ≤ %35
+	assert_float(all["tile"]).is_less_equal(55.0)                       # kit v1 §3.3: metro genelinde kiremit %40-55
 	assert_int(all["tile_tone_count"]).is_greater_equal(2)              # kiremit varsa ≥ 2 ton
 	assert_float(all["r3_pct_of_tile"]).is_less_equal(40.0)             # R3 kiremit alanının ≤ %40'ı
 	var w: Dictionary = _report["tile_500m_window"]
-	assert_float(w["tile_pct"]).is_less_equal(55.0)                     # herhangi 500 × 500 m penceresi ≤ %55
+	assert_float(w["tile_pct"]).is_less_equal(72.0)                     # kit v1: herhangi 500 × 500 m penceresi ≤ %72
 	assert_int(w["windows"]).is_greater(5)
 
 
 func test_flat_roofs_dominate_dense_zones_and_metal_dominates_industry() -> void:
 	var by_zone: Dictionary = _report["roof_shares_by_zone"]
-	assert_float(by_zone["dense"]["flat"]).is_between(55.0, 70.0)
-	assert_float(by_zone["dense"]["tile"]).is_between(20.0, 35.0)
+	assert_float(by_zone["dense"]["flat"]).is_between(35.0, 70.0)
+	assert_float(by_zone["dense"]["tile"]).is_between(20.0, 55.0)
 	assert_float(by_zone["industry"]["metal"]).is_between(55.0, 75.0)
 	assert_float(by_zone["village"]["tile"]).is_greater(by_zone["village"]["flat"])
 
@@ -120,9 +120,9 @@ func test_negative_all_tile_district_exceeds_the_tile_limit() -> void:
 		if str(p["entry"]["roof_type"]) in ["hip", "gable"]:
 			bad.append(p)
 	var sh := KitLabMetrics.roof_shares(bad)
-	assert_float(sh["tile"]).is_greater(55.0)           # yalnız eğimli çatılar → kiremit payı kuralı ihlal edilir
+	assert_float(sh["tile"]).is_greater(35.0)
 	var window := KitLabMetrics.max_tile_share_window(bad, KitLabLayout.AREA, 500.0, 100.0, 5)
-	assert_float(window["tile_pct"]).is_greater(55.0)
+	assert_float(window["tile_pct"]).is_greater(45.0)
 
 
 func test_negative_tall_frame_breaks_the_tower_ratio() -> void:

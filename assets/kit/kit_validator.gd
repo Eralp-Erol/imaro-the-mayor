@@ -11,13 +11,15 @@ const LOD0_MAX := 1500
 const LOD1_MIN := 16
 const LOD1_MAX := 60
 const PROXY_MAX := 14
-const MAX_LOD0_MESHES := 40
+## v0: 40; v1 (building-kit-v1.md §9): <= 64 (Tur 1 sonunda <= 52).
+const MAX_LOD0_MESHES := 64
 const TOWER_MIN_M := 21.0
 const TOWER_MAX_M := 25.0
 const NAME_PATTERN := "^(bld|prop|veh|veg)_[a-z0-9]+(_[a-z0-9]+)*$"
 ## Spec 7.2 LOD0 üçgen tavanı (aile → tavan). Tanımsız aile için LOD0_MAX.
 const FAMILY_LOD0_CAP := {
-	"res_old": 450, "res_mid": 450, "res_house": 450, "res_late": 700, "ind_shed": 250, "ind_heritage": 800,
+	"res_old": 450, "res_old_town": 650, "res_mid": 480, "res_house": 450, "res_late": 700, "ind_shed": 250,
+	"ind_heritage": 800,
 	"civ_hall": 900, "lmk_clocktower": 1200, "prop_human": 40, "veh_car": 60, "prop_chimney": 60, "veg_plane": 120,
 }
 

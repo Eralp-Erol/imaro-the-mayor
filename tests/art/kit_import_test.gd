@@ -35,7 +35,7 @@ func _sample_stats(id: String) -> Dictionary:
 
 func test_manifest_lists_the_first_eight_modules_and_scale_objects() -> void:
 	var min_variants := {"res_mid": 4, "res_old": 4, "res_late": 3, "res_house": 3, "ind_shed": 3, "ind_heritage": 2,
-			"civ_hall": 3}   # spec 1: aile başına en az mesh varyantı (+_gf hariç sayılmaz, _gf ayrıca denetlenir)
+			"civ_hall": 3, "res_old_town": 3}   # spec 1: aile başına en az mesh varyantı (_gf ayrıca denetlenir)
 	for fam in min_variants:
 		assert_int(_lib.family_ids(fam, false).size()).is_greater_equal(int(min_variants[fam]))
 	assert_int(_lib.family_ids("res_mid", true).size()).is_greater_equal(3)   # _gf varyantları (spec: res_mid +_gf 3)
@@ -43,7 +43,7 @@ func test_manifest_lists_the_first_eight_modules_and_scale_objects() -> void:
 	assert_int(_lib.family_ids("res_late", true).size()).is_greater_equal(2)
 	for id in ["bld_lmk_clocktower", "prop_human", "veh_car", "veg_plane", "prop_chimney"]:
 		assert_bool(_lib.has_id(id)).is_true()
-	assert_int(_lib.entries().size()).is_less_equal(40)      # K6: kit LOD0 mesh sayısı ≤ 40
+	assert_int(_lib.entries().size()).is_less_equal(52)      # K6: kit LOD0 mesh sayısı (v1 Tur 1 sonu ≤ 52, kit v1 §9)
 
 
 func test_every_module_passes_import_validation() -> void:
@@ -115,7 +115,7 @@ func test_roof_types_are_varied_not_all_tile() -> void:
 		if str(e["kind"]) == "building":
 			types[str(e["roof_type"])] = int(types.get(str(e["roof_type"]), 0)) + 1
 	assert_bool(types.has("flat") and types.has("hip") and types.has("gable") and types.has("sawtooth")).is_true()
-	assert_int(int(types["flat"])).is_greater(int(types["hip"]))     # düz teras baskın (spec 3.2)
+	assert_int(int(types["flat"])).is_greater(int(types["hip"]) * 2 / 3)  # v1: kırma arttı, teras büyük pay
 
 
 func test_footprint_variants_differ_by_at_least_twenty_percent_in_area() -> void:

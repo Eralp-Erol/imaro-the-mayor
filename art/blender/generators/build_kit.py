@@ -25,16 +25,22 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", "..", ".."))
 KIT_VERSION = 1
 ROW_NAMES = ["W%d" % i for i in range(1, 14)] + ["R%d" % i for i in range(1, 9)]
 ACCENT_ROWS = ["A1", "A2", "A3"]
-TILE = ["R3", "R4", "R5"]
+ACCENT_OLD = ["A1", "A3", "A4"]
+TILE = ["R3", "R4", "R5", "R9"]
+TILE_LOW = ["R4", "R5", "R9"]
 FLAT = ["R1", "R2"]
 METAL = ["R6", "R7"]
 
 FAMILY = {
     # family: (era, wall_rows, {roof_type: roof_rows}, order)
-    "res_mid": ("mid", ["W1", "W2", "W3", "W4", "W5", "W6", "W7"], {"flat": FLAT}, 1),
-    "res_old": ("old", ["W1", "W2", "W3", "W4", "W8"], {"flat": FLAT, "hip": TILE, "gable": TILE}, 2),
-    "res_late": ("late", ["W1", "W5", "W6", "W7", "W9"], {"flat": FLAT, "hip": TILE}, 3),
-    "res_house": ("mid", ["W1", "W2", "W3", "W4", "W8"], {"hip": TILE + ["R6"], "gable": TILE + ["R6"]}, 4),
+    # v1 (spec building-kit-v1.md 2.3): era wall/roof rows; W11 is left out of residential wall rows because the global
+    # settlement.json wall weight of W11 (1.0, meant for civic/heritage) would dominate; R6 sheet removed from houses.
+    "res_mid": ("mid", ["W1", "W2", "W5", "W6", "W4", "W3", "W7", "W9"],
+                {"flat": FLAT, "hip": TILE, "gable": TILE}, 1),
+    "res_old": ("old", ["W2", "W1", "W8", "W3", "W4", "W6"], {"flat": FLAT, "hip": TILE, "gable": TILE}, 2),
+    "res_old_town": ("old", ["W2", "W1", "W8", "W3", "W4", "W6"], {"hip": TILE}, 2),
+    "res_late": ("late", ["W1", "W5", "W9", "W2", "W4", "W7"], {"flat": FLAT, "hip": TILE_LOW}, 3),
+    "res_house": ("mid", ["W1", "W2", "W8", "W3", "W4"], {"hip": TILE, "gable": TILE}, 4),
     "ind_shed": ("late", ["W9", "W12", "W13"], {"gable": METAL, "sawtooth": METAL + ["R8"]}, 5),
     "ind_heritage": ("old", ["W10", "W11"], {"gable": ["R4", "R5", "R8"], "sawtooth": ["R7", "R8"]}, 6),
     "civ_hall": ("mid", ["W2", "W8", "W11"], {"flat": FLAT, "hip": ["R8", "R5"]}, 7),
@@ -74,13 +80,15 @@ def build_building(fam, v, gf, fn, seed):
     rt = mass["roof_type"]
     top = m0.aabb()[1][1]
     floors = {
-        "res_mid": kb.RES_MID, "res_old": kb.RES_OLD, "res_late": kb.RES_LATE, "res_house": kb.RES_HOUSE,
+        "res_mid": kb.RES_MID, "res_old": kb.RES_OLD, "res_old_town": kb.RES_OLD_TOWN, "res_late": kb.RES_LATE,
+        "res_house": kb.RES_HOUSE,
         "ind_heritage": kb.IND_HERITAGE, "civ_hall": kb.CIV_HALL}.get(fam, {}).get(v, {}).get("floors", 1)
     entry = {
         "id": ident, "family": fam, "kind": "building", "variant": v + ("_gf" if gf else ""), "gf": gf,
         "era": era, "floors": floors, "footprint_m": [round(mass["footprint"][0], 2), round(mass["footprint"][1], 2)],
         "eave_height_m": round(mass["eave"], 2), "total_height_m": round(top, 2), "roof_type": rt,
-        "palette": {"wall_rows": wall_rows, "roof_rows": roof_map.get(rt, FLAT), "accent_rows": ACCENT_ROWS},
+        "palette": {"wall_rows": wall_rows, "roof_rows": roof_map.get(rt, FLAT),
+                    "accent_rows": ACCENT_OLD if fam in ("res_old", "res_old_town", "res_house") else ACCENT_ROWS},
         "lods": {"LOD0": {"node": ident + "_LOD0", "tris": m0.tri_count()},
                  "LOD1": {"node": ident + "_LOD1", "tris": m1.tri_count()},
                  "PROXY": {"node": ident + "_PROXY", "tris": mp.tri_count()}},
@@ -192,10 +200,10 @@ def main():
         old[e["id"]] = e
     modules = [old[k] for k in sorted(old)]
     kc.write_json(manifest_path, {
-        "kit_version": KIT_VERSION, "seed": args.seed, "spec": "design/specs/art/building-kit-v0.md",
+        "kit_version": KIT_VERSION, "seed": args.seed, "spec": "design/specs/art/building-kit-v1.md",
         "units": "metre", "forward": "+Z (glTF)", "material": "mat_kit", "pivot": "footprint centre, y=0, skirt to -2.5",
         "uv0": "x=(part_id+0.5)/16, y=shade", "palette": "res://assets/kit/kit_palette.json",
-        "budgets": {"max_lod0_meshes": 40, "max_lod0_tris": 1500, "proxy_max_tris": 14, "skirt_m": 2.5},
+        "budgets": {"max_lod0_meshes": 64, "max_lod0_tris": 1500, "proxy_max_tris": 14, "skirt_m": 2.5},
         "modules": modules})
     print("manifest: %d modules -> %s" % (len(modules), manifest_path))
 

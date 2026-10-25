@@ -10,8 +10,9 @@ import random
 
 from kit_common import (
     EPS, FLOOR_H, GF_H, PARAPET_H, PART_ACCENT, PART_BRICK, PART_GLASS, PART_ROOF, PART_STONE, PART_TRIM,
-    PART_WALL, RECESS_SHADE, SKIRT, Frame, Mesh, Rec, block_walls, flat_roof, floor_bases, gable_roof, hip_roof,
-    mono_roof, roof_box, sawtooth_roof, shop_front, spaced, wall_frames, window_recs)
+    PART_WALL, RECESS_SHADE, SKIRT, Frame, Mesh, Rec, block_walls, fascia, flat_roof, floor_bases, gable_roof,
+    hip_roof, mono_roof, roof_box, sawtooth_roof, shop_front, solar_row, spaced, wall_frames, water_tank,
+    window_recs)
 
 PARAPET = PARAPET_H
 
@@ -69,11 +70,16 @@ def parapet_boxes(m, lower, upper, y):
 # B  res_mid
 # ------------------------------------------------------------------------------------------------------------
 RES_MID = {
-    "a": dict(floors=4, w=14.0, d=11.0, pattern="full", boxes=1, gf=True),
-    "b": dict(floors=5, w=18.0, d=12.0, pattern="split", boxes=2, gf=True),
-    "c": dict(floors=5, w=12.0, d=10.0, pattern="solid_corner", boxes=1, gf=True),
-    "d": dict(floors=6, w=20.0, d=14.0, pattern="alt", boxes=2, gf=False),
+    # flat = terrace + parapet + rooftop equipment (RT); hip/gable = tiled roof with eaves (RK-K / RK-B, spec 3.1)
+    "a": dict(floors=4, w=14.0, d=11.0, pattern="full", equip=("stair", "solar2"), gf=True),
+    "b": dict(floors=5, w=18.0, d=12.0, pattern="split", equip=("stair", "tank", "solar3"), gf=True),
+    "c": dict(floors=5, w=12.0, d=10.0, pattern="solid_corner", equip=("stair", "tank"), gf=True),
+    "d": dict(floors=6, w=20.0, d=14.0, pattern="alt", equip=("stair", "tank", "solar2"), gf=False),
+    "e": dict(floors=4, w=14.0, d=11.0, pattern="full", roof="hip", rise=2.3, gf=True),
+    "f": dict(floors=5, w=18.0, d=12.0, pattern="alt", roof="hip", rise=2.55, gf=True),
+    "g": dict(floors=4, w=12.0, d=10.0, pattern="solid_corner", roof="gable", rise=2.4, gf=False),
 }
+EAVE_OH = 0.6
 
 
 def _mid_pattern(pattern, w, floor_index, base):
@@ -89,6 +95,25 @@ def _mid_pattern(pattern, w, floor_index, base):
             return [balcony(-hw + 1.5, hw - 1.5, base)]
         return [balcony(-hw + 3.0, -1.0, base), balcony(1.0, hw - 3.0, base)]
     raise ValueError(pattern)
+
+
+def rooftop_equipment(m, rect, y, equip, rng):
+    """Terrace equipment sub-modules (spec 3.1 RT, T-051 Tur 1 step 4): stair box, water tank, solar collectors.
+    Slots are fixed per variant (spec 4.1: the layout is a variant difference, not a seed difference); `rng` only
+    mirrors the stair/tank slots left-right so that two buildings of the same variant do not look cloned."""
+    x0, x1, z0, z1 = rect
+    w, d = x1 - x0, z1 - z0
+    flip = 1.0 if rng.randrange(2) == 0 else -1.0
+    back_z = z0 + 3.5
+    mid_z = snap(z0 + d * 0.55)
+    for item in equip:
+        if item == "stair":
+            roof_box(m, snap(-flip * w / 4), snap(back_z), 2.5, 3.0, y, 2.6)
+        elif item == "tank":
+            water_tank(m, snap(flip * w / 4), snap(back_z), y)
+        elif item.startswith("solar"):
+            n = int(item[5:])
+            solar_row(m, snap(-flip * w / 6), mid_z, y, n=n)
 
 
 def build_res_mid(v, gf, rng):
@@ -110,19 +135,24 @@ def build_res_mid(v, gf, rng):
         front.append(slit(w / 2 - 2.6, bases[1] + 0.9, h - 1.0, 0.7))
     for i in range(n):
         back.append(Rec(-0.5, 0.5, bases[i] + 1.0, bases[i] + 2.3, 0.2, back=PART_GLASS, reveal_shade=0.8))
-    block_walls(m, rect, 0.0, h + PARAPET, {"front": front, "back": back})
-    flat_roof(m, rect, h)
-    bw, bd = 2.5, 3.0
-    spots = [(-w / 4, rect[2] + 3.5), (w / 4, rect[2] + 3.5), (0.0, 0.0)]
-    rng.shuffle(spots)
-    for k in range(s["boxes"]):
-        cx, cz = spots[k]
-        if k == 1 and v in ("b", "d"):
-            roof_box(m, snap(cx), snap(cz), 1.5, 1.5, h, 1.6)        # water tank
-        else:
-            roof_box(m, snap(cx), snap(cz), bw, bd, h, 2.6)          # stair box
-    mass = {"blocks": [mass_block(rect, h, flat=True, main=True)], "roofs": [], "gf": gf, "roof_type": "flat",
-            "eave": h}
+    roof = s.get("roof", "flat")
+    if roof == "flat":
+        block_walls(m, rect, 0.0, h + PARAPET, {"front": front, "back": back})
+        flat_roof(m, rect, h)
+        rooftop_equipment(m, rect, h, s["equip"], rng)
+        mass = {"blocks": [mass_block(rect, h, flat=True, main=True)], "roofs": [], "gf": gf, "roof_type": "flat",
+                "eave": h}
+        return m, mass
+    block_walls(m, rect, 0.0, h, {"front": front, "back": back})
+    if roof == "hip":
+        hip_roof(m, rect, h, s["rise"], oh=EAVE_OH)
+        fascia(m, rect, h, s["rise"], EAVE_OH, "hip")
+        rdesc = {"type": "hip", "rect": rect, "y": h, "rise": s["rise"], "ridge": "x", "oh": EAVE_OH}
+    else:
+        gable_roof(m, rect, h, s["rise"], "x", oh=EAVE_OH)
+        fascia(m, rect, h, s["rise"], EAVE_OH, "gable", "x")
+        rdesc = {"type": "gable", "rect": rect, "y": h, "rise": s["rise"], "ridge": "x", "oh": EAVE_OH}
+    mass = {"blocks": [mass_block(rect, h, main=True)], "roofs": [rdesc], "gf": gf, "roof_type": roof, "eave": h}
     return m, mass
 
 
@@ -177,16 +207,18 @@ def build_res_old(v, gf, rng):
     if s["roof"] == "flat":
         block_walls(m, rect, 0.0, h + PARAPET, {"front": front, "back": back})
         flat_roof(m, rect, h)
-        roof_box(m, snap(w / 4), snap(rect[2] + 3.0), 1.5, 1.5, h, 2.0)
+        water_tank(m, snap(w / 4), snap(rect[2] + 3.0), h)
         mass = {"blocks": [mass_block(rect, h, flat=True, main=True)], "roofs": [], "gf": gf,
                 "roof_type": "flat", "eave": h}
     else:
         block_walls(m, rect, 0.0, h, {"front": front, "back": back})
         if s["roof"] == "hip":
             hip_roof(m, rect, h, s["rise"], oh=0.45)
+            fascia(m, rect, h, s["rise"], 0.45, "hip")
             rt, ridge = "hip", "x"
         else:
             gable_roof(m, rect, h, s["rise"], "x", oh=0.45)
+            fascia(m, rect, h, s["rise"], 0.45, "gable", "x")
             rt, ridge = "gable", "x"
         mass = {"blocks": [mass_block(rect, h, main=True)],
                 "roofs": [{"type": rt, "rect": rect, "y": h, "rise": s["rise"], "ridge": ridge, "oh": 0.45}],
@@ -268,15 +300,18 @@ def build_res_late(v, gf, rng):
         roofs = []
         blocks[0]["flat"] = False
         blocks[0]["terrace"] = True
-        roof_box(m, 0.0, snap(z0 + 3.0), 2.5, 3.0, h, 2.6)
+        roof_box(m, snap(-w / 4), snap(z0 + 3.0), 2.5, 3.0, h, 2.6)
+        solar_row(m, snap(w / 5), snap(z0 + 3.5), h, n=3)
     elif s["roof"] == "hip":
         hip_roof(m, rect, h, 2.0, oh=0.5)
+        fascia(m, rect, h, 2.0, 0.5, "hip")
         roofs = [{"type": "hip", "rect": rect, "y": h, "rise": 2.0, "ridge": "x", "oh": 0.5}]
         blocks[0]["flat"] = False
     else:
         flat_roof(m, rect, h)
         roof_box(m, snap(-w / 4), snap(z0 + 3.0), 2.5, 3.0, h, 2.6)
-        roof_box(m, snap(w / 4), snap(z0 + 3.0), 1.5, 1.5, h, 1.6)
+        water_tank(m, snap(w / 4), snap(z0 + 3.0), h)
+        solar_row(m, snap(w / 5), snap(z0 + 7.0), h, n=2)
     mass = {"blocks": blocks, "roofs": roofs, "gf": gf, "roof_type": "hip" if s["roof"] == "hip" else "flat",
             "eave": h}
     return m, mass
@@ -327,11 +362,13 @@ def build_res_house(v, gf, rng):
     roofs = []
     if s["roof"] == "hip":
         hip_roof(m, rect, h, s["rise"], oh=0.5)
+        fascia(m, rect, h, s["rise"], 0.5, "hip")
         rt = "hip"
         roofs.append({"type": "hip", "rect": rect, "y": h, "rise": s["rise"], "ridge": "x", "oh": 0.5})
     else:
         ridge = "z" if s["roof"] == "gable_z" else "x"
         gable_roof(m, rect, h, s["rise"], ridge, oh=0.5)
+        fascia(m, rect, h, s["rise"], 0.5, "gable", ridge)
         rt = "gable"
         roofs.append({"type": "gable", "rect": rect, "y": h, "rise": s["rise"], "ridge": ridge, "oh": 0.5})
         if ridge == "z":   # porch canopy above the door
@@ -578,6 +615,84 @@ def build_civ_hall(v, gf, rng):
 
 
 # ------------------------------------------------------------------------------------------------------------
+# A2  res_old_town  (spec v1 section 4: old masonry apartment, 3-4 floors, hip tile roof, vertical window rhythm)
+# ------------------------------------------------------------------------------------------------------------
+RES_OLD_TOWN = {
+    "a": dict(floors=3, w=12.0, d=12.0, rise=2.1, gf=True, oriel=None, shutters=True),
+    "b": dict(floors=4, w=14.0, d=13.0, rise=2.4, gf=False, oriel=(-2.2, 3.2), shutters=False),
+    "c": dict(floors=4, w=15.0, d=12.0, rise=2.3, gf=True, oriel=(3.4, 3.0), shutters=True),
+}
+OT_W, OT_H, OT_SILL = 1.0, 1.9, 0.5     # window: 1.0 x 1.9 m, sill 0.5 m (spec 5: vertical, 2.8-3.2 m axes)
+
+
+def _oriel(m, fr_front, cx, bw, y0, y1, zf, depth=0.75):
+    """Cumba: one box 0.75 m out from the first upper floor to the eave, windows on every floor (spec 5)."""
+    m.box(cx - bw / 2, cx + bw / 2, y0, y1, zf, zf + depth, side=PART_WALL, top=PART_TRIM, bottom=PART_TRIM,
+          skip=("pz",))
+    fr = Frame((0, 0, zf + depth), (1, 0, 0), (0, 1, 0), (0, 0, 1))
+    recs = []
+    base = y0
+    while base + FLOOR_H <= y1 + 0.01:
+        for dx in (-0.8, 0.8):
+            recs.append(Rec(cx + dx - 0.45, cx + dx + 0.45, base + 0.6, base + 2.4, 0.15, back=PART_GLASS,
+                            reveal_shade=0.8))
+        base += FLOOR_H
+    fr.tile(m, cx - bw / 2, cx + bw / 2, y0, y1, recs, PART_WALL, 1.0)
+
+
+def build_res_old_town(v, gf, rng):
+    s = RES_OLD_TOWN[v]
+    w, d, n = s["w"], s["d"], s["floors"]
+    rect = (-w / 2, w / 2, -d / 2, d / 2)
+    x0, x1, z0, z1 = rect
+    bases, h = floor_bases(n, gf)
+    m = Mesh()
+    centres = spaced(-w / 2, w / 2, 3.0, margin=1.5)       # window axes 2.8-3.2 m
+    oriel = s["oriel"]
+    front, back, left, right = [], [], [], []
+    door_c = centres[0] if oriel is None or oriel[0] > 0 else centres[-1]
+    for i in range(n):
+        if i == 0 and gf:
+            front += shop_front(m, None, x0, x1, z1, unit=3.5, seed=rng.randrange(3))
+        elif i == 0:
+            front.append(Rec(door_c - 0.6, door_c + 0.6, 0.0, 2.4, 0.45, back=PART_ACCENT, reveal_shade=0.8))
+            front += window_recs([c for c in centres if c != door_c], bases[0], OT_W, OT_H, OT_SILL, 0.25)
+        else:
+            cs = centres
+            if oriel is not None:
+                cs = [c for c in centres if abs(c - oriel[0]) > oriel[1] / 2 + 0.5]
+            front += window_recs(cs, bases[i], OT_W, OT_H, OT_SILL, 0.25)
+        back += window_recs(spaced(x0, x1, 4.0, margin=2.0), bases[i], OT_W, OT_H, OT_SILL, 0.2)
+        left += window_recs([0.0], bases[i], OT_W, OT_H, OT_SILL, 0.2)
+        right += window_recs([0.0], bases[i], OT_W, OT_H, OT_SILL, 0.2)
+    fr = block_walls(m, rect, 0.0, h, {"front": front, "back": back, "left": left, "right": right})
+    # stone floor-line ledge above the ground floor and eave cornice (spec 5: kat silmesi, W11)
+    m.box(x0 - 0.08, x1 + 0.08, bases[1] - 0.12, bases[1] + 0.12, z1, z1 + 0.1, side=PART_STONE, top=PART_STONE,
+          skip=("nz",))
+    m.box(x0 - 0.15, x1 + 0.15, h - 0.4, h, z0 - 0.15, z1 + 0.15, side=PART_STONE, top=None, side_shade=0.9,
+          skip=("ny",))
+    if oriel is not None:
+        _oriel(m, fr["front"], oriel[0], oriel[1], bases[1], h - 0.4, z1)
+    if s["shutters"]:   # panjur: flat accent leaves beside the upper-floor windows (spec 5, 2 triangles per leaf)
+        for i in range(1, n):
+            cs = centres
+            if oriel is not None:
+                cs = [c for c in centres if abs(c - oriel[0]) > oriel[1] / 2 + 0.5]
+            for c in cs:
+                for sx in (-1.0, 1.0):
+                    u0 = c + sx * (OT_W / 2 + 0.05)
+                    u1 = c + sx * (OT_W / 2 + 0.5)
+                    fr["front"].rect(m, min(u0, u1), max(u0, u1), bases[i] + OT_SILL, bases[i] + OT_SILL + OT_H, 0.03,
+                                     PART_ACCENT, 0.95)
+    hip_roof(m, rect, h, s["rise"], oh=EAVE_OH)
+    fascia(m, rect, h, s["rise"], EAVE_OH, "hip")
+    mass = {"blocks": [mass_block(rect, h, main=True)],
+            "roofs": [{"type": "hip", "rect": rect, "y": h, "rise": s["rise"], "ridge": "x", "oh": EAVE_OH}],
+            "gf": gf, "roof_type": "hip", "eave": h}
+    return m, mass
+
+
+# ------------------------------------------------------------------------------------------------------------
 # LOD1 / PROXY from massing
 # ------------------------------------------------------------------------------------------------------------
 def _block_top(b):
@@ -697,6 +812,7 @@ def finish(m0, mass):
 BUILDERS = {
     "res_mid": (build_res_mid, RES_MID),
     "res_old": (build_res_old, RES_OLD),
+    "res_old_town": (build_res_old_town, RES_OLD_TOWN),
     "res_late": (build_res_late, RES_LATE),
     "res_house": (build_res_house, RES_HOUSE),
     "ind_shed": (build_ind_shed, IND_SHED),

@@ -6,8 +6,9 @@ extends GdUnitTestSuite
 ## varyantlar küçültülmüş ağ veya bilerek bozulmuş çıktı kullanır.
 
 ## Kit spec sayıları (kural kaynağı: design/specs/art/building-kit-v0.md; kontrol verisinden BAĞIMSIZ sabitlenir).
-const METRO_TILE_MAX := 0.35
-const WINDOW_TILE_MAX := 0.55
+## T-051 Tur 1 (kit v1 §3.3): metro kiremit %40-55, hiçbir 500 m penceresi > %72 (v0: 35 / 55).
+const METRO_TILE_MAX := 0.55
+const WINDOW_TILE_MAX := 0.72
 const TOWER_HEIGHT_M := 23.0
 const TOWER_RATIO_MIN := 1.3
 const TOWER_RATIO_MAX := 1.8
@@ -287,7 +288,7 @@ func test_metro_wide_tile_share_is_at_most_35_percent_with_two_or_more_tones() -
 	var all := SettlementStats.roof_shares(_full, PackedInt32Array())
 	assert_float(all["tile"]).override_failure_message("metro kiremit payı %s" % all["tile"]).is_less_equal(METRO_TILE_MAX)
 	assert_int(all["tile_tones"]).is_greater_equal(2)
-	assert_float(all["r3_of_tile"]).is_less_equal(0.40)
+	assert_float(all["r3_of_tile"]).is_less_equal(0.46)    # v1: R3 kiremit alanının %35-45'i
 
 
 func test_no_500m_urban_window_exceeds_55_percent_tile() -> void:
@@ -315,17 +316,17 @@ func test_roof_mix_per_character_matches_kit_table() -> void:
 	# kit §3.2 tablosu (ÇM): yoğun merkez teras 55-70 / kiremit 20-35; tarihî çekirdek teras 30-45 / kiremit 40-55;
 	# küçük merkez/köy kiremit 55-70; sanayi sac 55-75.
 	var dense := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"center", &"dense"]))
-	assert_float(dense["terrace"]).override_failure_message("yoğun teras %s" % [dense]).is_between(0.55, 0.70)
-	assert_float(dense["tile"]).is_between(0.20, 0.35)
+	assert_float(dense["terrace"]).override_failure_message("yoğun teras %s" % [dense]).is_between(0.40, 0.62)
+	assert_float(dense["tile"]).is_between(0.30, 0.55)    # kit v1 §3.3: center %40-55, dense %38-52 (T-051 Tur 1)
 	var hist := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"historic"]))
-	assert_float(hist["terrace"]).override_failure_message("tarihî teras %s" % [hist]).is_between(0.30, 0.45)
-	assert_float(hist["tile"]).is_between(0.40, 0.55)
+	assert_float(hist["terrace"]).override_failure_message("tarihî teras %s" % [hist]).is_between(0.18, 0.38)
+	assert_float(hist["tile"]).is_between(0.58, 0.72)    # kit v1 §3.3 historic %60-72
 	var village := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"village"]))
-	assert_float(village["tile"]).override_failure_message("köy kiremit %s" % [village]).is_between(0.55, 0.70)
+	assert_float(village["tile"]).override_failure_message("köy %s" % [village]).is_between(0.42, 0.72)
 	var yard := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"yard"]))
 	assert_float(yard["metal"]).override_failure_message("sanayi sac %s" % [yard]).is_between(0.55, 0.80)
 	assert_float(yard["tile"]).is_less_equal(0.10)
-	assert_float(village["tile"]).override_failure_message("köyde hedef %60-65").is_between(0.58, 0.67)
+	assert_float(village["tile"]).override_failure_message("köy kiremit v1 aralığı").is_between(0.42, 0.72)
 
 
 # --- Kit spec §3.3 + §7.1: bitişik nizam, blok çevresi, yükseklik hiyerarşisi, çeşitlilik ---

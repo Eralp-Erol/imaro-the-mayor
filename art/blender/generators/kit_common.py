@@ -22,6 +22,8 @@ PART_TRIM = 5     # trim / parapet cap (wall colour x 0.85)
 PART_BRICK = 6    # fixed brick W10 (spec reserve slot, used for ind_heritage)
 PART_TRUNK = 8    # fixed trunk
 PART_SKIN = 9     # fixed skin
+PART_TANK = 10    # fixed rooftop water tank (T-051 v1; palette parts[10] -> W12 row in Tur 1, R13 in Tur 2)
+PART_SOLAR = 11   # fixed rooftop solar collector (T-051 v1; palette parts[11] -> R7 row in Tur 1, R12 in Tur 2)
 
 FLOOR_H = 3.0
 GF_H = 4.2
@@ -321,6 +323,61 @@ def hip_roof(m, rect, y, rise, oh=0.4, part=PART_ROOF):
         m.tri((ex0, ey, ez1), (ex1, ey, ez1), (rx1, ry, rz1), part, 1.0, out=(0, 1, 1))
         m.tri((ex1, ey, ez0), (ex0, ey, ez0), (rx0, ry, rz0), part, 1.0, out=(0, 1, -1))
     del eps
+
+
+def fascia(m, rect, y, rise, oh, kind="hip", ridge="x", thick=0.22, part=PART_TRIM, shade=0.7):
+    """Dark eave fascia strip (spec 3.1 RK-*: eave underside/edge reads as a dark line that separates the mass).
+    Vertical outward-facing quads of height `thick` hanging from the eave edge of a hip/gable roof built with
+    hip_roof()/gable_roof() using the same (rect, y, rise, oh). 8 triangles for a hip roof, 4 for a gable roof."""
+    x0, x1, z0, z1 = rect
+    if kind == "hip":
+        slope = rise / (min(x1 - x0, z1 - z0) / 2.0)
+        sides = ("pz", "nz", "px", "nx")
+    elif ridge == "x":
+        slope = rise / ((z1 - z0) / 2.0)
+        sides = ("pz", "nz")
+    else:
+        slope = rise / ((x1 - x0) / 2.0)
+        sides = ("px", "nx")
+    ey = y - oh * slope
+    ex0, ex1 = (x0 - oh, x1 + oh) if kind == "hip" or ridge == "z" else (x0, x1)
+    ez0, ez1 = (z0 - oh, z1 + oh) if kind == "hip" or ridge == "x" else (z0, z1)
+    lo = ey - thick
+    if "pz" in sides:
+        m.poly([(ex0, lo, ez1), (ex1, lo, ez1), (ex1, ey, ez1), (ex0, ey, ez1)], part, shade, out=(0, 0, 1))
+    if "nz" in sides:
+        m.poly([(ex1, lo, ez0), (ex0, lo, ez0), (ex0, ey, ez0), (ex1, ey, ez0)], part, shade, out=(0, 0, -1))
+    if "px" in sides:
+        m.poly([(ex1, lo, ez1), (ex1, lo, ez0), (ex1, ey, ez0), (ex1, ey, ez1)], part, shade, out=(1, 0, 0))
+    if "nx" in sides:
+        m.poly([(ex0, lo, ez0), (ex0, lo, ez1), (ex0, ey, ez1), (ex0, ey, ez0)], part, shade, out=(-1, 0, 0))
+
+
+def water_tank(m, cx, cz, y, r=0.6, h=1.1):
+    """Rooftop water tank (spec 3.1 RT): hexagonal drum on a small plinth (26 triangles). Counts as one 1.2 x 1.5 m
+    roof volume in LOD1 (roof_boxes)."""
+    ring = [(cx + r * math.cos(math.pi / 3.0 * i), cz + r * math.sin(math.pi / 3.0 * i)) for i in range(6)]
+    m.box(cx - 0.45, cx + 0.45, y, y + 0.4, cz - 0.45, cz + 0.45, side=PART_TRIM, top=None, side_shade=0.8)
+    m.prism_poly(ring, y + 0.4, y + 0.4 + h, PART_TANK, top=PART_TANK, top_shade=1.0, side_shade=0.92)
+    m.roof_boxes.append((cx, cz, 1.2, 1.2, y, h + 0.4, PART_TANK, PART_TANK))
+
+
+def solar_row(m, cx, cz, y, n=2, w=2.0, d=1.0, tilt_deg=30.0, gap=0.25):
+    """`n` rooftop solar collectors in a row along x (spec 3.1 RT), tilted to face the street (+z). Per collector:
+    glass plate (2) + back (2) + two side triangles (2) = 6 triangles. Not kept in LOD1 (height < 1.5 m)."""
+    low, rise = 0.2, d * math.tan(math.radians(tilt_deg))
+    total = n * w + (n - 1) * gap
+    for i in range(n):
+        x0 = cx - total / 2.0 + i * (w + gap)
+        x1 = x0 + w
+        zl, zh = cz + d / 2.0, cz - d / 2.0   # low edge toward the street, high edge behind
+        m.poly([(x0, y + low, zl), (x1, y + low, zl), (x1, y + low + rise, zh), (x0, y + low + rise, zh)],
+               PART_SOLAR, 1.0, out=(0, 1, 1))
+        m.poly([(x1, y, zh), (x0, y, zh), (x0, y + low + rise, zh), (x1, y + low + rise, zh)], PART_TRIM, 0.75,
+               out=(0, 0, -1))
+        m.poly([(x1, y, zl), (x1, y, zh), (x1, y + low + rise, zh), (x1, y + low, zl)], PART_TRIM, 0.8, out=(1, 0, 0))
+        m.poly([(x0, y, zh), (x0, y, zl), (x0, y + low, zl), (x0, y + low + rise, zh)], PART_TRIM, 0.8,
+               out=(-1, 0, 0))
 
 
 def _roof_face(m, pts, part, out):

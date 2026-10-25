@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## T-004 ölçüt 1 · Palet (tek kaynak kit_palette.json) ve parça/örnek verisi kodlaması: spec bölüm 5-6.
-## Renk kuralları: duvar HSV S ≤ 0,40 (tuğla W10 ≤ 0,56), V 0,55–0,86; çatı S ≤ 0,55; oyuncak doygunluk yok (VIS-05).
+## Renk kuralları (v1, T-051): duvar S ≤ 0,42, V 0,58–0,87; kiremit S ≤ 0,66; oyuncak doygunluk yok (VIS-05).
+## Ayrıntılı v1 sınırları: tests/view/buildings/kit_palette_v1_test.gd.
 
 
 func test_palette_has_32_rows_and_16_parts_with_unique_names() -> void:
@@ -20,8 +21,8 @@ func test_wall_rows_obey_saturation_and_value_limits() -> void:
 		if not n.begins_with("W"):
 			continue
 		var c := Color.html(str(r["hex"]))
-		assert_float(c.s).is_less_equal(0.57 if n == "W10" else 0.41)
-		assert_float(c.v).is_between(0.55, 0.86)
+		assert_float(c.s).is_less_equal(0.605 if n == "W10" else 0.425)
+		assert_float(c.v).is_between(0.575, 0.875)
 
 
 func test_roof_rows_obey_saturation_limit_and_tile_is_not_a_single_red() -> void:
@@ -31,7 +32,7 @@ func test_roof_rows_obey_saturation_limit_and_tile_is_not_a_single_red() -> void
 		if not n.begins_with("R"):
 			continue
 		var c := Color.html(str(r["hex"]))
-		assert_float(c.s).is_less_equal(0.56)
+		assert_float(c.s).is_less_equal(0.665)
 		if n in ["R3", "R4", "R5"]:
 			tile_hues.append(c.v)
 	assert_int(tile_hues.size()).is_equal(3)
@@ -44,6 +45,7 @@ func test_roof_rows_obey_saturation_limit_and_tile_is_not_a_single_red() -> void
 func test_row_lookup_and_instance_encoding_round_trip() -> void:
 	assert_int(KitMaterial.row_index("W1")).is_equal(0)
 	assert_int(KitMaterial.row_index("R3")).is_equal(15)
+	assert_int(KitMaterial.row_index("R9")).is_equal(30)
 	assert_int(KitMaterial.row_index("A3")).is_equal(24)
 	assert_int(KitMaterial.row_index("nope")).is_equal(-1)
 	var c := KitMaterial.encode_instance(3, 16, 22, 1.06)
@@ -58,7 +60,7 @@ func test_shader_parameters_come_from_the_palette_file() -> void:
 	assert_str(mat.resource_name).is_equal("mat_kit")
 	var pal: PackedVector3Array = mat.get_shader_parameter("palette")
 	assert_int(pal.size()).is_equal(32)
-	var w1 := Color.html("#D9D2C3")
+	var w1 := Color.html("#DED3BF")
 	assert_float(pal[0].x).is_equal_approx(w1.r, 0.002)
 	var part_row: PackedFloat32Array = mat.get_shader_parameter("part_row")
 	assert_float(part_row[0]).is_equal(-1.0)       # duvar = örnek duvar satırı

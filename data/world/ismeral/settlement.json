@@ -8,7 +8,7 @@
 		"overrides: bölge + kıyıya uzaklık koşulu -> zone (ör. ana kara kıyı şeridi liman cephesi; WLD-03: ana kara, D4'ün batısı). fabric_zones: parsel şablonu -> zone (endüstriyel saha, kırsal tarla evi).",
 		"zones[ad]: family_weights = aile ağırlıkları (aile içinde kimlikler eşit; id_weights çarpanı), floors_shift = kat hedef kayması, floors_sigma = kat tercih genişliği, gf_main/gf_local = zemin kat dükkân varyantı çarpanı (ana cadde / yerel sokak), setback_m = cephe çekmesi [min,max], gap_m = aynı lotta yan yana yapı aralığı, adjacent = bitişik nizam (boşluk toleransı gap_tol_m), units_max, rows (derinlikte sıra sayısı: sanayi avlusu), wide_p/wide_weights = lot başına çok parselli (ayak izi tek lota sığmayan) sivil yapı / atölye-depo olasılığı ve aile ağırlıkları, heritage_p = tarihî çekirdek miras bayrağı olasılığı.",
 		"tower: saat kulesi + meydan kuralları (kit spec §4, WLD-07): kule D1'de, bölge merkez düğümüne en yakın uygun bloğun merkezinde; meydan = size_m dikdörtgeni (yapı yok); frame_radius_m çevresinde en yüksek yapı (parapet üstü) 23 / frame_ratio aralığında kalır.",
-		"placement.tile_rows + zones[].tile_cap: 500 m hücrede kiremit çatı alanı payı bütçesi (kit §3.2: kentsel pencere <= %55); aşılınca kiremit modüllerinin ağırlığı kısılır. Köy/yamaç/tarla dokuları kendi aralığında (%55-70) kalır, bütçe yok.",
+		"placement.tile_rows + zones[].tile_cap: 500 m hücrede kiremit çatı alanı payı bütçesi (T-051 Tur 1, kit v1 §3.3: zon üst sınırları, hiçbir hücre > %72; liman D3 <= %15); aşılınca kiremit modüllerinin ağırlığı kısılır. Kiremit satırları R3/R4/R5/R9 (tile_rows). `res_old_town` (kit v1 §4) res_old ağırlığının bir kısmını devralır (T-051 teknik-sanatçı; world-engineer onayı bekler).",
 		"occupancy (T-049 A, ÇM): T0 doluluk olasılığı = bölge fill(center->edge, t=organik sınır alanı) x (1 + road_access[cephe yolu sınıfı]) x (1 + cluster_amp(t) x gürültü) x boşluk/tarla cebi (pocket: gürültü > threshold ve t > t_min ise olasılık `keep` çarpanına iner; çekirdek etkilenmez) x eğim kesintisi (slope) x kıyı kesintisi (shore) x kenar saçağı (fray, A2: t0 üstünde `keep` oranına doğru seyrekleşir; edge_scale = saçak/kümeleşme bölge ölçeği). region_scale = bölgeye göre gürültü/cep/eğim/kıyı kesinti çarpanı (D1+D6 kompakt çekirdek düşük, WLD-04). Gürültü tohumu network.json layout_seed'dir (yerleşim tohumundan bağımsız).",
 		"zones[].rows/second_row_p/row_gap_m: arka sıra (iç blok): ön sıradan row_gap_m kadar geriye ikinci bir yapı sırası olasılığı; blok içini dolu gösterir (yalnız cephe şeridi değil). Komşu/pencere kuralları sıra başına ayrı sayılır."
 	],
@@ -38,7 +38,9 @@
 		"G1": 21,
 		"A1": 22,
 		"A2": 23,
-		"A3": 24
+		"A3": 24,
+		"R9": 30,
+		"A4": 31
 	},
 	"placement": {
 		"side_margin_m": 0.15,
@@ -72,18 +74,19 @@
 		"roof_row_weights": {
 			"R1": 0.68,
 			"R2": 0.32,
-			"R3": 0.3,
-			"R4": 0.42,
-			"R5": 0.28,
+			"R3": 0.38,
+			"R4": 0.24,
+			"R5": 0.2,
+			"R9": 0.18,
 			"R6": 0.5,
 			"R7": 0.5,
 			"R8": 1.0
 		},
 		"house_roof_row_weights": {
-			"R3": 0.3,
-			"R4": 0.42,
-			"R5": 0.28,
-			"R6": 0.17
+			"R3": 0.34,
+			"R4": 0.24,
+			"R5": 0.22,
+			"R9": 0.2
 		},
 		"gf_accent_rows": [
 			"A1",
@@ -94,7 +97,8 @@
 		"tile_rows": [
 			"R3",
 			"R4",
-			"R5"
+			"R5",
+			"R9"
 		],
 		"floor_diverge_boost": 3.5,
 		"floor_diverge_dist_m": 1.4
@@ -290,8 +294,9 @@
 	"zones": {
 		"center": {
 			"family_weights": {
-				"res_mid": 0.38,
-				"res_old": 0.25,
+				"res_mid": 0.3,
+				"res_old": 0.13,
+				"res_old_town": 0.2,
 				"res_late": 0.23,
 				"res_house": 0.05
 			},
@@ -315,7 +320,7 @@
 			"wide_weights": {
 				"civ_hall": 1.0
 			},
-			"tile_cap": 0.38,
+			"tile_cap": 0.55,
 			"second_row_p": 0.8,
 			"row_gap_m": [
 				3.0,
@@ -324,7 +329,8 @@
 		},
 		"historic": {
 			"family_weights": {
-				"res_old": 0.56,
+				"res_old": 0.24,
+				"res_old_town": 0.32,
 				"res_mid": 0.26,
 				"res_house": 0.18
 			},
@@ -353,7 +359,7 @@
 				"bld_res_old_c": 0.9,
 				"bld_res_old_c_gf": 0.9
 			},
-			"tile_cap": 0.5,
+			"tile_cap": 0.66,
 			"second_row_p": 0.8,
 			"row_gap_m": [
 				3.0,
@@ -363,8 +369,9 @@
 		"dense": {
 			"family_weights": {
 				"res_mid": 0.24,
-				"res_late": 0.32,
-				"res_old": 0.34,
+				"res_late": 0.26,
+				"res_old": 0.16,
+				"res_old_town": 0.24,
 				"res_house": 0.1
 			},
 			"floors_shift": 0.0,
@@ -389,7 +396,7 @@
 				"ind_heritage": 0.3,
 				"ind_shed": 0.35
 			},
-			"tile_cap": 0.38,
+			"tile_cap": 0.52,
 			"second_row_p": 0.8,
 			"row_gap_m": [
 				3.0,
@@ -399,7 +406,8 @@
 		"town_center": {
 			"family_weights": {
 				"res_mid": 0.38,
-				"res_old": 0.26,
+				"res_old": 0.16,
+				"res_old_town": 0.1,
 				"res_house": 0.2,
 				"res_late": 0.12
 			},
@@ -425,7 +433,7 @@
 				"ind_shed": 0.45,
 				"ind_heritage": 0.15
 			},
-			"tile_cap": 0.42,
+			"tile_cap": 0.62,
 			"second_row_p": 0.7,
 			"row_gap_m": [
 				3.0,
@@ -460,7 +468,7 @@
 				"civ_hall": 0.25,
 				"ind_shed": 0.75
 			},
-			"tile_cap": 0.42,
+			"tile_cap": 0.62,
 			"second_row_p": 0.5,
 			"row_gap_m": [
 				3.0,
@@ -468,6 +476,7 @@
 			]
 		},
 		"village": {
+			"tile_cap": 0.66,
 			"family_weights": {
 				"res_house": 0.56,
 				"res_old": 0.32,
@@ -498,7 +507,8 @@
 		"hill_center": {
 			"family_weights": {
 				"res_house": 0.22,
-				"res_old": 0.22,
+				"res_old": 0.14,
+				"res_old_town": 0.08,
 				"res_mid": 0.48,
 				"res_late": 0.08
 			},
@@ -523,7 +533,7 @@
 				"civ_hall": 0.5,
 				"ind_shed": 0.5
 			},
-			"tile_cap": 0.46,
+			"tile_cap": 0.68,
 			"second_row_p": 0.6,
 			"row_gap_m": [
 				3.0,
@@ -531,6 +541,7 @@
 			]
 		},
 		"hillside": {
+			"tile_cap": 0.66,
 			"family_weights": {
 				"res_house": 0.4,
 				"res_old": 0.22,
@@ -565,7 +576,8 @@
 		},
 		"harbor": {
 			"family_weights": {
-				"res_old": 0.2,
+				"res_old": 0.12,
+				"res_old_town": 0.08,
 				"res_mid": 0.35,
 				"res_late": 0.2
 			},
@@ -590,7 +602,7 @@
 				"ind_shed": 0.7,
 				"ind_heritage": 0.3
 			},
-			"tile_cap": 0.42,
+			"tile_cap": 0.15,
 			"second_row_p": 0.6,
 			"row_gap_m": [
 				3.0,
@@ -598,6 +610,7 @@
 			]
 		},
 		"farm": {
+			"tile_cap": 0.66,
 			"family_weights": {
 				"res_house": 0.8,
 				"ind_shed": 0.2
