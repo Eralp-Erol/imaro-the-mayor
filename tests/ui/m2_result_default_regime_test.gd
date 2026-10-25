@@ -262,29 +262,48 @@ func _first_meter(node: Node) -> MeterBar:
 	return null
 
 
+## Değer-yalnız güncellemeler (yapı imzası aynı) düğümleri yeniden kullanır ve sim ile birebirdir. Senaryo, hangi
+## parselin asıl parsel (ilk SONRAKİ karar) olacağına ve ne zaman inşaata gireceğine BAĞLI DEĞİLDİR: günlük adımlarda
+## her yapı-aynı adım denetlenir; asıl parselin gerçekten inşaatta ilerlediği (0..900) adımlar sayılır ve yeterli sayıda
+## yoksa test sessizce geçmez/yanlış nedenle düşmez, açık bir mesajla düşer. (T-051 yerleşim ağırlıkları serbest parsel
+## kümesini değiştirince asıl parsel 2 -> 7 oldu; eski sürüm "öneri bekliyor" penceresinde inşaat bekliyordu.)
 func test_value_only_changes_reuse_the_nodes_and_stay_exact() -> void:
 	var scene := _default_scene({}, 8, 2)
 	_propose(scene)
 	var f: SimFacade = scene["facade"]
 	var panel := _panel(scene)
-	for i in 250:
+	var progress_steps := 0  # yapı aynı + asıl parsel inşaatta + ilerleme değişti
+	var pending_steps := 0  # yapı aynı + "imar bekliyor" satırı görünürken yapılan değer-yalnız adım
+	for day in 250:
+		var model_before := panel.model
+		var structure := model_before.structure_signature()
+		var body_child := panel._body.get_child(0)
+		var meter := _first_meter(panel)
+		var before_pm := model_before.primary.view.progress_pm
 		_step(scene, 1)
-		var pv := f.parcel_views(PackedInt64Array([panel.model.primary.id()]))[0]
-		if pv.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION and pv.progress_pm > 0 \
-				and pv.progress_pm < 900 and pv.pending_zone != &"":
+		if panel.model.structure_signature() != structure:
+			continue  # düğüm kümesi meşru olarak değişti (karar/gelişme durumu): yeniden kurulum beklenir
+		assert_bool(panel._body.get_child(0) == body_child).override_failure_message(
+				"düğümler yeniden kuruldu (gün %d, yapı imzası aynı)" % day).is_true()
+		assert_bool(_first_meter(panel) == meter).override_failure_message(
+				"ilerleme çubuğu yeniden kuruldu (gün %d)" % day).is_true()
+		var v := f.parcel_views(PackedInt64Array([panel.model.primary.id()]))[0]
+		assert_int(panel.model.primary.view.progress_pm).override_failure_message(
+				"panel modeli simle birebir değil (gün %d)" % day).is_equal(v.progress_pm)
+		if meter != null:
+			assert_int(meter.permille).is_equal(v.progress_pm)
+		if v.pending_zone != &"":
+			pending_steps += 1
+		if v.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION and v.progress_pm > 0 and v.progress_pm < 900 \
+				and v.progress_pm != before_pm:
+			progress_steps += 1
+			assert_str(panel.joined_text()).contains(
+					UiText.t(&"format.percent", {"value": UiText.number(v.progress_pm / 10)}))
+		if progress_steps >= 3:
 			break
-	assert_int(panel.model.primary.view.progress_pm).is_greater(0)
-	var body_child := panel._body.get_child(0)
-	var meter := _first_meter(panel)
-	var before_pm := panel.model.primary.view.progress_pm
-	_step(scene, 3)
-	var v := f.parcel_views(PackedInt64Array([panel.model.primary.id()]))[0]
-	assert_int(v.progress_pm).is_not_equal(before_pm)
-	assert_bool(panel._body.get_child(0) == body_child).override_failure_message("düğümler yeniden kuruldu").is_true()
-	assert_bool(_first_meter(panel) == meter).is_true()
-	assert_int(meter.permille).is_equal(v.progress_pm)
-	assert_str(panel.joined_text()).contains(
-			UiText.t(&"format.percent", {"value": UiText.number(v.progress_pm / 10)}))
+	assert_int(progress_steps).override_failure_message(
+			"asıl parsel (%d) 250 günde yapı-aynı üç ilerleme adımı göstermedi" % panel.model.primary.id()).is_equal(3)
+	assert_int(pending_steps).override_failure_message("'imar bekliyor' satırlı değer-yalnız adım görülmedi").is_greater(0)
 	var o := f.economy_outcome()
 	assert_int(panel.model.metric(&"investments_approved").value).is_equal(o.metrics()["investments_approved"])
 
