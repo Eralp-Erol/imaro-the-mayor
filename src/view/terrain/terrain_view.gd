@@ -23,7 +23,9 @@ var stats: Dictionary = {}
 
 var _world: WorldData
 var _palette: TerrainPalette
-var _material: StandardMaterial3D
+var _material: ShaderMaterial
+var _water_material: StandardMaterial3D
+var _look: TerrainLook
 var _land_nodes: Array[MeshInstance3D] = []
 var _water_nodes: Array[MeshInstance3D] = []
 var _chunk_counts: Vector2i = Vector2i.ZERO
@@ -38,7 +40,9 @@ func build(world: WorldData) -> void:
 	var t_pal := Time.get_ticks_usec()
 	_palette = TerrainPalette.new(world)
 	var palette_ms := snappedf((Time.get_ticks_usec() - t_pal) / 1000.0, 0.1)
-	_material = _make_material()
+	_look = TerrainLook.shared()
+	_material = _look.make_material()
+	_water_material = _make_water_material()
 	_chunk_counts = TerrainMeshBuilder.chunk_counts(world, chunk_cells)
 	var count := _chunk_counts.x * _chunk_counts.y
 	_land_data.resize(count)
@@ -62,13 +66,13 @@ func build(world: WorldData) -> void:
 		var origin := TerrainMeshBuilder.chunk_origin(world, cx, cz, chunk_cells)
 		var land: Dictionary = _land_data[k]
 		if int(land["triangles"]) > 0:
-			var node := _make_node(land, false, origin, "Land_%d_%d" % [cx, cz])
+			var node := _make_node(land, false, origin, "Land_%d_%d" % [cx, cz], _material)
 			_land_nodes.append(node)
 			land_tris += int(land["triangles"])
 			land_verts += (land["vertices"] as PackedVector3Array).size()
 		var water: Dictionary = _water_data[k]
 		if int(water["triangles"]) > 0:
-			_water_nodes.append(_make_node(water, true, origin, "Water_%d_%d" % [cx, cz]))
+			_water_nodes.append(_make_node(water, true, origin, "Water_%d_%d" % [cx, cz], _water_material))
 			water_tris += int(water["triangles"])
 	_land_data.clear()
 	_water_data.clear()
@@ -112,21 +116,26 @@ func _build_chunk_data(k: int) -> void:
 	var cx := k % _chunk_counts.x
 	var cz := k / _chunk_counts.x
 	_land_data[k] = TerrainMeshBuilder.build_land(_world, _palette, cx, cz, chunk_cells, lod_stride, skirts,
-			shading_exaggeration)
+			shading_exaggeration, _look)
 	_water_data[k] = TerrainMeshBuilder.build_water(_world, _palette, cx, cz, chunk_cells)
 
 
-func _make_node(data: Dictionary, indexed: bool, origin: Vector3, node_name: String) -> MeshInstance3D:
+func _make_node(data: Dictionary, indexed: bool, origin: Vector3, node_name: String,
+		material: Material) -> MeshInstance3D:
 	var arrays: Array = []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = data["vertices"]
 	arrays[Mesh.ARRAY_NORMAL] = data["normals"]
 	arrays[Mesh.ARRAY_COLOR] = data["colors"]
+	if data.has("uvs"):
+		arrays[Mesh.ARRAY_TEX_UV] = data["uvs"]
+	if data.has("uv2s"):
+		arrays[Mesh.ARRAY_TEX_UV2] = data["uv2s"]
 	if indexed:
 		arrays[Mesh.ARRAY_INDEX] = data["indices"]
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-	mesh.surface_set_material(0, _material)
+	mesh.surface_set_material(0, material)
 	var node := MeshInstance3D.new()
 	node.name = node_name
 	node.mesh = mesh
@@ -137,7 +146,7 @@ func _make_node(data: Dictionary, indexed: bool, origin: Vector3, node_name: Str
 	return node
 
 
-func _make_material() -> StandardMaterial3D:
+func _make_water_material() -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.vertex_color_use_as_albedo = true
 	m.vertex_color_is_srgb = true

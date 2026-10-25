@@ -19,10 +19,6 @@ extends RefCounted
 const SKIRT_BOTTOM_Y := -260.0
 ## Köşegen seçiminde ana köşegene tanınan önyargı (hücre aralığının metre başına yüksekliği; 100 m hücrede 2 m).
 const DIAGONAL_BIAS_PER_M := 0.02
-## Üçgen düz normalinin hücre (iki üçgenin ortak) normaliyle karışımında ÜÇGENİN payı. 1 = saf üçgen faseti;
-## 0 = hücre başına tek düz normal. Eğik/bükülü (düzlemsel olmayan) hücrede iki üçgenin normali ayrışıp çapraz
-## paralel şerit (corduroy) verdiği için tam facet kullanılmaz; yine de tek hücrede iki facet'in izi kalır.
-const FACET_WEIGHT := 0.35
 const SKIRT_WATER_TOP_TINT := Color(0.02, 0.07, 0.15)
 
 
@@ -56,10 +52,16 @@ static func uses_main_diagonal(h00: float, h10: float, h01: float, h11: float, s
 
 
 ## Kara chunk'ı. `stride` > 1: kaba LOD (her `stride` örnekten biri; etek yok sayılmaz). `shading_exaggeration` YALNIZ
-## düz normallerin eğimini büyütür (hillshade z-faktörü); geometri gerçek yükseklikte kalır. Dönüş:
-## {"vertices": PackedVector3Array, "normals": PackedVector3Array, "colors": PackedColorArray, "triangles": int}
+## normallerin eğimini büyütür (hillshade z-faktörü); geometri gerçek yükseklikte kalır.
+## T-049b HARMAN gölgeleme: köşe başına yumuşak normal (dünya yükseklik farkından, chunk'tan bağımsız) + üçgen faseti;
+## faset ağırlığı üçgen eğimine bağlı (`TerrainLook.facet_weight`): düzlükte yumuşak, dik yamaçta keskin kenar.
+## Renk de KÖŞE başına (palet köşe konumunda) ve üçgen içinde yumuşakça geçer: hücre bloğu izi yok.
+## Dönüş: {"vertices", "normals", "colors" (a = 1 kara / 0 etek), "uvs" (dünya x/z m), "triangles": int}
 static func build_land(world: WorldData, palette: TerrainPalette, cx: int, cz: int, chunk_cells: int,
-		stride: int = 1, skirts: bool = true, shading_exaggeration: float = 1.0) -> Dictionary:
+		stride: int = 1, skirts: bool = true, shading_exaggeration: float = 1.0,
+		look: TerrainLook = null) -> Dictionary:
+	if look == null:
+		look = TerrainLook.shared()
 	var rect := chunk_cell_rect(world, cx, cz, chunk_cells)
 	var i0 := rect.position.x
 	var j0 := rect.position.y
@@ -74,55 +76,104 @@ static func build_land(world: WorldData, palette: TerrainPalette, cx: int, cz: i
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var uv2s := PackedVector2Array()
 	verts.resize(max_tris * 3)
 	normals.resize(max_tris * 3)
 	colors.resize(max_tris * 3)
+	uvs.resize(max_tris * 3)
+	uv2s.resize(max_tris * 3)
+	var grid := _vertex_grid(world, palette, rect, stride, origin, shading_exaggeration)
+	var gnormals: PackedVector3Array = grid["normals"]
+	var gcolors: PackedColorArray = grid["colors"]
+	var gshore: PackedFloat32Array = grid["shore"]
+	var gw: int = grid["width"]
 	var n := 0
 	var heights := world.heights
-	var shore := world.shore_distance
+	var gj := 0
 	for j in range(j0, j1, stride):
 		var jn := mini(j + stride, j1)
 		var z0 := (j - j0) * cell
 		var z1 := (jn - j0) * cell
+		var gi := 0
 		for i in range(i0, i1, stride):
 			var inx := mini(i + stride, i1)
 			var x0 := (i - i0) * cell
 			var x1 := (inx - i0) * cell
-			var a := j * w + i
-			var b := j * w + inx
-			var c := jn * w + i
-			var d := jn * w + inx
-			var h00 := heights[a]
-			var h10 := heights[b]
-			var h01 := heights[c]
-			var h11 := heights[d]
-			if maxf(maxf(h00, h10), maxf(h01, h11)) < sea:
-				continue
-			var p00 := Vector3(x0, h00, z0)
-			var p10 := Vector3(x1, h10, z0)
-			var p01 := Vector3(x0, h01, z1)
-			var p11 := Vector3(x1, h11, z1)
-			var gx := ((h10 + h11) - (h00 + h01)) * 0.5 / span
-			var gz := ((h01 + h11) - (h00 + h10)) * 0.5 / span
-			var slope := rad_to_deg(atan(sqrt(gx * gx + gz * gz)))
-			var elev := (h00 + h10 + h01 + h11) * 0.25 - sea
-			var sd := (shore[a] + shore[b] + shore[c] + shore[d]) * 0.25
-			var wx := origin.x + (x0 + x1) * 0.5
-			var wz := origin.z + (z0 + z1) * 0.5
-			var col := palette.land_color(elev, slope, sd, a, wx, wz)
-			var quad_normal := Vector3(-gx * shading_exaggeration, 1.0, -gz * shading_exaggeration).normalized()
-			if uses_main_diagonal(h00, h10, h01, h11, span):
-				n = _emit_land_tri(p00, p10, p11, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
-				n = _emit_land_tri(p00, p11, p01, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
-			else:
-				n = _emit_land_tri(p00, p10, p01, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
-				n = _emit_land_tri(p10, p11, p01, col, sea, shading_exaggeration, quad_normal, verts, normals, colors, n)
+			var h00 := heights[j * w + i]
+			var h10 := heights[j * w + inx]
+			var h01 := heights[jn * w + i]
+			var h11 := heights[jn * w + inx]
+			if maxf(maxf(h00, h10), maxf(h01, h11)) >= sea:
+				var c := [gj * gw + gi, gj * gw + gi + 1, (gj + 1) * gw + gi, (gj + 1) * gw + gi + 1]
+				var p := [Vector3(x0, h00, z0), Vector3(x1, h10, z0), Vector3(x0, h01, z1), Vector3(x1, h11, z1)]
+				var quad := {"p": p, "c": c, "gn": gnormals, "gc": gcolors, "gs": gshore, "origin": origin}
+				if uses_main_diagonal(h00, h10, h01, h11, span):
+					n = _emit_land_tri(quad, [0, 1, 3], sea, shading_exaggeration, look, verts, normals, colors,
+						uvs, uv2s, n)
+					n = _emit_land_tri(quad, [0, 3, 2], sea, shading_exaggeration, look, verts, normals, colors,
+						uvs, uv2s, n)
+				else:
+					n = _emit_land_tri(quad, [0, 1, 2], sea, shading_exaggeration, look, verts, normals, colors,
+						uvs, uv2s, n)
+					n = _emit_land_tri(quad, [1, 3, 2], sea, shading_exaggeration, look, verts, normals, colors,
+						uvs, uv2s, n)
+			gi += 1
+		gj += 1
 	if skirts:
 		n = _add_skirts(world, rect, stride, verts, normals, colors, n)
 	verts.resize(n * 3)
 	normals.resize(n * 3)
 	colors.resize(n * 3)
-	return {"vertices": verts, "normals": normals, "colors": colors, "triangles": n}
+	uvs.resize(n * 3)
+	uv2s.resize(n * 3)
+	return {"vertices": verts, "normals": normals, "colors": colors, "uvs": uvs, "uv2s": uv2s,
+		"triangles": n}
+
+
+## Chunk'ın köşe ızgarası (stride'lı; son sütun/satır chunk sınırında): köşe başına yumuşak normal + palet rengi.
+## Normal yükseklik farkı DÜNYA örneklerinden (deniz seviyesinin altı kenetli: sualtı uçurumu kıyı normalini bozmaz),
+## chunk sınırından bağımsızdır → komşu chunk'lar dikişte aynı normal/rengi üretir.
+static func _vertex_grid(world: WorldData, palette: TerrainPalette, rect: Rect2i, stride: int, origin: Vector3,
+		k_shade: float) -> Dictionary:
+	var w := world.width
+	var cell := world.cell_size
+	var sea := world.sea_level
+	var heights := world.heights
+	var shore := world.shore_distance
+	var cols: Array[int] = []
+	for i in range(rect.position.x, rect.end.x, stride):
+		cols.append(i)
+	cols.append(rect.end.x)
+	var rows: Array[int] = []
+	for j in range(rect.position.y, rect.end.y, stride):
+		rows.append(j)
+	rows.append(rect.end.y)
+	var gnormals := PackedVector3Array()
+	var gcolors := PackedColorArray()
+	var gshore := PackedFloat32Array()
+	gshore.resize(cols.size() * rows.size())
+	gnormals.resize(cols.size() * rows.size())
+	gcolors.resize(cols.size() * rows.size())
+	var k := 0
+	for j in rows:
+		var jm := maxi(j - stride, 0)
+		var jp := mini(j + stride, world.height - 1)
+		for i in cols:
+			var im := maxi(i - stride, 0)
+			var ip := mini(i + stride, w - 1)
+			var gx := (maxf(heights[j * w + ip], sea) - maxf(heights[j * w + im], sea)) / ((ip - im) * cell)
+			var gz := (maxf(heights[jp * w + i], sea) - maxf(heights[jm * w + i], sea)) / ((jp - jm) * cell)
+			gnormals[k] = Vector3(-gx * k_shade, 1.0, -gz * k_shade).normalized()
+			var idx := j * w + i
+			var slope := rad_to_deg(atan(sqrt(gx * gx + gz * gz)))
+			var col := palette.land_color(heights[idx] - sea, slope, shore[idx], idx,
+					origin.x + (i - rect.position.x) * cell, origin.z + (j - rect.position.y) * cell)
+			col.a = 1.0
+			gcolors[k] = col
+			gshore[k] = shore[idx]
+			k += 1
+	return {"normals": gnormals, "colors": gcolors, "shore": gshore, "width": cols.size()}
 
 
 ## Su chunk'ı (indeksli, düz yüzey; köşe rengi `palette.water_color_at`: bükülmüş, ana karaya uzaklığa bağlı
@@ -217,6 +268,7 @@ static func _add_skirts(world: WorldData, rect: Rect2i, stride: int, verts: Pack
 			var ib := (b * world.width + fixed) if fixed_is_i else (fixed * world.width + b)
 			var under := world.heights[ia] < sea and world.heights[ib] < sea
 			var col := SKIRT_WATER_TOP_TINT if under else TerrainPalette.SKIRT_EARTH
+			col.a = 0.0  # etek: gölgelendirici ayrıntısı uygulanmaz
 			n = _add_wall_tri(pa, pb, qb, outward, col, verts, normals, colors, n)
 			n = _add_wall_tri(pa, qb, qa, outward, col, verts, normals, colors, n)
 	return n
@@ -230,28 +282,39 @@ static func _skirt_top(world: WorldData, fixed_is_i: bool, fixed: int, along: in
 	return Vector3((i - i0) * world.cell_size, h, (j - j0) * world.cell_size)
 
 
-## Kara üçgeni: tamamı deniz seviyesinin altındaysa atılır (opak su örter). Düz normal.
-static func _emit_land_tri(p0: Vector3, p1: Vector3, p2: Vector3, col: Color, sea: float, k_shade: float,
-		quad_normal: Vector3, verts: PackedVector3Array, normals: PackedVector3Array, colors: PackedColorArray,
-		n: int) -> int:
+## Kara üçgeni (köşe indeksleri `corners` ⊂ 0..3): tamamı deniz seviyesinin altındaysa atılır (opak su örter).
+## Normal = köşe başına yumuşak normal ↔ üçgen faseti (eğime bağlı harman); renk/UV köşe başına.
+static func _emit_land_tri(quad: Dictionary, corners: Array, sea: float, k_shade: float, look: TerrainLook,
+		verts: PackedVector3Array, normals: PackedVector3Array, colors: PackedColorArray, uvs: PackedVector2Array,
+		uv2s: PackedVector2Array, n: int) -> int:
+	var p: Array = quad["p"]
+	var c: Array = quad["c"]
+	var gn: PackedVector3Array = quad["gn"]
+	var gc: PackedColorArray = quad["gc"]
+	var gs: PackedFloat32Array = quad["gs"]
+	var origin: Vector3 = quad["origin"]
+	var p0: Vector3 = p[corners[0]]
+	var p1: Vector3 = p[corners[1]]
+	var p2: Vector3 = p[corners[2]]
 	if maxf(maxf(p0.y, p1.y), p2.y) < sea:
 		return n
 	var e1 := p2 - p0
 	var e2 := p1 - p0
+	var true_n := e1.cross(e2).normalized()
+	var tri_slope := rad_to_deg(acos(clampf(true_n.y, -1.0, 1.0)))
 	e1.y *= k_shade
 	e2.y *= k_shade
-	var nrm := e1.cross(e2).normalized()
-	nrm = quad_normal.lerp(nrm, FACET_WEIGHT).normalized()
+	var facet := e1.cross(e2).normalized()
+	var fw := look.facet_weight(tri_slope)
 	var k := n * 3
-	verts[k] = p0
-	verts[k + 1] = p1
-	verts[k + 2] = p2
-	normals[k] = nrm
-	normals[k + 1] = nrm
-	normals[k + 2] = nrm
-	colors[k] = col
-	colors[k + 1] = col
-	colors[k + 2] = col
+	for m in 3:
+		var corner: int = corners[m]
+		var pos: Vector3 = p[corner]
+		verts[k + m] = pos
+		normals[k + m] = gn[c[corner]].lerp(facet, fw).normalized()
+		colors[k + m] = gc[c[corner]]
+		uvs[k + m] = Vector2(origin.x + pos.x, origin.z + pos.z)
+		uv2s[k + m] = Vector2(gs[c[corner]], 0.0)
 	return n + 1
 
 

@@ -83,7 +83,8 @@ func test_no_land_triangle_lies_fully_below_sea_and_none_is_degenerate() -> void
 			assert_float((verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t]).length()).is_greater(0.0)
 
 
-func test_land_normals_are_flat_unit_upward_and_match_clockwise_winding() -> void:
+func test_land_normals_are_unit_upward_and_match_clockwise_winding() -> void:
+	var smooth_tris := 0
 	for chunk in _all_chunks(1, false, 1.0):
 		var data: Dictionary = chunk["land"]
 		var verts: PackedVector3Array = data["vertices"]
@@ -91,13 +92,53 @@ func test_land_normals_are_flat_unit_upward_and_match_clockwise_winding() -> voi
 		assert_int(normals.size()).is_equal(verts.size())
 		assert_int(verts.size() / 3).is_equal(int(data["triangles"]))
 		for t in range(0, verts.size(), 3):
-			var n := normals[t]
-			assert_vector(normals[t + 1]).is_equal_approx(n, Vector3.ONE * EPS)
-			assert_vector(normals[t + 2]).is_equal_approx(n, Vector3.ONE * EPS)
-			assert_float(n.length()).is_equal_approx(1.0, EPS)
-			assert_float(n.y).is_greater(0.0)
-			# Godot ön yüz = saat yönü: (v1-v0)x(v2-v0), normalin TERSİ yönünde olmalı.
-			assert_float((verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t]).dot(n)).is_less(0.0)
+			var face := (verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t]).normalized()
+			for m in 3:
+				assert_float(normals[t + m].length()).is_equal_approx(1.0, EPS)
+				assert_float(normals[t + m].y).is_greater(0.0)
+				# Godot ön yüz = saat yönü: yüz normali (v1-v0)x(v2-v0), gölgeleme normalinin TERSİ yönünde olmalı.
+				assert_float(face.dot(normals[t + m])).is_less(0.0)
+			if not normals[t].is_equal_approx(normals[t + 1]):
+				smooth_tris += 1
+	# Harman gölgeleme: düzlük üçgenlerinde köşe normalleri ayrışır (yumuşak), blok-faset yok.
+	assert_int(smooth_tris).is_greater(100)
+
+
+func test_steep_triangles_keep_the_facet_normal_and_flat_ones_are_smooth() -> void:
+	var look := TerrainLook.shared()
+	assert_float(look.facet_weight(5.0)).is_equal(0.0)
+	assert_float(look.facet_weight(60.0)).is_equal(1.0)
+	var facet_tris := 0
+	for chunk in _all_chunks(1, false, 1.0):
+		var verts: PackedVector3Array = chunk["land"]["vertices"]
+		var normals: PackedVector3Array = chunk["land"]["normals"]
+		for t in range(0, verts.size(), 3):
+			var face := (verts[t + 1] - verts[t]).cross(verts[t + 2] - verts[t]).normalized()
+			var slope := rad_to_deg(acos(clampf(-face.y, -1.0, 1.0))) if face.y < 0.0 else rad_to_deg(acos(face.y))
+			if slope > look.facet_slope_deg().y + 1.0:
+				facet_tris += 1
+				assert_vector(normals[t]).is_equal_approx(normals[t + 1], Vector3.ONE * EPS)
+				assert_vector(normals[t]).is_equal_approx(normals[t + 2], Vector3.ONE * EPS)
+	assert_int(facet_tris).is_greater(0)
+
+
+func test_land_vertices_carry_world_uvs_and_detail_mask() -> void:
+	var data := TerrainMeshBuilder.build_land(_world, _palette, 1, 1, CHUNK_CELLS, 1, true)
+	var verts: PackedVector3Array = data["vertices"]
+	var uvs: PackedVector2Array = data["uvs"]
+	var colors: PackedColorArray = data["colors"]
+	var origin := TerrainMeshBuilder.chunk_origin(_world, 1, 1, CHUNK_CELLS)
+	assert_int(uvs.size()).is_equal(verts.size())
+	var surface := 0
+	var wall := 0
+	for k in verts.size():
+		if colors[k].a > 0.5:
+			surface += 1
+			assert_vector(uvs[k]).is_equal_approx(Vector2(origin.x + verts[k].x, origin.z + verts[k].z), Vector2.ONE * EPS)
+		else:
+			wall += 1
+	assert_int(surface).is_greater(0)
+	assert_int(wall).is_greater_equal(0)
 
 
 func test_shading_exaggeration_changes_normals_but_not_geometry() -> void:

@@ -108,9 +108,8 @@ func land_color(elev: float, slope_deg: float, shore_m: float, sample: int, x: f
 	# Kıyı şeridi: ince kum.
 	var sand_t := (1.0 - smoothstep(20.0, 120.0, shore_m)) * (1.0 - smoothstep(6.0, 16.0, slope_deg))
 	c = c.lerp(SAND, sand_t * 0.6)
-	# Yüz başına çok hafif parlaklık oynaması: düz gölgeleme ile birlikte faset okunur.
-	var jitter := 1.0 + (_hash2(int(x / 50.0), int(z / 50.0), 57) - 0.5) * 0.07
-	return Color(c.r * jitter, c.g * jitter, c.b * jitter)
+	# Parlaklık oynaması gölgelendiricide (dünya-uzayı gürültü, T-049b); köşe başına hash'li jitter piksel izi verirdi.
+	return c
 
 
 ## Kaya ağırlığı [0, 1] (satış kuralı: gri kaya yalnız DİK ve YÜKSEK yerde): eğim eşiği yalnız ~650 m üstünde etkindir;
