@@ -96,6 +96,26 @@ func build(world: WorldData) -> void:
 	}
 
 
+## Kent zemini (T-051): yapılı parsel maskesini bir kez hesaplar ve ortak arazi malzemesine verir (chunk'lar ve
+## uzak mesh aynı malzemeyi paylaşır: yeni draw call/malzeme yok). Yapılar kurulduktan SONRA çağrılır.
+## Dönüş: maske istatistikleri (boşsa {}). Maske yoksa/veri yoksa arazi eskisi gibi kalır.
+func apply_urban_ground(net: WorldNetwork, cols: BuildingColumns) -> Dictionary:
+	if _material == null or _look == null:
+		return {}
+	var mask := UrbanGroundMask.build(net, cols, _look.urban_mask_params())
+	if mask.is_empty():
+		return {}
+	var image: Image = mask["image"]
+	image.generate_mipmaps()
+	var tex := ImageTexture.create_from_image(image)
+	var origin: Vector2 = mask["origin"]
+	var size: Vector2 = mask["size"]
+	_material.set_shader_parameter("urban_tex", tex)
+	_material.set_shader_parameter("urban_rect", Vector4(origin.x, origin.y, size.x, size.y))
+	stats["urban_mask"] = {"px": image.get_size(), "cell_m": mask["cell_m"], "parcels": mask["parcels"], "ms": mask["ms"]}
+	return stats["urban_mask"]
+
+
 func clear() -> void:
 	for child in get_children():
 		remove_child(child)

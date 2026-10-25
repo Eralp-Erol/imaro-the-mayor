@@ -41,6 +41,20 @@ uniform vec3 haze_color : source_color = vec3(0.62, 0.68, 0.72);
 uniform vec2 haze_range = vec2(6000.0, 40000.0);
 uniform float haze_amount = 0.22;
 
+// T-051 kent zemini: yapılı parsel maskesi (R = kaplama, G = sanayi/avlu); dünya x/z ile örneklenir. urban_rect.zw = 0
+// ise (maske yok) hiçbir şey yapmaz. Yeni malzeme/draw call yok: aynı malzemede dördüncü doku okuması.
+uniform sampler2D urban_tex : filter_linear_mipmap, repeat_disable;
+uniform vec4 urban_rect = vec4(0.0);
+uniform vec3 urban_res_a : source_color = vec3(0.62, 0.57, 0.48);
+uniform vec3 urban_res_b : source_color = vec3(0.54, 0.47, 0.37);
+uniform vec3 urban_ind_a : source_color = vec3(0.56, 0.55, 0.52);
+uniform vec3 urban_ind_b : source_color = vec3(0.48, 0.44, 0.38);
+uniform float urban_strength = 0.94;
+uniform vec2 urban_edge = vec2(0.3, 0.7);
+uniform vec2 urban_sharp_fade = vec2(3000.0, 9000.0);
+uniform vec2 urban_slope = vec2(22.0, 34.0);
+uniform float urban_tone = 0.12;
+
 varying vec2 v_xz;
 varying float v_y;
 varying float v_ny;
@@ -96,6 +110,25 @@ void fragment() {
 	float sand_t = (1.0 - smoothstep(band_lo, band_hi, h)) * coast_flat * coast_strength * (1.0 - smoothstep(sand_shore.x, sand_shore.y, v_shore));
 	vec3 sand = mix(sand_color, gravel_color, (1.0 - smoothstep(0.0, gravel_height * (0.6 + 0.8 * n_fine), h)) * 0.9);
 	albedo = mix(albedo, sand * (0.94 + 0.12 * n_fine), sand_t);
+
+	// Kent zemini: yapılı parsel altında döşeme/avlu/toprak tonu (çim değil). Yakında maske eşikle keskinleşir,
+	// uzakta (mip) doğrusal kalır: metroda kent lekesi kent rengini taşır.
+	if (urban_rect.z > 0.0) {
+		vec2 uu = (v_xz - urban_rect.xy) / urban_rect.zw;
+		vec2 inside = step(vec2(0.0), uu) * step(uu, vec2(1.0));
+		vec2 m = textureLod(urban_tex, uu, 0.0).rg;
+		vec2 m_far = texture(urban_tex, uu).rg;
+		float sharp = 1.0 - smoothstep(urban_sharp_fade.x, urban_sharp_fade.y, dist);
+		float cover = mix(m_far.r, smoothstep(urban_edge.x, urban_edge.y, m.r), sharp) * inside.x * inside.y;
+		float ind = mix(m_far.g, smoothstep(urban_edge.x, urban_edge.y, m.g), sharp);
+		float ok = 1.0 - smoothstep(urban_slope.x, urban_slope.y, slope_deg);
+		float k = clamp(cover * urban_strength * ok * mask, 0.0, 1.0);
+		float pick = clamp(s_mid.y * 1.4 - 0.2 + (n_fine - 0.5) * 0.5 * fine_w, 0.0, 1.0);
+		vec3 res_c = mix(urban_res_a, urban_res_b, pick);
+		vec3 ind_c = mix(urban_ind_a, urban_ind_b, pick);
+		vec3 ground = mix(res_c, ind_c, clamp(ind, 0.0, 1.0)) * (1.0 + (n_fine - 0.5) * 2.0 * urban_tone * fine_w);
+		albedo = mix(albedo, ground, k);
+	}
 
 	// Uzak derinlik ipucu: mevcut ortamla uyumlu hafif hava tonu (ucuz; albedo karışımı).
 	float haze_t = smoothstep(haze_range.x, haze_range.y, dist) * haze_amount;

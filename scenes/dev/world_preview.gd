@@ -42,6 +42,9 @@ const SHADOW_MAX_CAMERA_DISTANCE_M := 30000.0
 ## metro medyan 0,384 -> 0,337, harbor 0,596 -> 0,522 (ikisi de 0,32-0,64 bandında). Eski taban `--light=t001` ile.
 const SUN_ENERGY := 0.5
 const AMBIENT_ENERGY := 0.7
+## T-051: ortam rengi (gölge tarafı). Önceki (0.60, 0.65, 0.74) mavi-gri baskı yaratıyordu (spec §1/2: soğuk mavi-gri
+## yalnız sanayi sacı/yeni yapıda); nötr-ılık gri, kısık doygunluk.
+const AMBIENT_COLOR := Color(0.70, 0.68, 0.64)
 const T001_SUN_ENERGY := 0.7
 const T001_AMBIENT_ENERGY := 0.85
 ## Gölge uzaklığı = kamera uzaklığı x çarpan, [min, max] aralığında. Alt sınır sokak ölçeğinde de gölge verir
@@ -328,7 +331,7 @@ func _setup_environment() -> void:
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Color(0.045, 0.06, 0.085)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.60, 0.65, 0.74)
+	env.ambient_light_color = AMBIENT_COLOR
 	env.ambient_light_energy = _arg_float(_args, "ambient",
 			T001_AMBIENT_ENERGY if str(_args.get("light", "")) == "t001" else AMBIENT_ENERGY, 0.0, 2.0)
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR

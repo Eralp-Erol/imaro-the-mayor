@@ -171,6 +171,8 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	if not report.get("ok", false):
 		push_error("playable: yapı sütunları reddedildi: %s" % str(report.get("errors")))
 	var stats := _buildings.stats.duplicate()
+	# T-051: kent zemini maskesi (yapılı parsel altı döşeme/toprak; bir kez, yeni draw call yok).
+	stats["urban_ground"] = _terrain.apply_urban_ground(_net, cols)
 	stats["network_ms"] = snappedf((t1 - t0) / 1000.0, 0.1)
 	stats["settlement_ms"] = snappedf((t2 - t1) / 1000.0, 0.1)
 	stats["view_ms"] = snappedf((Time.get_ticks_usec() - t2) / 1000.0, 0.1)

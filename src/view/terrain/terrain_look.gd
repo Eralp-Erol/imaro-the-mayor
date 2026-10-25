@@ -125,7 +125,29 @@ func make_material() -> ShaderMaterial:
 	m.set_shader_parameter("haze_color", _color(h["color"]))
 	m.set_shader_parameter("haze_range", Vector2(float(h["start_m"]), float(h["end_m"])))
 	m.set_shader_parameter("haze_amount", float(h["amount"]))
+	_apply_urban_params(m)
 	return m
+
+
+## Kent zemini renk/eşik uniform'ları (T-051); bölüm yoksa maske zaten uygulanmaz.
+func _apply_urban_params(m: ShaderMaterial) -> void:
+	if not data.has("urban"):
+		return
+	var u: Dictionary = data["urban"]
+	m.set_shader_parameter("urban_res_a", _color(u["residential"]["color_a"]))
+	m.set_shader_parameter("urban_res_b", _color(u["residential"]["color_b"]))
+	m.set_shader_parameter("urban_ind_a", _color(u["industrial"]["color_a"]))
+	m.set_shader_parameter("urban_ind_b", _color(u["industrial"]["color_b"]))
+	m.set_shader_parameter("urban_strength", float(u["strength"]))
+	m.set_shader_parameter("urban_edge", _vec2(u["edge"]))
+	m.set_shader_parameter("urban_sharp_fade", _vec2(u["sharp_fade_m"]))
+	m.set_shader_parameter("urban_slope", _vec2(u["slope_deg"]))
+	m.set_shader_parameter("urban_tone", float(u["tone"]))
+
+
+## Maske parametreleri (UrbanGroundMask.build girdisi); bölüm yoksa boş.
+func urban_mask_params() -> Dictionary:
+	return (data["urban"]["mask"] as Dictionary) if data.has("urban") else {}
 
 
 static func _vec2(a: Array) -> Vector2:
