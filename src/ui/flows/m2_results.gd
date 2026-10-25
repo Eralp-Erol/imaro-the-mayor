@@ -187,5 +187,7 @@ func _on_panel_closed(panel_id: StringName) -> void:
 		_reason_panel = null
 
 
-func _alive(c: Control) -> bool:
-	return c != null and is_instance_valid(c) and c.is_inside_tree()
+## Serbest bırakılmış nesne tipli parametreye geçirilemez ("previously freed" SCRIPT ERROR):
+## Variant alınır, önce is_instance_valid.
+func _alive(c: Variant) -> bool:
+	return is_instance_valid(c) and (c as Control).is_inside_tree()

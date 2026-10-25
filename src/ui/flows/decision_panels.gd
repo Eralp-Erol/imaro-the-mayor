@@ -115,8 +115,10 @@ func agenda_panel() -> AgendaPanel:
 	return _agenda_panel if _alive(_agenda_panel) else null
 
 
-func _alive(panel: Control) -> bool:
-	return panel != null and is_instance_valid(panel) and panel.is_inside_tree()
+## Serbest bırakılmış nesne tipli parametreye geçirilemez ("previously freed" SCRIPT ERROR):
+## Variant alınır, önce is_instance_valid.
+func _alive(panel: Variant) -> bool:
+	return is_instance_valid(panel) and (panel as Control).is_inside_tree()
 
 
 # --- İçerik kurucuları (profil değişince yeniden çağrılır) ---

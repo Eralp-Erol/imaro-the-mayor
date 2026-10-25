@@ -607,3 +607,30 @@ func test_panel_buttons_work_through_real_gui_event_propagation() -> void:
 	sub.push_input(_mouse(MOUSE_BUTTON_LEFT, false, tc))
 	await get_tree().process_frame
 	assert_bool(results.is_open()).override_failure_message("araç çubuğu tıklaması paneli açmadı").is_true()
+
+
+# --- Serbest bırakılmış panel referansı: tipli `_alive(Control)` parametresi "previously freed" hatası basıyordu
+# ---
+# (gerçek oyunda panel kapanınca HER yenilemede SCRIPT ERROR; başsız testler paneli hiç kapatmadığı için yakalamamıştı).
+# Hatasızlık `verify quick` günlük taramasıyla (SCRIPT ERROR) da korunur; burada davranış: kapalı panel => null, yenileme çalışır.
+
+func test_closed_panels_return_null_and_refresh_without_script_errors() -> void:
+	var f := UiTestSupport.mock()
+	var hud := _hud(f)
+	var decisions := DecisionPanels.attach(hud, f)
+	var results := M2Results.attach(hud, f)
+	results.open()
+	assert_object(results.results_panel()).is_not_null()
+	hud.close_panel_hard()
+	await get_tree().process_frame  # queue_free uygulanır: referans artık serbest bırakılmış nesne
+	assert_object(results.results_panel()).is_null()
+	assert_object(results.reason_panel()).is_null()
+	decisions.open_council()
+	hud.close_panel_hard()
+	await get_tree().process_frame
+	assert_object(decisions.council_panel()).is_null()
+	assert_object(decisions.agenda_panel()).is_null()
+	assert_object(decisions.zoning_panel()).is_null()
+	assert_object(decisions.budget_panel()).is_null()
+	hud.refresh()  # `refreshed` sinyali tüm sahiplerin getter'larını çağırır
+	hud.refresh()
