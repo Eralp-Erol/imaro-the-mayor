@@ -10,6 +10,7 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 | T-048 | **GÖRÜNÜR OYUN 2/4** Yolların çizimi (ağ verisi dünyada görünür) | T-047 | **done** (9ad8a5f + perf 12c0831/e7bad29) | 0 | yol kurulumu ~2,2 s; bağımsız smoke SMOKE_OK (ort 7,62 / P95 16,43 ms, 219 dc); AÇIK: art-director kapısı; `production/tasks/T-048.md` |
 | T-049 | **GÖRÜNÜR OYUN 3/4** Arazi + şehir görünümü (piksel zemin, daire damgası) | T-048 | **done-with-open** (A eece1ac, A2 a9a82e8, A3 2d6a437, B 7cab448) | 0 | D6 çekirdeği hâlâ nispeten kare, D2–D5 A2 uygulanmadı; art-director kapısı açık; `production/tasks/T-049.md` |
 | T-051 | **GÖRÜNÜR OYUN 5** Bina karakteri: Kit v1 (kiremit/dönem/kütle/cephe ritmi/yeşillik) | T-049 | in-progress (adım 1 spec c598cbb; Tur 1 kısım 1 481bf28; kısım 2 sıradaki: kent zemini, sanayi, bitki) | 0 | spec: `design/specs/art/building-kit-v1.md` (fark analizi: mevcut oyun FAIL); sıradaki: Tur 1 üretimi (technical-artist) + art-director kapısı C1/C2/C4; `production/tasks/T-051.md` |
+| T-052 | **TEMEL** Varlık kütüphanesi (design system) + kullanıcı ONAY kapısı | T-051 spec | in-progress (2026-10-25, kullanıcı kararı) | 0 | insan/araç/yol kesiti/bitki şablonları ÖNCE çizilir, kullanıcı onaylar; onaysız varlık dünyada görünmez. T-050 ve T-042 BU ONAYA BAĞLI; `production/tasks/T-052.md` |
 | T-050 | **GÖRÜNÜR OYUN 4/4** Araç ve insan: ilk yaşam belirtisi (sim verisine bağlı) | T-048 | ready | 0 | `production/tasks/T-050.md` |
 | T-041 | Parsel/bölge denetçisi + nedensellik zinciri (metro/ilçe/sokak zoom) | T-040 | ready | 0 | görev dosyası: `production/tasks/T-041.md` |
 | T-042 | Oyuncu yol/kamusal alan çizimi → altyapı kapasitesi → yatırımcı kararı | T-040 | ready | 0 | `production/tasks/T-042.md` |
@@ -18,6 +19,8 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 | T-046 | macOS dokunmatik profil pencereli HUD yerleşim hatası (güvenli alan) | T-040 | ready | 0 | `production/tasks/T-046.md`; T-040 HUD turunda bulundu |
 | T-044 | M2 kapı raporu (F03 eşleme, bağımsız QA özeti, açık kullanıcı/cihaz kabulleri) | T-040..T-043, T-045, T-046 | ready | 0 | `production/tasks/T-044.md` dosyası henüz yazılmadı (ilk işi: bunu yazmak) |
 | M3-1 | M3 kapsamı (yaşayan metropol) için görev tanımı | T-044 | ready | 0 | ROADMAP M3: yalnız T-044 `done` olunca; ilk iş görev dosyalarını `design-director` + `technical-director` ile yazmak |
+
+**KULLANICI KARARI (2026-10-25):** hiçbir yeni nesne (insan, araç, yol kesiti, bitki, donatı) onaysız dünyaya girmez; önce T-052 kütüphanesi + onay sayfaları. T-050 ve T-042, T-052'de ilgili şablonlar onaylanmadan başlamaz.
 
 **SIRA (2026-10-25):** T-049 (şehir formu + arazi) → T-051 (Kit v1) → T-042 genişletilmiş (oyuncu yol çizimi → yeni parsel) + doğal büyüme tasarımı (soru/spec, karar kullanıcıda) → T-050 (araç/insan); sonra T-046, T-041, T-043, T-044.
 
