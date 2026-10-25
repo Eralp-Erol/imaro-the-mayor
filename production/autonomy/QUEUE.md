@@ -12,6 +12,7 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 | T-051 | **GÖRÜNÜR OYUN 5** Bina karakteri: Kit v1 (kiremit/dönem/kütle/cephe ritmi/yeşillik) | T-049 | **DURDU** (kullanıcı reddi 2026-10-25: kutu kiti referansa benzemiyor); kent zemini 9d149b8 kalır; kit üretimi T-053 sonucuna göre yeniden planlanır | 0 | spec: `design/specs/art/building-kit-v1.md` (fark analizi: mevcut oyun FAIL); sıradaki: Tur 1 üretimi (technical-artist) + art-director kapısı C1/C2/C4; `production/tasks/T-051.md` |
 | T-052 | **TEMEL** Varlık kütüphanesi (design system) + kullanıcı ONAY kapısı | T-051 spec | in-progress (2026-10-25, kullanıcı kararı) | 0 | insan/araç/yol kesiti/bitki şablonları ÖNCE çizilir, kullanıcı onaylar; onaysız varlık dünyada görünmez. T-050 ve T-042 BU ONAYA BAĞLI; `production/tasks/T-052.md` |
 | T-053 | **TEMEL** Kahraman bina kanıtı: dokulu cephe ile referans kalitesine ulaşılabilir mi (tek bina) | T-052 | in-progress (2026-10-25) | 0 | kullanıcı 2026-10-25: mevcut kit (46 varlık) REFERANSA BENZEMİYOR, hepsini reddetti. T-051 kalan kit üretimi DURDU; kullanıcı kahraman binayı onaylamadan ikinci bina çizilmez. Çıktı: design/specs/art/hero-building/ |
+| T-054 | **TEMEL** Bina ailesi hero'ları batch 1 (kütüphane; OYUNA EKLENMEZ) | T-053 | in-progress (2026-10-25, kullanıcı: "bu stil iyi base; tüm assetler hero olarak; library tamamlanmadan oyuna ekleme yok") | 0 | çarşı evi, orta/geç apartman, müstakil/yamaç, sanayi, kamu+saat kulesi; ardından insan/araç/yol kesiti/bitki/zemin/donatı hero'ları |
 | T-050 | **GÖRÜNÜR OYUN 4/4** Araç ve insan: ilk yaşam belirtisi (sim verisine bağlı) | T-048 | ready | 0 | `production/tasks/T-050.md` |
 | T-041 | Parsel/bölge denetçisi + nedensellik zinciri (metro/ilçe/sokak zoom) | T-040 | ready | 0 | görev dosyası: `production/tasks/T-041.md` |
 | T-042 | Oyuncu yol/kamusal alan çizimi → altyapı kapasitesi → yatırımcı kararı | T-040 | ready | 0 | `production/tasks/T-042.md` |
@@ -20,6 +21,8 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 | T-046 | macOS dokunmatik profil pencereli HUD yerleşim hatası (güvenli alan) | T-040 | ready | 0 | `production/tasks/T-046.md`; T-040 HUD turunda bulundu |
 | T-044 | M2 kapı raporu (F03 eşleme, bağımsız QA özeti, açık kullanıcı/cihaz kabulleri) | T-040..T-043, T-045, T-046 | ready | 0 | `production/tasks/T-044.md` dosyası henüz yazılmadı (ilk işi: bunu yazmak) |
 | M3-1 | M3 kapsamı (yaşayan metropol) için görev tanımı | T-044 | ready | 0 | ROADMAP M3: yalnız T-044 `done` olunca; ilk iş görev dosyalarını `design-director` + `technical-director` ile yazmak |
+
+**KULLANICI KARARI (2026-10-25, KESİN):** library (tasarım sistemi) TAMAMLANMADAN oyuna varlık EKLEME aşamasına geçilmez; tüm assetler T-053 tarzı hero olarak geliştirilir. Çalışma modeli: tek ajan, sıralı (kota koruma).
 
 **KULLANICI KARARI (2026-10-25):** hiçbir yeni nesne (insan, araç, yol kesiti, bitki, donatı) onaysız dünyaya girmez; önce T-052 kütüphanesi + onay sayfaları. T-050 ve T-042, T-052'de ilgili şablonlar onaylanmadan başlamaz.
 
