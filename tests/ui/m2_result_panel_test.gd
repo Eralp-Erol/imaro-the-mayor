@@ -612,7 +612,8 @@ func test_panel_buttons_work_through_real_gui_event_propagation() -> void:
 # --- Serbest bırakılmış panel referansı: tipli `_alive(Control)` parametresi "previously freed" hatası basıyordu
 # ---
 # (gerçek oyunda panel kapanınca HER yenilemede SCRIPT ERROR; başsız testler paneli hiç kapatmadığı için yakalamamıştı).
-# Hatasızlık `verify quick` günlük taramasıyla (SCRIPT ERROR) da korunur; burada davranış: kapalı panel => null, yenileme çalışır.
+# Hatasızlık `verify quick` günlük taramasıyla (SCRIPT ERROR) da korunur; burada davranış:
+# kapalı panel => null, yenileme çalışır.
 
 func test_closed_panels_return_null_and_refresh_without_script_errors() -> void:
 	var f := UiTestSupport.mock()
