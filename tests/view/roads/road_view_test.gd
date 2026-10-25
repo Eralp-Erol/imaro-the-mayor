@@ -10,6 +10,9 @@ func before_test() -> void:
 	_world = NetworkTestSupport.flat_world()
 	_net = NetworkTestSupport.empty_network(_world)
 	_style = RoadStyle.load_default()
+	# Bu testler chunk mantığını 1 km ızgarada sınar (anahtarlar/koordinatlar sabit); sanat verisindeki varsayılan
+	# chunk_m (T-049 perf: 2 km) bağımsızdır.
+	_style.data["chunk_m"] = 1000.0
 
 
 func _edge(a: Vector2, b: Vector2, cls: StringName = &"local", width: float = 10.0) -> int:

@@ -7,7 +7,7 @@
 varsayılan katsayı 1, ağın parsel cephesini belirleyen `edge.width` koridorunu korur.
 Şerit ekseni düğüm konumlarıdır; bina yönü/cephe verisi yeniden yorumlanmaz.
 
-1 km chunk başına yakın ve metro meshleri bir kez kurulur. Yakın görünüm ilçe/sokakta gerçek genişliktedir;
+`chunk_m` (veri: `road_style.json`, şimdi 2 km; T-049 perf'te 1 km'den çıkarıldı) başına yakın ve metro meshleri bir kez kurulur. Yakın görünüm ilçe/sokakta gerçek genişliktedir;
 metro daha ince ve daha seyrek segmentlidir. Godot mesafe görünürlüğü seçer; kare başına script yoktur.
 Arazi üçgenlerine kırpma (TerrainMeshBuilder köşegeni, stride=1) yüzeyin içine gömülmeyi engeller.
 Kırpma Geometry2D yerine hücre ızgarası + görünür köşegen boyunca yarım-düzlem bölmesidir; yükseklik çokgenin
@@ -34,3 +34,9 @@ koordinat Godot üçgenlemesini bozup çokgeni sessizce atıyordu (eski sürümd
 yakın/metro toplam üçgenlerini ve son kurulum süresini verir. Bunlar tüm dünya toplamıdır;
 yerel görünür üçgen bütçesi ve GPU kare maliyeti başsız dummy renderer ile doğrulanamaz.
 Playabledaki `--no-roads`, koordinatörün aynı kamera/koşullarda önce/sonra ölçümüne ayrılmıştır.
+
+**Uzak mod (T-049 perf, `FarLod`):** Compatibility/OpenGL'de maliyet draw call başınadır (bu Intel/AMD Mac'te ölçülen
+~15-20 us/çağrı). `build_far_mesh = true` iken tüm chunk'ların METRO meshleri ayrıca TEK birleşik `FarRoads` meshine
+konur; kamera uzaklığı `FarLod.ENTER_M` (24 km) üstüne çıkınca `set_far_mode(true)` chunk düğümlerini gizleyip bunu
+gösterir (EXIT 21 km). Metro kamerasında ~259 yol draw call'ı -> 1. Aynı köşeler (metro temsili); CPU'da metro köşe
+dizileri tutulur. `rebuild_chunks` uzak meshi de günceller. Playable `--no-far-lod` ile kapatılır (A/B).

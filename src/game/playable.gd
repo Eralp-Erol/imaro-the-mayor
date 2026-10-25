@@ -21,6 +21,10 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
 ##   --no-roads  yol görünümü kapalı (karşılaştırmalı ölçüm).
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
+##   --no-far-lod     uzak (metro) görünümde birleşik tek-mesh temsilini kapatır (FarLod; perf A/B).
+##   --hide=a,b,..    (yalnız perf A/B) bileşenleri çizimden gizler, veri/sim değişmez: land, water, roads, buildings
+##                    (T0 yapıları), simbld, hud, markers. --terrain-simple: arazi gölgelendiricisi yerine düz köşe
+##                    rengi malzemesi (gölgelendirici maliyetini ayırmak için).
 ##   --m2-pause       --m2-advance sonrası sim hızını duraklatır (inşaat ortası yakalama için sabit kare).
 ##   --t47-flow=built|empty  (yakalama) kamerayı odağa en yakın YAPILI (T0 stoku) ya da BOŞ parsele taşır, parseli
 ##                    seçer ve imar akışını açıp `--demo-zone` (varsayılan zone.green) kullanımını seçer; göndermez.
@@ -83,6 +87,7 @@ func _ready() -> void:
 	if _net != null and not _args.has("no-roads"):
 		_roads = RoadView.new()
 		_roads.name = "Roads"
+		_roads.build_far_mesh = not _args.has("no-far-lod")
 		_view_root.add_child(_roads)
 		_roads.build(_net)
 		print("ROADS ", JSON.stringify(_roads.stats))
@@ -96,8 +101,46 @@ func _ready() -> void:
 	_on_hud_ready()
 	_m2_dev_setup()
 	_t47_dev_setup()
+	_apply_perf_flags()
 	sim_stats["sim_setup_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
 	print("PLAYABLE ", JSON.stringify(sim_stats))
+
+
+func _apply_far_lod(far: bool) -> void:
+	super._apply_far_lod(far)
+	if _roads != null:
+		_roads.set_far_mode(far)
+
+
+## Yalnız perf A/B bayrakları (--hide=, --terrain-simple): oyuncu yolunda hiçbir etkisi yok.
+func _apply_perf_flags() -> void:
+	if _args.has("terrain-simple") and _terrain != null:
+		var m := StandardMaterial3D.new()
+		m.vertex_color_use_as_albedo = true
+		m.vertex_color_is_srgb = true
+		m.roughness = 1.0
+		m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
+		for node in _terrain.land_nodes():
+			node.material_override = m
+	if not _args.has("hide"):
+		return
+	var hidden := str(_args["hide"]).split(",", false)
+	if "land" in hidden and _terrain != null:
+		for node in _terrain.land_nodes():
+			node.visible = false
+	if "water" in hidden and _terrain != null:
+		for node in _terrain.water_nodes():
+			node.visible = false
+	if "roads" in hidden and _roads != null:
+		_roads.visible = false
+	if "buildings" in hidden and _buildings != null:
+		_buildings.visible = false
+	if "simbld" in hidden and _sim_buildings != null:
+		_sim_buildings.visible = false
+	if "hud" in hidden and _hud != null:
+		_hud.visible = false
+	if "markers" in hidden and _markers != null:
+		_markers.visible = false
 
 
 func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:

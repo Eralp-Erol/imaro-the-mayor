@@ -69,6 +69,7 @@ var _sun: DirectionalLight3D
 var _args: Dictionary = {}
 var _shadows_wanted: bool = true
 var _buildings: BuildingView = null
+var _far_lod: bool = false
 
 
 func _ready() -> void:
@@ -101,6 +102,8 @@ func _ready() -> void:
 	_terrain.use_threads = not args.has("no-threads")
 	_terrain.shading_exaggeration = _arg_float(args, "exag", _terrain.shading_exaggeration, 0.5, 12.0)
 	_terrain.cast_shadows = not args.has("no-shadows")
+	# T-049 perf: uzak (metro) görünümde chunk'lar yerine tek birleşik mesh (FarLod). --no-far-lod kapatır (A/B).
+	_terrain.build_far_mesh = not args.has("no-far-lod")
 	_view_root.add_child(_terrain)
 	_terrain.build(_world)
 	var t3 := Time.get_ticks_usec()
@@ -158,8 +161,19 @@ func _process(_delta: float) -> void:
 		_frames_alive += 1
 		var warming := _frames_alive <= SHADOW_WARMUP_FRAMES
 		_sun.shadow_enabled = _shadows_wanted and (warming or _camera.distance() < SHADOW_MAX_CAMERA_DISTANCE_M)
+	if _camera != null:
+		var far := FarLod.next_state(_camera.distance(), _far_lod)
+		if far != _far_lod:
+			_far_lod = far
+			_apply_far_lod(far)
 	if _markers != null and _markers.visible:
 		_markers.rescale_for(_camera.camera)
+
+
+## Uzak mod geçişi (FarLod). Alt sınıflar (playable) yol görünümü gibi ek katmanları da çevirir.
+func _apply_far_lod(far: bool) -> void:
+	if _terrain != null:
+		_terrain.set_far_mode(far)
 
 
 ## perf_probe etiketi: tarama sırasında ölçek aşaması (metro/district/local/street), değilse preset adı.

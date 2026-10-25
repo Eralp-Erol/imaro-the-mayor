@@ -17,6 +17,9 @@ extends Node3D
 @export var use_threads: bool = true
 ## Kara chunk'ları gölge düşürür (su düşürmez; ikisi de alır). Gölgeyi açan ışık sahnededir; burada yalnız katılım.
 @export var cast_shadows: bool = true
+## true: kara + su için ayrıca TEK birleşik "uzak" mesh kurulur (FarLod; metro uzaklığında chunk'lar yerine çizilir:
+## ~150 draw call -> 2). Aynı köşeler ve malzemeler (yalnız temsil); bellek ~bir kopya daha. Varsayılan kapalı.
+@export var build_far_mesh: bool = false
 
 ## Son kurulumun ölçümleri: data_ms (mesh verisi), mesh_ms (ArrayMesh+düğüm), chunk/üçgen sayıları.
 var stats: Dictionary = {}
@@ -31,6 +34,8 @@ var _water_nodes: Array[MeshInstance3D] = []
 var _chunk_counts: Vector2i = Vector2i.ZERO
 var _land_data: Array = []
 var _water_data: Array = []
+var _far_nodes: Array[MeshInstance3D] = []
+var _far_mode: bool = false
 
 
 ## Eski çocukları siler, WorldData'dan tüm chunk'ları kurar.
@@ -74,6 +79,10 @@ func build(world: WorldData) -> void:
 		if int(water["triangles"]) > 0:
 			_water_nodes.append(_make_node(water, true, origin, "Water_%d_%d" % [cx, cz], _water_material))
 			water_tris += int(water["triangles"])
+	var t_far := Time.get_ticks_usec()
+	if build_far_mesh:
+		_build_far(world)
+	var far_ms := snappedf((Time.get_ticks_usec() - t_far) / 1000.0, 0.1)
 	_land_data.clear()
 	_water_data.clear()
 	var t2 := Time.get_ticks_usec()
@@ -83,7 +92,7 @@ func build(world: WorldData) -> void:
 		"land_chunks": _land_nodes.size(), "water_chunks": _water_nodes.size(),
 		"land_triangles": land_tris, "water_triangles": water_tris, "land_vertices": land_verts,
 		"palette_ms": palette_ms, "data_ms": snappedf((t1 - t0) / 1000.0, 0.1), "mesh_ms": snappedf((t2 - t1) / 1000.0, 0.1),
-		"threaded": use_threads,
+		"threaded": use_threads, "far_nodes": _far_nodes.size(), "far_ms": far_ms,
 	}
 
 
@@ -93,6 +102,29 @@ func clear() -> void:
 		child.queue_free()
 	_land_nodes.clear()
 	_water_nodes.clear()
+	_far_nodes.clear()
+	_far_mode = false
+
+
+## Uzak mod (FarLod): true iken chunk'lı kara/su gizlenir, birleşik uzak meshler çizilir. Uzak mesh yoksa etkisiz.
+func set_far_mode(far: bool) -> void:
+	if far == _far_mode or _far_nodes.is_empty():
+		return
+	_far_mode = far
+	for node in _land_nodes:
+		node.visible = not far
+	for node in _water_nodes:
+		node.visible = not far
+	for node in _far_nodes:
+		node.visible = far
+
+
+func far_mode() -> bool:
+	return _far_mode
+
+
+func far_nodes() -> Array[MeshInstance3D]:
+	return _far_nodes
 
 
 func chunk_counts() -> Vector2i:
@@ -110,6 +142,27 @@ func water_nodes() -> Array[MeshInstance3D]:
 ## Dünya konumundaki (x, z) kara/su yüksekliği: görünümün kullandığı veri (kamera çarpışması vb.).
 func surface_height_at(x: float, z: float) -> float:
 	return maxf(_world.height_at(x, z), _world.sea_level) if _world != null else 0.0
+
+
+## Tüm chunk verisini tek kara + tek su meshinde birleştirir (köşe = chunk yerel + chunk başlangıcı; düğüm dünya
+## başlangıcında). Başlangıçta gizli; `set_far_mode(true)` gösterir.
+func _build_far(world: WorldData) -> void:
+	for water in [false, true]:
+		var parts: Array = []
+		var offsets: Array = []
+		for k in _land_data.size():
+			var d: Dictionary = (_water_data[k] if water else _land_data[k])
+			if int(d["triangles"]) <= 0:
+				continue
+			parts.append(d)
+			offsets.append(TerrainMeshBuilder.chunk_origin(world, k % _chunk_counts.x, k / _chunk_counts.x, chunk_cells))
+		if parts.is_empty():
+			continue
+		var merged := FarLod.merge_parts(parts, offsets)
+		var node := _make_node(merged, water, Vector3.ZERO, "FarWater" if water else "FarLand",
+				_water_material if water else _material)
+		node.visible = false
+		_far_nodes.append(node)
 
 
 func _build_chunk_data(k: int) -> void:

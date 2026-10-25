@@ -12,11 +12,18 @@ var stats: Dictionary = {}
 var style: RoadStyle
 ## false: tüm hesap çağıran iş parçacığında (hata ayıklama / karşılaştırma). Sonuç aynıdır.
 var use_threads: bool = true
+## true: tüm chunk'ların METRO meshleri ayrıca TEK birleşik "uzak" mesh olarak kurulur (FarLod). `set_far_mode(true)`
+## chunk düğümlerini gizleyip bunu gösterir: ~260 draw call -> 1 (Compatibility'de draw call başına ~15-20 us).
+## Aynı köşeler (metro temsili); CPU'da metro köşe dizileri tutulur (~10 MB). Varsayılan kapalı.
+var build_far_mesh: bool = false
 
 var _net: WorldNetwork
 var _plan: RoadChunkPlan
 var _chunks: Dictionary = {}
 var _material: StandardMaterial3D
+var _far_parts: Dictionary = {}
+var _far_node: MeshInstance3D = null
+var _far_mode: bool = false
 
 
 func build(net: WorldNetwork, road_style: RoadStyle = null) -> void:
@@ -37,9 +44,50 @@ func clear() -> void:
 		remove_child(child)
 		child.queue_free()
 	_chunks.clear()
+	_far_parts.clear()
+	_far_node = null
+	_far_mode = false
 	stats.clear()
 	_net = null
 	_plan = null
+
+
+## Uzak mod (FarLod): chunk düğümleri gizlenir, birleşik uzak yol meshi gösterilir. Uzak mesh yoksa etkisiz.
+func set_far_mode(far: bool) -> void:
+	if far == _far_mode or _far_node == null:
+		return
+	_far_mode = far
+	for key: Vector2i in _chunks:
+		(_chunks[key] as Node3D).visible = not far
+	_far_node.visible = far
+
+
+func far_mode() -> bool:
+	return _far_mode
+
+
+func far_node() -> MeshInstance3D:
+	return _far_node
+
+
+func _refresh_far_mesh() -> void:
+	if _far_node != null:
+		remove_child(_far_node)
+		_far_node.queue_free()
+		_far_node = null
+	if _far_parts.is_empty():
+		return
+	var keys: Array = _far_parts.keys()
+	keys.sort_custom(func(a: Vector2i, b: Vector2i) -> bool: return a.x < b.x or (a.x == b.x and a.y < b.y))
+	var parts: Array = []
+	var offsets: Array = []
+	for key: Vector2i in keys:
+		parts.append(_far_parts[key]["data"])
+		offsets.append(_far_parts[key]["offset"])
+	_far_node = _mesh_node(FarLod.merge_parts(parts, offsets))
+	_far_node.name = "FarRoads"
+	_far_node.visible = _far_mode
+	add_child(_far_node)
 
 
 func plan() -> RoadChunkPlan:
@@ -74,6 +122,7 @@ func _rebuild_with_plan(keys: Array[Vector2i], started: int) -> void:
 			remove_child(old)
 			old.queue_free()
 		_chunks.erase(key)
+		_far_parts.erase(key)
 		if not _plan.cells.has(key):
 			continue
 		var chunk := Node3D.new()
@@ -100,8 +149,15 @@ func _rebuild_with_plan(keys: Array[Vector2i], started: int) -> void:
 			bounds = bounds.merge(node.mesh.get_aabb())
 		for node: MeshInstance3D in chunk.get_children():
 			node.custom_aabb = bounds
+		chunk.visible = not _far_mode
 		add_child(chunk)
 		_chunks[key] = chunk
+		if build_far_mesh:
+			var metro_data: Dictionary = (meshes[key] as Array)[1]
+			if not (metro_data["vertices"] as PackedVector3Array).is_empty():
+				_far_parts[key] = {"data": metro_data, "offset": chunk.position}
+	if build_far_mesh:
+		_refresh_far_mesh()
 	var near_tris := 0
 	var metro_tris := 0
 	for key: Vector2i in _chunks:
@@ -110,7 +166,10 @@ func _rebuild_with_plan(keys: Array[Vector2i], started: int) -> void:
 				near_tris += int(node.get_meta(&"tris"))
 			else:
 				metro_tris += int(node.get_meta(&"tris"))
-	stats = {"strips": _plan.strip_count, "chunks": _chunks.size(), "near_triangles": near_tris,
+	var far_tris := 0
+	if _far_node != null:
+		far_tris = int(_far_node.get_meta(&"tris"))
+	stats = {"far_triangles": far_tris, "strips": _plan.strip_count, "chunks": _chunks.size(), "near_triangles": near_tris,
 		"metro_triangles": metro_tris, "last_rebuilt": unique.size(),
 		"last_build_ms": (Time.get_ticks_usec() - started) / 1000.0}
 	chunks_rebuilt.emit(unique)

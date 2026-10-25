@@ -1,6 +1,6 @@
 {
   "note": "T-048 geçici görünüm; sanat yönetmeni kabulü bekliyor. width_scale ağdaki gerçek genişliği korur.",
-  "chunk_m": 1000.0,
+  "chunk_m": 2000.0,
   "surface_offset_m": 0.12,
   "metro_begin_m": 14000.0,
   "near_step_m": 40.0,
