@@ -7,7 +7,17 @@
 - Üretim ve araçlar (bu belgenin kapsamı dışı): `technical-artist` — `data/library/catalog.json` (katalog şeması onun), `tools/library/` (kontak sayfası üreteci), `design/library/sheets/` (PNG'ler). Onay kapısı kodu: `godot-engineer`.
 - İşaretler: **[K]** kanondan aynen · **[ÇM]** art-director çalışma değeri (veri; kullanıcı kararı veya ölçümle değişir) · **[AÇIK]** kullanıcı kararı gerekir · **[DOĞRULANACAK]** kontak sayfası/oyun yakalaması olmadan iddia edilmeyen şey.
 
-> **Kanıt durumu (2026-10-25):** Bu belge yazılırken kütüphanenin hiçbir kontak sayfası yoktu (`design/library/sheets/` boş). Aşağıdaki tüm görsel hedefler (okunurluk, ton ayrımı, ölçek hissi) **[DOĞRULANACAK]** niteliğindedir; bir kural ancak sayfada ve oyun yakalamasında görüldükten sonra "sağlanıyor" denebilir.
+## Güncel üretim durumu · 2026-10-26
+
+Bu belgenin aşağıdaki ayrıntılı kuralları T-052'nin **ilk düz renkli kit çalışma modelidir**; bütün satırlar güncel hero hattını tarif etmez. Kullanıcının sonraki kararı önceliklidir (`design/CANON.md`): eski kutu kit reddedildi; dokulu hero bina yönü ve altı ek bina ailesi 2026-10-25'te beğenildi (kayıt: `production/autonomy/QUEUE.md`, T-053/T-054). Dolayısıyla aşağıdaki “doku yok / UV yok / yüz başına tek renk” gibi teknik reçeteler hero üretimine kısıt olarak uygulanmaz; foundation'ın low-key low-poly, mat, gerçek ölçek ve tek dünya ilkeleri geçerlidir. Dokusuzluk foundation'ın değişmez bir kuralı değildir (`design/foundation/docs/04_VISUAL_DIRECTION_AND_ASSETS.md`, “Görsel dil”).
+
+- **Mevcut katalog:** `data/library/catalog.json`; T-055 tesliminde 81 kayıt (46 eski kit + 21 hero bina + 14 zemin dokusu). Kontak sayfaları `design/library/sheets/`; gerçek motor karşılaştırmaları `design/specs/art/hero-building/` ve `design/specs/art/ground/` altında.
+- **Hero binalar:** 7 aile × 3 varyant. Sohbetteki aile onayı, katalogdaki kimlik/hash onay alanlarının otomatik değiştirildiği anlamına gelmez; mevcut kullanıcı alanları korunur.
+- **Zemin:** 14 dokunun T-055 teslimi `bc6d2e9`; kullanıcı değerlendirmesi açık. Görsellerin hazırlanması onay değildir.
+- **LOD teslimi:** `production/tasks/T-056.md` — mevcut hero'lara 42 LOD1/proxy +21 küçük proxy atlası; bağımsız QA, sanat ve final full PASS. [Rapor ve görsel dizini](hero-lod.md). Özgün yakın dosyalar korundu; yeni çıktılar proposed, oyuna bağlı değil.
+- **Devam eden sınır:** kütüphane tamamlanmadan yeni varlıklar oyuna bağlanmaz. İnsan/araç/yol/bitki/donatı kategorileri tamamlanmış sayılmaz.
+
+Bu not sonraki kullanıcı kararlarını görünür kılar; kanonu veya kullanıcıya ait onay kayıtlarını değiştirmez.
 
 ---
 

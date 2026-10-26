@@ -44,3 +44,28 @@ değişir). Oyun gölgelendiricisi (`mat_kit`) değil Blender malzemesi kullanı
 - Yeni insan/araç/yol varlığı ÜRETMEZ; yalnız mevcut kit'i listeler. `proposed` şablon kayıtları art-director onayına bağlı.
 - `region` alanı şimdilik `null` (bölge karakteri kararı yok).
 - Kategoriler `road_section`, `ground`, `street_furniture`, `marking` henüz boş (sayfa üretilmez).
+
+## Hero LOD zincirleri (T-056)
+
+```
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/hero/build_lods.py
+python3 tools/library/hero_lods.py --write
+python3 tools/library/hero_lods.py --check
+python3 tools/library/validate_catalog.py
+python3 -m unittest discover -s tests/library -p 'test_*.py' -q
+```
+
+İsteğe bağlı `-- old_core|bazaar|res_mid|res_late|house|industrial|civic` aile seçer.
+Üreteç source LOD0'ı değiştirmez; anlamsal yüz/geometri sadeleştirmesi yapar.
+Proxy doku paketleme için `uv run --with pillow==11.3.0` kullanır; üreteç bunu çağırır.
+Ham ışıksız ortografik bake kanıtları `artifacts/verify/t056/proxy-bake/` altındadır.
+Yeni GLB'lerde gömülü doku yükü ayıklanır; LOD1 kaynak atlası, proxy kendi 256px
+atlasını dış referansla kullanır. Ayrıntı ve sınırlar: `design/library/hero-lod.md`.
+Lab: `res://assets/hero/lod_lab.tscn`; `--fam=... --distance=100 --variants=true`.
+Her sütunun aynı kamera/ışık ve ayrı dünyası vardır: LOD0 | LOD1 | PROXY.
+
+Arka cephe denetimi: lab `--view=rear` veya `--yaw=180` ile tekrarlanır.
+Proxy yalnız ön bake kullanır; yan/arka tile özgün albedoyu korur.
+`uv run --with pillow==11.3.0 python tools/library/check_proxy_side_tiles.py`
+bu tile'ın değişmediğini piksel üzerinden denetler. GLB arka yüz UV regresyonu
+normal Python test keşfindedir (`tests/library/test_hero_rear_uv.py`).

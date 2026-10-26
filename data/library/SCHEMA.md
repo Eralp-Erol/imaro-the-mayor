@@ -63,3 +63,17 @@ python3 tools/library/build_catalog.py --write     # manifest/GLB değişince
 python3 tools/library/validate_catalog.py          # doğrula
 tools/library/render_sheets.sh                     # sayfaları yeniden üret
 ```
+
+## Hero LOD zinciri (T-056; yalnız kütüphane)
+
+Hero kayıtlarında isteğe bağlı `lod_chain` bulunur. `levels.LOD0|LOD1|PROXY`,
+`glb`, `sha256`, gerçek `triangles`, `bbox_min/max`, `materials` içerir. Kök
+`triangles` bu ölçümlerle eşleşir. `status: proposed`, mevcut bina onayını yeni
+LOD'lara taşımaz. `distances_m` 100/300 m çalışma değeridir; oyun entegrasyonu değildir.
+`atlas` LOD1'in kaynak dokusunu hash ile tanımlar. `proxy_atlas`, özgün LOD0'ın
+ışıksız ön ortografik albedo görüntüsünden, yan/arka kaynak tile korunarak aynı UV düzeninde üretilmiş
+256×256 PNG'yi ve kaynak GLB hash'ini izler; yeni doku/LOD kullanıcı onayı değildir.
+Üreteç `art/blender/hero/build_lods.py`; ölçüm/güncelleme
+`python3 tools/library/hero_lods.py --write`, bayatlık kontrolü `--check`.
+Ana katalog doğrulayıcı, zincirin dosya/hash/üçgen/doku sürüklenmesini ve bütçeyi
+(LOD1 ≤800, proxy ≤80 üçgen) denetler. `approval*`, `user_note`, `user_*` korunur.

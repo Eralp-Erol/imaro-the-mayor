@@ -3,10 +3,15 @@
 Tek devam noktası. `CHECKPOINT` bloğu SessionStart hook'u ile her oturuma enjekte edilir; `handoff` skill'i günceller. Geçmiş: `production/log/`.
 
 <!-- CHECKPOINT:BEGIN -->
-- Tarih: 2026-10-20 · Dal: dev/m1-parallel (T-001 dalından; paralel hatlar, path-scoped commit; main'e alma kullanıcıda; worktree yok)
-- Çalışma modeli: `production/LANES.md` + `tools/lane.sh` (status/check/verify/commit). Aktif hatlar: sim (T-027), world (T-005), render (T-012). Bitenler: T-001..T-004, T-007, T-011, T-015, T-018, T-019, T-021, T-023, T-025 (kanıt: `production/tasks/`)
-- M0: operasyonel kapalı (C-07 kısmi → T-901). M1: T0 dünya (arazi+yol/parsel), kamera, yapı kiti, UI temeli, sözleşmeler, platform profili, sim çekirdeği hazır; T-012 (yapı render), T-005 (T0 yerleşim), T-027 (SimFacadeImpl) sürüyor; sıradaki T-013 (ekonomi), T-016/T-017 (aktör/siyaset), T-022 (karar akışları), T-008 (iPad cihaz testi), T-006 (M1 kapısı)
-- Kararlar: D-001..D-004. Açık (engellemeyen): Q-003 para birimi, Q-005..Q-013 (protagonist, partiler, seçim, kaybetme, rakipler, ton, UX tercihleri, takvim, kit v0 soruları)
-- Kanıtlanmamış: birleşik yük (render+sim) performansı, iPadOS zinciri ve iPad perf (cihaz), Windows çalıştırma, renderer karşılaştırması (T-010), platformlar arası determinizm (T-009), alt-hücre kıyı, gerçek fare/trackpad/dokunma elle denemesi
-- **ZORUNLU DURAKLAMA:** T-030 demo teslim + M1 teknik doğrulama raporu hazır olunca dur; açık test/karar süresiz ertelemez; durunca yeni görev/M2 başlatılmaz. **M1 koşulsuz PASS DEĞİL:** T-008, T-009, T-010 ve Q-015 tamamlanmadıkça 'TEKNİK ÇALIŞMA TAMAM — KOŞULLU' + açık eksik listesi. T-028 T-030'dan bağımsız. Backlog: T-014, T-026, T-001a–c, kit v1, T-009, T-010.
+- Tarih: 2026-10-26 · Dal: agent/handover-imaro-m01-349562fb · Doğrulama baz HEAD: bc6d2e9 + T-056 teslimi; bu checkpoint aynı teslim commit'indedir. Önceki artifacts/library/ ve tmp/ izlenmeyen dosyaları korundu.
+- Güncel çalışma dizini: /Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb. Ana checkout dev/m1-parallel eski devir noktasında; güncel işi orada arama.
+- Aşama: M2 AÇIK. Kullanıcı önceliği varlık kütüphanesidir; tamamlanmadan yeni varlık oyuna bağlanmaz. Tek uygulayıcı, sıralı çalışma; kullanıcı onayları devralınmaz.
+- T-054: 7 hero bina ailesi ×3 varyant teslim; kullanıcı aileleri beğendi. T-055: 14 zemin dokusu teslim bc6d2e9; kullanıcı değerlendirmesi açık, onay verilmiş sayılmaz.
+- T-056 DONE (yalnız kütüphane teslimi): 42 LOD modeli +21 türetilmiş proxy atlası. 21 özgün LOD0 ve 81 kullanıcı alanı korundu; yeni zincirler proposed. Görev: production/tasks/T-056.md; rapor/görseller: design/library/hero-lod.md.
+- Bağımsız kapılar: production/qa/T-056-review.md PASS (arka cephe UV hatası giderildi); production/qa/T-056-art-review.md PASS. İlk başarısız inceleme ve çözüm izi raporda korundu.
+- Son doğrulama: tools/verify.sh full PASS, 7/7 adım / skip yok; 1633 GdUnit4 /0 hata/0 başarısızlık; canon-guard 105 PASS; gerçek runtime 180 kare hatasız. Rapor: artifacts/verify/full-latest.json.
+- Doğrulanan fingerprint: c96a3ba37077f18b3c837840d01bd67b509d52ed48977e2be2f1e2f4f549de71. Sonrasında oyun/asset/test baytları değişmedi; yalnız teslim kayıtları güncellendi.
+- Ek QA: 32 Python test; katalog 81/0; 21 yan/arka atlası; 42 Godot mesh/doku kimliği; gerçek GLB arka UV negatif regresyonu PASS. Komutlar/kanıtlar görev ve QA raporunda.
+- NEXT: T-052 kalan insan/araç/yol/bitki/donatı hero önerileri; kategori önceliği kullanıcıya soruldu, yanıt gelmediyse seçim yapılmış sayma. Q-018 seçenekleri önce görsel öneri olarak sunulur; dünyaya eklenmez. T-055 zemin değerlendirmesi açık.
+- Kanıtlanmamış: otomatik LOD geçişi/pop/gölge sürekliliği, gerçek 54k bina yükü, entegre kare/VRAM bütçesi ve hedef cihazlar. Lab ölçümü kent performansı kanıtı değildir. M2 kapanmadı; tüm kütüphane tamamlanmadı.
 <!-- CHECKPOINT:END -->

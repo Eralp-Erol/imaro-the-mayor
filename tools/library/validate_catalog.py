@@ -16,6 +16,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import build_catalog as bc  # noqa: E402
+import hero_lods  # noqa: E402
 
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -88,6 +89,8 @@ def check_entry(e, cats, root, errors, warnings):
                 err("triangles.%s must be an integer or null" % lod)
     elif tris is not None:
         err("triangles must be an object")
+
+    errors.extend(hero_lods.validate_chain(e, root))
 
     src = e.get("source")
     if isinstance(src, dict):
