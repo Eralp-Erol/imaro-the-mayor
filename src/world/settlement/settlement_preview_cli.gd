@@ -18,8 +18,7 @@ func _initialize() -> void:
 	var control := WorldControlData.load_dir(DATA_DIR)
 	var net_control: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("%s/network.json" % DATA_DIR))
 	var settle_control: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("%s/settlement.json" % DATA_DIR))
-	var manifest_path := "res://assets/models/buildings/kit_manifest.json"
-	var manifest: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(manifest_path))
+	var manifest: Dictionary = SettlementTable.game_table()
 	var world_seed := int(control["world"]["default_seed"])
 	var settle_seed := int(args[0]) if args.size() > 0 else 20261020
 	var out_dir := ProjectSettings.globalize_path("res://%s" % DEFAULT_OUT_DIR)

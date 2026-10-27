@@ -7,7 +7,10 @@ const CELL_M := 250.0
 const MIN_CELL_PARCELS := 15
 ## Gözlenen hücre doluluk sapması / bağımsız (binom) beklenen sapma: >1 = kümeleşme.
 const MIN_CLUSTER_RATIO := 1.8
-const BUILDINGS_T0_BEFORE := 54856
+## Referans bina sayısı (varsayılan test tohumu, tam Ismeral). Tarihçe: T-049 öncesi 54.856 -> T-049 sonrası kit tablosu
+## 49.967 -> T-062 A2 hero tablosu 32.264 (-%35: hero ayak izi >= 10,25 m, kit 7 m'ye iniyordu; doluluk/topoloji AYNI,
+## lottery_parcels 26.278 değişmedi). Bu test kümeleşme ayarının sayıyı kaydırmadığını korur; referans hero tabanıdır.
+const BUILDINGS_T0_BEFORE := 32264
 const BUILDINGS_TOLERANCE := 0.25
 
 var _res: SettlementResult

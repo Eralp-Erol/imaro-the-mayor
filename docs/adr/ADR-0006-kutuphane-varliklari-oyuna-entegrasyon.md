@@ -193,3 +193,11 @@
   - A1 sonrası masaüstü bütçe mesafe kısaltmasıyla tutmazsa;
   - A2 deneyi düşerse ve art-director LOD1'i FAIL ederse;
   - iPad ölçümü 117 MB atlas belleğini taşımazsa.
+
+## 10. A2 teslim notu (world-engineer, 2026-10-27) — uygulanan eşleme ve ölçüm
+
+- **Modül tablosu:** T0 yerleşimi artık `data/library/game_buildings.json`'dan (`SettlementTable`, `LibraryGate`'ten geçen 21 hero) okur; `kit_manifest.json` dünya katmanında okunmaz. `module_idx` = oyun tablosu sırası. Görünüm katmanı (`BuildingKit`/`KitLibrary`) hâlâ kit dizinleriyle çalışır: A3'e kadar `playable.gd` içinde `module_idx` görünümle UYUŞMAZ (A3 işi).
+- **Eşleme (ÇM; `settlement.json` `hero_family_map` + `family_roles`):** res_mid->hero_res_mid, res_late->hero_res_late, res_old+res_old_town->hero_old_core, res_house->hero_res_house, civ_hall->hero_civ_hero, ind_shed+ind_heritage->hero_ind_hero, `_gf` dükkânlı varyant kütlesi->hero_com_bazaar. Aile ağırlıkları bu eşlemeyle ELDE edildi (toplam korunur); a/b/c seçimi mevcut seed'li yerleşim ve komşu onarımıyla (yeni RNG akışı yok).
+- **Kararlar uygulandı:** (1) landmark yok: `tower.module=""`, `stats["tower"]="none-approved"`, meydan ayrılmaz; (2) hero tek boy: `SimBuildingPlacer` kat kademesi bulamaz, nihai modül inşaat başlayınca görünür; (3) dükkân rolü yalnız `hero_com_bazaar` (`family_roles.ground_shop`); (4) yeni aile yok; (5) `hero_ind_hero` kat=1 ÇALIŞMA DEĞERİ (`family_roles.floors_unknown`; `SettlementModule.floors_working_value`).
+- **Palet:** hero modülde satır yok; wall/roof/accent=0, renk seçimi ve RNG tüketimi atlanır. Kiremit bütçesi/duvar çeşitliliği/palet tabanlı çatı payı hero'da etkisizdir (veri korunur).
+- **Ölçülen etki (varsayılan test tohumu, tam Ismeral):** yapı sayısı 49.967 -> 32.264, topoloji (doluluk) hash'i değişmedi; ayrıntı T-062 görev dosyasında.

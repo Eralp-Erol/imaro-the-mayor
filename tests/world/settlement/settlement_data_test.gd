@@ -43,7 +43,7 @@ func test_palette_rows_match_the_kit_palette_single_source() -> void:
 
 func test_every_manifest_palette_row_name_resolves_to_a_row() -> void:
 	var rules := SettlementTestSupport.rules()
-	assert_int(rules.modules.size()).is_greater(20)
+	assert_int(rules.modules.size()).is_equal(21)   # T-062 A2: 21 onaylı hero (7 aile x a/b/c)
 	for m in rules.modules:
 		assert_bool(m.wall_rows.has(-1)).override_failure_message(m.id).is_false()
 		assert_bool(m.roof_rows.has(-1)).override_failure_message(m.id).is_false()
@@ -54,23 +54,25 @@ func test_zone_candidates_are_built_from_the_manifest_not_from_code() -> void:
 	var rules := SettlementTestSupport.rules()
 	var z := rules.zone(&"center")
 	assert_object(z).is_not_null()
-	assert_int(z.candidates.size()).is_greater(8)
+	assert_int(z.candidates.size()).is_equal(15)   # center: 5 hero ailesi x 3 stil
 	var ids := {}
 	for m in z.candidates:
 		ids[m.id] = true
 		assert_bool(rules.module_by_id.has(m.id)).is_true()
-	assert_bool(ids.has("bld_res_mid_a")).is_true()
-	assert_bool(ids.has("bld_civ_hall_a")).override_failure_message("sivil yapı normal adaylarda olamaz").is_false()
-	assert_bool(ids.has("bld_lmk_clocktower")).is_false()
+	assert_bool(ids.has("bld_hero_res_mid_a")).is_true()
+	assert_bool(ids.has("bld_hero_civ_hero_a")).override_failure_message("sivil yapı normal adaylarda olamaz").is_false()
+	assert_bool(ids.has("bld_hero_ind_hero_a")).override_failure_message("sanayi center adaylarında olamaz").is_false()
+	for id: String in ids:
+		assert_bool(id.begins_with("bld_lmk")).is_false()
 
 
 # --- OLUMSUZ: bozulmuş veri kırmızı verir ---
 
 func test_negative_unknown_family_is_rejected() -> void:
 	var c := SettlementTestSupport.control()
-	c["zones"]["center"]["family_weights"]["res_fantasy"] = 0.5
+	c["zones"]["center"]["family_weights"]["hero_fantasy"] = 0.5
 	var errors := SettlementRules.validate(c, SettlementTestSupport.manifest())
-	assert_bool(" ".join(errors).contains("res_fantasy")).override_failure_message(str(errors)).is_true()
+	assert_bool(" ".join(errors).contains("hero_fantasy")).override_failure_message(str(errors)).is_true()
 
 
 func test_negative_embedded_coordinate_is_rejected() -> void:
@@ -93,7 +95,7 @@ func test_negative_unknown_palette_row_and_unordered_bands_are_rejected() -> voi
 
 func test_negative_civic_family_in_regular_weights_and_missing_tower_module_are_rejected() -> void:
 	var c := SettlementTestSupport.control()
-	c["zones"]["dense"]["family_weights"]["civ_hall"] = 0.1
+	c["zones"]["dense"]["family_weights"]["hero_civ_hero"] = 0.1
 	assert_bool(SettlementRules.validate(c, SettlementTestSupport.manifest()).is_empty()).is_false()
 	var c2 := SettlementTestSupport.control()
 	c2["tower"]["module"] = "bld_lmk_missing"

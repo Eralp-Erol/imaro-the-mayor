@@ -6,7 +6,8 @@ extends RefCounted
 ##
 ## Satır i = bir yapı. Sütunlar (hepsi `count` uzunluğunda):
 ##   parcel_id    PackedInt32Array   WorldNetwork parsel kimliği (yapı bu parselin içindedir)
-##   module_idx   PackedInt32Array   `kit_manifest.json` `modules[]` sırası (kimlik dizinden okunur)
+##   module_idx   PackedInt32Array   oyun bina tablosu `game_buildings.json` `modules[]` sırası (T-062 A2;
+## kimlik dizinden okunur)
 ##   x, z         PackedFloat32Array dünya metresi, ayak izi merkezi (yükseklik render'da WorldData.height_at)
 ##   yaw          PackedFloat32Array Y ekseni dönüşü (rad); modülün +Z yüzü (cephe) sokağa bakar
 ##   floors       PackedByteArray    kat sayısı (manifest `floors`; saat kulesinde 0)

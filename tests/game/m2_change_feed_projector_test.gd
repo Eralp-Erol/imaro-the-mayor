@@ -78,7 +78,8 @@ func _displayed_floors(proj: SimBuildingProjector) -> Dictionary:
 
 
 ## Sentetik kare sürücüsü: gün başına `fpd` kare; ilk kare tick'li. İş dağıtımı playable.gd'nin kullandığı
-## `SimBuildingPump` ile AYNI (tick'li karede iş yok, bekleyen sütun varsa görünüm kurulumu, aksi halde bütçeli dilim).
+## `SimBuildingPump` ile AYNI (tick'li karede iş yok, bekleyen sütun varsa görünüm kurulumu, aksi halde bütçeli
+## dilim).
 ## Dönüş: {max_lag, lag_hist, max_backlog, max_concurrent, built}.
 func _drive(run: Dictionary, days: int, fpd: int) -> Dictionary:
 	var f: SimFacade = run["facade"]
@@ -295,9 +296,14 @@ func test_virtual_clock_makes_the_lag_measurement_independent_of_wall_time() -> 
 
 
 func test_save_load_bumps_the_epoch_and_costs_exactly_one_full_sync_then_only_the_feed() -> void:
-	var run := _run(ISOLATE, 50)
+	# İki dalga: ilk 25 parsel başta, kalan 25 kayıttan SONRA önerilir. Hero tek boy (T-062 A2): satırlar inşaat
+	# başlayınca bir
+	# kerede gelir; ileri gidince satırların değişmesi (geri sarma anlamlı olsun) ikinci dalgadan gelir.
+	var run := _run(ISOLATE, 50, 25)
 	var f: SimFacadeImpl = run["facade"]
 	var proj: SimBuildingProjector = run["proj"]
+	var ids: PackedInt64Array = run["ids"]
+	_propose(f, ids.slice(0, 25))
 	for day in 70:
 		f.advance(1)
 		proj.sync()
@@ -313,6 +319,7 @@ func test_save_load_bumps_the_epoch_and_costs_exactly_one_full_sync_then_only_th
 	assert_str(proj.columns().state_hash()).is_equal(early_hash)
 	assert_bool(proj.busy()).is_false()
 	# (b) İleri git, sonra eski kayda GERİ SAR: tek tam eşitleme, eski satırlar.
+	_propose(f, ids.slice(25))
 	for day in 60:
 		f.advance(1)
 		proj.sync()

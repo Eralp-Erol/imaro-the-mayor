@@ -4,7 +4,8 @@ extends GdUnitTestSuite
 ## ve assets/kit/.
 ## YENİ referans eklenemez: her (dosya, belirteç) çifti aşağıdaki "bilinen kalan referans" listesinde olmalı.
 ## Liste AŞAĞI doğru küçülür: bir referans kaldırıldığında girdi de silinmeli (bayat girdi testi düşürür). A2
-## (settlement.json, dev kaynağı) ve A3 (kit yolu, KitLibrary) sonrası liste BOŞALIR; kit_lab (scenes/dev) ADR'ye
+## (settlement.json, dünya katmanı yükleyicileri: BİTTİ) ve A3 (kit yolu, KitLibrary) sonrası liste BOŞALIR;
+## kit_lab (scenes/dev) ADR'ye
 ## göre izinli ama kit dosyaları silinene kadar listede kalır.
 
 const ROOTS := ["res://src", "res://scenes", "res://data", "res://assets/kit"]
@@ -13,13 +14,11 @@ const TEXT_EXTENSIONS := ["gd", "json", "tscn", "tres", "gdshader"]
 ## Reddedilmiş kit modüllerinin GLB ağacı (kit_manifest.json burada): yol referansı da bağımlılıktır.
 const KIT_PATH_TOKEN := "assets/models/buildings/"
 
-## BİLİNEN KALAN REFERANSLAR (dosya -> belirteçler). A2/A3 sonrası boşalacak; YENİ girdi eklemek için gerekçe gerekir.
+## BİLİNEN KALAN REFERANSLAR (dosya -> belirteçler). A2, settlement.json + dünya yükleyicilerini (topology_loader,
+## settlement_preview_cli) çıkardı; kalanlar A3'ün (görünüm/kit) işidir. YENİ girdi eklemek için gerekçe gerekir.
 const KNOWN_REMAINING := {
 	"res://assets/kit/kit_library.gd": ["assets/models/buildings/"],
 	"res://assets/kit/kit_validator.gd": ["prop_chimney", "prop_human", "veh_car"],
-	"res://data/world/ismeral/settlement.json": [
-		"bld_ind_shed_b", "bld_lmk_clocktower", "bld_res_old_c", "bld_res_old_c_gf",
-	],
 	"res://scenes/dev/kit_lab.gd": [
 		"bld_civ_hall_a", "bld_ind_heritage_a", "bld_ind_shed_a", "bld_lmk_clocktower", "bld_res_house_a",
 		"bld_res_late_a", "bld_res_late_a_gf", "bld_res_mid_a", "bld_res_mid_a_gf", "bld_res_old_a",
@@ -34,8 +33,6 @@ const KNOWN_REMAINING := {
 		"bld_civ_hall_b", "bld_ind_heritage_b", "bld_ind_shed_b", "bld_lmk_clocktower", "bld_res_old_c",
 		"bld_res_old_c_gf",
 	],
-	"res://src/world/settlement/settlement_preview_cli.gd": ["assets/models/buildings/"],
-	"res://src/world/topology_map/topology_loader.gd": ["assets/models/buildings/"],
 }
 
 

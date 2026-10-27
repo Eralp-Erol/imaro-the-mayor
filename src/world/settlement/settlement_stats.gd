@@ -43,9 +43,19 @@ static func _row_names(res: SettlementResult) -> Array[String]:
 	return out
 
 
+## Çatı sınıfı. Palet taşıyan modül: satır adından (tile/terrace/metal). Palet taşımayan (hero) modül: tablonun
+## `roof_type` alanından — flat -> terrace, hip/gable -> pitched (kiremit tonu hero'da atlas dokusundandır,
+## ölçülemez).
 static func roof_class(res: SettlementResult, names: Array[String], i: int) -> StringName:
 	var m := res.module_of(i)
 	if m.roof_type == &"sawtooth":
+		return &"other"
+	if m.palette_free():
+		match m.roof_type:
+			&"flat":
+				return &"terrace"
+			&"hip", &"gable":
+				return &"pitched"
 		return &"other"
 	var row_name := names[res.columns.roof_row[i]]
 	if TILE_ROWS.has(row_name):
@@ -64,7 +74,7 @@ static func roof_shares(res: SettlementResult, indices: PackedInt32Array) -> Dic
 	if list.is_empty():
 		for i in res.columns.count:
 			list.append(i)
-	var area := {"terrace": 0.0, "tile": 0.0, "metal": 0.0, "other": 0.0}
+	var area := {"terrace": 0.0, "tile": 0.0, "metal": 0.0, "pitched": 0.0, "other": 0.0}
 	var tones := {}
 	var total := 0.0
 	for i in list:
@@ -86,11 +96,12 @@ static func roof_shares(res: SettlementResult, indices: PackedInt32Array) -> Dic
 	return out
 
 
-## Kayan pencere (yarım adım kaydırmalı iki ızgara): en kiremitli pencerenin kiremit payı. `min_count` altı
-## pencere sayılmaz.
-## Küçük merkez/köy/tarla dokusu çoğunlukta olan pencereler kentsel sayılmaz (kit §3.2 tablosunda kendi aralıkları var).
+## Kayan pencere (yarım adım kaydırmalı iki ızgara): en kiremitli pencerenin kiremit payı (`target_class` ile başka
+## çatı sınıfı da ölçülür; hero için &"pitched"). `min_count` altı pencere sayılmaz.
+## Küçük merkez/köy/tarla dokusu çoğunlukta olan pencereler kentsel sayılmaz (kit §3.2 tablosunda kendi
+## aralıkları var).
 static func window_tile_max(res: SettlementResult, window_m: float, min_count: int,
-		small_zones: Array = [&"village", &"hillside", &"farm"]) -> Dictionary:
+		small_zones: Array = [&"village", &"hillside", &"farm"], target_class: StringName = &"tile") -> Dictionary:
 	var names := _row_names(res)
 	var small := {}
 	for z in small_zones:
@@ -123,7 +134,7 @@ static func window_tile_max(res: SettlementResult, window_m: float, min_count: i
 			for i in list:
 				var m := res.module_of(i)
 				total += m.w * m.d
-				if roof_class(res, names, i) == &"tile":
+				if roof_class(res, names, i) == target_class:
 					tile += m.w * m.d
 			var share := tile / maxf(total, 1.0)
 			if share > best:
@@ -161,13 +172,13 @@ static func region_mix(res: SettlementResult, code: StringName) -> Dictionary:
 	for i in indices_in_region(res, code):
 		var m := res.module_of(i)
 		out["buildings"] += 1
-		if m.family.begins_with("res_"):
+		if m.housing:
 			out["housing"] += 1
 		if (res.columns.flags[i] & BuildingColumns.FLAG_GROUND_SHOP) != 0:
 			out["shops"] += 1
-		if m.family.begins_with("ind_"):
+		if m.industry:
 			out["workplaces"] += 1
-		if m.family.begins_with("civ_"):
+		if m.civic:
 			out["civic"] += 1
 	return out
 
@@ -259,10 +270,12 @@ static func neighbour_rules(res: SettlementResult, skip_zones: Array = [&"yard",
 			windows += 1
 			var meshes := {}
 			var walls := {}
+			var walls_apply := false   # duvar rengi kuralı yalnız palet satırı taşıyan modüller için (hero: yok)
 			for q in 9:
 				meshes[c.module_idx[order[k + q]]] = true
 				walls[c.wall_row[order[k + q]]] = true
-			if meshes.size() < 3 or walls.size() < 3:
+				walls_apply = walls_apply or not res.module_of(order[k + q]).wall_rows.is_empty()
+			if meshes.size() < 3 or (walls_apply and walls.size() < 3):
 				window_fail += 1
 	return {"pairs": pairs, "same_mesh_wall_neighbours": same, "max_identical_run": max_run, "windows": windows,
 			"window_fail_ratio": float(window_fail) / maxf(float(windows), 1.0)}
@@ -278,7 +291,8 @@ static func _without_zones(res: SettlementResult, order: PackedInt32Array, skip:
 	return out
 
 
-## 9 ardışık KONUT (res_mid/old/late) yapısında kat sayısı std >= 1 olan pencerelerin oranı (verilen dokularda).
+## 9 ardışık KONUT (rol `floor_rule`: res_mid/res_late/old_core) yapısında kat sayısı std >= 1 olan pencerelerin
+## oranı (verilen dokularda).
 ## `min_mean`: yalnız ortalama katı bu değerin üstündeki ("orta yoğun") pencereler sayılır; alçak sıralar hariç.
 static func floor_variety(res: SettlementResult, zone_names: Array, min_mean: float = 0.0) -> Dictionary:
 	var want := {}
@@ -290,8 +304,7 @@ static func floor_variety(res: SettlementResult, zone_names: Array, min_mean: fl
 		var floors: Array[float] = []
 		for i in g["order"]:
 			var m := res.module_of(i)
-			if want.has(res.zone_of_building(i)) and (m.family == "res_mid" or m.family == "res_old" \
-					or m.family == "res_late"):
+			if want.has(res.zone_of_building(i)) and m.floor_rule:
 				floors.append(float(m.floors))
 		for k in range(0, floors.size() - 8):
 			var mean := 0.0
@@ -336,6 +349,39 @@ static func unique_combo_ratio(res: SettlementResult, cell_m: float, min_count: 
 		if ratio >= 0.60:
 			ok += 1
 	return {"cells": counted, "ok_ratio": float(ok) / maxf(float(counted), 1.0), "min_ratio": worst}
+
+
+## 200 m hücrelerde (>= `min_count` yapı) farklı MODÜL sayısı. Hero tablosu 21 modüldür: (mesh, duvar)
+## kombinasyon oranı
+## (`unique_combo_ratio`) hücre başına yüzlerce yapıda yapısal olarak <= 21/N olur; çeşitlilik bu ölçüyle sınanır.
+## ok_ratio = en az `min_distinct` farklı modülü olan hücre payı.
+static func cell_module_variety(res: SettlementResult, cell_m: float, min_count: int, min_distinct: int) -> Dictionary:
+	var cells := {}
+	for i in res.columns.count:
+		if i == res.tower_index:
+			continue
+		var key := Vector2i(floori(res.columns.x[i] / cell_m), floori(res.columns.z[i] / cell_m))
+		if not cells.has(key):
+			cells[key] = {}
+		(cells[key] as Dictionary)[res.columns.module_idx[i]] = true
+		cells[key]["n"] = int(cells[key].get("n", 0)) + 1
+	var counted := 0
+	var ok := 0
+	var least := 999
+	var sum := 0
+	for key: Vector2i in cells:
+		var d: Dictionary = cells[key]
+		var n: int = d["n"]
+		if n < min_count:
+			continue
+		var distinct := d.size() - 1
+		counted += 1
+		sum += distinct
+		least = mini(least, distinct)
+		if distinct >= min_distinct:
+			ok += 1
+	return {"cells": counted, "ok_ratio": float(ok) / maxf(float(counted), 1.0), "min_distinct": least,
+			"mean_distinct": float(sum) / maxf(float(counted), 1.0)}
 
 
 # ---------------------------------------------------------------- bitişik nizam, blok çevresi
@@ -439,7 +485,7 @@ static func height_hierarchy(res: SettlementResult, code: StringName) -> Diction
 		counts[k] = 0
 	for i in indices_in_region(res, code):
 		var m := res.module_of(i)
-		if not (m.family == "res_mid" or m.family == "res_old" or m.family == "res_late"):
+		if not m.floor_rule:
 			continue
 		var p := res.net.parcel(res.columns.parcel_id[i])
 		var t := fp.norm_dist(p.centroid)

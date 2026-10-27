@@ -1,14 +1,14 @@
 {
 	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; koordinatlar kilitli değil (F02, F04)",
 	"_notes": [
-		"T0 YERLEŞİM (mevcut yapı stoğu) kontrol verisi (T-005): hangi parselde hangi kit modülü var. Bu, oyuncunun özel bina koyması DEĞİLDİR (CAN-03): T0 sim başlangıç durumudur; sim T-013'te içe alır, sonraki tüm yeni yapılar aktör kararıyla doğar. Üreteç yalnız BuildingColumns üretir.",
+		"T0 YERLEŞİM (mevcut yapı stoğu) kontrol verisi (T-005): hangi parselde hangi modül var (T-062 A2: modül tablosu `data/library/game_buildings.json`, yalnız onaylı 21 hero; reddedilmiş kit kimlikleri bu dosyada YOK). Bu, oyuncunun özel bina koyması DEĞİLDİR (CAN-03): T0 sim başlangıç durumudur; sim T-013'te içe alır, sonraki tüm yeni yapılar aktör kararıyla doğar. Üreteç yalnız BuildingColumns üretir.",
 		"KOORDİNAT YOK: bölge çapaları/ayak izleri, parsel `fabric` şablonu, bölge merkez düğümü (WorldNetwork.hubs) ve WorldData'dan (kıyı uzaklığı, eğim) türer. Her sayı ÇALIŞMA MODELİdir (ÇM), kanon değildir; ölçek/popülasyon/üretim oranları ve ilçe sınırları AÇIK (F05-D); tekil bina tasarımı/konumu onaylı değil (F05-C): bu dosya KURAL verir.",
 		"palette_rows: kit_palette.json satır dizinleri (tek kaynak oradadır; bu kopya testle karşılaştırılır).",
 		"regions[kod].bands: bölgenin kentsel ayak izine göre normalize uzaklık t (0 = merkez, 1 = ayak izi kenarı) bantları -> bölge dokusu (zone). floors/fill: t'ye göre merkezden kenara doğrusal (yükseklik hiyerarşisi; WLD-04: D1+D6 kompakt-gelişmiş çekirdek, D2-D5 daha küçük ama gerçek merkezler). fill = parselin dolu olma olasılığı (kalan parseller büyüme/yeşil alandır, WLD-04/06; ama dekor boş bırakılmaz, WLD-08).",
 		"overrides: bölge + kıyıya uzaklık koşulu -> zone (ör. ana kara kıyı şeridi liman cephesi; WLD-03: ana kara, D4'ün batısı). fabric_zones: parsel şablonu -> zone (endüstriyel saha, kırsal tarla evi).",
-		"zones[ad]: family_weights = aile ağırlıkları (aile içinde kimlikler eşit; id_weights çarpanı), floors_shift = kat hedef kayması, floors_sigma = kat tercih genişliği, gf_main/gf_local = zemin kat dükkân varyantı çarpanı (ana cadde / yerel sokak), setback_m = cephe çekmesi [min,max], gap_m = aynı lotta yan yana yapı aralığı, adjacent = bitişik nizam (boşluk toleransı gap_tol_m), units_max, rows (derinlikte sıra sayısı: sanayi avlusu), wide_p/wide_weights = lot başına çok parselli (ayak izi tek lota sığmayan) sivil yapı / atölye-depo olasılığı ve aile ağırlıkları, heritage_p = tarihî çekirdek miras bayrağı olasılığı.",
+		"zones[ad]: family_weights = aile ağırlıkları (aile içinde kimlikler eşit; isteğe bağlı id_weights çarpanı: bu sürümde kullanılmıyor, hero ailesi stilleri eşit), floors_shift = kat hedef kayması, floors_sigma = kat tercih genişliği, gf_main/gf_local = zemin kat dükkân varyantı çarpanı (ana cadde / yerel sokak), setback_m = cephe çekmesi [min,max], gap_m = aynı lotta yan yana yapı aralığı, adjacent = bitişik nizam (boşluk toleransı gap_tol_m), units_max, rows (derinlikte sıra sayısı: sanayi avlusu), wide_p/wide_weights = lot başına çok parselli (ayak izi tek lota sığmayan) sivil yapı / atölye-depo olasılığı ve aile ağırlıkları, heritage_p = tarihî çekirdek miras bayrağı olasılığı.",
 		"tower: saat kulesi + meydan kuralları (kit spec §4, WLD-07): kule D1'de, bölge merkez düğümüne en yakın uygun bloğun merkezinde; meydan = size_m dikdörtgeni (yapı yok); frame_radius_m çevresinde en yüksek yapı (parapet üstü) 23 / frame_ratio aralığında kalır.",
-		"placement.tile_rows + zones[].tile_cap: 500 m hücrede kiremit çatı alanı payı bütçesi (T-051 Tur 1, kit v1 §3.3: zon üst sınırları, hiçbir hücre > %72; liman D3 <= %15); aşılınca kiremit modüllerinin ağırlığı kısılır. Kiremit satırları R3/R4/R5/R9 (tile_rows). `res_old_town` (kit v1 §4) res_old ağırlığının bir kısmını devralır (T-051 teknik-sanatçı; world-engineer onayı bekler).",
+		"placement.tile_rows + zones[].tile_cap: 500 m hücrede kiremit çatı alanı payı bütçesi (T-051 Tur 1, kit v1 §3.3: zon üst sınırları, hiçbir hücre > %72; liman D3 <= %15); aşılınca kiremit modüllerinin ağırlığı kısılır. Kiremit satırları R3/R4/R5/R9 (tile_rows). `res_old_town` (kit v1 §4) res_old ağırlığının bir kısmını devralır (T-051 teknik-sanatçı; world-engineer onayı bekler). T-062 A2: hero modüllerde palet satırı YOK (boş satır = wall/roof/accent 0, renk atlas dokusundan); bu yüzden kiremit bütçesi, duvar-rengi çeşitliliği ve palet tabanlı çatı payı kuralları hero modüllerde ETKİSİZDİR (veri korunur: palet taşıyan bir tablo geri gelirse çalışır).",
 		"occupancy (T-049 A, ÇM): T0 doluluk olasılığı = bölge fill(center->edge, t=organik sınır alanı) x (1 + road_access[cephe yolu sınıfı]) x (1 + cluster_amp(t) x gürültü) x boşluk/tarla cebi (pocket: gürültü > threshold ve t > t_min ise olasılık `keep` çarpanına iner; çekirdek etkilenmez) x eğim kesintisi (slope) x kıyı kesintisi (shore) x kenar saçağı (fray, A2: t0 üstünde `keep` oranına doğru seyrekleşir; edge_scale = saçak/kümeleşme bölge ölçeği). region_scale = bölgeye göre gürültü/cep/eğim/kıyı kesinti çarpanı (D1+D6 kompakt çekirdek düşük, WLD-04). Gürültü tohumu network.json layout_seed'dir (yerleşim tohumundan bağımsız).",
 		"zones[].rows/second_row_p/row_gap_m: arka sıra (iç blok): ön sıradan row_gap_m kadar geriye ikinci bir yapı sırası olasılığı; blok içini dolu gösterir (yalnız cephe şeridi değil). Komşu/pencere kuralları sıra başına ayrı sayılır."
 	],
@@ -103,9 +103,32 @@
 		"floor_diverge_boost": 3.5,
 		"floor_diverge_dist_m": 1.4
 	},
+	"_family_roles_note": "T-062 A2 · hero aile ROLLERİ (ÇM; veri, kodda aile adı yok). Rol anahtarları: housing (konut sayımı), floor_rule (kat çeşitliliği/komşu kat kuralında konut/karma-kullanım yapısı sayılır; com_bazaar eski `_gf` konut-dükkân modüllerinin yerini aldığı için dahildir ama housing DEĞİLDİR: sim'de FLAG_GROUND_SHOP = ticari), house (müstakil ev: ev çatı ağırlığı, tarla evi), industry (sanayi bayrağı), civic (sivil bayrağı), ground_shop (zemin kat dükkân rolü: FLAG_GROUND_SHOP, zone.gf_main/gf_local çarpanı; Studio Director kararı 3: YALNIZ com_bazaar taşır, katalogdaki generator_params.gf.shopfront konut ailelerinde görsel üreteç parametresidir, dükkân rolü DEĞİL), heritage_eligible (zone.heritage_p ile miras bayrağı adayı), wide (çok parselli yapı adayı), wide_only (yalnız wide_weights'te; family_weights'te olamaz), floors_unknown (katalogda floors='unknown' ise ÇALIŞMA DEĞERİ). ind_hero: katalog kat bilgisi 'unknown' (üreteçte GF=0,NF=0, kat yapısı yok); endüstriyel salon tek birim = tek kat (floors=1) ÇALIŞMA DEĞERİdir, gerçek kat sayısı değildir (Studio Director kararı 5).",
+	"family_roles": {
+		"hero_old_core": {"housing": true, "floor_rule": true, "heritage_eligible": true},
+		"hero_res_house": {"housing": true, "house": true},
+		"hero_res_mid": {"housing": true, "floor_rule": true},
+		"hero_res_late": {"housing": true, "floor_rule": true},
+		"hero_com_bazaar": {"ground_shop": true, "floor_rule": true},
+		"hero_civ_hero": {"civic": true, "wide": true, "wide_only": true},
+		"hero_ind_hero": {"industry": true, "wide": true, "floors_unknown": 1}
+	},
+	"_hero_family_map_note": "T-062 A2 · eski kit ailesi -> onaylı hero ailesi eşlemesi (ÇM; art-director + systems-designer önerisi bekler; yeni aile üretilmez, karar 4). `zones[*].family_weights` / `wide_weights` bu eşlemeyle ELDE edilmiştir (aile ağırlığı toplamı korunur): res_mid->hero_res_mid, res_late->hero_res_late, res_old + res_old_town->hero_old_core, res_house->hero_res_house, civ_hall->hero_civ_hero, ind_shed + ind_heritage->hero_ind_hero. Eski `_gf` (dükkânlı zemin) modüllerinin AİLE KÜTLESİ hero_com_bazaar'a taşındı: bazaar ağırlığı = sum(aile ağırlığı x gf üye sayısı / aile üye sayısı) (res_mid 5/12, res_late 2/5, res_old 2/6, res_old_town 2/5; res_house'ta gf yok); kalan kütle ilgili hero ailesinde. zone.gf_main/gf_local çarpanı bazaar'a aynen uygulanır. Hero ailesi tek kat/tek ayak izi taşır (a/b/c yalnız stil): kat sayıları kataloğun generator_params.floors alanından okunur (old_core 4, com_bazaar 3, res_house 2, res_mid 6, res_late 8, civ_hero 3; ind_hero 1 çalışma değeri).",
+	"hero_family_map": {
+		"res_mid": "hero_res_mid",
+		"res_late": "hero_res_late",
+		"res_old": "hero_old_core",
+		"res_old_town": "hero_old_core",
+		"res_house": "hero_res_house",
+		"civ_hall": "hero_civ_hero",
+		"ind_shed": "hero_ind_hero",
+		"ind_heritage": "hero_ind_hero",
+		"_gf_variants": "hero_com_bazaar"
+	},
+	"_tower_note": "LANDMARK YOK (T-062 A2; Studio Director kararı 1): saat kulesi D-005'te reddedildi, onaylı landmark yok. module boş = 'none-approved': meydan ayrılmaz, kule yerleşmez, stats['tower']='none-approved'. Yerine landmark UYDURULMAZ. Onaylı bir landmark gelirse yalnız `module` kimliği yazılır (kural/boyut alanları hazır tutuldu).",
 	"tower": {
 		"enabled": true,
-		"module": "bld_lmk_clocktower",
+		"module": "",
 		"region": "D1",
 		"size_m": [
 			60.0,
@@ -294,11 +317,11 @@
 	"zones": {
 		"center": {
 			"family_weights": {
-				"res_mid": 0.3,
-				"res_old": 0.13,
-				"res_old_town": 0.2,
-				"res_late": 0.23,
-				"res_house": 0.05
+				"hero_com_bazaar": 0.3403,
+				"hero_old_core": 0.2067,
+				"hero_res_house": 0.05,
+				"hero_res_late": 0.138,
+				"hero_res_mid": 0.175
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 0.9,
@@ -318,7 +341,7 @@
 			"heritage_p": 0.1,
 			"wide_p": 0.02,
 			"wide_weights": {
-				"civ_hall": 1.0
+				"hero_civ_hero": 1.0
 			},
 			"tile_cap": 0.55,
 			"second_row_p": 0.8,
@@ -329,10 +352,10 @@
 		},
 		"historic": {
 			"family_weights": {
-				"res_old": 0.24,
-				"res_old_town": 0.32,
-				"res_mid": 0.26,
-				"res_house": 0.18
+				"hero_com_bazaar": 0.3163,
+				"hero_old_core": 0.352,
+				"hero_res_house": 0.18,
+				"hero_res_mid": 0.1517
 			},
 			"floors_shift": -3.4,
 			"floors_sigma": 1.1,
@@ -352,12 +375,8 @@
 			"heritage_p": 0.2,
 			"wide_p": 0.02,
 			"wide_weights": {
-				"civ_hall": 0.3,
-				"ind_heritage": 0.7
-			},
-			"id_weights": {
-				"bld_res_old_c": 0.9,
-				"bld_res_old_c_gf": 0.9
+				"hero_civ_hero": 0.3,
+				"hero_ind_hero": 0.7
 			},
 			"tile_cap": 0.66,
 			"second_row_p": 0.8,
@@ -368,11 +387,11 @@
 		},
 		"dense": {
 			"family_weights": {
-				"res_mid": 0.24,
-				"res_late": 0.26,
-				"res_old": 0.16,
-				"res_old_town": 0.24,
-				"res_house": 0.1
+				"hero_com_bazaar": 0.3533,
+				"hero_old_core": 0.2507,
+				"hero_res_house": 0.1,
+				"hero_res_late": 0.156,
+				"hero_res_mid": 0.14
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 1.3,
@@ -392,9 +411,8 @@
 			"heritage_p": 0.0,
 			"wide_p": 0.035,
 			"wide_weights": {
-				"civ_hall": 0.35,
-				"ind_heritage": 0.3,
-				"ind_shed": 0.35
+				"hero_civ_hero": 0.35,
+				"hero_ind_hero": 0.65
 			},
 			"tile_cap": 0.52,
 			"second_row_p": 0.8,
@@ -405,11 +423,11 @@
 		},
 		"town_center": {
 			"family_weights": {
-				"res_mid": 0.38,
-				"res_old": 0.16,
-				"res_old_town": 0.1,
-				"res_house": 0.2,
-				"res_late": 0.12
+				"hero_com_bazaar": 0.2997,
+				"hero_old_core": 0.1667,
+				"hero_res_house": 0.2,
+				"hero_res_late": 0.072,
+				"hero_res_mid": 0.2217
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 1.3,
@@ -429,9 +447,8 @@
 			"heritage_p": 0.1,
 			"wide_p": 0.06,
 			"wide_weights": {
-				"civ_hall": 0.4,
-				"ind_shed": 0.45,
-				"ind_heritage": 0.15
+				"hero_civ_hero": 0.4,
+				"hero_ind_hero": 0.6
 			},
 			"tile_cap": 0.62,
 			"second_row_p": 0.7,
@@ -442,10 +459,11 @@
 		},
 		"town": {
 			"family_weights": {
-				"res_mid": 0.42,
-				"res_old": 0.14,
-				"res_house": 0.3,
-				"res_late": 0.14
+				"hero_com_bazaar": 0.2777,
+				"hero_old_core": 0.0933,
+				"hero_res_house": 0.3,
+				"hero_res_late": 0.084,
+				"hero_res_mid": 0.245
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 1.2,
@@ -465,8 +483,8 @@
 			"heritage_p": 0.0,
 			"wide_p": 0.04,
 			"wide_weights": {
-				"civ_hall": 0.25,
-				"ind_shed": 0.75
+				"hero_civ_hero": 0.25,
+				"hero_ind_hero": 0.75
 			},
 			"tile_cap": 0.62,
 			"second_row_p": 0.5,
@@ -478,9 +496,10 @@
 		"village": {
 			"tile_cap": 0.66,
 			"family_weights": {
-				"res_house": 0.56,
-				"res_old": 0.32,
-				"res_mid": 0.06
+				"hero_com_bazaar": 0.1317,
+				"hero_old_core": 0.2133,
+				"hero_res_house": 0.56,
+				"hero_res_mid": 0.035
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 1.0,
@@ -500,17 +519,17 @@
 			"heritage_p": 0.0,
 			"wide_p": 0.015,
 			"wide_weights": {
-				"civ_hall": 0.3,
-				"ind_shed": 0.7
+				"hero_civ_hero": 0.3,
+				"hero_ind_hero": 0.7
 			}
 		},
 		"hill_center": {
 			"family_weights": {
-				"res_house": 0.22,
-				"res_old": 0.14,
-				"res_old_town": 0.08,
-				"res_mid": 0.48,
-				"res_late": 0.08
+				"hero_com_bazaar": 0.3107,
+				"hero_old_core": 0.1413,
+				"hero_res_house": 0.22,
+				"hero_res_late": 0.048,
+				"hero_res_mid": 0.28
 			},
 			"floors_shift": -0.3,
 			"floors_sigma": 1.2,
@@ -530,8 +549,8 @@
 			"heritage_p": 0.05,
 			"wide_p": 0.06,
 			"wide_weights": {
-				"civ_hall": 0.5,
-				"ind_shed": 0.5
+				"hero_civ_hero": 0.5,
+				"hero_ind_hero": 0.5
 			},
 			"tile_cap": 0.68,
 			"second_row_p": 0.6,
@@ -543,10 +562,11 @@
 		"hillside": {
 			"tile_cap": 0.66,
 			"family_weights": {
-				"res_house": 0.4,
-				"res_old": 0.22,
-				"res_mid": 0.3,
-				"res_late": 0.08
+				"hero_com_bazaar": 0.2303,
+				"hero_old_core": 0.1467,
+				"hero_res_house": 0.4,
+				"hero_res_late": 0.048,
+				"hero_res_mid": 0.175
 			},
 			"floors_shift": -0.3,
 			"floors_sigma": 1.0,
@@ -566,7 +586,7 @@
 			"heritage_p": 0.0,
 			"wide_p": 0.01,
 			"wide_weights": {
-				"civ_hall": 1.0
+				"hero_civ_hero": 1.0
 			},
 			"second_row_p": 0.3,
 			"row_gap_m": [
@@ -576,10 +596,10 @@
 		},
 		"harbor": {
 			"family_weights": {
-				"res_old": 0.12,
-				"res_old_town": 0.08,
-				"res_mid": 0.35,
-				"res_late": 0.2
+				"hero_com_bazaar": 0.2978,
+				"hero_old_core": 0.128,
+				"hero_res_late": 0.12,
+				"hero_res_mid": 0.2042
 			},
 			"floors_shift": -0.5,
 			"floors_sigma": 1.4,
@@ -599,8 +619,7 @@
 			"heritage_p": 0.0,
 			"wide_p": 0.15,
 			"wide_weights": {
-				"ind_shed": 0.7,
-				"ind_heritage": 0.3
+				"hero_ind_hero": 1.0
 			},
 			"tile_cap": 0.15,
 			"second_row_p": 0.6,
@@ -612,8 +631,8 @@
 		"farm": {
 			"tile_cap": 0.66,
 			"family_weights": {
-				"res_house": 0.8,
-				"ind_shed": 0.2
+				"hero_ind_hero": 0.2,
+				"hero_res_house": 0.8
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 3.0,
@@ -636,11 +655,7 @@
 		"yard": {
 			"fill": 0.85,
 			"family_weights": {
-				"ind_shed": 0.92,
-				"ind_heritage": 0.08
-			},
-			"id_weights": {
-				"bld_ind_shed_b": 0.12
+				"hero_ind_hero": 1.0
 			},
 			"floors_shift": 0.0,
 			"floors_sigma": 3.0,

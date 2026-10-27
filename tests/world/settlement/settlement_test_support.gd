@@ -4,10 +4,10 @@ extends RefCounted
 ## salt okunur paylaşılır (`full`); olumsuz/determinizm testleri küçültülmüş (`light`) ağ üzerinde çalışır.
 
 const CONTROL_PATH := "res://data/world/ismeral/settlement.json"
-const MANIFEST_PATH := "res://assets/models/buildings/kit_manifest.json"
 const PALETTE_PATH := "res://assets/kit/kit_palette.json"
 const SEED := 20261020
 
+static var _table: Dictionary = {}
 static var _full: SettlementResult = null
 static var _light: SettlementResult = null
 
@@ -16,8 +16,11 @@ static func control() -> Dictionary:
 	return _read(CONTROL_PATH)
 
 
+## Oyun bina tablosu (T-062 A2: onaylı hero, LibraryGate'ten geçmiş); süreç başına bir kez. Çağıran DEĞİŞTİRMEMELİ.
 static func manifest() -> Dictionary:
-	return _read(MANIFEST_PATH)
+	if _table.is_empty():
+		_table = SettlementTable.game_table()
+	return _table
 
 
 static func palette() -> Dictionary:

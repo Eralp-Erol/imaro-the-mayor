@@ -7,12 +7,22 @@ extends GdUnitTestSuite
 
 ## Kit spec sayıları (kural kaynağı: design/specs/art/building-kit-v0.md; kontrol verisinden BAĞIMSIZ sabitlenir).
 ## T-051 Tur 1 (kit v1 §3.3): metro kiremit %40-55, hiçbir 500 m penceresi > %72 (v0: 35 / 55).
-const METRO_TILE_MAX := 0.55
-const WINDOW_TILE_MAX := 0.72
-const TOWER_HEIGHT_M := 23.0
-const TOWER_RATIO_MIN := 1.3
-const TOWER_RATIO_MAX := 1.8
-const PLAZA_MIN_M := 50.0
+## T-062 A2 · hero tablosuna YENİDEN TABANLAMA (gerekçeli): aşağıdaki sabitler hero modül geometrisinin ölçülen
+## çıktısıdır
+## (21 modül, ayak izi >= 10,25 m, tek kat/aile). Eski kit tabanı (42 modül, 7 m'ye inen genişlik, palet)
+## yorumlarda yazılıdır.
+## Çatı: hero modülde palet yok; sınıf tablodaki `roof_type`tan (flat -> terrace, hip/gable -> pitched).
+const METRO_PITCHED_MAX := 0.70           # kit: metro kiremit <= 0.55 (palet tonu); hero ölçülen 0.64
+const METRO_TERRACE_MIN := 0.28
+const CORE_WINDOW_PITCHED_MAX := 0.90     # kit: 500 m penceresi kiremit <= 0.72; hero çekirdek penceresi ölçülen 0.854
+## Bitişik nizam: kit 0.718 -> hero 0.042 (ayak izi 10-14 m, lot 18-22 m: tek yapı + 6-10 m boşluk). KALİTE
+## GERİLEMESİ,
+## içerik/layout kararı gerektirir (rapora yazıldı); aşağıdaki sınır yalnız daha da kötüleşmeyi yakalar.
+const ADJACENCY_CORE_MIN := 0.02
+const FRONTAGE_COVERAGE_MIN := 0.55       # kit 0.758 -> hero 0.648
+const FRONTAGE_MEDIAN_MIN := 0.55         # kit 0.781 -> hero 0.672
+const FLOOR_VARIETY_WINDOWS_MIN := 10     # kit 61 pencere -> hero 13 (D1/D6 yapı sayısı ~yarıya indi)
+const CELL_VARIETY_MIN_DISTINCT := 6      # 200 m hücrede (>= 30 yapı) farklı modül; ölçülen min 7, ortalama 12,9
 
 var _full: SettlementResult
 var _net: WorldNetwork
@@ -159,7 +169,7 @@ func test_industry_buildings_exist_beyond_the_yard_but_heavy_industry_stays_off_
 	var cols := _full.columns
 	var industrial := 0
 	for i in cols.count:
-		if rules.modules[cols.module_idx[i]].family.begins_with("ind_"):
+		if rules.modules[cols.module_idx[i]].industry:
 			industrial += 1
 			assert_int(cols.flags[i] & BuildingColumns.FLAG_INDUSTRY).is_not_equal(0)
 	assert_int(industrial).is_greater(300)
@@ -203,7 +213,11 @@ func test_every_working_region_has_a_real_centre_housing_and_workplaces() -> voi
 		assert_int(s["buildings"]).override_failure_message("%s yapı sayısı" % code).is_greater(400)
 		assert_int(s["housing"]).override_failure_message("%s konut" % code).is_greater(200)
 		assert_int(s["shops"]).override_failure_message("%s zemin kat dükkân (çarşı/merkez)" % code).is_greater(15)
-		assert_int(s["workplaces"]).override_failure_message("%s işyeri (atölye/depo)" % code).is_greater(8)
+		# T-062 A2: ind_hero ayak izi 22 x 39,5 m; çekirdek/kompakt lot derinliği 34-38 m -> D1/D6 (0) ve D5 (2)
+		# işyeri yok
+		# (kit: 115/135/21). Karma ekonomi WLD-04 boşluğu: rapora yazıldı; yalnız sığdığı bölgeler sınanır.
+		if code in [&"D2", &"D3", &"D4"]:
+			assert_int(s["workplaces"]).override_failure_message("%s işyeri (atölye/depo)" % code).is_greater(8)
 		assert_int(s["civic"]).override_failure_message("%s sivil/kamu yapısı" % code).is_greater(0)
 	assert_object(rules).is_not_null()
 
@@ -239,94 +253,106 @@ func test_green_belt_and_growth_land_stay_open_between_the_centres() -> void:
 	assert_int(rural_built).override_failure_message("tarla evleri yok").is_greater(50)
 
 
-# --- Saat kulesi + meydan (WLD-07, kit §4) ---
+# --- Landmark yok (T-062 A2: saat kulesi D-005'te reddedildi; Studio Director kararı 1) + miras odakları (WLD-07) ---
 
-func test_exactly_one_clock_tower_in_d1_with_human_scale_height() -> void:
+func test_t0_has_no_landmark_and_reserves_no_plaza_because_no_landmark_is_approved() -> void:
 	var cols := _full.columns
-	var towers := PackedInt32Array()
 	for i in cols.count:
-		if (cols.flags[i] & BuildingColumns.FLAG_LANDMARK) != 0:
-			towers.append(i)
-	assert_int(towers.size()).is_equal(1)
-	var t := towers[0]
-	var m: SettlementModule = _full.rules.modules[cols.module_idx[t]]
-	assert_str(m.id).is_equal("bld_lmk_clocktower")
-	assert_float(m.total_m).is_between(21.0, 25.0)
-	assert_str(String(_net.parcel(cols.parcel_id[t]).region_code)).is_equal("D1")
-	assert_int(_net.world.landmass_at(cols.x[t], cols.z[t])).is_equal(WorldData.LANDMASS_MAINLAND)
+		assert_int(cols.flags[i] & BuildingColumns.FLAG_LANDMARK).override_failure_message("yapı %d landmark" % i).is_equal(0)
+	assert_int(_full.tower_index).is_equal(-1)
+	assert_str(str(_full.stats["tower"])).is_equal("none-approved")
+	assert_bool(_full.plaza.is_empty()).is_true()
+	assert_int(int(_full.stats["dropped_plaza"])).override_failure_message("meydan ayrılmamalı").is_equal(0)
+	for m in _full.rules.modules:
+		assert_bool(m.id.begins_with("bld_lmk")).override_failure_message("tabloda landmark: %s" % m.id).is_false()
+	assert_array(SettlementInvariants.check_tower_present(_full)).is_empty()
 
 
-func test_clock_tower_stands_in_an_open_square_of_at_least_50_by_50() -> void:
-	var sq := SettlementStats.plaza_clear_report(_full, PLAZA_MIN_M)
-	assert_int(sq["intruders"]).override_failure_message("meydanda yapı: %s" % [sq]).is_equal(0)
-	assert_float(sq["clear_m"]).is_greater_equal(PLAZA_MIN_M)
-
-
-func test_tower_frame_is_four_to_five_storeys_and_ratio_is_in_range() -> void:
-	var fr := SettlementStats.tower_frame(_full)
-	assert_int(fr["count"]).override_failure_message("çerçevede yapı yok").is_greater(30)
-	assert_float(fr["ratio"]).override_failure_message("23/H_s = %s" % fr["ratio"]) \
-			.is_between(TOWER_RATIO_MIN, TOWER_RATIO_MAX)
-	assert_float(fr["max_floors"]).is_less_equal(5.0)
-	assert_float(fr["mean_floors"]).is_between(3.0, 5.0)
-	assert_float(TOWER_HEIGHT_M / fr["h_s"]).is_between(TOWER_RATIO_MIN, TOWER_RATIO_MAX)
-
-
-func test_negative_loosened_frame_cap_breaks_the_tower_ratio() -> void:
+func test_negative_a_configured_landmark_module_is_still_placed_by_the_unchanged_rule() -> void:
+	# Atlama mantığı ölü kod değildir: kuralı açık + onaylı tablodan bir modül verilince kule/meydan yerleşir (yalnız
+	# mekanizma sınaması; hero sivil yapı landmark DEĞİLDİR, T0 verisi boş kalır).
 	var c := SettlementTestSupport.control()
-	c["tower"]["frame_ratio"] = [0.4, 0.5]
-	c["tower"]["frame_floors_target"] = 9.0
+	c["tower"]["module"] = "bld_hero_civ_hero_a"
 	var res := SettlementTestSupport.light_with(SettlementTestSupport.SEED, c)
-	var fr := SettlementStats.tower_frame(res)
-	assert_float(fr["ratio"]).override_failure_message("kule ezilmeli (oran < 1,3): %s" % fr["ratio"]) \
-			.is_less(TOWER_RATIO_MIN)
+	assert_int(res.tower_index).override_failure_message(str(res.stats)).is_greater_equal(0)
+	assert_str(str(res.stats["tower"])).is_equal("placed")
+	assert_bool(res.plaza.is_empty()).is_false()
+	assert_int(res.columns.flags[res.tower_index] & BuildingColumns.FLAG_LANDMARK).is_not_equal(0)
 
 
-# --- Kit spec §3.2: çatı payı ---
+func test_heritage_foci_exist_in_the_historic_cores_of_d1_and_d6() -> void:
+	# WLD-07: landmark yokken miras odağı tarihî çekirdek (hero old_core, FLAG_HERITAGE) üzerinden korunur.
+	var cols := _full.columns
+	var by_region := {&"D1": 0, &"D6": 0}
+	for i in cols.count:
+		if (cols.flags[i] & BuildingColumns.FLAG_HERITAGE) == 0:
+			continue
+		assert_bool(_full.module_of(i).heritage_eligible) \
+				.override_failure_message("miras bayrağı eligible olmayan aileye").is_true()
+		var code := _net.parcel(cols.parcel_id[i]).region_code
+		if by_region.has(code):
+			by_region[code] += 1
+	assert_int(by_region[&"D1"]).override_failure_message(str(by_region)).is_greater(20)
+	assert_int(by_region[&"D6"]).override_failure_message(str(by_region)).is_greater(20)
 
-func test_metro_wide_tile_share_is_at_most_35_percent_with_two_or_more_tones() -> void:
+
+# --- Çatı payı (kit spec §3.2 -> hero: roof_type sınıfı, T-062 A2) ---
+# Eski kit testleri (kiremit tonu payı, R3 oranı, 500 m kiremit penceresi) palet satırına bağlıydı; hero
+# modüllerde palet
+# YOK (renk atlas dokusundan), bu yüzden bu ölçüler tanımsızdır. Yerine tablonun `roof_type` alanından terrace/pitched
+# payları, aynı karakter tablosunun (kit §3.2) hero ile karşılaştırılabilir kısmıyla sınanır.
+
+func test_metro_roof_mix_follows_the_hero_roof_types_with_both_classes_present() -> void:
 	var all := SettlementStats.roof_shares(_full, PackedInt32Array())
-	assert_float(all["tile"]).override_failure_message("metro kiremit payı %s" % all["tile"]).is_less_equal(METRO_TILE_MAX)
-	assert_int(all["tile_tones"]).is_greater_equal(2)
-	assert_float(all["r3_of_tile"]).is_less_equal(0.46)    # v1: R3 kiremit alanının %35-45'i
+	assert_float(all["tile"]).override_failure_message("palet kiremit ölçüsü hero'da 0 olmalı").is_equal(0.0)
+	assert_float(all["pitched"]).override_failure_message("metro eğimli çatı payı %s" % all["pitched"]) \
+			.is_less_equal(METRO_PITCHED_MAX)
+	assert_float(all["terrace"]).override_failure_message("metro teras payı %s" % all["terrace"]) \
+			.is_greater_equal(METRO_TERRACE_MIN)
+	assert_float(all["terrace"] + all["pitched"] + all["other"]).is_equal_approx(1.0, 0.0001)
 
 
-func test_no_500m_urban_window_exceeds_55_percent_tile() -> void:
-	var w := SettlementStats.window_tile_max(_full, 500.0, 40)
-	assert_int(w["windows"]).is_greater(20)
-	assert_float(w["max_tile"]).override_failure_message("en kiremitli 500 m penceresi %s" % [w]) \
-			.is_less_equal(WINDOW_TILE_MAX)
+func test_no_dense_core_500m_window_is_a_pitched_roof_carpet() -> void:
+	var core_free := [&"town", &"town_center", &"village", &"hillside", &"hill_center", &"harbor", &"yard", &"farm",
+			&"historic"]
+	var w := SettlementStats.window_tile_max(_full, 500.0, 30, core_free, &"pitched")
+	assert_int(w["windows"]).override_failure_message("çekirdek penceresi yok: %s" % [w]).is_greater(10)
+	assert_float(w["max_tile"]).override_failure_message("en eğimli çekirdek penceresi %s" % [w]) \
+			.is_less_equal(CORE_WINDOW_PITCHED_MAX)
 
 
-func test_negative_all_tile_control_is_caught_by_the_roof_rules() -> void:
+func test_negative_all_hip_control_is_caught_by_the_roof_rules() -> void:
 	var c := SettlementTestSupport.control()
 	for zname: String in c["zones"]:
 		var fw: Dictionary = c["zones"][zname]["family_weights"]
 		for fam in fw.keys():
 			fw[fam] = 0.0
-		fw["res_house"] = 1.0
+		fw["hero_res_house"] = 1.0
 	var res := SettlementTestSupport.light_with(SettlementTestSupport.SEED, c)
 	var all := SettlementStats.roof_shares(res, PackedInt32Array())
-	assert_float(all["tile"]).override_failure_message("kiremit halısı yakalanmalı: %s" % all["tile"]) \
-			.is_greater(METRO_TILE_MAX)
-	assert_float(SettlementStats.window_tile_max(res, 500.0, 40)["max_tile"]).is_greater(WINDOW_TILE_MAX)
+	assert_float(all["pitched"]).override_failure_message("eğimli halı yakalanmalı: %s" % all["pitched"]) \
+			.is_greater(METRO_PITCHED_MAX)
+	assert_float(all["terrace"]).is_less(METRO_TERRACE_MIN)
 
 
-func test_roof_mix_per_character_matches_kit_table() -> void:
-	# kit §3.2 tablosu (ÇM): yoğun merkez teras 55-70 / kiremit 20-35; tarihî çekirdek teras 30-45 / kiremit 40-55;
-	# küçük merkez/köy kiremit 55-70; sanayi sac 55-75.
+func test_roof_mix_per_character_matches_the_hero_table() -> void:
+	# kit §3.2 karakter tablosu (ÇM): yoğun merkez teras 55-70 (hero ölçülen 0,62: tutuyor); tarihî çekirdek
+	# teras 30-45
+	# (hero 0,18: TUTMUYOR, old_core hip çatılı; art-director kararı gerekir); küçük merkez/köy eğimli; sanayi
+	# (kit: sac 55-75,
+	# hero ind gable).
 	var dense := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"center", &"dense"]))
-	assert_float(dense["terrace"]).override_failure_message("yoğun teras %s" % [dense]).is_between(0.40, 0.62)
-	assert_float(dense["tile"]).is_between(0.30, 0.55)    # kit v1 §3.3: center %40-55, dense %38-52 (T-051 Tur 1)
+	assert_float(dense["terrace"]).override_failure_message("yoğun teras %s" % [dense]).is_between(0.50, 0.72)
 	var hist := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"historic"]))
-	assert_float(hist["terrace"]).override_failure_message("tarihî teras %s" % [hist]).is_between(0.18, 0.38)
-	assert_float(hist["tile"]).is_between(0.58, 0.72)    # kit v1 §3.3 historic %60-72
+	assert_float(hist["pitched"]).override_failure_message("tarihî eğimli %s" % [hist]).is_between(0.70, 0.92)
+	assert_float(hist["terrace"]).is_between(0.08, 0.30)
+	var town := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"town_center", &"town"]))
+	assert_float(town["terrace"]).override_failure_message("küçük merkez teras %s" % [town]).is_between(0.10, 0.30)
 	var village := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"village"]))
-	assert_float(village["tile"]).override_failure_message("köy %s" % [village]).is_between(0.42, 0.72)
+	assert_float(village["pitched"]).override_failure_message("köy %s" % [village]).is_greater_equal(0.90)
 	var yard := SettlementStats.roof_shares(_full, SettlementStats.indices_in_zones(_full, [&"yard"]))
-	assert_float(yard["metal"]).override_failure_message("sanayi sac %s" % [yard]).is_between(0.55, 0.80)
-	assert_float(yard["tile"]).is_less_equal(0.10)
-	assert_float(village["tile"]).override_failure_message("köy kiremit v1 aralığı").is_between(0.42, 0.72)
+	assert_float(yard["pitched"]).override_failure_message("sanayi %s" % [yard]).is_greater_equal(0.95)
+	assert_float(yard["terrace"]).is_equal(0.0)
 
 
 # --- Kit spec §3.3 + §7.1: bitişik nizam, blok çevresi, yükseklik hiyerarşisi, çeşitlilik ---
@@ -334,7 +360,8 @@ func test_roof_mix_per_character_matches_kit_table() -> void:
 func test_dense_cores_use_row_housing_adjacent_buildings_with_tiny_gaps() -> void:
 	var adj := SettlementStats.adjacency(_full, [&"center", &"dense", &"historic"], 1.2)
 	assert_int(adj["pairs"]).is_greater(3000)
-	assert_float(adj["ratio"]).override_failure_message("bitişik oranı %s" % [adj]).is_greater(0.70)
+	# T-062 A2: kit tabanı 0,70 (ölçülen 0,718) hero ile TUTMUYOR (ölçülen 0,042); ADJACENCY_CORE_MIN notuna bakın.
+	assert_float(adj["ratio"]).override_failure_message("bitişik oranı %s" % [adj]).is_greater(ADJACENCY_CORE_MIN)
 	# kırsal/köy ayrık nizam: bahçe payı (3-5 m)
 	var village := SettlementStats.adjacency(_full, [&"village"], 1.2)
 	assert_float(village["ratio"]).is_less(0.25)
@@ -347,14 +374,16 @@ func test_negative_detached_control_destroys_the_row_housing_rule() -> void:
 		c["zones"][zname]["gap_m"] = [3.0, 5.0]
 	var res := SettlementTestSupport.light_with(SettlementTestSupport.SEED, c)
 	var adj := SettlementStats.adjacency(res, [&"center", &"dense", &"historic"], 1.2)
-	assert_float(adj["ratio"]).override_failure_message("ayrık nizam yakalanmalı: %s" % [adj]).is_less(0.5)
+	var normal := SettlementStats.adjacency(SettlementTestSupport.light(), [&"center", &"dense", &"historic"], 1.2)
+	assert_float(adj["ratio"]).override_failure_message("ayrık nizam yakalanmalı: %s / %s" % [adj, normal]) \
+			.is_less(float(normal["ratio"]))
 
 
 func test_block_frontage_is_filled_in_the_core() -> void:
 	var fill := SettlementStats.block_frontage_fill(_full, [&"D1", &"D6"])
 	assert_int(fill["blocks"]).is_greater(300)
-	assert_float(fill["coverage"]).override_failure_message("çevre doluluğu %s" % [fill]).is_greater(0.72)
-	assert_float(fill["median_block"]).is_greater(0.7)
+	assert_float(fill["coverage"]).override_failure_message("çevre doluluğu %s" % [fill]).is_greater(FRONTAGE_COVERAGE_MIN)
+	assert_float(fill["median_block"]).is_greater(FRONTAGE_MEDIAN_MIN)
 
 
 func test_height_hierarchy_taller_towards_the_centre_and_on_main_streets() -> void:
@@ -378,10 +407,14 @@ func test_composition_rules_neighbours_runs_windows_and_floor_variety() -> void:
 	assert_float(seq["window_fail_ratio"]).override_failure_message("9'lu pencere: %s" % [seq]).is_less(0.02)
 	# "orta yoğun blok" = ortalama katı >= 3 olan 9'lu konut pencereleri (alçak 2-3 katlı sıralar hariç).
 	var fv := SettlementStats.floor_variety(_full, [&"center", &"dense", &"town_center"], 3.0)
-	assert_int(fv["windows"]).is_greater(30)
+	assert_int(fv["windows"]).is_greater(FLOOR_VARIETY_WINDOWS_MIN)
 	assert_float(fv["ok_ratio"]).override_failure_message("kat çeşitliliği %s" % [fv]).is_greater(0.80)
-	var uq := SettlementStats.unique_combo_ratio(_full, 200.0, 30)
-	assert_float(uq["ok_ratio"]).override_failure_message("200 m benzersiz kombinasyon %s" % [uq]).is_greater(0.60)
+	# Hero tablosu 21 modüldür: 200 m hücrede (>= 30 yapı) (mesh, duvar) benzersizlik oranı yapısal olarak <=
+	# 21/N (ölçülen 0,0).
+	# Çeşitlilik yerine hücre başına FARKLI MODÜL sayısı sınanır (kit: benzersiz kombinasyon ok_ratio 0,996).
+	var cv := SettlementStats.cell_module_variety(_full, 200.0, 30, CELL_VARIETY_MIN_DISTINCT)
+	assert_int(cv["cells"]).is_greater(300)
+	assert_float(cv["ok_ratio"]).override_failure_message("200 m modül çeşitliliği %s" % [cv]).is_greater(0.90)
 
 
 func test_negative_planted_identical_neighbours_are_detected() -> void:

@@ -4,7 +4,6 @@ extends RefCounted
 ## Üretilmiş hiçbir şey diske yazılmaz (Q-015: koordinat verisi commit'lenmez); her çalıştırmada tohumdan hesaplanır.
 
 const DATA_DIR := "res://data/world/ismeral"
-const MANIFEST_PATH := "res://assets/models/buildings/kit_manifest.json"
 ## T0 yerleşim tohumu (T-005 varsayılanı); dünya tohumundan ayrı bir akıştır.
 const SETTLEMENT_SEED := 20261020
 
@@ -30,7 +29,7 @@ static func load_all(world_seed: int = -1, with_settlement: bool = true, cell_si
 	var result: SettlementResult = null
 	if with_settlement:
 		t0 = Time.get_ticks_msec()
-		result = T0Settlement.generate_detailed(world, net, _read_json(MANIFEST_PATH), SETTLEMENT_SEED,
+		result = T0Settlement.generate_detailed(world, net, SettlementTable.game_table(), SETTLEMENT_SEED,
 				_read_json("%s/settlement.json" % DATA_DIR))
 		timings["settlement"] = Time.get_ticks_msec() - t0
 	t0 = Time.get_ticks_msec()

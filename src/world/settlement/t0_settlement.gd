@@ -1,7 +1,8 @@
 class_name T0Settlement
 extends RefCounted
 ## T0 yerleşim üreteci v0 (T-005; WLD-03/04/08, VIS-02/04, CAN-03): ağ parselleri + `settlement.json` kuralları +
-## `kit_manifest.json` modül tablosu + tohum -> BuildingColumns (T0'da MEVCUT yapı stoğu). Saf: Node/Time/OS/global
+## oyun bina tablosu (`game_buildings.json`, T-062 A2: yalnız onaylı hero) + tohum -> BuildingColumns (T0'da
+## MEVCUT yapı stoğu). Saf: Node/Time/OS/global
 ## rastgelelik yok; her akış (sokak cephesi grubu) `NetworkRules.stream_seed` ile bağımsız tohumlanır.
 ##
 ## Koordinat gömme yok: bölge dokusu (zone) parselin `region_code`/`fabric`ından, bölge ayak izine normalize
@@ -97,6 +98,8 @@ class _Hist:
 			res_floors.append(floors)
 
 
+## `kit_manifest`: oyun bina tablosu sözlüğü (`SettlementTable.load_game_table()`); parametre adı eski
+## sözleşmeden kaldı.
 func _run(world: WorldData, net: WorldNetwork, kit_manifest: Dictionary, settle_seed: int,
 		control: Dictionary) -> SettlementResult:
 	_world = world
@@ -129,7 +132,7 @@ func _run(world: WorldData, net: WorldNetwork, kit_manifest: Dictionary, settle_
 	_occ = (control.get("occupancy", {}) as Dictionary)
 	_occ_seed = NetworkRules.stream_seed(int(net.rules.control.get("layout_seed", 0)), "occupancy")
 	_stats = {"parcels": 0, "zoned": 0, "lottery_built": 0, "units": 0, "dropped_water": 0, "dropped_slope": 0,
-			"dropped_fit": 0, "dropped_plaza": 0, "wide": 0, "consumed": 0, "farms": 0}
+			"dropped_fit": 0, "dropped_plaza": 0, "wide": 0, "consumed": 0, "farms": 0, "tower": _rules.tower_state()}
 	for fp in net.rules.footprints:
 		_footprints[String(fp.id)] = fp
 	var ids := PackedInt32Array(net.parcels.keys())
@@ -176,12 +179,34 @@ func _repair_neighbours() -> void:
 			if k + 1 < seq.size():
 				next_mod = _cols.module_idx[seq[k + 1]]
 				next_wall = _cols.wall_row[seq[k + 1]]
+			var fixed := false
 			for row in m.wall_rows:
 				if row != _cols.wall_row[a] and not (next_mod == m.idx and row == next_wall):
 					_cols.wall_row[b] = row
 					repaired += 1
+					fixed = true
 					break
+			if not fixed and m.palette_free():
+				# Hero modül: duvar rengi yok; aynı ailede, aynı katta, sığan, komşulardan farklı stile (a/b/c)
+				# geçilir.
+				var alt := _alt_variant(m, _cols.module_idx[a], next_mod)
+				if alt != null:
+					_cols.module_idx[b] = alt.idx
+					_cols.era[b] = alt.era
+					repaired += 1
 	_stats["repaired_neighbours"] = repaired
+
+
+## `m` ile aynı aile + aynı kat olan, ayak izi `m`ninkinden BÜYÜK olmayan (yerleşim alanı içinde kalır), `avoid_a`/
+## `avoid_b` dizinlerinden farklı ilk modül (tablo sırası); yoksa null. RNG yok: deterministik. Merkez sabit kalır,
+## ayak izi küçülebilir: parsel/su/eğim/çakışma geçerliliği korunur.
+func _alt_variant(m: SettlementModule, avoid_a: int, avoid_b: int) -> SettlementModule:
+	for c in _rules.modules:
+		if c.family != m.family or c.idx == avoid_a or c.idx == avoid_b or c.idx == m.idx:
+			continue
+		if c.floors == m.floors and c.w <= m.w + 0.01 and c.d <= m.d + 0.01:
+			return c
+	return null
 
 
 # ---------------------------------------------------------------- bölge dokusu (zone)
@@ -221,7 +246,8 @@ func _occupied(p: WorldParcel, zone: SettlementZone) -> bool:
 	return _lottery(p, "occupancy") < prob
 
 
-## T-049 A organik doluluk olasılığı: bölge merkez->kenar eğrisi (t = organik sınır alanı) x cephe yolu erişimi x yerel
+## T-049 A organik doluluk olasılığı: bölge merkez->kenar eğrisi (t = organik sınır alanı) x cephe yolu erişimi
+## x yerel
 ## kümeleşme x boşluk/tarla cepleri x eğim/kıyı kesintisi. Parametreler `settlement.json` `occupancy` (ÇM). Çekirdek
 ## (t küçük) ve D1/D6 `region_scale` ile kompakt kalır (WLD-04); gürültü tohumu `layout_seed` (yerleşim tohumundan
 ## bağımsız).
@@ -278,7 +304,7 @@ func _target_floors(p: WorldParcel, zone: SettlementZone, road_class: StringName
 
 func _find_plaza() -> void:
 	var tw := _rules.tower
-	if not bool(tw.get("enabled", true)):
+	if _rules.tower_state() != "pending":
 		return
 	var code := StringName(str(tw["region"]))
 	if not _net.hubs.has(code):
@@ -360,6 +386,7 @@ func _add_tower() -> void:
 	var axis: Vector2 = _res.plaza["axis"]
 	var face := Vector2(-axis.y, axis.x)
 	var yaw := atan2(face.x, face.y)
+	_stats["tower"] = "placed"
 	_res.tower_index = _cols.add(best, m.idx, _tower_pos.x, _tower_pos.y, yaw, m.floors,
 			_rules.row_of(str(tw["wall"])), _rules.row_of(str(tw["roof"])), _rules.row_of(str(tw["accent"])), 128,
 			BuildingColumns.FLAG_HERITAGE | BuildingColumns.FLAG_LANDMARK, m.era)
@@ -558,6 +585,8 @@ func _sample_sequence(cands: Array[SettlementModule], weights: PackedFloat32Arra
 
 func _pick_wall(m: SettlementModule, win_mods: PackedInt32Array, win_walls: PackedInt32Array, cell: Vector2i,
 		rng: RandomNumberGenerator, zone: SettlementZone) -> int:
+	if m.wall_rows.is_empty():
+		return 0   # palet satırı yok (hero): renk seçimi ve RNG tüketimi yok
 	var prev_mod := -1 if win_mods.is_empty() else win_mods[win_mods.size() - 1]
 	var prev_wall := -1 if win_walls.is_empty() else win_walls[win_walls.size() - 1]
 	var need_walls := zone.min_walls if zone.min_walls > 0 else _min_walls
@@ -594,7 +623,7 @@ func _unit_penalty(m: SettlementModule, wall: int, win_mods: PackedInt32Array, w
 		var need_walls := zone.min_walls if zone.min_walls > 0 else _min_walls
 		if _distinct_tail_with(win_mods, m.idx, _window) < need_meshes:
 			score += 4.0
-		if _distinct_tail_with(win_walls, wall, _window) < need_walls:
+		if not m.wall_rows.is_empty() and _distinct_tail_with(win_walls, wall, _window) < need_walls:
 			score += 4.0
 	if _is_residential(m) and win_floors.size() >= 5 and _std_tail_with(win_floors, m.floors, _floor_window) < _floor_std:
 		score += 3.0
@@ -659,8 +688,9 @@ static func _std_tail_with(arr: PackedInt32Array, extra: int, n: int) -> float:
 	return sqrt(acc / count)
 
 
+## Kat çeşitliliği/komşu kat kuralının konut saydığı modül (`family_roles.floor_rule`).
 static func _is_residential(m: SettlementModule) -> bool:
-	return m.family == "res_mid" or m.family == "res_old" or m.family == "res_late"
+	return m.floor_rule
 
 
 func _tile_share(pos: Vector2) -> float:
@@ -741,20 +771,19 @@ func _finish_unit(parcel_id: int, yaw: float, center: Vector2, zone: SettlementZ
 	if _plaza_corners.size() == 4 and SettlementObb.overlap(corners, _plaza_corners):
 		_stats["dropped_plaza"] += 1
 		return false
-	var roof_weights: Dictionary = _rules.house_roof_weights if m.family == "res_house" else _rules.roof_weights
+	var roof_weights: Dictionary = _rules.house_roof_weights if m.house else _rules.roof_weights
 	var roof := _pick_weighted_row(m.roof_rows, roof_weights, rng)
 	var accent := _pick_shop_accent(m, rng)
 	var flags := 0
 	if m.gf:
 		flags |= BuildingColumns.FLAG_GROUND_SHOP
-	if m.family.begins_with("ind_"):
+	if m.industry:
 		flags |= BuildingColumns.FLAG_INDUSTRY
 		if zone.name == &"yard" or zone.name == &"harbor":
 			flags |= BuildingColumns.FLAG_PORT_YARD
-	if m.family == "civ_hall":
+	if m.civic:
 		flags |= BuildingColumns.FLAG_CIVIC
-	if m.family == "ind_heritage" or (m.family == "res_old" and zone.heritage_p > 0.0 \
-			and float(rng.randf()) < zone.heritage_p):
+	if m.heritage_eligible and zone.heritage_p > 0.0 and float(rng.randf()) < zone.heritage_p:
 		flags |= BuildingColumns.FLAG_HERITAGE
 	_cols.add(parcel_id, m.idx, center.x, center.y, yaw, m.floors, wall, roof, accent, rng.randi() % 256, flags, m.era)
 	var roof_cell := Vector2i(floori(center.x / ROOF_CELL_M), floori(center.y / ROOF_CELL_M))
@@ -770,6 +799,8 @@ func _finish_unit(parcel_id: int, yaw: float, center: Vector2, zone: SettlementZ
 
 
 func _pick_weighted_row(rows: PackedInt32Array, weights: Dictionary, rng: RandomNumberGenerator) -> int:
+	if rows.is_empty():
+		return 0
 	var total := 0.0
 	for row in rows:
 		total += float(weights.get(row, 1.0))
@@ -782,6 +813,8 @@ func _pick_weighted_row(rows: PackedInt32Array, weights: Dictionary, rng: Random
 
 
 func _pick_shop_accent(m: SettlementModule, rng: RandomNumberGenerator) -> int:
+	if m.palette_free():
+		return 0
 	var rows := _rules.shop_accent_rows if m.gf and not _rules.shop_accent_rows.is_empty() else m.accent_rows
 	return rows[rng.randi() % rows.size()]
 
@@ -889,10 +922,10 @@ func _place_farm(p: WorldParcel, lot: SettlementLot, zone: SettlementZone, rng: 
 	var shed_w := PackedFloat32Array()
 	for ci in zone.candidates.size():
 		var m := zone.candidates[ci]
-		if m.family == "res_house":
+		if m.house:
 			houses.append(m)
 			house_w.append(zone.base_weights[ci])
-		elif m.family.begins_with("ind_"):
+		elif m.industry:
 			sheds.append(m)
 			shed_w.append(zone.base_weights[ci])
 	if houses.is_empty():

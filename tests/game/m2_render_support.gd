@@ -68,7 +68,10 @@ static func projector(facade: SimFacade) -> SimBuildingProjector:
 
 ## T0 yapısı olmayan, sim'in vereceği birimle (ekonomi: alan x 6/1000, konut) projector'ın yapı sığdırabildiği ilk
 ## `count` parsel. `staged`: inşaat başlangıcı ile tamamı farklı kat gösteren (kat kademesi olan) parseller.
+## T-062 A2: hero aileleri tek boydur (Studio Director kararı 2) -> tabloda kat kademesi YOKSA (`staging_available`)
+## `staged` koşulu boştur ve yerleştirilebilen parseller döner; kademe VARSA koşul aynen uygulanır.
 static func free_parcels(proj: SimBuildingProjector, count: int, staged: bool = false) -> PackedInt64Array:
+	staged = staged and staging_available()
 	var settlement: SettlementResult = fixture()["settlement"]
 	var occupied := {}
 	for pid in settlement.columns.occupied_parcels():
@@ -90,6 +93,17 @@ static func free_parcels(proj: SimBuildingProjector, count: int, staged: bool = 
 				continue
 		out.append(v.id)
 	return out
+
+
+## Modül tablosunda aynı ailede (ve aynı zemin-dükkân rolünde) daha az katlı bir modül var mı: inşaat kat kademesi
+## (SimBuildingPlacer._stage_module) ancak o zaman görünür.
+static func staging_available() -> bool:
+	var rules: SettlementRules = (fixture()["settlement"] as SettlementResult).rules
+	for m in rules.modules:
+		for other in rules.modules:
+			if other.family == m.family and other.gf == m.gf and other.floors < m.floors:
+				return true
+	return false
 
 
 static func t0_parcels(count: int) -> PackedInt64Array:

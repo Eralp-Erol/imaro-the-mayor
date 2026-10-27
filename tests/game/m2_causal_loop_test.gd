@@ -1,5 +1,6 @@
 extends GdUnitTestSuite
-## T-040 · İlk nedensel döngünün RENDER payı (başsız, gerçek bileşenler): imar önerisi -> yatırımcı kararı -> inşaat ->
+## T-040 · İlk nedensel döngünün RENDER payı (başsız, gerçek bileşenler): imar önerisi -> yatırımcı kararı ->
+## inşaat ->
 ## SimBuildingProjector satırları -> BuildingView (hücre-yerel). Küçük GERÇEK dünya (düz arazi + ızgara WorldNetwork +
 ## T0Settlement) + gerçek PoliticsBootstrap/SimFacadeImpl + gerçek BuildingView. Zorlanmış sonuç yok: yalnız başlangıç
 ## koşulları (ISOLATE: otonom tarama kapalı; UNFAVORABLE: dar altyapı) ve oyuncu komutu veridir.
@@ -8,7 +9,8 @@ extends GdUnitTestSuite
 const ISOLATE := M2RenderSupport.ISOLATE
 const BUILDING_STATES := [ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION, ParcelView.DEVELOPMENT_BUILT,
 		ParcelView.DEVELOPMENT_STALLED]
-## Tek bir parselin değişiminde yeniden kurulabilecek en çok hücre (1 km hücre kenarında ayak izi en çok 2x2'ye değer).
+## Tek bir parselin değişiminde yeniden kurulabilecek en çok hücre (1 km hücre kenarında ayak izi en çok 2x2'ye
+## değer).
 const MAX_REBUILT_CELLS := 4
 
 
@@ -85,7 +87,12 @@ func test_proposal_becomes_staged_building_only_through_the_investor_decision() 
 			assert_int(fl[i]).override_failure_message("parsel %d kat azaldı: %s" % [pid, str(fl)]).is_greater(fl[i - 1])
 		best_distinct = maxi(best_distinct, fl.size())
 	assert_int(built).override_failure_message("hiçbir proje tamamlanmadı").is_greater(0)
-	assert_int(best_distinct).override_failure_message("kat kademesi gözlenmedi").is_greater_equal(2)
+	if M2RenderSupport.staging_available():
+		assert_int(best_distinct).override_failure_message("kat kademesi gözlenmedi").is_greater_equal(2)
+	else:
+		# T-062 A2 · Studio Director kararı 2: hero aileleri tek boy; nihai modül inşaat başlayınca TAM boy görünür
+		# (kademe yok). Kat toplamı inşaat boyunca sabit kalır ve sim biriminin kat karşılığıdır.
+		assert_int(best_distinct).override_failure_message("kademesiz tabloda kat değişti").is_equal(1)
 	proj.sync(true)
 	for v in f.parcel_views(ids):
 		if v.development == ParcelView.DEVELOPMENT_BUILT:
@@ -153,7 +160,10 @@ func test_only_the_affected_cells_are_rebuilt_and_the_t0_view_is_untouched() -> 
 			assert_bool(rep["ok"]).is_true()
 			max_rebuilt = maxi(max_rebuilt, int(rep["rebuilt"]))
 			applied += 1
-	assert_int(applied).override_failure_message("yapı değişimi hiç gözlenmedi").is_greater(1)
+	# Kademeli tabloda satırlar birden çok kez değişir (kat kademeleri); hero tek boydur (T-062 A2, karar 2): inşaat
+	# başlayınca nihai satır TEK değişimle gelir.
+	var min_applied := 2 if M2RenderSupport.staging_available() else 1
+	assert_int(applied).override_failure_message("yapı değişimi hiç gözlenmedi").is_greater_equal(min_applied)
 	assert_int(max_rebuilt).is_between(1, MAX_REBUILT_CELLS)
 	assert_int(sim_view.building_count()).is_equal(proj.columns().count)
 	# T0 görünümü bu süreçte hiç yeniden kurulmadı (55k satırlık plan maliyeti tetiklenmedi).
@@ -242,13 +252,19 @@ func test_rewinding_the_same_facade_to_an_older_save_restores_the_older_rows() -
 	var run := _scenario(ISOLATE, 4, 0)
 	var f: SimFacadeImpl = run["facade"]
 	var proj: SimBuildingProjector = run["proj"]
-	for day in 70:
+	# Kayıt günü satırların SONRA değişeceği bir an olmalı: kademeli tabloda inşaat ortası (gün 70); hero tek
+	# boyda satırlar
+	# inşaat başlayınca (ölçülen gün ~29) bir kerede gelir ve sonra değişmez -> kayıt, inşaat öncesi (gün 20, 0
+	# satır):
+	# geri sarma satırları SİLMELİDİR.
+	var save_day := 70 if M2RenderSupport.staging_available() else 20
+	for day in save_day:
 		f.advance(1)
 		proj.sync(true)
 	var bytes := f.export_save()
 	var early_hash := proj.columns().state_hash()
 	var early_count := proj.columns().count
-	for day in 90:
+	for day in 160 - save_day:
 		f.advance(1)
 		proj.sync(true)
 	assert_str(proj.columns().state_hash()).is_not_equal(early_hash)

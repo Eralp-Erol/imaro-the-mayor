@@ -154,7 +154,9 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	var t1 := Time.get_ticks_usec()
 	var lib := KitLibrary.load_manifest()
 	# generate() == generate_detailed().columns; ayrıntı (bölge dokusu, meydan, çok parsellileri) projector'a gerekir.
-	_settlement = T0Settlement.generate_detailed(_world, _net, lib.manifest, world_seed, rules)
+	# T-062 A2: yerleşim modül tablosu onaylı hero oyun tablosudur (SettlementTable). `lib` (kit) YALNIZ görünüm içindir ve
+	# A3'te (hero mesh yükleyici) aynı tabloya geçer: o zamana dek module_idx görünüm kit dizinleriyle UYUŞMAZ.
+	_settlement = T0Settlement.generate_detailed(_world, _net, SettlementTable.game_table(), world_seed, rules)
 	var cols: BuildingColumns = _settlement.columns
 	_t0_columns = cols
 	for pid in cols.occupied_parcels():

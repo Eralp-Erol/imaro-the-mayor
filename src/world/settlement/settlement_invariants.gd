@@ -161,6 +161,8 @@ static func check_orientation(res: SettlementResult) -> PackedStringArray:
 
 static func check_tower_present(res: SettlementResult) -> PackedStringArray:
 	var out := PackedStringArray()
-	if bool(res.rules.tower.get("enabled", true)) and res.tower_index < 0:
-		out.append("saat kulesi yok (meydan bulunamadı)")
+	# Kule yalnız onaylı bir landmark modülü yapılandırıldıysa beklenir (module boş = 'none-approved': landmark yok).
+	if bool(res.rules.tower.get("enabled", true)) and not str(res.rules.tower.get("module", "")).is_empty() \
+			and res.tower_index < 0:
+		out.append("landmark yok (meydan bulunamadı)")
 	return out

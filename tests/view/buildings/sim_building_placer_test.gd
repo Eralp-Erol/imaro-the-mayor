@@ -91,7 +91,12 @@ func test_staging_is_monotonic_keeps_the_row_count_and_ends_in_the_final_module(
 			final_total += final_rows[i].floors
 		assert_int(last_total).is_less_equal(final_total)
 		staged_any = staged_any or _placer.rows_for(plan, 1)[0].module != final_rows[0].module
-	assert_bool(staged_any).override_failure_message("hiçbir parselde kat kademesi yok").is_true()
+	if M2RenderSupport.staging_available():
+		assert_bool(staged_any).override_failure_message("hiçbir parselde kat kademesi yok").is_true()
+	else:
+		# T-062 A2 · karar 2: hero ailesi tek boy -> kademe yok, nihai modül en başta görünür (olumsuz değil: yukarıdaki
+		# monotonluk/satır sayısı/nihai modül denetimleri aynen geçerli).
+		assert_bool(staged_any).override_failure_message("kademesiz tabloda kademe görüldü").is_false()
 
 
 func test_commercial_plans_use_ground_shop_modules_and_residential_ones_do_not() -> void:
