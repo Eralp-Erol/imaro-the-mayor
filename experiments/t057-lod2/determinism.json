@@ -1,0 +1,21 @@
+{
+ "ok": true,
+ "return_codes": [
+  0,
+  0
+ ],
+ "run1": {
+  "glb": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+  "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+ },
+ "run2": {
+  "glb": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+  "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+ },
+ "repo": {
+  "glb": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+  "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+ },
+ "byte_equal_runs": true,
+ "byte_equal_repo": true
+}
