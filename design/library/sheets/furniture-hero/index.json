@@ -15,14 +15,14 @@
         "LOD1": 144
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-192933-t058-bench-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-192939-t058-bench-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-192944-t058-bench-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-192949-t058-bench-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-192955-t058-bench-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193000-t058-bench-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193006-t058-bench-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193011-t058-bench-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-194847-t058-bench-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-194852-t058-bench-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-194858-t058-bench-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-194903-t058-bench-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-194909-t058-bench-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-194915-t058-bench-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-194921-t058-bench-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-194926-t058-bench-far_lod1.png"
       }
     },
     {
@@ -38,14 +38,14 @@
         "LOD1": 90
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193019-t058-bin-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193024-t058-bin-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193030-t058-bin-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193035-t058-bin-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193041-t058-bin-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193046-t058-bin-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193052-t058-bin-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193057-t058-bin-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-194935-t058-bin-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-194940-t058-bin-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-194945-t058-bin-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-194951-t058-bin-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-194957-t058-bin-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195003-t058-bin-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195008-t058-bin-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195013-t058-bin-far_lod1.png"
       }
     },
     {
@@ -61,14 +61,14 @@
         "LOD1": 94
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193105-t058-lamp_street-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193110-t058-lamp_street-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193116-t058-lamp_street-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193121-t058-lamp_street-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193126-t058-lamp_street-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193132-t058-lamp_street-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193137-t058-lamp_street-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193142-t058-lamp_street-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-195022-t058-lamp_street-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-195027-t058-lamp_street-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-195033-t058-lamp_street-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-195038-t058-lamp_street-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-195044-t058-lamp_street-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195049-t058-lamp_street-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195055-t058-lamp_street-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195100-t058-lamp_street-far_lod1.png"
       }
     },
     {
@@ -84,14 +84,14 @@
         "LOD1": 44
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193150-t058-bollard-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193156-t058-bollard-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193201-t058-bollard-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193206-t058-bollard-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193212-t058-bollard-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193218-t058-bollard-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193223-t058-bollard-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193228-t058-bollard-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-195108-t058-bollard-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-195114-t058-bollard-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-195119-t058-bollard-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-195125-t058-bollard-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-195130-t058-bollard-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195136-t058-bollard-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195142-t058-bollard-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195147-t058-bollard-far_lod1.png"
       }
     },
     {
@@ -107,14 +107,14 @@
         "LOD1": 120
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193237-t058-bike_rack-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193242-t058-bike_rack-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193247-t058-bike_rack-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193253-t058-bike_rack-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193258-t058-bike_rack-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193304-t058-bike_rack-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193310-t058-bike_rack-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193315-t058-bike_rack-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-195156-t058-bike_rack-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-195202-t058-bike_rack-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-195207-t058-bike_rack-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-195212-t058-bike_rack-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-195219-t058-bike_rack-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195224-t058-bike_rack-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195229-t058-bike_rack-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195235-t058-bike_rack-far_lod1.png"
       }
     },
     {
@@ -130,14 +130,14 @@
         "LOD1": 158
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193323-t058-bus_stop-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193329-t058-bus_stop-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193334-t058-bus_stop-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193339-t058-bus_stop-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193345-t058-bus_stop-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193350-t058-bus_stop-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193356-t058-bus_stop-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193401-t058-bus_stop-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-195243-t058-bus_stop-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-195249-t058-bus_stop-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-195254-t058-bus_stop-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-195300-t058-bus_stop-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-195306-t058-bus_stop-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195311-t058-bus_stop-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195317-t058-bus_stop-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195322-t058-bus_stop-far_lod1.png"
       }
     },
     {
@@ -150,17 +150,17 @@
       ],
       "triangles": {
         "LOD0": 304,
-        "LOD1": 124
+        "LOD1": 158
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193410-t058-planter-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193415-t058-planter-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193420-t058-planter-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193425-t058-planter-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193431-t058-planter-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193437-t058-planter-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193442-t058-planter-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193447-t058-planter-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-195331-t058-planter-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-195337-t058-planter-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-195342-t058-planter-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-195347-t058-planter-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-195353-t058-planter-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195400-t058-planter-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195407-t058-planter-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195414-t058-planter-far_lod1.png"
       }
     },
     {
@@ -176,14 +176,14 @@
         "LOD1": 142
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-193456-t058-kiosk-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-193501-t058-kiosk-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-193507-t058-kiosk-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-193512-t058-kiosk-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-193517-t058-kiosk-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-193523-t058-kiosk-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-193528-t058-kiosk-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-193534-t058-kiosk-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-195425-t058-kiosk-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-195432-t058-kiosk-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-195437-t058-kiosk-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-195443-t058-kiosk-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-195449-t058-kiosk-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-195454-t058-kiosk-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-195459-t058-kiosk-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-195505-t058-kiosk-far_lod1.png"
       }
     }
   ],
@@ -191,5 +191,11 @@
     "context-scale.png",
     "context-street.png",
     "context-lineup.png"
-  ]
+  ],
+  "recapture_t058_fix": {
+    "planter_40m_lod0": "artifacts/screenshots/captures/20261027-195542-t058-planter-40m_lod0.png",
+    "planter_40m_lod1": "artifacts/screenshots/captures/20261027-195547-t058-planter-40m_lod1.png",
+    "visual_diff_40m": "diff_pixels=1113 total=1540000 percent=0.0723",
+    "visual_diff_front_pair": "percent=6.7939"
+  }
 }

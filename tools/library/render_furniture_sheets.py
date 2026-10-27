@@ -52,7 +52,7 @@ def main():
             else:image=image.resize((width,tileh),Image.Resampling.LANCZOS)
             sheet.paste(image,(x,y));draw.text((x+12,y+tileh+8),label,font=small,fill=(42,46,37))
         x=2*width;y=96+2*(tileh+40)
-        lines=['Ölçü: '+tref['size_status'][:40],('Şablon: %s %s'%(tref['template_id'],tref['template_size_m']) if tref['template_id'] else 'Şablon satırı yok · çalışma değeri'),'Mesafe (çalışma): LOD0 < %d m · LOD1 < %d m · sonrası cull'%(dist['LOD0_max'],dist['LOD1_max']),
+        lines=['Ölçü: '+tref['size_status'][:40],('Şablon: %s %s'%(tref['template_id'],' x '.join('-' if v is None else ('%g'%v) for v in tref['template_size_m'])) if tref['template_id'] else 'Şablon satırı yok · çalışma değeri'),'Mesafe (çalışma): LOD0 < %d m · LOD1 < %d m · sonrası cull'%(dist['LOD0_max'],dist['LOD1_max']),
                'Uzak proxy yok · generate_lods=false','Palet satırları: '+', '.join(entry['palette_rows']['furniture_rows']),'sha256 LOD0: '+entry['lod_chain']['levels']['LOD0']['sha256'][:8],
                'Işık/yazı/logo yok · onay: proposed','Q-018 açık (kullanıcı)']
         for i,line in enumerate(lines):draw.text((x+12,y+8+i*30),line,font=small,fill=(42,46,37))

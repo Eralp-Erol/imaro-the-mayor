@@ -28,9 +28,9 @@ TEMPLATES={
     'bin':{'template_id':'fur_bin_a','template_size_m':[0.5,0.5,0.9],'size_status':'template-working-value','height_m':0.9,'rows':['FN1'],'distance_class':'small'},
     'lamp_street':{'template_id':'fur_lamp_street_a','template_size_m':[1.5,None,8.0],'size_status':'template-working-value','height_m':8.0,'rows':['FN1','FN2'],'distance_class':'lamp'},
     'bollard':{'template_id':'fur_bollard_a','template_size_m':[0.2,0.2,0.9],'size_status':'template-working-value','height_m':0.9,'rows':['FN2','FN1'],'distance_class':'small'},
-    'bike_rack':{'template_id':None,'template_size_m':None,'size_status':'working-value (no template row; 3 hoops 0.70 wide x 0.85 high, 0.9 m pitch)','height_m':0.85,'rows':['FN2','FN1'],'distance_class':'small'},
+    'bike_rack':{'template_id':None,'template_size_m':None,'size_status':'working-value (no template row)','height_m':0.85,'rows':['FN2','FN1'],'distance_class':'small'},
     'bus_stop':{'template_id':'fur_bus_stop_a','template_size_m':[5.0,1.6,2.6],'size_status':'template-working-value','height_m':2.6,'rows':['FN6','FN3','FN5','VH13'],'distance_class':'large'},
-    'planter':{'template_id':'fur_planter_a','template_size_m':[1.2,1.2,0.7],'size_status':'template footprint/pot height; stone+earth instead of concrete and a shrub added: total 1.34 is a working value','height_m':1.34,'rows':['W11','FN5','P2'],'distance_class':'small'},
+    'planter':{'template_id':'fur_planter_a','template_size_m':[1.2,1.2,0.7],'size_status':'template footprint; total 1.34 working','height_m':1.34,'rows':['W11','FN5','P2'],'distance_class':'small'},
     'kiosk':{'template_id':'fur_kiosk_a','template_size_m':[2.4,2.0,2.7],'size_status':'template-working-value','height_m':2.7,'rows':['FN4','FN3','FN6'],'distance_class':'large'},
 }
 DISTANCES={'small':(40,150),'large':(60,200),'lamp':(80,300)}

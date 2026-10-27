@@ -65,10 +65,8 @@ def tile_metal(rng,color):
 
 
 def tile_glass(rng):
-    im=base((48,66,70),rng,3,5);d=ImageDraw.Draw(im)
-    for k in range(-256,512,70):  # soft diagonal sheen bands, matte (no reflection)
-        d.polygon([(k,256),(k+26,256),(k+126,0),(k+100,0)],fill=(58,80,84))
-    return im.filter(ImageFilter.GaussianBlur(1.2))
+    """Light, low-saturation grey-blue glass (~0.50 value), matte and opaque: no baked sheen bands (art-gate B2)."""
+    return base((120,134,144),rng,3,5)
 
 
 def tile_stone(rng):
@@ -82,7 +80,8 @@ def tile_stone(rng):
 
 
 def tile_concrete(rng):
-    color=(201,195,181);im=base(color,rng,10,14);d=ImageDraw.Draw(im)
+    # ~10% darker than the first proposal (art-gate D3)
+    color=(181,176,163);im=base(color,rng,10,14);d=ImageDraw.Draw(im)
     for k in range(14):
         x=rng.randrange(256);y=rng.randrange(256);d.ellipse([x,y,x+3,y+2],fill=shade(color,.72))  # air pockets
     d.line([(0,128),(255,128)],fill=shade(color,.82),width=1)
@@ -119,10 +118,11 @@ def tile_fabric(rng):
 
 
 def tile_shrub(rng):
-    color=(82,100,66);im=base(color,rng,14,14);d=ImageDraw.Draw(im)
+    # pulled to the T-057 maquis/hedge leaf tone (art-gate D2)
+    color=(76,97,60);im=base(color,rng,14,14);d=ImageDraw.Draw(im)
     for k in range(260):  # leaf flecks (opaque, no alpha)
         x=rng.randrange(256);y=rng.randrange(256);s=rng.randrange(4,9);f=rng.uniform(.75,1.25)
-        d.polygon([(x,y),(x+s,y-s//2),(x+2*s,y),(x+s,y+s//2)],fill=shade((88,108,70),f))
+        d.polygon([(x,y),(x+s,y-s//2),(x+2*s,y),(x+s,y+s//2)],fill=shade((80,103,62),f))
     return im
 
 

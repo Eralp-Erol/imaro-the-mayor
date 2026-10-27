@@ -185,7 +185,10 @@ def planter(m,lod):
         for c,r in (((0,0,1.0),(.42,.40,.34)),((-.28,.12,.88),(.30,.30,.26)),((.30,-.10,.90),(.30,.30,.28)),((.05,.30,.86),(.26,.26,.24)),((-.05,-.30,.84),(.26,.26,.22))):
             blob(m,c,r,8,4,'shrub',tilt=0.3*c[0],lower=False)
     else:
-        for c,r in (((0,0,0.98),(.45,.42,.36)),((-.25,.15,.88),(.32,.32,.28))):blob(m,c,r,6,3,'shrub',lower=False)
+        # low dome seated on the soil (z 0.70), centred on the pot axis like the LOD0 cluster, following its measured envelope (r 0.53 at soil, 0.61 widest, apex 1.34)
+        rings=[zring(0,0,z,r,10) for z,r in ((0.70,0.49),(0.90,0.58),(1.10,0.50),(1.25,0.27))]
+        loft(m,rings,'shrub',cap_first=False,cap_last=False)
+        for j in range(10):m.poly([(0,0,1.34),rings[-1][(j+1)%10],rings[-1][j]],'shrub',out=(0,0,0.95))
 
 
 def kiosk(m,lod):
