@@ -73,3 +73,11 @@ REQ: VIS-01, VIS-02, VIS-03, VIS-05, WLD-01 · görev kabul ölçütü 2 ("A/B/C
   - `design/library/sheets/vegetation-hero/context-street.png`
 - Kırpımlar: `/private/tmp/claude-501/t059ad/{c_fronts,cn_hem,cb_hem,sides,street_fig,scale_fig,far_all,near_all}.png`
 - Kod (yalnız okundu): `design/library/human-hero.md`, `production/tasks/T-059.md`, `assets/hero/human/human_lab.gd` (60–123), `art/blender/human/assets.py` (14–30, 94–110)
+
+## Yeniden inceleme (K1–K4 sonrası, commit 6aa0585) — hüküm: PASS (koşullar yalnız devredilebilir)
+Kullanıcı onayı değildir; A/B/C seçilmiş sayılmaz (Q-018 açık).
+- **K1 kapandı (gördüm):** `hem_facet_{neutral,broad}_{front,side,back}.png` altı kırpımda etek kenarı kesintisiz, pantolon mavisi etekten taşmıyor. `hum_hero_facet_{neutral,broad}_a.png` ön/yan/arka/3q/12 m karelerinde ve `context-compare-3q.png` 4x kırpımında (`/private/tmp/claude-501/t059ad2/c3q_hem.png`) çentik yok. Hareket/animasyon test edilmedi.
+- **K2/K3 kapandı (gördüm):** `context-compare-3q.png` ve `context-compare-side.png`'de altı figürün boyu eşit, baş hizası aynı, örtüşme yok; `style-compare.png` 3/4 paneli yeni kareyi kullanıyor. Kod: `human_lab.gd` sırayı kamera eksenine dik kuruyor.
+- **K4 kapandı (okudum):** `human-hero.md` kostüm adilliği uyarısı, 60 m cümlesi (A ayrı, B=C), etek durumu (hp+0,02 ve hd+0,02, kapsam sınırı) doğru.
+- **Yan etki yok:** git'e göre e279f6f'den beri yalnız iki C LOD0 GLB değişti; A/B GLB'leri değişmedi. C'de yeni kusur görmedim. Ön ortografik görünümde C kalçası hafif kloş; stil notu, kusur değil.
+- **Devredilebilir (yeni, küçük):** `human-hero.md` "figürler düz renkli (dokusuz)" cümlesi tam doğru değil; kırpımlarda hafif gren dokusu görünüyor. Entegrasyonda düzeltilsin. Önceki "Devredilebilir" listesi aynen geçerli.
