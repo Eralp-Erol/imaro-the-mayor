@@ -40,7 +40,7 @@ class FurnitureCatalogTests(unittest.TestCase):
             with self.subTest(e=e['id']):
                 self.assertEqual([],fc.validate_chain(e,ROOT))
                 self.assertTrue(e['id'].startswith('fur_hero_') and e['id'].endswith('_a'))
-                self.assertEqual('street_furniture',e['category']);self.assertEqual('proposed',e['approval']);self.assertIsNone(e['approval_by'])
+                self.assertEqual('street_furniture',e['category']);self.assertIn(e['approval'],('proposed','approved','rejected'));self.assertEqual('user' if e['approval']!='proposed' else None,e['approval_by']);self.assertTrue(e['approval']=='proposed' or e['approval_date'])  # D-005: user decisions are legitimate; invariant = decided => user-signed+dated, proposed => unsigned
                 self.assertEqual(['LOD0','LOD1'],list(e['lod_chain']['levels']));self.assertEqual({'LOD0','LOD1'},set(e['triangles']))
                 self.assertTrue(0<e['triangles']['LOD1']<=240 and e['triangles']['LOD1']<e['triangles']['LOD0']<=1600)
                 self.assertEqual('working-model-not-integrated',e['lod_chain']['distances_m']['status'])

@@ -27,11 +27,24 @@ class ApprovalTest(unittest.TestCase):
         self.cat = os.path.join(self.tmp, "catalog.json")
         shutil.copyfile(REAL, self.cat)
         with open(self.cat, "rb") as fh:
+            self.real_bytes = fh.read()
+        # The real catalog holds genuine user decisions (D-005). To stay data-independent, the first two
+        # entries are reset to 'proposed' in the TMP copy only (real catalog is never written).
+        doc0 = json.loads(self.real_bytes.decode("utf-8"))
+        for e in doc0["entries"][:2]:
+            e["approval"] = "proposed"
+            e["approval_by"] = None
+            e["approval_date"] = None
+            e["user_note"] = ""
+            e.pop(aa.SHA_FIELD, None)
+        with open(self.cat, "w", encoding="utf-8") as fh:
+            fh.write(bc.dumps(doc0))
+        with open(self.cat, "rb") as fh:
             self.orig_bytes = fh.read()
         self.orig = json.loads(self.orig_bytes.decode("utf-8"))
         self.entries = {e["id"]: e for e in self.orig["entries"]}
         # drift-free pick by data, not by a fixed id list
-        self.a, self.b = [e["id"] for e in self.orig["entries"] if e["approval"] != "approved"][:2]
+        self.a, self.b = [e["id"] for e in self.orig["entries"][:2]]
 
     def tearDown(self):
         shutil.rmtree(self.tmp, ignore_errors=True)
@@ -59,7 +72,7 @@ class ApprovalTest(unittest.TestCase):
             self.assertEqual(fh.read(), self.orig_bytes)
 
     def test_real_catalog_roundtrips_byte_equal(self):
-        self.assertEqual(bc.dumps(self.orig).encode("utf-8"), self.orig_bytes)
+        self.assertEqual(bc.dumps(json.loads(self.real_bytes)).encode("utf-8"), self.real_bytes)
         self.assertEqual(len(self.orig["entries"]), len(self.entries))
 
     def test_every_entry_has_content_hash(self):

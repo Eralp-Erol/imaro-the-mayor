@@ -30,6 +30,15 @@ class CatalogTest(unittest.TestCase):
     def fresh(self):
         return copy.deepcopy(self.catalog)
 
+    @staticmethod
+    def make_provisional(entry):
+        """The real catalog holds user decisions (D-005), no provisional-in-use entries remain. These tests
+        exercise validator rules about pre-decision states, so they set that state on a tmp deepcopy."""
+        entry["approval"] = "provisional-in-use"
+        entry["approval_by"] = None
+        entry["approval_date"] = None
+        entry.pop("user_approved_sha256", None)
+
     def validate(self, catalog, manifest=None):
         return vc.validate(catalog, ROOT, manifest if manifest is not None else self.manifest)
 
@@ -86,7 +95,11 @@ class CatalogTest(unittest.TestCase):
     def test_kit_entry_removed_from_manifest(self):
         m = copy.deepcopy(self.manifest)
         gone = m["modules"].pop(0)["id"]
-        errors, _ = self.validate(self.catalog, m)
+        c = self.fresh()
+        for e in c["entries"]:
+            if e["id"] == gone:
+                self.make_provisional(e)
+        errors, _ = self.validate(c, m)
         self.assertTrue(any(gone in x and "no longer in the manifest" in x for x in errors), errors)
 
     def test_drift_detection(self):
@@ -111,6 +124,7 @@ class CatalogTest(unittest.TestCase):
 
     def test_approved_requires_user_author_and_date(self):
         c = self.fresh()
+        self.make_provisional(c["entries"][0])
         c["entries"][0]["approval"] = "approved"
         errors, _ = self.validate(c)
         self.assertTrue(any("requires approval_by == 'user'" in x for x in errors), errors)
@@ -124,9 +138,20 @@ class CatalogTest(unittest.TestCase):
 
     def test_agent_cannot_claim_user_authorship_on_provisional(self):
         c = self.fresh()
+        self.make_provisional(c["entries"][0])
         c["entries"][0]["approval_by"] = "user"
         errors, _ = self.validate(c)
         self.assertTrue(any("approval_by must be null" in x for x in errors), errors)
+
+    def test_real_catalog_user_decision_invariant(self):
+        """approved/rejected only with user signature + date; every other state has approval_by None."""
+        for e in self.catalog["entries"]:
+            if e["approval"] in ("approved", "rejected"):
+                self.assertEqual(e["approval_by"], "user", e["id"])
+                self.assertTrue(e["approval_date"], e["id"])
+                self.assertTrue(e.get("user_approved_sha256") or e["approval"] == "rejected", e["id"])
+            else:
+                self.assertIsNone(e["approval_by"], e["id"])
 
     def test_proposed_entry_without_glb_is_allowed(self):
         c = self.fresh()

@@ -40,7 +40,7 @@ class HumanCatalogTests(unittest.TestCase):
             with self.subTest(e=e['id']):
                 self.assertEqual([],hc.validate_chain(e,ROOT))
                 self.assertRegex(e['id'],r'^hum_hero_(pawn|block|facet)_(neutral|broad)_a$')
-                self.assertEqual('human',e['category']);self.assertEqual('proposed',e['approval']);self.assertIsNone(e['approval_by'])
+                self.assertEqual('human',e['category']);self.assertIn(e['approval'],('proposed','approved','rejected'));self.assertEqual('user' if e['approval']!='proposed' else None,e['approval_by']);self.assertTrue(e['approval']=='proposed' or e['approval_date'])  # D-005: user decisions are legitimate; invariant = decided => user-signed+dated, proposed => unsigned
                 self.assertEqual(['LOD0','LOD1'],list(e['lod_chain']['levels']));self.assertEqual({'LOD0','LOD1'},set(e['triangles']))
                 self.assertTrue(0<e['triangles']['LOD1']<=100 and e['triangles']['LOD1']<e['triangles']['LOD0']<=900)
                 self.assertEqual('working-model-not-integrated',e['lod_chain']['distances_m']['status']);self.assertIn('cull',e['lod_chain']['distances_m']['beyond_lod1'])
