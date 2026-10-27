@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FAMILIES = {"old_core": "Tarihî çekirdek", "bazaar": "Çarşı", "res_mid": "Orta dönem apartman", "res_late": "Geç dönem apartman", "house": "Müstakil ev", "industrial": "Sanayi", "civic": "Kamu ve saat kulesi"}
 GROUPS = {"building": "Binalar", "ground": "Zeminler", "lod": "Bina LOD", "vegetation": "Bitkiler", "furniture": "Donatılar", "human": "İnsanlar", "vehicle": "Araçlar", "road": "Yol kesitleri"}
 FOLDERS = {"vegetation-hero": "vegetation", "furniture-hero": "furniture", "human-hero": "human", "vehicle-hero": "vehicle", "road-hero": "road"}
+HUMAN_LABELS = {"style-compare": "İnsan stilleri · A piyon / B blok / C faset karşılaştırma", "context-compare-lod0": "İnsan stilleri · ön, LOD0", "context-compare-lod1": "İnsan stilleri · ön, LOD1", "context-compare-3q": "İnsan stilleri · 3/4", "context-compare-side": "İnsan stilleri · yan", "context-street": "İnsanlar · hero bina ve donatı yanında sokak", "context-scale": "İnsanlar · hero bina yanında ölçek", **{"hum_hero_%s_%s_a" % (s, r): "%s · %s oran" % (n, o) for s, n in (("pawn", "A piyon"), ("block", "B blok figür"), ("facet", "C faset figür")) for r, o in (("neutral", "nötr"), ("broad", "geniş"))}}
 PLANT_LABELS = {"plane": "Çınar", "palm_date": "Geniş taçlı palmiye", "palm_slender": "İnce uzun palmiye", "pine_brutia": "Kızılçam", "pine_stone": "Fıstık çamı", "olive_open": "Açık taçlı zeytin", "olive_twisted": "Burgulu gövdeli zeytin", "cypress": "Servi", "maquis": "Maki / çalı kümesi", "hedge": "Budanmış çit"}
 FURNITURE_LABELS = {"fur_hero_bench_a": "Bank", "fur_hero_bin_a": "Çöp kutusu", "fur_hero_lamp_street_a": "Sokak direği (tek kollu, ışıksız)", "fur_hero_bollard_a": "Bollard", "fur_hero_bike_rack_a": "Bisiklet park demiri", "fur_hero_bus_stop_a": "Otobüs durağı", "fur_hero_planter_a": "Taş saksı", "fur_hero_kiosk_a": "Markasız kiosk", "context-scale": "Donatılar · hero bina yanında ölçek", "context-street": "Donatılar · sokak bağlamı", "context-lineup": "Donatılar · yan yana ölçek"}
 PLANT_VIEWS = {"context-lineup": "Türler · ölçek karşılaştırması", "context-slope": "Yamaç bağlamı", "context-street": "Sokak bağlamı", "context-true": "Hero bina yanında ölçek", "cypress-50m-lod": "Servi · 50 m detay karşılaştırması", "nonpalms-150m-lod": "Sekiz tür · 150 m uzak görünüm", "proxy-side-top-proof": "Uzak modeller · yan ve üst görünüm", "olive_open-scissor-no-msaa": "Zeytin · kenar yumuşatma kapalı", "palm_date-scissor-no-msaa": "Palmiye · kenar yumuşatma kapalı"}
@@ -35,6 +36,8 @@ def records(root=ROOT):
             label = PLANT_VIEWS.get(path.stem, PLANT_LABELS.get(path.stem.removeprefix("veg_hero_").removesuffix("_a"), path.stem.replace("_", " ").replace("-", " · "))) if group == "vegetation" else path.stem.replace("_", " ").replace("-", " · ")
             if group == "furniture":
                 label = FURNITURE_LABELS.get(path.stem, label)
+            if group == "human":
+                label = HUMAN_LABELS.get(path.stem, label)
             result.append((path, label, group, "Kütüphane önerisi · onay aktarılmaz"))
     return result
 

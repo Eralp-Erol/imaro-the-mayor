@@ -114,3 +114,12 @@ olduğunu taşır. Ana doğrulayıcı zinciri `source.kind` ile
 `furniture_catalog.validate_chain`'e iletir. Üretim `art/blender/furniture/`
 (`rebuild.sh`); ölçüm `python3 tools/library/furniture_catalog.py --write|--check`.
 Bu alanlar kullanıcı onayı veya oyun entegrasyonu değildir; Q-018 açıktır.
+
+## İnsan stil önerileri (T-059)
+
+`source.kind: hero_human`, `category: human`. Kimlikler `hum_hero_<stil>_<oran>_a` (stil `pawn|block|facet`, oran `neutral|broad`; 6 öneri,
+hiçbiri seçilmiş değil); `approval: proposed`. Mevcut 99 kayıt ve kullanıcı alanları değiştirilmez. `lod_chain.levels` yalnız LOD0/LOD1
+(≤900 / ≤100 üçgen; LOD1 sınırı LOD0 zarfı içinde), proxy yok, `distances_m` çalışma kesme mesafeleri (30/120 m, `working-model-not-integrated`).
+`atlas` tek opak RGB `human_atlas.png` (1024×512) ve `atlas_layout.json`; `palette_rows.human_rows` SK/HR/CL satırları. Etiketler izinli listeyle
+sınırlıdır (yüz, logo, yazı, üniforma, kültürel/dini giyim, adlı karakter, mevsim yok). Ana doğrulayıcı `human_catalog.validate_chain`'e iletir.
+Üretim `art/blender/human/` (`rebuild.sh`); ölçüm `python3 tools/library/human_catalog.py --write|--check`. Q-018 açıktır.

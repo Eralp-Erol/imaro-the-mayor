@@ -35,7 +35,7 @@ class FurnitureCatalogTests(unittest.TestCase):
         self.assertEqual(sorted('hero_'+n for n in fc.NAMES),sorted(e['family'] for e in self.items))
         kinds={}
         for e in self.catalog['entries']:kinds[e['source']['kind']]=kinds.get(e['source']['kind'],0)+1
-        self.assertEqual(8,kinds['hero_furniture']);self.assertEqual(10,kinds['hero_vegetation']);self.assertEqual(81,len(self.catalog['entries'])-18)
+        self.assertEqual(8,kinds['hero_furniture']);self.assertEqual(10,kinds['hero_vegetation']);self.assertEqual(81,len([e for e in self.catalog['entries'] if e['source']['kind'] not in ('hero_furniture','hero_vegetation','hero_human')]))
         for e in self.items:
             with self.subTest(e=e['id']):
                 self.assertEqual([],fc.validate_chain(e,ROOT))
@@ -256,7 +256,8 @@ class FurnitureCatalogTests(unittest.TestCase):
         self.assertEqual(len(old),91)
         self.assertFalse(old&new,'new furniture ids must not collide with the 91 pre-T-058 ids')
         self.assertTrue(old<=set(ids),'every pre-T-058 id must still be in the catalog')
-        self.assertEqual(set(ids)-old,new,'the only additions over the 91 old records are the furniture proposals')
+        human={e['id'] for e in self.catalog['entries'] if e['source']['kind']=='hero_human'}
+        self.assertEqual(set(ids)-old-human,new,'the only additions over the 91 old records are the furniture (and later human) proposals')
         for i in new:self.assertRegex(i,r'^fur_hero_[a-z_]+_a$')
 
 

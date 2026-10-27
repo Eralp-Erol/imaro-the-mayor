@@ -1,0 +1,79 @@
+{
+  "size": [
+    1024,
+    512
+  ],
+  "tile_px": 256,
+  "regions": {
+    "skin": [
+      0,
+      0,
+      256,
+      256
+    ],
+    "hair": [
+      256,
+      0,
+      256,
+      256
+    ],
+    "top": [
+      512,
+      0,
+      256,
+      256
+    ],
+    "bottom": [
+      768,
+      0,
+      256,
+      256
+    ],
+    "shoe": [
+      0,
+      256,
+      256,
+      256
+    ],
+    "sole": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "trim": [
+      512,
+      256,
+      256,
+      256
+    ],
+    "under": [
+      768,
+      256,
+      256,
+      256
+    ]
+  },
+  "palette_rows": {
+    "skin": "SK2",
+    "hair": "HR2",
+    "top": "CL7",
+    "bottom": "CL4",
+    "shoe": "CL15",
+    "sole": "CL6",
+    "trim": "CL2",
+    "under": "CL1"
+  },
+  "palette_hex": {
+    "skin": "#C99C7C",
+    "hair": "#5A4030",
+    "top": "#8A8F86",
+    "bottom": "#3E5470",
+    "shoe": "#3B2F2A",
+    "sole": "#5B5F63",
+    "trim": "#D2C3A5",
+    "under": "#E6E1D6"
+  },
+  "seed_base": 59000,
+  "format": "RGB opaque (no alpha); matte; flat tiles with fine grain; one shared Texture2D"
+}

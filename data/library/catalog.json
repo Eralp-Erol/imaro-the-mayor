@@ -7468,6 +7468,999 @@
       "user_note": ""
     },
     {
+      "id": "hum_hero_block_broad_a",
+      "label_tr": "B blok figür · prizma uzuvlar, el/ayak blokları · geniş gövde oranı (1,75 m)",
+      "category": "human",
+      "family": "hero_block_broad",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "human-style-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-face",
+        "no-logo",
+        "no-text",
+        "anonymous",
+        "neutral-palette",
+        "style:block",
+        "ratio:broad"
+      ],
+      "glb": "res://assets/hero/human/hum_hero_block_broad_a_lod0.glb",
+      "glb_sha256": "34143be9b5e20ab67171e7c0ac967bd78246f2921485d13dcf193610df857d00",
+      "materials": [
+        "mat_human_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.614,
+        "depth_z": 0.3,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.307,
+          0.0,
+          -0.13
+        ],
+        "bbox_max": [
+          0.307,
+          1.75,
+          0.17
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 198,
+        "LOD1": 98
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "human_rows": [
+          "SK2",
+          "HR2",
+          "CL7",
+          "CL4",
+          "CL15",
+          "CL6",
+          "CL2",
+          "CL1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "reference_ids": [
+          "hum_adult_broad_a"
+        ],
+        "template_size_m": [
+          1.74,
+          0.56
+        ],
+        "size_status": "template hum_adult_broad_a 1.74x0.56; height set to 1.75 for equal comparison (working value)",
+        "intended_height_m": 1.75,
+        "source": "design/library/templates-v0.md section a"
+      },
+      "source": {
+        "kind": "hero_human",
+        "generator": "art/blender/human/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/human/rebuild.sh",
+        "spec": "production/tasks/T-059.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/human/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/human/hum_hero_block_broad_a_lod0.glb",
+            "sha256": "34143be9b5e20ab67171e7c0ac967bd78246f2921485d13dcf193610df857d00",
+            "triangles": 198,
+            "bbox_min": [
+              -0.307,
+              0.0,
+              -0.13
+            ],
+            "bbox_max": [
+              0.307,
+              1.75,
+              0.17
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/human/hum_hero_block_broad_a_lod1.glb",
+            "sha256": "95efd55b271b08d1f65d68fd656146e22f93ef5e07a3568c2bb11d774a20a3ac",
+            "triangles": 98,
+            "bbox_min": [
+              -0.307,
+              0.0,
+              -0.13
+            ],
+            "bbox_max": [
+              0.307,
+              1.75,
+              0.17
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/human/human_atlas.png",
+          "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+          "size_px": [
+            1024,
+            512
+          ],
+          "layout": "res://assets/hero/human/atlas_layout.json",
+          "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+        },
+        "material_policy": {
+          "material": "mat_human_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 30,
+          "LOD1_max": 120,
+          "beyond_lod1": "cull (no far proxy for a single small figure)",
+          "status": "working-model-not-integrated",
+          "decision": "T-059 technical-artist working value (1.75 m figure ~17 px at 120 m, README 5.1); not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 900,
+          "LOD1": 100
+        }
+      },
+      "notes": "İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil."
+    },
+    {
+      "id": "hum_hero_block_neutral_a",
+      "label_tr": "B blok figür · prizma uzuvlar, el/ayak blokları · nötr 1,75 m yetişkin",
+      "category": "human",
+      "family": "hero_block_neutral",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "human-style-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-face",
+        "no-logo",
+        "no-text",
+        "anonymous",
+        "neutral-palette",
+        "style:block",
+        "ratio:neutral"
+      ],
+      "glb": "res://assets/hero/human/hum_hero_block_neutral_a_lod0.glb",
+      "glb_sha256": "4c0a6f05e9bd5333b978c26cfb800a03e5b17b1a5db8bad4e991b2f72986e544",
+      "materials": [
+        "mat_human_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.522,
+        "depth_z": 0.275,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.261,
+          0.0,
+          -0.105
+        ],
+        "bbox_max": [
+          0.261,
+          1.75,
+          0.17
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 198,
+        "LOD1": 98
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "human_rows": [
+          "SK2",
+          "HR2",
+          "CL7",
+          "CL4",
+          "CL15",
+          "CL6",
+          "CL2",
+          "CL1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "reference_ids": [
+          "hum_adult_m_a",
+          "hum_adult_f_a"
+        ],
+        "template_size_m": [
+          1.75,
+          0.46
+        ],
+        "size_status": "working-value between hum_adult_m_a 1.76x0.48 and hum_adult_f_a 1.64x0.42 (height 1.75 per task)",
+        "intended_height_m": 1.75,
+        "source": "design/library/templates-v0.md section a"
+      },
+      "source": {
+        "kind": "hero_human",
+        "generator": "art/blender/human/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/human/rebuild.sh",
+        "spec": "production/tasks/T-059.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/human/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/human/hum_hero_block_neutral_a_lod0.glb",
+            "sha256": "4c0a6f05e9bd5333b978c26cfb800a03e5b17b1a5db8bad4e991b2f72986e544",
+            "triangles": 198,
+            "bbox_min": [
+              -0.261,
+              0.0,
+              -0.105
+            ],
+            "bbox_max": [
+              0.261,
+              1.75,
+              0.17
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/human/hum_hero_block_neutral_a_lod1.glb",
+            "sha256": "40eaf4515d4dd6dbade42aca7e508465796ae98594a2aa22d3e02ed7a82b570e",
+            "triangles": 98,
+            "bbox_min": [
+              -0.261,
+              0.0,
+              -0.105
+            ],
+            "bbox_max": [
+              0.261,
+              1.75,
+              0.17
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/human/human_atlas.png",
+          "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+          "size_px": [
+            1024,
+            512
+          ],
+          "layout": "res://assets/hero/human/atlas_layout.json",
+          "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+        },
+        "material_policy": {
+          "material": "mat_human_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 30,
+          "LOD1_max": 120,
+          "beyond_lod1": "cull (no far proxy for a single small figure)",
+          "status": "working-model-not-integrated",
+          "decision": "T-059 technical-artist working value (1.75 m figure ~17 px at 120 m, README 5.1); not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 900,
+          "LOD1": 100
+        }
+      },
+      "notes": "İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil."
+    },
+    {
+      "id": "hum_hero_facet_broad_a",
+      "label_tr": "C faset figür · eklemli uzuvlar, ayakkabı, yaka/manşet · geniş gövde oranı (1,75 m)",
+      "category": "human",
+      "family": "hero_facet_broad",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "human-style-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-face",
+        "no-logo",
+        "no-text",
+        "anonymous",
+        "neutral-palette",
+        "style:facet",
+        "ratio:broad"
+      ],
+      "glb": "res://assets/hero/human/hum_hero_facet_broad_a_lod0.glb",
+      "glb_sha256": "324c39fc8a5fe3c79f0e0122f851cd1361f96008989724a467d7964347f915ac",
+      "materials": [
+        "mat_human_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.614,
+        "depth_z": 0.305,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.307,
+          0.0,
+          -0.13
+        ],
+        "bbox_max": [
+          0.307,
+          1.75,
+          0.175
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 654,
+        "LOD1": 98
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "human_rows": [
+          "SK2",
+          "HR2",
+          "CL7",
+          "CL4",
+          "CL15",
+          "CL6",
+          "CL2",
+          "CL1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "reference_ids": [
+          "hum_adult_broad_a"
+        ],
+        "template_size_m": [
+          1.74,
+          0.56
+        ],
+        "size_status": "template hum_adult_broad_a 1.74x0.56; height set to 1.75 for equal comparison (working value)",
+        "intended_height_m": 1.75,
+        "source": "design/library/templates-v0.md section a"
+      },
+      "source": {
+        "kind": "hero_human",
+        "generator": "art/blender/human/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/human/rebuild.sh",
+        "spec": "production/tasks/T-059.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/human/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/human/hum_hero_facet_broad_a_lod0.glb",
+            "sha256": "324c39fc8a5fe3c79f0e0122f851cd1361f96008989724a467d7964347f915ac",
+            "triangles": 654,
+            "bbox_min": [
+              -0.307,
+              0.0,
+              -0.13
+            ],
+            "bbox_max": [
+              0.307,
+              1.75,
+              0.175
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/human/hum_hero_facet_broad_a_lod1.glb",
+            "sha256": "4626998d2552fa0f0a5e7f739f82b6df1654d63fa9188233b346463188cf2ea4",
+            "triangles": 98,
+            "bbox_min": [
+              -0.307,
+              0.0,
+              -0.13
+            ],
+            "bbox_max": [
+              0.307,
+              1.75,
+              0.17
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/human/human_atlas.png",
+          "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+          "size_px": [
+            1024,
+            512
+          ],
+          "layout": "res://assets/hero/human/atlas_layout.json",
+          "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+        },
+        "material_policy": {
+          "material": "mat_human_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 30,
+          "LOD1_max": 120,
+          "beyond_lod1": "cull (no far proxy for a single small figure)",
+          "status": "working-model-not-integrated",
+          "decision": "T-059 technical-artist working value (1.75 m figure ~17 px at 120 m, README 5.1); not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 900,
+          "LOD1": 100
+        }
+      },
+      "notes": "İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil."
+    },
+    {
+      "id": "hum_hero_facet_neutral_a",
+      "label_tr": "C faset figür · eklemli uzuvlar, ayakkabı, yaka/manşet · nötr 1,75 m yetişkin",
+      "category": "human",
+      "family": "hero_facet_neutral",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "human-style-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-face",
+        "no-logo",
+        "no-text",
+        "anonymous",
+        "neutral-palette",
+        "style:facet",
+        "ratio:neutral"
+      ],
+      "glb": "res://assets/hero/human/hum_hero_facet_neutral_a_lod0.glb",
+      "glb_sha256": "3bba6013d02f767850f0884b890981bae65536f24861a88976f19f15ecd1a359",
+      "materials": [
+        "mat_human_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.522,
+        "depth_z": 0.285,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.261,
+          0.0,
+          -0.11
+        ],
+        "bbox_max": [
+          0.261,
+          1.75,
+          0.175
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 654,
+        "LOD1": 98
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "human_rows": [
+          "SK2",
+          "HR2",
+          "CL7",
+          "CL4",
+          "CL15",
+          "CL6",
+          "CL2",
+          "CL1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "reference_ids": [
+          "hum_adult_m_a",
+          "hum_adult_f_a"
+        ],
+        "template_size_m": [
+          1.75,
+          0.46
+        ],
+        "size_status": "working-value between hum_adult_m_a 1.76x0.48 and hum_adult_f_a 1.64x0.42 (height 1.75 per task)",
+        "intended_height_m": 1.75,
+        "source": "design/library/templates-v0.md section a"
+      },
+      "source": {
+        "kind": "hero_human",
+        "generator": "art/blender/human/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/human/rebuild.sh",
+        "spec": "production/tasks/T-059.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/human/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/human/hum_hero_facet_neutral_a_lod0.glb",
+            "sha256": "3bba6013d02f767850f0884b890981bae65536f24861a88976f19f15ecd1a359",
+            "triangles": 654,
+            "bbox_min": [
+              -0.261,
+              0.0,
+              -0.11
+            ],
+            "bbox_max": [
+              0.261,
+              1.75,
+              0.175
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/human/hum_hero_facet_neutral_a_lod1.glb",
+            "sha256": "d20c3e5be5a4480fc19af2cf487fe699df26587f2f8d9db442d3ef7defa3e94b",
+            "triangles": 98,
+            "bbox_min": [
+              -0.261,
+              0.0,
+              -0.105
+            ],
+            "bbox_max": [
+              0.261,
+              1.75,
+              0.17
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/human/human_atlas.png",
+          "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+          "size_px": [
+            1024,
+            512
+          ],
+          "layout": "res://assets/hero/human/atlas_layout.json",
+          "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+        },
+        "material_policy": {
+          "material": "mat_human_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 30,
+          "LOD1_max": 120,
+          "beyond_lod1": "cull (no far proxy for a single small figure)",
+          "status": "working-model-not-integrated",
+          "decision": "T-059 technical-artist working value (1.75 m figure ~17 px at 120 m, README 5.1); not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 900,
+          "LOD1": 100
+        }
+      },
+      "notes": "İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil."
+    },
+    {
+      "id": "hum_hero_pawn_broad_a",
+      "label_tr": "A piyon · uzuvsuz gövde prizması · geniş gövde oranı (1,75 m)",
+      "category": "human",
+      "family": "hero_pawn_broad",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "human-style-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-face",
+        "no-logo",
+        "no-text",
+        "anonymous",
+        "neutral-palette",
+        "style:pawn",
+        "ratio:broad"
+      ],
+      "glb": "res://assets/hero/human/hum_hero_pawn_broad_a_lod0.glb",
+      "glb_sha256": "4543aa96fe1ce6fe4267b89aa7a109a796a35517f5e34c1d7fa44f04443885ca",
+      "materials": [
+        "mat_human_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.564,
+        "depth_z": 0.28,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.282,
+          0.0,
+          -0.14
+        ],
+        "bbox_max": [
+          0.282,
+          1.75,
+          0.14
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 122,
+        "LOD1": 66
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "human_rows": [
+          "SK2",
+          "HR2",
+          "CL7",
+          "CL4",
+          "CL15",
+          "CL6",
+          "CL2",
+          "CL1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "reference_ids": [
+          "hum_adult_broad_a"
+        ],
+        "template_size_m": [
+          1.74,
+          0.56
+        ],
+        "size_status": "template hum_adult_broad_a 1.74x0.56; height set to 1.75 for equal comparison (working value)",
+        "intended_height_m": 1.75,
+        "source": "design/library/templates-v0.md section a"
+      },
+      "source": {
+        "kind": "hero_human",
+        "generator": "art/blender/human/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/human/rebuild.sh",
+        "spec": "production/tasks/T-059.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/human/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/human/hum_hero_pawn_broad_a_lod0.glb",
+            "sha256": "4543aa96fe1ce6fe4267b89aa7a109a796a35517f5e34c1d7fa44f04443885ca",
+            "triangles": 122,
+            "bbox_min": [
+              -0.282,
+              0.0,
+              -0.14
+            ],
+            "bbox_max": [
+              0.282,
+              1.75,
+              0.14
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/human/hum_hero_pawn_broad_a_lod1.glb",
+            "sha256": "8e90dff4befcc0e3b5fef5214218d39d85951fd79cd64a1c7888087b99068ed8",
+            "triangles": 66,
+            "bbox_min": [
+              -0.282,
+              0.0,
+              -0.14
+            ],
+            "bbox_max": [
+              0.282,
+              1.75,
+              0.14
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/human/human_atlas.png",
+          "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+          "size_px": [
+            1024,
+            512
+          ],
+          "layout": "res://assets/hero/human/atlas_layout.json",
+          "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+        },
+        "material_policy": {
+          "material": "mat_human_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 30,
+          "LOD1_max": 120,
+          "beyond_lod1": "cull (no far proxy for a single small figure)",
+          "status": "working-model-not-integrated",
+          "decision": "T-059 technical-artist working value (1.75 m figure ~17 px at 120 m, README 5.1); not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 900,
+          "LOD1": 100
+        }
+      },
+      "notes": "İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil."
+    },
+    {
+      "id": "hum_hero_pawn_neutral_a",
+      "label_tr": "A piyon · uzuvsuz gövde prizması · nötr 1,75 m yetişkin",
+      "category": "human",
+      "family": "hero_pawn_neutral",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "human-style-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-face",
+        "no-logo",
+        "no-text",
+        "anonymous",
+        "neutral-palette",
+        "style:pawn",
+        "ratio:neutral"
+      ],
+      "glb": "res://assets/hero/human/hum_hero_pawn_neutral_a_lod0.glb",
+      "glb_sha256": "398b91e59e3c98f5cec02682540e0946921b18852f8355c2129fed18a132e0ce",
+      "materials": [
+        "mat_human_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.464,
+        "depth_z": 0.23,
+        "height_above_ground": 1.75,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.232,
+          0.0,
+          -0.115
+        ],
+        "bbox_max": [
+          0.232,
+          1.75,
+          0.115
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 122,
+        "LOD1": 66
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "human_rows": [
+          "SK2",
+          "HR2",
+          "CL7",
+          "CL4",
+          "CL15",
+          "CL6",
+          "CL2",
+          "CL1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "reference_ids": [
+          "hum_adult_m_a",
+          "hum_adult_f_a"
+        ],
+        "template_size_m": [
+          1.75,
+          0.46
+        ],
+        "size_status": "working-value between hum_adult_m_a 1.76x0.48 and hum_adult_f_a 1.64x0.42 (height 1.75 per task)",
+        "intended_height_m": 1.75,
+        "source": "design/library/templates-v0.md section a"
+      },
+      "source": {
+        "kind": "hero_human",
+        "generator": "art/blender/human/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/human/rebuild.sh",
+        "spec": "production/tasks/T-059.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/human/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/human/hum_hero_pawn_neutral_a_lod0.glb",
+            "sha256": "398b91e59e3c98f5cec02682540e0946921b18852f8355c2129fed18a132e0ce",
+            "triangles": 122,
+            "bbox_min": [
+              -0.232,
+              0.0,
+              -0.115
+            ],
+            "bbox_max": [
+              0.232,
+              1.75,
+              0.115
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/human/hum_hero_pawn_neutral_a_lod1.glb",
+            "sha256": "12c7f0b08bf8b9defa6ca64f8052d8873857b84e11bf1cdbb53156bacbaa9dba",
+            "triangles": 66,
+            "bbox_min": [
+              -0.232,
+              0.0,
+              -0.115
+            ],
+            "bbox_max": [
+              0.232,
+              1.75,
+              0.115
+            ],
+            "materials": [
+              "mat_human_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/human/human_atlas.png",
+          "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+          "size_px": [
+            1024,
+            512
+          ],
+          "layout": "res://assets/hero/human/atlas_layout.json",
+          "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+        },
+        "material_policy": {
+          "material": "mat_human_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 30,
+          "LOD1_max": 120,
+          "beyond_lod1": "cull (no far proxy for a single small figure)",
+          "status": "working-model-not-integrated",
+          "decision": "T-059 technical-artist working value (1.75 m figure ~17 px at 120 m, README 5.1); not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 900,
+          "LOD1": 100
+        }
+      },
+      "notes": "İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil."
+    },
+    {
       "id": "prop_human",
       "category": "human",
       "family": "prop_human",
