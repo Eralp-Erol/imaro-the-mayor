@@ -1,0 +1,195 @@
+{
+  "task": "T-058",
+  "source": "actual Godot frames (furniture_lab.tscn)",
+  "entries": [
+    {
+      "id": "fur_hero_bench_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_bench_a.png",
+      "dimensions_m": [
+        1.8,
+        0.575,
+        0.801
+      ],
+      "triangles": {
+        "LOD0": 600,
+        "LOD1": 144
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-192933-t058-bench-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-192939-t058-bench-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-192944-t058-bench-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-192949-t058-bench-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-192955-t058-bench-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193000-t058-bench-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193006-t058-bench-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193011-t058-bench-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_bin_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_bin_a.png",
+      "dimensions_m": [
+        0.5,
+        0.5,
+        0.9
+      ],
+      "triangles": {
+        "LOD0": 256,
+        "LOD1": 90
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193019-t058-bin-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193024-t058-bin-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193030-t058-bin-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193035-t058-bin-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193041-t058-bin-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193046-t058-bin-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193052-t058-bin-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193057-t058-bin-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_lamp_street_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_lamp_street_a.png",
+      "dimensions_m": [
+        1.67,
+        0.28,
+        8.002
+      ],
+      "triangles": {
+        "LOD0": 390,
+        "LOD1": 94
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193105-t058-lamp_street-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193110-t058-lamp_street-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193116-t058-lamp_street-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193121-t058-lamp_street-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193126-t058-lamp_street-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193132-t058-lamp_street-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193137-t058-lamp_street-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193142-t058-lamp_street-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_bollard_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_bollard_a.png",
+      "dimensions_m": [
+        0.2,
+        0.2,
+        0.87
+      ],
+      "triangles": {
+        "LOD0": 138,
+        "LOD1": 44
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193150-t058-bollard-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193156-t058-bollard-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193201-t058-bollard-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193206-t058-bollard-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193212-t058-bollard-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193218-t058-bollard-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193223-t058-bollard-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193228-t058-bollard-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_bike_rack_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_bike_rack_a.png",
+      "dimensions_m": [
+        0.81,
+        1.91,
+        0.861
+      ],
+      "triangles": {
+        "LOD0": 552,
+        "LOD1": 120
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193237-t058-bike_rack-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193242-t058-bike_rack-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193247-t058-bike_rack-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193253-t058-bike_rack-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193258-t058-bike_rack-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193304-t058-bike_rack-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193310-t058-bike_rack-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193315-t058-bike_rack-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_bus_stop_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_bus_stop_a.png",
+      "dimensions_m": [
+        5.0,
+        1.6,
+        2.6
+      ],
+      "triangles": {
+        "LOD0": 652,
+        "LOD1": 158
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193323-t058-bus_stop-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193329-t058-bus_stop-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193334-t058-bus_stop-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193339-t058-bus_stop-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193345-t058-bus_stop-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193350-t058-bus_stop-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193356-t058-bus_stop-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193401-t058-bus_stop-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_planter_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_planter_a.png",
+      "dimensions_m": [
+        1.2,
+        1.2,
+        1.34
+      ],
+      "triangles": {
+        "LOD0": 304,
+        "LOD1": 124
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193410-t058-planter-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193415-t058-planter-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193420-t058-planter-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193425-t058-planter-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193431-t058-planter-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193437-t058-planter-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193442-t058-planter-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193447-t058-planter-far_lod1.png"
+      }
+    },
+    {
+      "id": "fur_hero_kiosk_a",
+      "path": "design/library/sheets/furniture-hero/fur_hero_kiosk_a.png",
+      "dimensions_m": [
+        2.4,
+        2.0,
+        2.68
+      ],
+      "triangles": {
+        "LOD0": 486,
+        "LOD1": 142
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-193456-t058-kiosk-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-193501-t058-kiosk-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-193507-t058-kiosk-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-193512-t058-kiosk-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-193517-t058-kiosk-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-193523-t058-kiosk-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-193528-t058-kiosk-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-193534-t058-kiosk-far_lod1.png"
+      }
+    }
+  ],
+  "contexts": [
+    "context-scale.png",
+    "context-street.png",
+    "context-lineup.png"
+  ]
+}

@@ -18,6 +18,7 @@ sys.path.insert(0, HERE)
 import build_catalog as bc  # noqa: E402
 import hero_lods  # noqa: E402
 import vegetation_catalog  # noqa: E402
+import furniture_catalog  # noqa: E402
 
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -93,7 +94,7 @@ def check_entry(e, cats, root, errors, warnings):
 
     src = e.get("source")
     if isinstance(src, dict):
-        handler = vegetation_catalog if src.get("kind") == "hero_vegetation" else hero_lods
+        handler = {"hero_vegetation": vegetation_catalog, "hero_furniture": furniture_catalog}.get(src.get("kind"), hero_lods)
         errors.extend(handler.validate_chain(e, root))
     else:
         err("source must be an object")

@@ -98,3 +98,19 @@ reddedilir. Palmiyelerde LOD0/LOD1/PROXY (40tri prosedürel) kalır. `import_pol
 (`generate_lods:false`, post-import yok) ve `distances_m` (LOD0<120, LOD1<400 m,
 `working-model-not-integrated`) taşınır; atlas hash'i `atlas_regions.json` ile
 korunur. malformed source=None/string/list dispatch öncesi tanı verir. Bu alan kullanıcı onayı veya oyun LOD entegrasyonu değildir.
+
+## Sokak donatısı hero zincirleri (T-058)
+
+`source.kind: hero_furniture`, `category: street_furniture`. Yeni kimlikler
+`fur_hero_<tür>_a` (8 öneri: bank, çöp kutusu, sokak direği, bollard, bisiklet
+demiri, durak, saksı, kiosk); `approval: proposed` başlar. Mevcut 81 kit + 10 bitki
+kaydı ve kullanıcı alanları değiştirilmez. `lod_chain.levels` yalnız LOD0/LOD1'dir
+(≤1600 / ≤240 üçgen); uzak proxy yoktur, `distances_m` belgelenen çalışma
+kesme mesafeleridir (`beyond_lod1: cull`, `working-model-not-integrated`). `atlas`
+tek opak RGB Texture2D'yi (`furniture_atlas.png`) ve `atlas_layout.json`'ı hash ile
+izler; `material_policy` opak/tek yüzlü/mat, `import_policy` `generate_lods:false`.
+`template_ref` templates-v0 §f satırını ve ölçünün şablon mu çalışma değeri mi
+olduğunu taşır. Ana doğrulayıcı zinciri `source.kind` ile
+`furniture_catalog.validate_chain`'e iletir. Üretim `art/blender/furniture/`
+(`rebuild.sh`); ölçüm `python3 tools/library/furniture_catalog.py --write|--check`.
+Bu alanlar kullanıcı onayı veya oyun entegrasyonu değildir; Q-018 açıktır.

@@ -8319,6 +8319,1237 @@
       "approval_date": null,
       "user_note": "",
       "notes": "T-055 lab dokusu; oyuna bagli degil. Seamless 512 px, tile_m dunya boyutu."
+    },
+    {
+      "id": "fur_hero_bench_a",
+      "label_tr": "Bank · ahşap oturak, metal ayak",
+      "category": "street_furniture",
+      "family": "hero_bench",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:bench"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_bench_a_lod0.glb",
+      "glb_sha256": "53d01613c769b4325a9a7406b2d3c790119d097080ad46c1592e4d0b5ec7f281",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 1.8,
+        "depth_z": 0.575,
+        "height_above_ground": 0.801,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.9,
+          0.0,
+          -0.285
+        ],
+        "bbox_max": [
+          0.9,
+          0.800503,
+          0.29
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 600,
+        "LOD1": 144
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN3",
+          "FN2"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_bench_a",
+        "template_size_m": [
+          1.8,
+          0.6,
+          0.8
+        ],
+        "size_status": "template-working-value",
+        "intended_height_m": 0.8,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_bench_a_lod0.glb",
+            "sha256": "53d01613c769b4325a9a7406b2d3c790119d097080ad46c1592e4d0b5ec7f281",
+            "triangles": 600,
+            "bbox_min": [
+              -0.9,
+              0.0,
+              -0.285
+            ],
+            "bbox_max": [
+              0.9,
+              0.800503,
+              0.29
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_bench_a_lod1.glb",
+            "sha256": "4d6d15c93b202dfc037127716e721b3b874894b5e12a59ad165e4036a5c79f68",
+            "triangles": 144,
+            "bbox_min": [
+              -0.9,
+              0.0,
+              -0.285
+            ],
+            "bbox_max": [
+              0.9,
+              0.8,
+              0.28
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 40,
+          "LOD1_max": 150,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "small",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_bike_rack_a",
+      "label_tr": "Bisiklet park demiri · üç ters-U",
+      "category": "street_furniture",
+      "family": "hero_bike_rack",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:bike_rack"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_bike_rack_a_lod0.glb",
+      "glb_sha256": "c8d9c013db3ea72e10e0e70e6ef040fbb383f4ccf21962a71fe51fb0be710d0e",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.81,
+        "depth_z": 1.91,
+        "height_above_ground": 0.861,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.405,
+          0.0,
+          -0.955
+        ],
+        "bbox_max": [
+          0.405,
+          0.860988,
+          0.955
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 552,
+        "LOD1": 120
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN2",
+          "FN1"
+        ]
+      },
+      "template_ref": {
+        "template_id": null,
+        "template_size_m": null,
+        "size_status": "working-value (no template row; 3 hoops 0.70 wide x 0.85 high, 0.9 m pitch)",
+        "intended_height_m": 0.85,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_bike_rack_a_lod0.glb",
+            "sha256": "c8d9c013db3ea72e10e0e70e6ef040fbb383f4ccf21962a71fe51fb0be710d0e",
+            "triangles": 552,
+            "bbox_min": [
+              -0.405,
+              0.0,
+              -0.955
+            ],
+            "bbox_max": [
+              0.405,
+              0.860988,
+              0.955
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_bike_rack_a_lod1.glb",
+            "sha256": "405fb7ee1fd1b159c4f614bee8ebd5e91668be51081f38a87c631899997c02dd",
+            "triangles": 120,
+            "bbox_min": [
+              -0.371,
+              0.0,
+              -0.921
+            ],
+            "bbox_max": [
+              0.371,
+              0.870437,
+              0.921
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 40,
+          "LOD1_max": 150,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "small",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_bin_a",
+      "label_tr": "Çöp kutusu · sekizgen sac gövde",
+      "category": "street_furniture",
+      "family": "hero_bin",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:bin"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_bin_a_lod0.glb",
+      "glb_sha256": "695088d9490d1619dc214f7b003a2babde0275d1a7760c1d338e96c9e570a9b0",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.5,
+        "depth_z": 0.5,
+        "height_above_ground": 0.9,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.25,
+          0.0,
+          -0.25
+        ],
+        "bbox_max": [
+          0.25,
+          0.9,
+          0.25
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 256,
+        "LOD1": 90
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN1"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_bin_a",
+        "template_size_m": [
+          0.5,
+          0.5,
+          0.9
+        ],
+        "size_status": "template-working-value",
+        "intended_height_m": 0.9,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_bin_a_lod0.glb",
+            "sha256": "695088d9490d1619dc214f7b003a2babde0275d1a7760c1d338e96c9e570a9b0",
+            "triangles": 256,
+            "bbox_min": [
+              -0.25,
+              0.0,
+              -0.25
+            ],
+            "bbox_max": [
+              0.25,
+              0.9,
+              0.25
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_bin_a_lod1.glb",
+            "sha256": "6d5a0862967b4855591512e854ae824ad9ee8a2a01181d2a67178a39f78fb96b",
+            "triangles": 90,
+            "bbox_min": [
+              -0.23,
+              0.0,
+              -0.23
+            ],
+            "bbox_max": [
+              0.23,
+              0.88,
+              0.23
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 40,
+          "LOD1_max": 150,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "small",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_bollard_a",
+      "label_tr": "Bollard · yaya alanı babası",
+      "category": "street_furniture",
+      "family": "hero_bollard",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:bollard"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_bollard_a_lod0.glb",
+      "glb_sha256": "673bbbc8701ffd06b96f42813d801569df812f79367eb1ba9a4c98e1d7e17012",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 0.2,
+        "depth_z": 0.2,
+        "height_above_ground": 0.87,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.1,
+          0.0,
+          -0.1
+        ],
+        "bbox_max": [
+          0.1,
+          0.87,
+          0.1
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 138,
+        "LOD1": 44
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN2",
+          "FN1"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_bollard_a",
+        "template_size_m": [
+          0.2,
+          0.2,
+          0.9
+        ],
+        "size_status": "template-working-value",
+        "intended_height_m": 0.9,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_bollard_a_lod0.glb",
+            "sha256": "673bbbc8701ffd06b96f42813d801569df812f79367eb1ba9a4c98e1d7e17012",
+            "triangles": 138,
+            "bbox_min": [
+              -0.1,
+              0.0,
+              -0.1
+            ],
+            "bbox_max": [
+              0.1,
+              0.87,
+              0.1
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_bollard_a_lod1.glb",
+            "sha256": "88d014eb5e5832f37e275e4e9c456f841348dd993c82a0576b17ef7726246a88",
+            "triangles": 44,
+            "bbox_min": [
+              -0.075758,
+              0.0,
+              -0.075758
+            ],
+            "bbox_max": [
+              0.075758,
+              0.87,
+              0.075758
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 40,
+          "LOD1_max": 150,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "small",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_bus_stop_a",
+      "label_tr": "Otobüs durağı · cam/metal/ahşap, yazısız",
+      "category": "street_furniture",
+      "family": "hero_bus_stop",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:bus_stop"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_bus_stop_a_lod0.glb",
+      "glb_sha256": "d90a64a029fbb0d4e0c1d6b04f51e826bc7e7e97cba5fa3ffbefcb4522b30440",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 5.0,
+        "depth_z": 1.6,
+        "height_above_ground": 2.6,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -2.5,
+          0.0,
+          -0.8
+        ],
+        "bbox_max": [
+          2.5,
+          2.6,
+          0.8
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 652,
+        "LOD1": 158
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN6",
+          "FN3",
+          "FN5",
+          "VH13"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_bus_stop_a",
+        "template_size_m": [
+          5.0,
+          1.6,
+          2.6
+        ],
+        "size_status": "template-working-value",
+        "intended_height_m": 2.6,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_bus_stop_a_lod0.glb",
+            "sha256": "d90a64a029fbb0d4e0c1d6b04f51e826bc7e7e97cba5fa3ffbefcb4522b30440",
+            "triangles": 652,
+            "bbox_min": [
+              -2.5,
+              0.0,
+              -0.8
+            ],
+            "bbox_max": [
+              2.5,
+              2.6,
+              0.8
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_bus_stop_a_lod1.glb",
+            "sha256": "5551608395ebd9a03c0dd400244916e9b1ae6876baa53feeebcf1c1257649bb0",
+            "triangles": 158,
+            "bbox_min": [
+              -2.5,
+              0.0,
+              -0.8
+            ],
+            "bbox_max": [
+              2.5,
+              2.6,
+              0.8
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 60,
+          "LOD1_max": 200,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "large",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_kiosk_a",
+      "label_tr": "Markasız küçük kiosk · tentesi, kepenkli",
+      "category": "street_furniture",
+      "family": "hero_kiosk",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:kiosk"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_kiosk_a_lod0.glb",
+      "glb_sha256": "2f923ab0e15e65789954ee7dbd10a3765f5afbf38bdb65b78bdf3facea3c6b85",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 2.4,
+        "depth_z": 2.0,
+        "height_above_ground": 2.68,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -1.2,
+          0.0,
+          -1.047619
+        ],
+        "bbox_max": [
+          1.2,
+          2.68,
+          0.952381
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 486,
+        "LOD1": 142
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN4",
+          "FN3",
+          "FN6"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_kiosk_a",
+        "template_size_m": [
+          2.4,
+          2.0,
+          2.7
+        ],
+        "size_status": "template-working-value",
+        "intended_height_m": 2.7,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_kiosk_a_lod0.glb",
+            "sha256": "2f923ab0e15e65789954ee7dbd10a3765f5afbf38bdb65b78bdf3facea3c6b85",
+            "triangles": 486,
+            "bbox_min": [
+              -1.2,
+              0.0,
+              -1.047619
+            ],
+            "bbox_max": [
+              1.2,
+              2.68,
+              0.952381
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_kiosk_a_lod1.glb",
+            "sha256": "1c3b4b2c7391b2684b82f0ecd77263c2dddb36033999ae211d6d673e0452f4c0",
+            "triangles": 142,
+            "bbox_min": [
+              -1.2,
+              0.0,
+              -1.047619
+            ],
+            "bbox_max": [
+              1.2,
+              2.68,
+              0.952381
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 60,
+          "LOD1_max": 200,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "large",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_lamp_street_a",
+      "label_tr": "Sokak direği · tek kollu armatür gövdesi (ışıksız)",
+      "category": "street_furniture",
+      "family": "hero_lamp_street",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:lamp_street"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_lamp_street_a_lod0.glb",
+      "glb_sha256": "cc3062604783bcab046b99643f180a67748d35e66f96b06195fcf85f5fba7e1b",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 1.67,
+        "depth_z": 0.28,
+        "height_above_ground": 8.002,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.14,
+          0.0,
+          -0.14
+        ],
+        "bbox_max": [
+          1.53,
+          8.001988,
+          0.14
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 390,
+        "LOD1": 94
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "FN1",
+          "FN2"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_lamp_street_a",
+        "template_size_m": [
+          1.5,
+          null,
+          8.0
+        ],
+        "size_status": "template-working-value",
+        "intended_height_m": 8.0,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_lamp_street_a_lod0.glb",
+            "sha256": "cc3062604783bcab046b99643f180a67748d35e66f96b06195fcf85f5fba7e1b",
+            "triangles": 390,
+            "bbox_min": [
+              -0.14,
+              0.0,
+              -0.14
+            ],
+            "bbox_max": [
+              1.53,
+              8.001988,
+              0.14
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_lamp_street_a_lod1.glb",
+            "sha256": "24752e21b86e908f2225f20a52ce0ee3e125290ea17a58ba56e2bf5b95b5827b",
+            "triangles": 94,
+            "bbox_min": [
+              -0.14,
+              0.0,
+              -0.14
+            ],
+            "bbox_max": [
+              1.53,
+              8.001872,
+              0.14
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 80,
+          "LOD1_max": 300,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "lamp",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
+    },
+    {
+      "id": "fur_hero_planter_a",
+      "label_tr": "Taş saksı · toprak ve çalı",
+      "category": "street_furniture",
+      "family": "hero_planter",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "street-furniture-proposal",
+        "matte",
+        "opaque-atlas",
+        "no-light",
+        "no-text",
+        "type:planter"
+      ],
+      "glb": "res://assets/hero/furniture/fur_hero_planter_a_lod0.glb",
+      "glb_sha256": "5a3244ab38a282318f42961adc74c0e51558c8db22b85e4775c1af631f409c32",
+      "materials": [
+        "mat_furniture_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 1.2,
+        "depth_z": 1.2,
+        "height_above_ground": 1.34,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -0.6,
+          0.0,
+          -0.6
+        ],
+        "bbox_max": [
+          0.6,
+          1.34,
+          0.6
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 304,
+        "LOD1": 124
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": [],
+        "furniture_rows": [
+          "W11",
+          "FN5",
+          "P2"
+        ]
+      },
+      "template_ref": {
+        "template_id": "fur_planter_a",
+        "template_size_m": [
+          1.2,
+          1.2,
+          0.7
+        ],
+        "size_status": "template footprint/pot height; stone+earth instead of concrete and a shrub added: total 1.34 is a working value",
+        "intended_height_m": 1.34,
+        "source": "design/library/templates-v0.md section f"
+      },
+      "source": {
+        "kind": "hero_furniture",
+        "generator": "art/blender/furniture/build.py",
+        "manifest": null,
+        "rebuild": "bash art/blender/furniture/rebuild.sh",
+        "spec": "production/tasks/T-058.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "status": "proposed",
+        "generator": "art/blender/furniture/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/furniture/fur_hero_planter_a_lod0.glb",
+            "sha256": "5a3244ab38a282318f42961adc74c0e51558c8db22b85e4775c1af631f409c32",
+            "triangles": 304,
+            "bbox_min": [
+              -0.6,
+              0.0,
+              -0.6
+            ],
+            "bbox_max": [
+              0.6,
+              1.34,
+              0.6
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/furniture/fur_hero_planter_a_lod1.glb",
+            "sha256": "795c78a6195ab11a00df7eb8d5e9b0cb50356a18aaad2cb239f2ecd82884fbfe",
+            "triangles": 124,
+            "bbox_min": [
+              -0.6,
+              0.0,
+              -0.6
+            ],
+            "bbox_max": [
+              0.6,
+              1.34,
+              0.6
+            ],
+            "materials": [
+              "mat_furniture_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/furniture/furniture_atlas.png",
+          "sha256": "03a3c81fae9e9fc8126ab315223e24fbe7ff9a5957fbed7c20302fdbcfcff56d",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/furniture/atlas_layout.json",
+          "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+        },
+        "material_policy": {
+          "material": "mat_furniture_atlas",
+          "alpha_mode": "OPAQUE",
+          "double_sided": false,
+          "roughness": 1,
+          "specular": 0,
+          "metallic": 0,
+          "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+        },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
+        "distances_m": {
+          "LOD0_max": 40,
+          "LOD1_max": 150,
+          "beyond_lod1": "cull (no far proxy for small furniture)",
+          "distance_class": "small",
+          "status": "working-model-not-integrated",
+          "decision": "T-058 technical-artist working value; not an integration or user decision"
+        },
+        "budgets": {
+          "LOD0": 1600,
+          "LOD1": 240
+        }
+      },
+      "notes": "Sokak donatısı hero önerisi; yalnız kütüphane/lab. Q-018 (donatı/metal/kiosk/ışık) açık; renk, ölçü ve yerleşim kullanıcı onayı değil."
     }
   ]
 }
