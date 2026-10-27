@@ -86,6 +86,29 @@ class ApprovalTest(unittest.TestCase):
         self.assertEqual({k: v for k, v in new.items() if k != "entries"},
                          {k: v for k, v in self.orig.items() if k != "entries"})
 
+    def test_png_only_texture_can_be_approved_and_rejected(self):
+        # Ground textures have no GLB by design; approval must not trip the "glb only null for proposed" rule.
+        textures = [e["id"] for e in self.orig["entries"] if (e.get("source") or {}).get("kind") == "texture"]
+        self.assertGreaterEqual(len(textures), 2)
+        rc, out = self.run_doc(self.doc(self.dec(textures[0], "approved"), self.dec(textures[1], "rejected")))
+        self.assertEqual(rc, 0, out)
+        by_id = {x["id"]: x for x in self.current()["entries"]}
+        self.assertEqual(by_id[textures[0]]["approval"], "approved")
+        self.assertEqual(by_id[textures[1]]["approval"], "rejected")
+        self.assertIsNone(by_id[textures[0]]["glb"])
+
+    def test_non_texture_entry_without_glb_still_rejected_when_approved(self):
+        # The texture exemption must not let a GLB-less building/plant be approved.
+        broken = copy.deepcopy(self.orig)
+        victim = [e for e in broken["entries"] if (e.get("source") or {}).get("kind") != "texture"][0]
+        victim["glb"] = None
+        with open(self.cat, "w", encoding="utf-8") as fh:
+            fh.write(bc.dumps(broken))
+        self.entries = {e["id"]: e for e in broken["entries"]}
+        rc, out = self.run_doc(self.doc(self.dec(victim["id"], "approved")))
+        self.assertNotEqual(rc, 0)
+        self.assertIn("glb may only be null", out)
+
     def test_rejection_applies(self):
         rc, _ = self.run_doc(self.doc(self.dec(self.a, "rejected")))
         self.assertEqual(rc, 0)

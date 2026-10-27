@@ -68,7 +68,8 @@ def check_entry(e, cats, root, errors, warnings):
 
     glb = e.get("glb")
     if glb is None:
-        if appr != "proposed":
+        # Ground textures are PNG-only (no GLB by design), so they stay valid once the user approves/rejects them.
+        if appr != "proposed" and (e.get("source") or {}).get("kind") != "texture":
             err("glb may only be null for 'proposed' entries")
     elif not isinstance(glb, str) or not glb.startswith("res://"):
         err("glb must be a res:// path")

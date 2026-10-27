@@ -7,6 +7,8 @@ decisions take effect when applied with tools/library/apply_approvals.py.
 Usage: python3 tools/library/build_approval_page.py [--out PATH]
 """
 import argparse
+import base64
+import io
 import json
 import os
 import sys
@@ -140,7 +142,7 @@ function counts(){var c={approved:0,rejected:0,hold:0,none:0};D.items.forEach(fu
  ['approved','rejected','hold','none'].forEach(function(k){var s=el('span',null,LBL[k]+': '+c[k]);document.getElementById('counts').appendChild(s);});}
 function card(it){
  var d=dec(it.id),c=el('div','card '+(d==='none'?'':d));
- if(it.image){var im=el('img');im.loading='lazy';im.alt=it.id;im.src=it.image;
+ if(it.image){var im=el('img');im.loading='lazy';im.alt=it.id;im.src=(D.imgs&&D.imgs[it.image])||it.image;
   im.onerror=function(){var n=el('div','noimg','gorsel yok (dosya acilamadi)');im.replaceWith(n);};c.appendChild(im);
   c.appendChild(el('div','cap',it.image_caption||''));}
  else c.appendChild(el('div','noimg','gorsel yok'));
@@ -168,7 +170,7 @@ function render(){
   var its=D.items.filter(function(i){return i.category===cat.id&&(fd.value==='all'||dec(i.id)===fd.value);});
   if(!its.length)return;
   root.appendChild(el('h2',null,cat.label+' ('+its.length+')'));
-  var cx=D.context[cat.id];if(cx&&cx.length){var r=el('div','ctx');cx.forEach(function(s){var i=el('img');i.src=s;i.alt='baglam';i.loading='lazy';i.onerror=function(){i.remove();};r.appendChild(i);});root.appendChild(r);}
+  var cx=D.context[cat.id];if(cx&&cx.length){var r=el('div','ctx');cx.forEach(function(s){var i=el('img');i.src=(D.imgs&&D.imgs[s])||s;i.alt='baglam';i.loading='lazy';i.onerror=function(){i.remove();};r.appendChild(i);});root.appendChild(r);}
   var g=el('div','grid');its.forEach(function(i){g.appendChild(card(i));});root.appendChild(g);});}
 function payload(){
  var out=[];D.items.forEach(function(i){var s=state[i.id];if(!s)return;
@@ -202,6 +204,27 @@ def render_html(data):
 """ % (CSS, blob, JS)
 
 
+def embed_images(data, root, max_w=900):
+    """Inline every referenced sheet as a downscaled JPEG data URI so the page works from any origin (file://, data:)."""
+    from PIL import Image  # Pillow 11.3.0 (uv run --with pillow==11.3.0)
+    paths = {i["image"] for i in data["items"] if i["image"]}
+    for lst in data["context"].values():
+        paths.update(lst)
+    imgs = {}
+    for rel in sorted(paths):
+        src = os.path.normpath(os.path.join(root, "artifacts/library", rel))
+        if not os.path.isfile(src):
+            continue
+        with Image.open(src) as im:
+            im = im.convert("RGB")
+            if im.width > max_w:
+                im = im.resize((max_w, round(im.height * max_w / im.width)), Image.LANCZOS)
+            buf = io.BytesIO()
+            im.save(buf, "JPEG", quality=72, optimize=True)
+        imgs[rel] = "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    data["imgs"] = imgs
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=bc.ROOT)
@@ -210,6 +233,7 @@ def main(argv=None):
     root = os.path.abspath(args.root)
     out = args.out or os.path.join(root, OUT)
     data = build_data(root)
+    embed_images(data, root)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as fh:
         fh.write(render_html(data))
