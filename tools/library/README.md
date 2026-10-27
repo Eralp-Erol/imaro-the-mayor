@@ -73,12 +73,7 @@ normal Python test keşfindedir (`tests/library/test_hero_rear_uv.py`).
 ## Bitki HERO önerileri (T-057, kütüphane/lab)
 
 ```
-uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py -- --base-only
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/bake_proxies.py
-uv run --with pillow==11.3.0 python art/blender/vegetation/pack_proxies.py
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py -- --proxy-only
-python3 tools/library/vegetation_catalog.py --write
+bash art/blender/vegetation/rebuild.sh   # atlas -> base-only -> palmiye proxy -> katalog yaz -> validate
 python3 tools/library/vegetation_catalog.py --check
 python3 tools/library/validate_catalog.py
 tools/godot.sh --headless --path . --editor --import --quit
@@ -87,7 +82,7 @@ uv run --with pillow==11.3.0 python tools/library/render_vegetation_sheets.py
 python3 -m unittest discover -s tests/library -p 'test_*.py' -q
 ```
 
-GLB'ler gömülü PNG yükü taşımaz;30 model tek gerçek `vegetation_atlas.png`
+GLB'ler gömülü PNG yükü taşımaz;22 model tek gerçek `vegetation_atlas.png`
 Texture2D kaynağını kullanır. PNG import ayarında mipmap açık, alpha-border düzeltmesi
 var. Yapraklar çift taraflı MASK0.45; blend/sıralama yolu kullanılmaz. Lab
 `--aa=off` ile MSAA/coverage olmadan tanı üretir; varsayılan4×MSAA+coverage yalnız
@@ -95,8 +90,7 @@ bu lab ayarıdır, oyun profiline uygulanmaz. Tüm kaynaklar öneri, Q-018 açı
 Yeni sayfalar `design/library/sheets/vegetation-hero/`; katalog ve `index.json`
 ölçüleri GLB'den gelir. Açıklama/sınırlamalar `design/library/vegetation-hero.md`.
 
-Bitki proxy sırası atlas→base-only→bake→pack→proxy-only zorunludur. Sekiz
-palmiye dışı adayın gerçek LOD0 albedo+alpha ön/yan/üst görünümü mevcut atlasın
-boş alt alanına24 tile olarak paketlenir; üst512 satır değişmez. Provenance
-`assets/hero/vegetation/proxy_bakes.json`; denetim:
-`uv run --with pillow==11.3.0 python tools/library/check_vegetation_proxy_tiles.py`.
+Bitki zinciri (T-057 Karar 5): palmiye dışı 8 tür LOD0/LOD1, palmiyeler LOD0/LOD1/PROXY;
+tüm `.glb.import` `meshes/generate_lods=false`. Atlas üst 512 satırı ve ölü y640–1023 tile
+bölgesi `assets/hero/vegetation/atlas_regions.json` hash'iyle korunur; denetim:
+`uv run --with pillow==11.3.0 python tools/library/check_vegetation_atlas.py`.

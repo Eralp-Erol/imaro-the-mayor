@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://bvq4uh3gxbwl0"
-path="res://.godot/imported/veg_hero_maquis_a_proxy.glb-28bf99e5dcda5bc5da8ae6a3549acbf0.scn"
+uid="uid://c5jluajjoqaor"
+path="res://.godot/imported/veg_hero_plane_a_lod2.glb-e88dc01da50815a2bff34f3716a6a9ae.scn"
 
 [deps]
 
-source_file="res://assets/hero/vegetation/veg_hero_maquis_a_proxy.glb"
-dest_files=["res://.godot/imported/veg_hero_maquis_a_proxy.glb-28bf99e5dcda5bc5da8ae6a3549acbf0.scn"]
+source_file="res://assets/hero/vegetation/lod2_experiment/veg_hero_plane_a_lod2.glb"
+dest_files=["res://.godot/imported/veg_hero_plane_a_lod2.glb-e88dc01da50815a2bff34f3716a6a9ae.scn"]
 
 [params]
 
@@ -35,7 +35,7 @@ animation/fps=30
 animation/trimming=false
 animation/remove_immutable_tracks=true
 animation/import_rest_as_RESET=false
-import_script/path="res://assets/hero/vegetation/proxy_import.gd"
+import_script/path=""
 materials/extract=0
 materials/extract_format=0
 materials/extract_path=""

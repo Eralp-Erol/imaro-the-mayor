@@ -6002,8 +6002,7 @@
       },
       "triangles": {
         "LOD0": 316,
-        "LOD1": 300,
-        "PROXY": 6
+        "LOD1": 300
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6022,67 +6021,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "725571feea04ac4645635363576e7febc4d1bf58a794a969f0e953190ff2aa1a",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                2.89408,
-                10.361515
-              ],
-              "region": [
-                896,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "974cdf200b4c24c45aa47eb7ce90ab627a69c97933fee32a4b99c85fa656c854"
-            },
-            "side": {
-              "physical_size": [
-                2.754542,
-                10.361515
-              ],
-              "region": [
-                0,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "2d5ceab253463f0cef4b7903d9947821902dc9ebcedefa9c6fd5cc9d79b40994"
-            },
-            "top": {
-              "physical_size": [
-                2.89408,
-                2.754542
-              ],
-              "region": [
-                128,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "e784ad8cd745169882f1ad8ae60124e22f79eabca4141e865c7c27d5da8c206c"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -6121,24 +6059,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_proxy.glb",
-            "sha256": "dafbde33be9dba5b0f3f7fa26b4ed9e0509fd5dc679b269620ed4693f28d78b8",
-            "triangles": 6,
-            "bbox_min": [
-              -1.315632,
-              0.0,
-              -1.481942
-            ],
-            "bbox_max": [
-              1.578448,
-              10.361515,
-              1.2726
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -6157,15 +6077,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
-          "LOD1": 300,
-          "PROXY": 40
+          "LOD1": 300
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -6209,8 +6135,7 @@
       },
       "triangles": {
         "LOD0": 360,
-        "LOD1": 100,
-        "PROXY": 6
+        "LOD1": 100
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6229,67 +6154,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "e11658a658a4775ffc4b84d5da8a989c2c4783d8c0cf702254f02ff8d5d291ee",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                4.798565,
-                1.208549
-              ],
-              "region": [
-                640,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "00c73b21fb07bd783260a6c9ce30366e53539bbd0dc1c6b7133c9fad50046149"
-            },
-            "side": {
-              "physical_size": [
-                1.252775,
-                1.208549
-              ],
-              "region": [
-                768,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "4967207dac39624ba82ac1b5d1ded40e04b8dd0269df69b4418226a5f6ce8802"
-            },
-            "top": {
-              "physical_size": [
-                4.798565,
-                1.252775
-              ],
-              "region": [
-                896,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "cb789cec5984300a016715828d49ce62168952d3abd39b0df4b5133f356d8e7d"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -6328,24 +6192,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_proxy.glb",
-            "sha256": "e339b973641b942ee6568b444cff57d38bfd6625a601d5c442bf6fa1307a1def",
-            "triangles": 6,
-            "bbox_min": [
-              -2.358746,
-              -0.011508,
-              -0.650645
-            ],
-            "bbox_max": [
-              2.439819,
-              1.197041,
-              0.60213
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -6364,15 +6210,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 600,
-          "LOD1": 120,
-          "PROXY": 24
+          "LOD1": 120
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -6416,8 +6268,7 @@
       },
       "triangles": {
         "LOD0": 288,
-        "LOD1": 80,
-        "PROXY": 6
+        "LOD1": 80
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6436,67 +6287,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "c3b67505817556a2b6f9cc1f1c4d1620b1a81221dedfe6f423b4f550b42f4db1",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                3.584228,
-                2.498674
-              ],
-              "region": [
-                256,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "cb6bde5eabe300bd7df4b97b7686cd2d0234ae520128369c5ea65af417761277"
-            },
-            "side": {
-              "physical_size": [
-                2.10816,
-                2.498674
-              ],
-              "region": [
-                384,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "e9773700646390e5df90b4bb8d9099790a81f907a04f13ffb3cae5f20c461f73"
-            },
-            "top": {
-              "physical_size": [
-                3.584228,
-                2.10816
-              ],
-              "region": [
-                512,
-                896,
-                128,
-                128
-              ],
-              "rgba_sha256": "523459919be927ebcabc154f18de94f5ccc722524818f920e4c658c95335b88c"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -6535,24 +6325,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_proxy.glb",
-            "sha256": "dc0035111e8b360fb54074a8444fa94561f8b577360da58210d3337d5535262f",
-            "triangles": 6,
-            "bbox_min": [
-              -1.789722,
-              -0.005582,
-              -1.134479
-            ],
-            "bbox_max": [
-              1.794505,
-              2.493092,
-              0.973682
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -6571,15 +6343,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 600,
-          "LOD1": 120,
-          "PROXY": 24
+          "LOD1": 120
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -6623,8 +6401,7 @@
       },
       "triangles": {
         "LOD0": 428,
-        "LOD1": 122,
-        "PROXY": 6
+        "LOD1": 122
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6643,67 +6420,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "6fe81cc6b11b7e4c255c3a199bdcb86d0992ac36ec574b76229f798b664a1d9c",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                5.3703,
-                5.116493
-              ],
-              "region": [
-                128,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "1c081d378bcdf79c6ecdc0989abe756c2f7da95b93f272eace5e69339ea756af"
-            },
-            "side": {
-              "physical_size": [
-                4.665001,
-                5.116493
-              ],
-              "region": [
-                256,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "f2a463d284e2221c5e7fb25e4d98bc25a7ad3667e10c1402fdbd37f1d5b1bd06"
-            },
-            "top": {
-              "physical_size": [
-                5.3703,
-                4.665001
-              ],
-              "region": [
-                384,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "9199cc6fc0ae5a9d52aaa40dd44ee8e7cddc1635da0c6c7ca1084a422ef30691"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -6742,24 +6458,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_proxy.glb",
-            "sha256": "148e0be24ace535fb159df4eb46cb755a62ef8a50c15c7ac7f9f0aae1bce0a01",
-            "triangles": 6,
-            "bbox_min": [
-              -2.768248,
-              -0.095674,
-              -2.62283
-            ],
-            "bbox_max": [
-              2.602051,
-              5.020819,
-              2.042171
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -6778,15 +6476,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
-          "LOD1": 300,
-          "PROXY": 40
+          "LOD1": 300
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -6830,8 +6534,7 @@
       },
       "triangles": {
         "LOD0": 552,
-        "LOD1": 152,
-        "PROXY": 6
+        "LOD1": 152
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6850,67 +6553,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "45d58a0b4e83ab16d2582edd6525691f45a5f7173ed2281b9c7d21c32456a40c",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                6.011144,
-                5.216815
-              ],
-              "region": [
-                512,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "30a26991e28048270ba8ac1c44e65db18508e0bd48f300ee2e7901bfd454c615"
-            },
-            "side": {
-              "physical_size": [
-                4.718928,
-                5.216815
-              ],
-              "region": [
-                640,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "bd928fc65cbce429302c1d03bda54c7a3f85a5f6de292f94a98e55b00a7e0a8e"
-            },
-            "top": {
-              "physical_size": [
-                6.011144,
-                4.718928
-              ],
-              "region": [
-                768,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "9358d29bd7607087500db33feb1ea741d79ffe2c9f7b5277c9ca197b4a435fce"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -6949,24 +6591,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_proxy.glb",
-            "sha256": "c33a5eca18f9b66b169cd0ca8a6908f6936acc8539d591a00d6133a90d594661",
-            "triangles": 6,
-            "bbox_min": [
-              -2.865498,
-              -0.095674,
-              -2.622202
-            ],
-            "bbox_max": [
-              3.145646,
-              5.121141,
-              2.096726
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -6985,15 +6609,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
-          "LOD1": 300,
-          "PROXY": 40
+          "LOD1": 300
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -7133,10 +6763,17 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "PROXY (palms, working)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
@@ -7281,10 +6918,17 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "PROXY (palms, working)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
@@ -7333,8 +6977,7 @@
       },
       "triangles": {
         "LOD0": 608,
-        "LOD1": 286,
-        "PROXY": 6
+        "LOD1": 286
       },
       "palette_rows": {
         "accent_rows": [],
@@ -7353,67 +6996,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "3a01277b2fada317d8685bae043af1c5e2a94cf98be8351622c7ccc06a50894d",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                7.782953,
-                12.176716
-              ],
-              "region": [
-                384,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "41129a7468052cfb01c581818d35ca1bbc2ebea3cd70abff412f8720255918ec"
-            },
-            "side": {
-              "physical_size": [
-                7.103967,
-                12.176716
-              ],
-              "region": [
-                512,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "87605602b7ec0f0d58fc678269aa958ccf832e17ad63c3b3c2ea9a967211aba5"
-            },
-            "top": {
-              "physical_size": [
-                7.782953,
-                7.103967
-              ],
-              "region": [
-                640,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "cdeb3425b02899e842780e127e71d451375650c99c5517c3fced86588c100a12"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -7452,24 +7034,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_proxy.glb",
-            "sha256": "9c314f3f3b85982cdc8d72e4a5e9698311dcfadf4b0d8169a57fa41c6a4f67e5",
-            "triangles": 6,
-            "bbox_min": [
-              -3.889853,
-              -0.025034,
-              -3.241848
-            ],
-            "bbox_max": [
-              3.8931,
-              12.151683,
-              3.862119
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -7488,15 +7052,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
-          "LOD1": 300,
-          "PROXY": 40
+          "LOD1": 300
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -7540,8 +7110,7 @@
       },
       "triangles": {
         "LOD0": 544,
-        "LOD1": 272,
-        "PROXY": 6
+        "LOD1": 272
       },
       "palette_rows": {
         "accent_rows": [],
@@ -7560,67 +7129,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "7bd7f18dcbac3d23b1c5f1d9f3c87100e9388fbf0878c6d81751b9a1a34d1323",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                9.660808,
-                12.807804
-              ],
-              "region": [
-                768,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "4c6b23926220a303ea9a4ee98d1e0b31fb28be15ee8f7dbd30cb9e8c55b3cd55"
-            },
-            "side": {
-              "physical_size": [
-                8.741715,
-                12.807804
-              ],
-              "region": [
-                896,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "48d290e7d1f4d9920ed78369373565f30be5380e11c2bf04244d0e8b8a867361"
-            },
-            "top": {
-              "physical_size": [
-                9.660808,
-                8.741715
-              ],
-              "region": [
-                0,
-                768,
-                128,
-                128
-              ],
-              "rgba_sha256": "d8f4151878ebacfc7bb2701e5f300bcf592df5f11685d756ae5c3b9454ac74bf"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -7659,24 +7167,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_proxy.glb",
-            "sha256": "a297e766c30f52376765b772b2ecd9b7292f55001e392f6f96ca2d5743387ef9",
-            "triangles": 6,
-            "bbox_min": [
-              -4.575644,
-              -0.015934,
-              -3.642632
-            ],
-            "bbox_max": [
-              5.085165,
-              12.791869,
-              5.099083
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -7695,15 +7185,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
-          "LOD1": 300,
-          "PROXY": 40
+          "LOD1": 300
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
@@ -7747,8 +7243,7 @@
       },
       "triangles": {
         "LOD0": 1024,
-        "LOD1": 288,
-        "PROXY": 6
+        "LOD1": 288
       },
       "palette_rows": {
         "accent_rows": [],
@@ -7767,67 +7262,6 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
-        "proxy_runtime": {
-          "files": {
-            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
-            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
-            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
-          },
-          "normal": "shared position-based canopy field",
-          "received_shadows": false,
-          "casts_ground_shadow": "double-sided",
-          "ambient_occlusion": 0.55,
-          "ao_light_affect": 0.75,
-          "relightable": true
-        },
-        "proxy_source": {
-          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
-          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
-          "source_lod0_sha256": "fc10a6f221cda25f5434dc316040bbf032f0d20d91a8c63c68c61be31fbcdcfb",
-          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
-          "representation": "source albedo+alpha front/side/top crossed quads",
-          "views": {
-            "front": {
-              "physical_size": [
-                10.012675,
-                13.755527
-              ],
-              "region": [
-                0,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "3948fce0db512ce5096245fe670dea3b2bbd0cf449cda70972bf81896d0158a2"
-            },
-            "side": {
-              "physical_size": [
-                8.674449,
-                13.755527
-              ],
-              "region": [
-                128,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "989fb517a8f0271b81ee5f591adb586b83107b9cddef9ce986b4fdc9e1a80250"
-            },
-            "top": {
-              "physical_size": [
-                10.012675,
-                8.674449
-              ],
-              "region": [
-                256,
-                640,
-                128,
-                128
-              ],
-              "rgba_sha256": "0cf15ed28544cf9fbad5b4e3e7f3a56f0d63bb9603b349025a79b43cbd1abc23"
-            }
-          }
-        },
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
         "levels": {
@@ -7866,24 +7300,6 @@
             "materials": [
               "mat_vegetation_atlas"
             ]
-          },
-          "PROXY": {
-            "glb": "res://assets/hero/vegetation/veg_hero_plane_a_proxy.glb",
-            "sha256": "90e756410062d4380821a7cc5591c3978c9edd0bc9772ccafc8f2b72b7eddf6b",
-            "triangles": 6,
-            "bbox_min": [
-              -4.986894,
-              -0.035899,
-              -3.989619
-            ],
-            "bbox_max": [
-              5.025781,
-              13.719627,
-              4.68483
-            ],
-            "materials": [
-              "mat_vegetation_atlas"
-            ]
           }
         },
         "atlas": {
@@ -7902,15 +7318,21 @@
           "double_sided": true,
           "roughness": 1
         },
+        "import_policy": {
+          "generate_lods": false,
+          "import_script": null,
+          "note": "GLB material imported as-is; no per-asset shader/post-import"
+        },
         "distances_m": {
-          "LOD0_max": 50,
-          "LOD1_max": 120,
-          "status": "working-model-not-integrated"
+          "LOD0_max": 120,
+          "LOD1_max": 400,
+          "beyond_lod1": "per-cell tree blob/HLOD (separate task, outside T-057)",
+          "status": "working-model-not-integrated",
+          "decision": "production/qa/T-057-technical-review.md Teknik karar 5"
         },
         "budgets": {
           "LOD0": 1800,
-          "LOD1": 300,
-          "PROXY": 40
+          "LOD1": 300
         }
       },
       "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."

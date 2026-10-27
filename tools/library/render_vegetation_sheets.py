@@ -33,18 +33,20 @@ def main():
     old_index={e["id"]:e for e in json.loads((OUT/"index.json").read_text())["entries"]} if lod_updates else {}
     for species in (requested or SPECIES):
         entry=entries[species];paths={}
+        has_proxy='PROXY' in entry['triangles']  # T-057 Karar 5: only the palms keep a PROXY
         if lod_updates:
             for key,path in old_index[entry['id']]['frames'].items():
                 view,level=key.rsplit('_',1);paths[view,level]=ROOT/path
-            jobs=[('front','proxy')]+([('front','lod1')] if species=='cypress' else [])
-        else:jobs=[('front','lod0'),('side','lod0'),('top','lod0'),('front','lod1'),('front','proxy')]
+            jobs=([('front','proxy')] if has_proxy else [])+([('front','lod1')] if species=='cypress' else [])
+        else:jobs=[('front','lod0'),('side','lod0'),('top','lod0'),('front','lod1')]+([('front','proxy')] if has_proxy else [])
         for view,level in jobs:
             paths[view,level]=capture(species+'-'+view+'-'+level,['--asset='+species,'--view='+view,'--level='+level])
         width,tileh=600,472;sheet=Image.new('RGB',(width*3,96+2*(tileh+40)),(235,232,222));draw=ImageDraw.Draw(sheet)
         draw.text((18,12),entry['id']+' · '+entry['label_tr']+' · PROPOSED',font=title,fill=(42,46,37))
         d=entry['dimensions_m'];tri=entry['triangles']
-        draw.text((18,52),'%.2fm height / %.2fm x %.2fm canopy · triangles %d / %d / %d · 1.75m figure · 4xMSAA lab'%(d['height_above_ground'],d['width_x'],d['depth_z'],tri['LOD0'],tri['LOD1'],tri['PROXY']),font=font,fill=(62,65,54))
-        views=[('front','lod0','Ön / LOD0'),('side','lod0','Yan / LOD0'),('top','lod0','Üst / LOD0'),('front','lod0','LOD0 / aynı kamera'),('front','lod1','LOD1 / aynı kamera'),('front','proxy','Proxy / aynı kamera')]
+        chain=' / '.join(str(tri[k]) for k in ('LOD0','LOD1','PROXY') if k in tri)
+        draw.text((18,52),'%.2fm height / %.2fm x %.2fm canopy · triangles %s (%s) · 1.75m figure · 4xMSAA lab'%(d['height_above_ground'],d['width_x'],d['depth_z'],chain,'LOD0/LOD1/PROXY' if has_proxy else 'LOD0/LOD1; uzak = hücre lekesi, ayrı görev'),font=font,fill=(62,65,54))
+        views=[('front','lod0','Ön / LOD0'),('side','lod0','Yan / LOD0'),('top','lod0','Üst / LOD0'),('front','lod0','LOD0 / aynı kamera'),('front','lod1','LOD1 / aynı kamera')]+([('front','proxy','Proxy / aynı kamera')] if has_proxy else [])
         for k,(view,level,label) in enumerate(views):
             x=(k%3)*width;y=96+(k//3)*(tileh+40)
             frame=Image.open(paths[view,level]).convert('RGB').resize((width,tileh),Image.Resampling.LANCZOS)

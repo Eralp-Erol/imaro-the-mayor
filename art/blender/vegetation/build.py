@@ -2,8 +2,10 @@
 Blender --background --factory-startup --python art/blender/vegetation/build.py -- [olive_open palm_date ...]
 Prerequisite: uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py
 Opaque bark +alpha-mask cutout leaf sprays/fronds share one mat/atlas. No game integration.
+T-057 Karar 5: the eight non-palm species have a LOD0/LOD1 chain only (no single-tree far proxy;
+the far representation is a separate per-cell blob/HLOD task). Only the two palms keep the
+40-tri PROXY. Flags: --base-only (LOD0+LOD1, all species), --proxy-only (palm PROXY only).
 """
-import hashlib
 import json
 import math
 import os
@@ -61,14 +63,7 @@ def tuft(center,radii,count,region,rng,card_size=1.1):
 
 
 def olive(species,level,rng):
-    sides={'LOD0':7,'LOD1':4,'PROXY':3}[level]
-    twist=species=='olive_twisted'
-    centers=[(-1.1,-.35,3.55),(1.05,.4,3.8),(.05,1.0,3.65)] if not twist else [(-1.3,-.1,3.5),(.7,.4,3.5),(1.4,-.45,3.9),(-.1,1.0,3.8)]
-    if level=='PROXY':
-        tube([(0,0,0),(.06,0,1.6),(.1,0,2.9)],[.33,.21,.10],3)
-        for i,c in enumerate(centers):
-            tuft(c,(.8,.7,.25),3,'olive',rng,1.8)
-        return
+    sides={'LOD0':7,'LOD1':4}[level]
     twist=species=='olive_twisted'
     centers=[(-1.1,-.35,3.55),(1.05,.4,3.8),(.05,1.0,3.65)] if not twist else [(-1.3,-.1,3.5),(.7,.4,3.5),(1.4,-.45,3.9),(-.1,1.0,3.8)]
     tube([(0,0,0),(.12,-.1,.6),(-.05,.04,1.2),(.18,0,1.9),(.05,.08,2.6)],[.39,.31,.26,.22,.15],sides)
@@ -122,14 +117,6 @@ def palm(species,level,rng):
 def plane_tree(level,rng):
     # Distinct rounded shade canopy, not the stone-pine umbrella/fan skeleton.
     centers=[(-2.6,-1.2,9.6),(0,-2.4,9.5),(2.7,-1.0,10.2),(-2.7,1.2,10.4),(0,2.2,10.0),(2.3,1.1,9.5),(-.2,.2,11.9),(0,-.2,8.9)]
-    if level=='PROXY':
-        base=Vector((0,.1,8.4));tube([(0,0,0),base],[.43,.15],3)
-        for k,i in enumerate([0,2,3,5,6]):
-            center=Vector(centers[i]);axis=(center-base).normalized();across=axis.cross(Vector((0,1,0)))
-            across.normalize();other=axis.cross(across)
-            for side in (across*.14,other*.14):poly([base-side,base+side,center+side*.25,center-side*.25],'bark')
-            tuft(center,(.25,.25,.3),1,'plane',random.Random(570135+i),3.5)
-        return
     sides=8 if level=='LOD0' else 4
     tube([(0,0,0),(.15,.05,2.0),(-.18,.12,4.6),(.1,.08,6.5),(0,.1,8.0)],[.48,.38,.29,.21,.12],sides)
     for i,c in enumerate(centers):
@@ -148,57 +135,28 @@ def broad_tree(species,level,rng):
     plane=False;stone=species=='pine_stone'
     h=14 if plane else 12.8 if stone else 12.0
     stem=h*(.38 if plane else .62 if stone else .42)
-    if level=='PROXY':
-        # Continuous tree proxy: five source crown centres and crossed opaque
-        # branch strips connect them to a trunk. No floating canopy fragments.
-        stem_top=h*(.65 if plane else .7 if stone else .45)
-        base=Vector((-.1,.15,stem_top))
-        tube([(0,0,0),base],[.38 if plane else .3,.14],3)
-        source_count=7 if plane else 8 if stone else 9
-        for k in range(5):
-            source_k=round(k*(source_count-1)/4)
-            crng=random.Random(SEEDS[species]+source_k*883)
-            angle=source_k*2.39996
-            radius=(3.0 if plane else 3.3 if stone else 1.8)*(0.5+.5*((source_k%3)/2))
-            z=10.6+crng.uniform(-1.2,1.2) if plane else 10.7+crng.uniform(-.3,.4) if stone else 5.7+source_k*.58
-            center=Vector((math.cos(angle)*radius,math.sin(angle)*radius,z))
-            axis=(center-base).normalized()
-            across=axis.cross(Vector((0,1,0)))
-            if across.length<.01:across=axis.cross(Vector((1,0,0)))
-            across.normalize();second=axis.cross(across)
-            for side in (across*.12,second*.12):
-                poly([base-side,base+side,center+side*.25,center-side*.25],'bark')
-            tuft(center,(.2,.2,.15),1,'plane' if plane else 'pine',crng,3.2)
-        return
-    sides={'LOD0':8,'LOD1':4,'PROXY':3}[level]
+    sides={'LOD0':8,'LOD1':4}[level]
     tube([(0,0,0),(.16,.10,stem*.45),(-.1,.15,stem)],[.43 if plane else .31,.28,.16],sides)
     crowns=7 if plane else 8 if stone else 9
-    if level=='PROXY':crowns=7
     region='plane' if plane else 'pine'
     for k in range(crowns):
         angle=k*2.39996;radius=(3.0 if plane else 3.3 if stone else 1.8)*(0.5+.5*((k%3)/2))
         crng=random.Random(SEEDS[species]+k*883)
         z=10.6+crng.uniform(-1.2,1.2) if plane else 10.7+crng.uniform(-.3,.4) if stone else 5.7+k*.58
         center=(math.cos(angle)*radius,math.sin(angle)*radius,z)
-        if level!='PROXY':
-            tube([(-.1,.15,stem*.8),(center[0]*.6,center[1]*.6,z-.7),center],[.14,.10,.025],sides)
+        tube([(-.1,.15,stem*.8),(center[0]*.6,center[1]*.6,z-.7),center],[.14,.10,.025],sides)
         tuft(center,(1.7 if plane else 1.5,1.5,1.25 if plane else .35 if stone else .8),24 if level=='LOD0' and plane else 16 if level=='LOD0' else 8 if species!='pine_brutia' else 7,region,crng,1.7 if level=='LOD0' else 2.5)
 
 
 def small(species,level,rng):
     if species=='cypress':
-        tube([(0,0,0),(0,0,4),(0,0,8.8)],[.19,.12,.04],{'LOD0':7,'LOD1':4,'PROXY':3}[level])
-        tiers=12 if level in ('LOD0','LOD1') else 5
+        tube([(0,0,0),(0,0,4),(0,0,8.8)],[.19,.12,.04],{'LOD0':7,'LOD1':4}[level])
+        tiers=12
         for k in range(tiers):
             z=1.7+k*(7.5/(tiers-1));r=.85*(1-(z-1.7)/9.5)
-            tuft((.08*math.sin(k),0,z),(r,r,.35),12 if level=='LOD0' else (11 if k in (0,11) else 12) if level=='LOD1' else 1,'pine',rng,1.3 if level!='PROXY' else 2.0)
+            tuft((.08*math.sin(k),0,z),(r,r,.35),12 if level=='LOD0' else (11 if k in (0,11) else 12),'pine',rng,1.3)
     else:
         hedge=species=='hedge';count=5 if hedge else 4
-        if level=='PROXY':
-            for k in range(7):
-                x=(k-3)*.6 if hedge else (k%4-1.5)*.65
-                card((x,0,.6 if hedge else 1.35),1.2,1.0 if hedge else 1.8,'maquis',0 if hedge and k in (0,6) else k*1.3,.2*(k%2))
-            return
         for k in range(count):
             x=(k-(count-1)/2)*(.8 if hedge else .48);z=.6 if hedge else 1.35+(.12 if k%2 else -.1)
             tube([(x,0,0),(x+.1,0,z)],[.07,.025],4 if level=='LOD0' else 3)
@@ -231,38 +189,29 @@ def save(species,level):
     js=json.dumps(g,separators=(',',':')).encode();js+=b' '*((-len(js))%4)
     path.write_bytes(struct.pack('<III',0x46546c67,2,20+len(js)+len(tail))+struct.pack('<II',len(js),0x4e4f534a)+js+tail)
     tris=sum(len(f)-2 for f in F);small_asset=species in ('maquis','hedge')
-    budget=({'LOD0':600,'LOD1':120,'PROXY':24} if small_asset else {'LOD0':1800,'LOD1':300,'PROXY':40})[level]
+    if level=='PROXY' and not species.startswith('palm'):raise ValueError('no single-tree proxy for '+species+' (T-057 Karar 5)')
+    budget=({'LOD0':600,'LOD1':120} if small_asset else {'LOD0':1800,'LOD1':300,'PROXY':40} if species.startswith('palm') else {'LOD0':1800,'LOD1':300})[level]
     print('VEGETATION',species,level,tris,'budget',budget,flush=True)
     if tris>budget:raise ValueError(name+' exceeds budget')
 
 
 
-def source_impostor(kind):
-    manifest=json.loads((OUT/'proxy_bakes.json').read_text())
-    asset=manifest['assets'][kind]
-    source=ROOT/asset['source_lod0'].removeprefix('res://')
-    if hashlib.sha256(source.read_bytes()).hexdigest()!=asset['source_lod0_sha256']:raise ValueError('stale source impostor bake: '+kind)
-    lo,hi=asset['bbox_blender_min'],asset['bbox_blender_max']
-    cx,cy=(lo[0]+hi[0])/2,(lo[1]+hi[1])/2
-    z=asset['top_plane_height']
-    poly([(lo[0],cy,lo[2]),(hi[0],cy,lo[2]),(hi[0],cy,hi[2]),(lo[0],cy,hi[2])],'proxy_'+kind+'_front')
-    poly([(cx,lo[1],lo[2]),(cx,hi[1],lo[2]),(cx,hi[1],hi[2]),(cx,lo[1],hi[2])],'proxy_'+kind+'_side')
-    poly([(lo[0],lo[1],z),(hi[0],lo[1],z),(hi[0],hi[1],z),(lo[0],hi[1],z)],'proxy_'+kind+'_top')
-
-
 def main():
     global V,F,UV
     args=sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else []
-    levels=['LOD0','LOD1'] if '--base-only' in args else ['PROXY'] if '--proxy-only' in args else ['LOD0','LOD1','PROXY']
     species=[a for a in args if not a.startswith('--')]
-    for kind in species or SPECIES:
+    for kind in species or ([s for s in SPECIES if s.startswith('palm')] if '--proxy-only' in args else SPECIES):
         if kind not in SPECIES:raise ValueError(kind)
+        is_palm_kind=kind.startswith('palm')
+        if '--proxy-only' in args:
+            if not is_palm_kind:raise ValueError('--proxy-only is palm-only (T-057 Karar 5): '+kind)
+            levels=['PROXY']
+        else:levels=['LOD0','LOD1'] if '--base-only' in args or not is_palm_kind else ['LOD0','LOD1','PROXY']
         for level in levels:
             for ob in list(bpy.data.objects):bpy.data.objects.remove(ob,do_unlink=True)
             bpy.data.orphans_purge(do_recursive=True);V=[];F=[];UV=[]
             rng=random.Random(SEEDS[kind])
-            if level=='PROXY' and not kind.startswith('palm'):source_impostor(kind)
-            elif kind.startswith('olive'):olive(kind,level,rng)
+            if kind.startswith('olive'):olive(kind,level,rng)
             elif kind.startswith('palm'):palm(kind,level,rng)
             elif kind in ('plane','pine_brutia','pine_stone'):broad_tree(kind,level,rng)
             else:small(kind,level,rng)

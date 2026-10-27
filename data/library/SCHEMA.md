@@ -92,9 +92,9 @@ kayıtlarını işler. Üretim `art/blender/vegetation/`; ölçüm/güncelleme
 `python3 tools/library/vegetation_catalog.py --write|--check`. Negatif drift,
 şema sınıflandırması, aynı Texture2D ve MASK/mipmap kontrolleri vardır.
 
-Sekiz palmiye dışı bitki zincirinde `proxy_source`, kaynak LOD0 hash’i,
-`proxy_bakes.json` yol/hash’i, üst512RGBA hash’i ve üç kaynak görünümün tile
-izini taşır. Proxy üç çapraz kart/6tri;24 türetilmiş tile aynı atlasın alt
-alanındadır. Doğrulayıcı kaynak/manifest/doku drift’ini reddeder; malformed
-source=None/string/list dispatch öncesi tanı verir. Palmiye40tri proxy’leri
-prosedürel kalır. Bu alan kullanıcı onayı veya oyun LOD entegrasyonu değildir.
+Bitki zinciri (T-057 Karar 5): palmiye dışı 8 türde `levels` yalnız LOD0/LOD1'dir;
+`proxy_source`/`proxy_runtime` ve PROXY seviyesi yoktur, eski proxy kalıntısı
+reddedilir. Palmiyelerde LOD0/LOD1/PROXY (40tri prosedürel) kalır. `import_policy`
+(`generate_lods:false`, post-import yok) ve `distances_m` (LOD0<120, LOD1<400 m,
+`working-model-not-integrated`) taşınır; atlas hash'i `atlas_regions.json` ile
+korunur. malformed source=None/string/list dispatch öncesi tanı verir. Bu alan kullanıcı onayı veya oyun LOD entegrasyonu değildir.

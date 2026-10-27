@@ -9,6 +9,7 @@ from PIL import Image, ImageDraw
 
 ROOT=Path(__file__).resolve().parents[3]
 OUT=ROOT/'assets/hero/vegetation'
+# proxy_* regions below are retired reservations (dead pixels); kept so atlas_layout.json stays byte-equal.
 REGIONS={'bark':(0,0,256,256),'olive':(256,0,256,256),'plane':(512,0,256,256),'pine':(768,0,256,256),'palm_bark':(0,256,256,256),'maquis':(256,256,256,256),'frond':(512,256,512,256)}
 IMPOSTOR_SPECIES=['plane','pine_brutia','pine_stone','olive_open','olive_twisted','cypress','maquis','hedge']
 for _i,_species in enumerate(IMPOSTOR_SPECIES):
@@ -110,6 +111,14 @@ def main():
             d.line([(x,128),(x1-2,y1-sign*5)],fill=(100,116,79,255),width=1)
     atlas.paste(frond,REGIONS['frond'][:2])
     OUT.mkdir(parents=True,exist_ok=True)
+    # T-057 Karar 5: the lower rows (y>=512; reserved tile region y640-1023) hold dead pixels left by the
+    # retired cross-card proxies. They are carried forward byte-equal from the committed atlas, never
+    # regenerated or cleared here (clearing is a separate, drift-tested step). Fresh checkout without
+    # an atlas leaves them transparent.
+    previous=OUT/'vegetation_atlas.png'
+    if previous.exists():
+        old=Image.open(previous).convert('RGBA')
+        if old.size==(1024,1024):atlas.paste(old.crop((0,512,1024,1024)),(0,512))
     atlas.save(OUT/'vegetation_atlas.png',optimize=False)
     (OUT/'atlas_layout.json').write_text(json.dumps({'size':1024,'regions':REGIONS,'seed':57001},indent=2)+'\n')
     print('vegetation atlas:1024 RGBA, deterministic cutout sprays/bark/fronds')
