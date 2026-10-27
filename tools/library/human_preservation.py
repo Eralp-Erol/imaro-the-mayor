@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """T-059 preservation proof: the 99 pre-existing catalog records and the building/vegetation/furniture/ground assets stay byte-equal.
-python3 tools/library/furniture_preservation.py --snapshot   # before the human batch: writes pre.json
-python3 tools/library/furniture_preservation.py --compare    # after: writes preservation.json, exit 1 on any change
+python3 tools/library/human_preservation.py --snapshot   # before the human batch: writes pre.json
+python3 tools/library/human_preservation.py --compare    # after: writes preservation.json, exit 1 on any change
 """
 import argparse
 import hashlib

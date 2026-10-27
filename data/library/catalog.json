@@ -7820,19 +7820,19 @@
         "ratio:broad"
       ],
       "glb": "res://assets/hero/human/hum_hero_facet_broad_a_lod0.glb",
-      "glb_sha256": "324c39fc8a5fe3c79f0e0122f851cd1361f96008989724a467d7964347f915ac",
+      "glb_sha256": "0e98df8636fece4fff458cd15185bf0c33d01e605352024591710be81125a5f0",
       "materials": [
         "mat_human_atlas"
       ],
       "dimensions_m": {
         "width_x": 0.614,
-        "depth_z": 0.305,
+        "depth_z": 0.32,
         "height_above_ground": 1.75,
         "foundation_skirt_depth": 0,
         "bbox_min": [
           -0.307,
           0.0,
-          -0.13
+          -0.145
         ],
         "bbox_max": [
           0.307,
@@ -7890,12 +7890,12 @@
         "levels": {
           "LOD0": {
             "glb": "res://assets/hero/human/hum_hero_facet_broad_a_lod0.glb",
-            "sha256": "324c39fc8a5fe3c79f0e0122f851cd1361f96008989724a467d7964347f915ac",
+            "sha256": "0e98df8636fece4fff458cd15185bf0c33d01e605352024591710be81125a5f0",
             "triangles": 654,
             "bbox_min": [
               -0.307,
               0.0,
-              -0.13
+              -0.145
             ],
             "bbox_max": [
               0.307,
@@ -7985,19 +7985,19 @@
         "ratio:neutral"
       ],
       "glb": "res://assets/hero/human/hum_hero_facet_neutral_a_lod0.glb",
-      "glb_sha256": "3bba6013d02f767850f0884b890981bae65536f24861a88976f19f15ecd1a359",
+      "glb_sha256": "2fa7ea5009ac4edbab5680d5de7a2e5dc1d54471fcdc0b4801fb0447411e3457",
       "materials": [
         "mat_human_atlas"
       ],
       "dimensions_m": {
         "width_x": 0.522,
-        "depth_z": 0.285,
+        "depth_z": 0.295,
         "height_above_ground": 1.75,
         "foundation_skirt_depth": 0,
         "bbox_min": [
           -0.261,
           0.0,
-          -0.11
+          -0.12
         ],
         "bbox_max": [
           0.261,
@@ -8056,12 +8056,12 @@
         "levels": {
           "LOD0": {
             "glb": "res://assets/hero/human/hum_hero_facet_neutral_a_lod0.glb",
-            "sha256": "3bba6013d02f767850f0884b890981bae65536f24861a88976f19f15ecd1a359",
+            "sha256": "2fa7ea5009ac4edbab5680d5de7a2e5dc1d54471fcdc0b4801fb0447411e3457",
             "triangles": 654,
             "bbox_min": [
               -0.261,
               0.0,
-              -0.11
+              -0.12
             ],
             "bbox_max": [
               0.261,

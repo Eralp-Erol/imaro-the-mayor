@@ -39,6 +39,8 @@ MATERIAL='mat_human_atlas'
 PALETTE=['SK2','HR2','CL7','CL4','CL15','CL6','CL2','CL1']
 REQUIRED_TAGS=['hero','human-style-proposal','matte','opaque-atlas','no-face','no-logo','no-text','anonymous','neutral-palette']
 ALLOWED_TAGS=set(REQUIRED_TAGS)|{'style:'+s for s in STYLES}|{'ratio:'+r for r in RATIOS}
+NOTES='İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil.'
+NOTES_OPEN_QUESTION='Q-018 (stilizasyon, kimlik/giyim, mevsim) açık'  # names the open question; the only sentence allowed to mention a forbidden topic
 FORBIDDEN_WORDS=['uniform','üniform','logo','protagonist','named-character','adlı karakter','başörtü','hijab','kippa','religious','dini','season','mevsim','helmet','baret','face-detail']
 
 
@@ -82,7 +84,7 @@ def entry(root,name):
             'template_ref':{'template_id':None,'reference_ids':t['reference_ids'],'template_size_m':t['template_size_m'],'size_status':t['size_status'],'intended_height_m':HEIGHT_M,'source':'design/library/templates-v0.md section a'},
             'source':{'kind':'hero_human','generator':'art/blender/human/build.py','manifest':None,'rebuild':'bash art/blender/human/rebuild.sh','spec':'production/tasks/T-059.md'},
             'approval':'proposed','approval_by':None,'approval_date':None,'user_note':'','lod_chain':chain,
-            'notes':'İnsan stil önerisi (A piyon / B blok / C faset); yalnız kütüphane/lab, hiçbiri seçilmiş değil. Q-018 (stilizasyon, kimlik/giyim, mevsim) açık; palet ve oranlar çalışma değeri, kullanıcı onayı değil.'}
+            'notes':NOTES}
 
 
 def update(catalog,root):
@@ -109,9 +111,23 @@ def content_errors(e):
         if tag not in ALLOWED_TAGS:errors.append(ident+': tag not allowed for a human proposal: '+str(tag))
     for tag in REQUIRED_TAGS:
         if tag not in tags:errors.append(ident+': missing required tag '+tag)
-    text=' '.join(str(e.get(k,'')) for k in ('label_tr','user_note')).lower()  # notes/tags are fixed text (tags allow-listed above)
+    text=' '.join([str(e.get(k,'')) for k in ('label_tr','user_note')]+[str(e.get('notes','')).replace(NOTES_OPEN_QUESTION,'')]).lower()  # tags are allow-listed above
     for word in FORBIDDEN_WORDS:
         if word in text:errors.append(ident+': forbidden content word "'+word+'"')
+    return errors
+
+
+def light_errors(g):
+    """GLB must stay unlit and non-emissive: no emissive factor/texture, no KHR_lights_punctual (nodes or extensions), no emission extension."""
+    errors=[]
+    for mat in g.get('materials',[]):
+        if any(v>0 for v in mat.get('emissiveFactor',[0,0,0])) or 'emissiveTexture' in mat:errors.append('material must not be emissive')
+        for ext in mat.get('extensions',{}):
+            if ext=='KHR_materials_emissive_strength':errors.append('emissive extension not allowed')
+    used=set(g.get('extensionsUsed',[]))|set(g.get('extensionsRequired',[]))|set(g.get('extensions',{}))
+    for node in g.get('nodes',[]):used|=set(node.get('extensions',{}))
+    if any('light' in x.lower() for x in used):errors.append('light extension not allowed: '+', '.join(sorted(x for x in used if 'light' in x.lower())))
+    if g.get('extensions',{}).get('KHR_lights_punctual') or any('KHR_lights_punctual' in n.get('extensions',{}) for n in g.get('nodes',[])):errors.append('KHR_lights_punctual not allowed')
     return errors
 
 
@@ -142,6 +158,7 @@ def validate_chain(e,root):
                 if mat.get('alphaMode') not in (None,'OPAQUE') or mat.get('doubleSided') is True:errors.append(ident+': human material must be opaque single-sided')
             images=g.get('images',[])
             if len(images)!=1 or images[0].get('uri')!='human_atlas.png' or 'bufferView' in images[0]:errors.append(ident+': texture must be the external shared human_atlas.png')
+            errors.extend(ident+': '+level+' '+x for x in light_errors(g))
             names=[n.get('name') for n in g.get('nodes',[])]
             if names!=['%s_%s'%(ident,level)]:errors.append(ident+': '+level+' node names must be exactly '+ident+'_'+level+', got '+str(names))
             if abs(stats['bbox_min'][1])>0.001:errors.append(ident+': '+level+' must be ground-origin (min Y=0)')

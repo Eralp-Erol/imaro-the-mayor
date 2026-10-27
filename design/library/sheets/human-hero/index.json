@@ -15,14 +15,14 @@
         "LOD1": 66
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-203159-t059-pawn_neutral-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-203203-t059-pawn_neutral-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-203208-t059-pawn_neutral-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-203213-t059-pawn_neutral-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-203218-t059-pawn_neutral-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-203223-t059-pawn_neutral-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-203227-t059-pawn_neutral-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-203232-t059-pawn_neutral-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-205652-t059-pawn_neutral-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205657-t059-pawn_neutral-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205702-t059-pawn_neutral-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205708-t059-pawn_neutral-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205713-t059-pawn_neutral-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205718-t059-pawn_neutral-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205723-t059-pawn_neutral-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205728-t059-pawn_neutral-far_lod1.png"
       }
     },
     {
@@ -38,14 +38,14 @@
         "LOD1": 66
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-203240-t059-pawn_broad-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-203244-t059-pawn_broad-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-203249-t059-pawn_broad-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-203254-t059-pawn_broad-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-203259-t059-pawn_broad-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-203304-t059-pawn_broad-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-203308-t059-pawn_broad-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-203313-t059-pawn_broad-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-205736-t059-pawn_broad-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205740-t059-pawn_broad-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205745-t059-pawn_broad-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205750-t059-pawn_broad-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205755-t059-pawn_broad-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205800-t059-pawn_broad-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205806-t059-pawn_broad-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205811-t059-pawn_broad-far_lod1.png"
       }
     },
     {
@@ -61,14 +61,14 @@
         "LOD1": 98
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-203320-t059-block_neutral-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-203325-t059-block_neutral-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-203330-t059-block_neutral-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-203335-t059-block_neutral-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-203340-t059-block_neutral-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-203345-t059-block_neutral-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-203350-t059-block_neutral-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-203354-t059-block_neutral-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-205818-t059-block_neutral-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205823-t059-block_neutral-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205828-t059-block_neutral-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205833-t059-block_neutral-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205838-t059-block_neutral-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205843-t059-block_neutral-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205848-t059-block_neutral-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205853-t059-block_neutral-far_lod1.png"
       }
     },
     {
@@ -84,14 +84,14 @@
         "LOD1": 98
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-203402-t059-block_broad-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-203407-t059-block_broad-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-203411-t059-block_broad-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-203416-t059-block_broad-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-203421-t059-block_broad-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-203426-t059-block_broad-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-203431-t059-block_broad-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-203435-t059-block_broad-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-205900-t059-block_broad-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205905-t059-block_broad-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205910-t059-block_broad-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205915-t059-block_broad-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205920-t059-block_broad-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205925-t059-block_broad-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205930-t059-block_broad-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205935-t059-block_broad-far_lod1.png"
       }
     },
     {
@@ -99,7 +99,7 @@
       "path": "design/library/sheets/human-hero/hum_hero_facet_neutral_a.png",
       "dimensions_m": [
         0.522,
-        0.285,
+        0.295,
         1.75
       ],
       "triangles": {
@@ -107,14 +107,14 @@
         "LOD1": 98
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-203443-t059-facet_neutral-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-203448-t059-facet_neutral-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-203452-t059-facet_neutral-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-203457-t059-facet_neutral-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-203502-t059-facet_neutral-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-203507-t059-facet_neutral-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-203512-t059-facet_neutral-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-203517-t059-facet_neutral-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-205943-t059-facet_neutral-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205947-t059-facet_neutral-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205952-t059-facet_neutral-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205957-t059-facet_neutral-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-210002-t059-facet_neutral-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-210007-t059-facet_neutral-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-210012-t059-facet_neutral-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-210017-t059-facet_neutral-far_lod1.png"
       }
     },
     {
@@ -122,7 +122,7 @@
       "path": "design/library/sheets/human-hero/hum_hero_facet_broad_a.png",
       "dimensions_m": [
         0.614,
-        0.305,
+        0.32,
         1.75
       ],
       "triangles": {
@@ -130,14 +130,14 @@
         "LOD1": 98
       },
       "frames": {
-        "front_lod0": "artifacts/screenshots/captures/20261027-203524-t059-facet_broad-front_lod0.png",
-        "side_lod0": "artifacts/screenshots/captures/20261027-203529-t059-facet_broad-side_lod0.png",
-        "back_lod0": "artifacts/screenshots/captures/20261027-203534-t059-facet_broad-back_lod0.png",
-        "top_lod0": "artifacts/screenshots/captures/20261027-203538-t059-facet_broad-top_lod0.png",
-        "3q_lod0": "artifacts/screenshots/captures/20261027-203543-t059-facet_broad-3q_lod0.png",
-        "front_lod1": "artifacts/screenshots/captures/20261027-203548-t059-facet_broad-front_lod1.png",
-        "near_lod0": "artifacts/screenshots/captures/20261027-203553-t059-facet_broad-near_lod0.png",
-        "far_lod1": "artifacts/screenshots/captures/20261027-203558-t059-facet_broad-far_lod1.png"
+        "front_lod0": "artifacts/screenshots/captures/20261027-210025-t059-facet_broad-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-210030-t059-facet_broad-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-210034-t059-facet_broad-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-210040-t059-facet_broad-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-210045-t059-facet_broad-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-210050-t059-facet_broad-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-210055-t059-facet_broad-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-210100-t059-facet_broad-far_lod1.png"
       }
     }
   ],
@@ -149,5 +149,13 @@
     "context-street.png",
     "context-scale.png"
   ],
-  "style_compare": "style-compare.png"
+  "style_compare": "style-compare.png",
+  "hem_crops": {
+    "hem_facet_neutral_front": "design/library/sheets/human-hero/hem_facet_neutral_front.png",
+    "hem_facet_neutral_side": "design/library/sheets/human-hero/hem_facet_neutral_side.png",
+    "hem_facet_neutral_back": "design/library/sheets/human-hero/hem_facet_neutral_back.png",
+    "hem_facet_broad_front": "design/library/sheets/human-hero/hem_facet_broad_front.png",
+    "hem_facet_broad_side": "design/library/sheets/human-hero/hem_facet_broad_side.png",
+    "hem_facet_broad_back": "design/library/sheets/human-hero/hem_facet_broad_back.png"
+  }
 }

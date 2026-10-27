@@ -103,7 +103,7 @@ def facet(m,p,lod):
                 ring(ax(.95),0,.95,p['fa'],.036,n),ring(ax(.84),0,.84,p['wr']+.004,.031,n),ring(ax(.80),0,.80,p['wr']+.006,.032,n)],'top',cap_first=False,cap_last=False,regions={4:'trim'})
         loft(m,[ring(ax(.80),0,.80,p['wr'],.028,n),ring(ax(.74),0,.74,p['wr']+.008,.040,n),ring(ax(.66),0,.66,p['wr']+.003,.034,n)],'skin',cap_first=False,cap_last=True)
         tx=ax(.73)-s*(p['wr']+.008+.002);box(m,(tx-.007,-.062,.70),(tx+.007,-.022,.765),'skin')
-    rings=[ring(0,0,.80,p['hp'],p['hd'],n),ring(0,0,.90,p['hp'],p['hd'],n),ring(0,0,1.07,p['wa'],p['wd'],n),ring(0,0,1.26,p['sh']+.008,p['sd'],n),
+    rings=[ring(0,0,.80,p['hp']+.02,p['hd']+.02,n),ring(0,0,.90,p['hp']+.02,p['hd']+.02,n),ring(0,0,1.07,p['wa'],p['wd'],n),ring(0,0,1.26,p['sh']+.008,p['sd'],n),
            ring(0,0,Z_SH,p['sh'],p['sd']*.97,n),ring(0,0,1.44,p['sh']*.45,p['sd']*.58,n)]
     loft(m,rings,'top',cap_first=False,cap_last=False)
     loft(m,[ring(0,0,1.43,.052,.058,n),ring(0,0,1.465,.052,.058,n)],'under',cap_first=False,cap_last=False)

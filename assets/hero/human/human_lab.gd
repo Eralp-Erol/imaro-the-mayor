@@ -97,9 +97,17 @@ func _frame(context: String) -> void:
 
 func _context(context: String, level: String) -> void:
 	if context == "compare":
+		# Row axis is perpendicular to the camera view direction: all six figures are equally far from the camera.
+		var view := String(_args.get("view", "front"))
+		var toward_camera := Vector3(0.0, 0.0, 1.0)
+		if view == "side":
+			toward_camera = Vector3(-1.0, 0.0, 0.0)
+		elif view == "3q":
+			toward_camera = Vector3(0.62, 0.0, 0.85).normalized()
+		var lateral := Vector3.UP.cross(toward_camera).normalized()
 		for i in range(ASSETS.size()):
 			var x := float(i / 2 - 1) * 2.4 + (-0.5 if i % 2 == 0 else 0.5)
-			_place(ASSETS[i], level, Vector3(x, 0, 0), 0.0)
+			_place(ASSETS[i], level, lateral * x, 0.0)
 			var label := Label3D.new()
 			label.text = LABELS[ASSETS[i]]
 			label.font_size = 28
@@ -108,9 +116,9 @@ func _context(context: String, level: String) -> void:
 			label.modulate = Color(0.12, 0.13, 0.11)
 			label.outline_modulate = Color(0.93, 0.92, 0.88)
 			label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-			label.position = Vector3(x, -0.18, 0.6)
+			label.position = lateral * x + toward_camera * 0.6 + Vector3(0.0, -0.18, 0.0)
 			add_child(label)
-		_ruler(Vector3(-3.35, 0.0, 0.0))
+		_ruler(lateral * -3.35)
 		return
 	var building := (load(HERO_BUILDING) as PackedScene).instantiate() as Node3D
 	building.position = Vector3(0, 0, -4)

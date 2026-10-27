@@ -176,6 +176,30 @@ class HumanCatalogTests(unittest.TestCase):
                 self.assertEqual(['human_atlas.png'],[i.get('uri') for i in g['images']]);self.assertTrue(all('bufferView' not in i for i in g['images']))
                 self.assertEqual(1,len(g['materials']));self.assertNotIn(g['materials'][0].get('alphaMode'),('MASK','BLEND'));self.assertLess(path.stat().st_size,60000)
 
+    def patch_glb_json(self,path,mutate):
+        import struct
+        data=path.read_bytes();clen=struct.unpack('<I',data[12:16])[0];g=json.loads(data[20:20+clen]);mutate(g)
+        raw=json.dumps(g).encode();raw+=b' '*((-len(raw))%4);rest=data[20+clen:]
+        path.write_bytes(data[:8]+struct.pack('<I',20+len(raw)+len(rest))+struct.pack('<II',len(raw),0x4E4F534A)+raw+rest)
+
+    def test_emissive_or_light_glb_is_rejected_even_when_catalog_is_regenerated(self):
+        def emissive(g):g['materials'][0]['emissiveFactor']=[1,1,1]
+        def light(g):g['extensionsUsed']=g.get('extensionsUsed',[])+['KHR_lights_punctual'];g['extensions']={'KHR_lights_punctual':{'lights':[{'type':'point'}]}}
+        def node_light(g):g['nodes'][0].setdefault('extensions',{})['KHR_lights_punctual']={'light':0}
+        for mutate in (emissive,light,node_light):
+            with tempfile.TemporaryDirectory() as d:
+                root=self.copy_root(d);self.patch_glb_json(root/'assets/hero/human/hum_hero_block_neutral_a_lod0.glb',mutate)
+                e=copy.deepcopy(self.item('hero_block_neutral'))
+                # the catalog is re-measured from the tampered file, so only the content rule can catch it
+                e.update(hc.entry(root,'block_neutral'))
+                errors=hc.validate_chain(e,root)
+                self.assertTrue(any('emissive' in x or 'light' in x for x in errors),errors)
+        self.assertEqual([],hc.light_errors(glb_info.read_gltf_json(ROOT/'assets/hero/human/hum_hero_block_neutral_a_lod0.glb')))
+
+    def test_forbidden_word_in_notes_is_rejected(self):
+        e=copy.deepcopy(self.items[0]);e['notes']='üniformalı logo';self.assertTrue(any('forbidden content word' in x for x in hc.content_errors(e)))
+        e=copy.deepcopy(self.items[0]);e['notes']='hijab';self.assertTrue(hc.validate_chain(e,ROOT))
+
     def test_unknown_family_and_malformed_source_rejected(self):
         e=copy.deepcopy(self.items[0]);e['family']='hero_unknown';self.assertTrue(hc.validate_chain(e,ROOT))
         for bad in (None,'x',[]):
