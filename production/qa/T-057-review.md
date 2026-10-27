@@ -113,3 +113,65 @@ Metadata düzeltmesinden sonra yeniden çalıştırılanlar:
 -81 eski tam kayıt+67GLB+14PNG ve10bitkiLOD0 hash'i yeniden aynı;10katalog rebuild komutu doğruwrapper'a bağlı; diff-check temiz.
 
 **Güncel kriter durumu:**1 teknikPASS ·2 teknik kütle/bütçePASS ve sanatPENDING ·3PASS ·4PASS ·5PASS ·6PASS ·7odaklıPASS/art+fullPENDING. Eski tur1 FAIL giderildi; yeni doğrulanmış teknik blocker yok. Yakın/üst impostor kart kesişimi ve ton/ışık farkı sanat incelemesinde açıkça değerlendirilmelidir; bu rapor o görünümü sessizce sanatPASS saymaz. Final full başlatılmadı ve tüm görev tamamlandı denmez.
+
+
+## Bağımsız QA tur3 — Karar 5
+
+Kapsam: HEAD acec260 (+ lab'da commit'siz `neighborhood_lab.gd` 8+/4- --far/--yaw/--pitch; kapsam dışı, incelenmedi). Kod/asset değiştirilmedi; rebuild.sh çalıştırılmadı. Tüm komutlar bu turda taze koşuldu.
+
+### Komutlar (çıkış kodu)
+
+- `python3 -m unittest discover -s tests/library -p 'test_*.py' -q` -> 53 test OK, exit 0.
+- `vegetation_catalog.py --check` -> `VEGETATION_ATLAS_OK upper512_unchanged=true dead_tile_region_byte_equal=true`; `vegetation proposals 10; measured LODs 22 (8 non-palm LOD0/LOD1 + 2 palm LOD0/LOD1/PROXY)`, exit 0.
+- `hero_lods.py --check` -> 21 zincir / 63 seviye, exit 0. `build_catalog.py --check` -> 91 kayıt up to date, exit 0. `validate_catalog.py` -> 91 kayıt, 0 hata, 0 uyarı, exit 0.
+- Godot: `tools/godot.sh --headless --path . --editor --import --quit` exit 0; `--script res://tools/library/check_vegetation_import.gd` -> `VEGETATION_IMPORT_OK meshes=22 shared_texture=1 alpha=MASK double_sided=true mipmaps=true generate_lods=false shader_materials=0 post_import_scripts=0 casts_and_receives_shadow=true nonpalm_chain=LOD0/LOD1 palm_chain=LOD0/LOD1/PROXY legacy_proxy=absent`, exit 0.
+- Bağımsız negatif: `veg_hero_olive_open_a_lod1.glb.import` içinde `generate_lods=true` yapıldı -> denetim `ERROR: veg_hero_olive_open_a LOD1: meshes/generate_lods must be false`, exit 1. Hemen `git checkout --` ile geri alındı; dosya tekrar `generate_lods=false`, `git diff --stat` o dosya için boş, `git status` yalnız başlangıçtaki `neighborhood_lab.gd`/`artifacts/library/`/`tmp/`. Not: negatif yalnız .import konfig denetimini sınar (yeniden import yapılmadı); sahnenin ürettiği mesh LOD'u için ayrı negatif koşulmadı (UNVERIFIED).
+
+### Korunanlar (doğrudan hesap)
+
+- fe89e29 kataloğundaki 81 kayıt yeni katalogda tam eşit (differing/missing=[]); yeni katalog 91 = 81 + 10 bitki.
+- Eski kayıtların atıf yaptığı yol-biçimli dosyalar: 109 GLB + 56 PNG; hepsi diskte var, hepsi fe89e29 ile SHA-256 eşit (0 uyuşmazlık).
+- 10 bitki LOD0 GLB'si 1c9c3c0 ile eşit. dcb9c1f ile karşılaştırma: tüm `veg_hero_*.glb` (22) + `vegetation_atlas.png` bayt-eşit.
+- Atlas: PNG dosyası dcb9c1f/1c9c3c0/37d2d2b ile bayt-eşit; üst 512 satır, y512-639 ve y640-1023 RGBA SHA'ları aynı; `atlas_regions.json` hash'leri (a7ea5561..., 09a75adb...) benim hesabımla birebir.
+- `git diff --stat dcb9c1f HEAD` ile kanon dizini, `experiments`, `src`, `scenes`, `project.godot` için çıktı boş (değişiklik yok). Karar 5 commit'inin tamamı 75 dosya, hepsi bitki/katalog/araç/test/doc alanında.
+
+### Sayı uyuşmazlığı çözümü (67 GLB/14 PNG vs 109 GLB/56 PNG)
+
+Çelişki değil, farklı kümeler. 81 eski kaydın başvurduğu tüm dosyalar = 109 GLB + 56 PNG. Bunun içinde `assets/hero/lod/` altı 42 GLB ve `assets/hero/lod|fam|hero` altı 42 hero PNG doku var; bunlar çıkarılınca 67 GLB (fam 18, hero 3, models/* 46) ve 14 zemin PNG (`assets/ground/tex`) kalır. Eski tur2 "67 GLB + 14 PNG" daha dar kümeydi (hero LOD zincir GLB/dokusu hariç); Karar 5 raporu tam kümeyi (109/56) kullanmış. İkisi de eşit çıktı; kapsam notu eksikti.
+
+### Shader kalıntısı (assets/tools/tests/art/data/design, experiments hariç)
+
+Kalan tüm eşleşmeler gerekçeli: `vegetation_catalog.py:42` (LEGACY_SHARED yasak listesi), `check_vegetation_import.gd:10-12` (yokluk denetimi), `test_vegetation_catalog.py:125,135` (negatif test girdisi), `design/library/vegetation-hero.md:44,118,181-182` (tarihçe: sanat kabulü almadı, Karar 5 ile kaldırıldı). `assets/` ve `art/` içinde canlı kalıntı yok; `assets/hero/vegetation` içinde "proxy" adlı yalnız palmiye proxy GLB/.import.
+
+### Palmiye proxy ve katalog
+
+- `veg_hero_palm_{date,slender}_a_proxy.glb`: kendi GLB ayrıştırmamla 40 üçgen (bütçe ≤40), dcb9c1f ile SHA eşit (bozulmamış), katalogda PROXY seviyesi + 40 tri + SHA doğru. 22 .import'un hepsi `generate_lods=false`.
+- 8 palmiye dışı kayıt: `levels`=LOD0/LOD1, hiçbir `proxy` anahtarı/değeri yok (özyinelemeli arandı), `distances_m` 120/400 + `status: working-model-not-integrated`, `approval: proposed`, `source.kind: hero_vegetation`. Üçgenler GLB'den bağımsız sayımla katalogla eşit; LOD1 en yüksek 286 (<=300), çalı/çit <=120.
+- Gözlem (düşük): palmiye `lod_chain` içinde `proxy_runtime: null`, `proxy_source: null` boş alanları kalıyor (`vegetation_catalog.py:66`); SCHEMA.md:96 yalnız palmiye dışında yok der, tutarlı; işlevsiz ama zararsız.
+
+### Üretim kanıtları (okuma)
+
+`artifacts/verify/t057/karar5-determinism.json`: 27 dosya (22 GLB + atlas PNG + layout + 3 bölge hash'i), baseline = generation1 = generation2; "removed" listesi tam 8 palmiye dışı proxy; baseline'daki 24 `assets/` hash'i diskle eşleşiyor (kendim hesapladım). `karar5-preservation.json`: sayılar (81 kayıt, 109/56, 10 LOD0, atlas) bağımsız sonuçlarımla tutarlı. Uyarı: `artifacts/verify/*` .gitignore'da; bu iki JSON commit'e girmez, yalnız yerel kanıt. Rebuild koşuları yeniden çalıştırılmadı; üç koşunun determinizmi uygulayıcı kaydına dayanır (diskteki sonuç hash'leri doğrulandı).
+
+### Kontak sayfaları
+
+`index.json`: 10 giriş; 8 palmiye dışında yalnız LOD0/LOD1 kareleri (proxy anahtarı yok), palmiyelerde LOD0/LOD1/PROXY + `front_proxy`; tüm referans kareler ve `frames_old` dosyaları diskte var. `representation` ve `review_status` (onaylanmadı) doğru. Gerçekten açılanlar: plane, hedge, cypress sayfaları (başlıkta "LOD0/LOD1; uzak = hücre lekesi, ayrı görev", proxy karesi yok, ön/yan/üst + LOD0/LOD1 karşılaştırma doğru) ve `retired-proxy/proxy-side-top-proof.png`. Retired işareti yalnız klasör adı + `index.json.retired_diagnostics.status` ("RETIRED ... not current"); PNG'nin kendi pikselinde RETIRED yazısı yok (başlık hâlâ "Proxy side/top edge proof"), tek başına açılan görsel retired olduğunu söylemiyor (düşük bulgu). Palmiye sayfaları yeniden üretilmedi (00:42), kabul edilir: palmiye zinciri değişmedi. Sanat kararı verilmedi (art-director kapısı); gözlem: cypress LOD1 (300 tri) LOD0'dan (316) gözle ayırt edilemiyor, hedge LOD1 seyrek.
+
+### Diğer düşük bulgu
+
+`assets/hero/vegetation/lod2_experiment/veg_hero_plane_a_lod2.glb.import` Karar 5 commit'inde yeni izlenen dosya, `generate_lods=true`. 22 bitki mesh'i denetimi dışında; README'deki "tüm .glb.import generate_lods=false" bitki 22 dosya için doğru, bu deney dosyası için değil. Ya `false` yapılmalı ya da deney olarak notlanmalı (kod değiştirmedim).
+
+### Tablo
+
+| Madde | Sonuç |
+|---|---|
+| 1 Python test + 4 denetim | PASS (hepsi exit 0) |
+| 2 Godot import audit + negatif | PASS (negatif exit 1, geri alındı, diff temiz); mesh-LOD yolu negatifi UNVERIFIED |
+| 3 Korunanlar, atlas, kanon/experiments, 67/14 vs 109/56 | PASS, uyuşmazlık çözüldü |
+| 4 Shader kalıntısı | PASS (hepsi gerekçeli) |
+| 5 Palmiye proxy <=40, bozulmamış | PASS |
+| 6 Katalog dürüstlüğü | PASS |
+| 7 Determinism/preservation JSON | tutarlı (okundu, disk hash'leri doğrulandı); rebuild yeniden koşulmadı; JSON'lar gitignore'da |
+| 8 Kontak sayfaları | PASS (3 sayfa + retired görsel açıldı); düşük bulgu: PNG'de RETIRED işareti yok |
+
+Doğrulandı: yukarıdaki komut/hesap sonuçları. Varsayılan: rebuild determinizmi (uygulayıcı kaydı). Test edilmedi: `verify.sh full`, oyun runtime'ı, performans, sanat kabulü, lab commit'siz değişiklik.

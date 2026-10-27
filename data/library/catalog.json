@@ -6135,7 +6135,7 @@
       },
       "triangles": {
         "LOD0": 360,
-        "LOD1": 100
+        "LOD1": 110
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6177,17 +6177,17 @@
           },
           "LOD1": {
             "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_lod1.glb",
-            "sha256": "040a0a14c37618f20ec0dc21e8318bc85d37874dde12c22549b0cf043d4ae4e2",
-            "triangles": 100,
+            "sha256": "cc44c1f215f52105cdb3b892bf98c2661f77b8ece60649494157a69b9cadf811",
+            "triangles": 110,
             "bbox_min": [
-              -2.358746,
-              -0.005754,
-              -0.692598
+              -2.542096,
+              -0.132154,
+              -0.836353
             ],
             "bbox_max": [
-              2.165479,
-              1.142495,
-              0.656657
+              2.209703,
+              1.41227,
+              0.750538
             ],
             "materials": [
               "mat_vegetation_atlas"
@@ -6401,7 +6401,7 @@
       },
       "triangles": {
         "LOD0": 428,
-        "LOD1": 122
+        "LOD1": 260
       },
       "palette_rows": {
         "accent_rows": [],
@@ -6443,17 +6443,17 @@
           },
           "LOD1": {
             "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_lod1.glb",
-            "sha256": "fc80b9ece5e79452bf7e56cbd2ea4443d515a1bb752d744bce524f784bf45ee3",
-            "triangles": 122,
+            "sha256": "6342b84d7edc2d1d96cc748b849b882e05dd22d914bcb72f1fb39349f11f5e0f",
+            "triangles": 260,
             "bbox_min": [
-              -2.492052,
+              -2.733723,
               -0.076485,
-              -2.494612
+              -2.31401
             ],
             "bbox_max": [
-              2.705985,
-              5.197693,
-              1.971458
+              2.690212,
+              5.013425,
+              2.069579
             ],
             "materials": [
               "mat_vegetation_atlas"

@@ -74,7 +74,7 @@ def olive(species,level,rng):
             for k in range(3):
                 tip=(c[0]+rng.uniform(-.8,.8),c[1]+rng.uniform(-.7,.7),c[2]+rng.uniform(-.1,.5))
                 tube([end,tip],[.06,.015],4)
-        tuft(c,(1.0,.9,.40),36 if level=='LOD0' else 7,'olive',rng,1.35 if level=='LOD0' else 1.65)
+        tuft(c,(1.0,.9,.40),36 if level=='LOD0' else 7 if twist else 30,'olive',rng,1.35 if level=='LOD0' or not twist else 1.65)
 
 
 def frond(angle,base,length,width,rise,droop,segments):
@@ -159,8 +159,8 @@ def small(species,level,rng):
         hedge=species=='hedge';count=5 if hedge else 4
         for k in range(count):
             x=(k-(count-1)/2)*(.8 if hedge else .48);z=.6 if hedge else 1.35+(.12 if k%2 else -.1)
-            tube([(x,0,0),(x+.1,0,z)],[.07,.025],4 if level=='LOD0' else 3)
-            tuft((x,.1*math.sin(k),z),(.55,.2 if hedge else .35,.1 if hedge else .4),32 if level=='LOD0' else 7,'maquis',rng,.6 if hedge else 1.0)
+            if not(hedge and level=='LOD1'):tube([(x,0,0),(x+.1,0,z)],[.07,.025],4 if level=='LOD0' else 3)
+            tuft((x,.1*math.sin(k),z),(.55,.2 if hedge else .35,.1 if hedge else .4),32 if level=='LOD0' else 11 if hedge else 7,'maquis',rng,(.6 if level=='LOD0' else .9) if hedge else 1.0)
 
 
 def save(species,level):
