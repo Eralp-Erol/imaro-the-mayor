@@ -345,3 +345,17 @@ Her aşama sonunda safe pause. Bu deney final full, kontak/galeri yenileme veya 
 - Uygulayıcının bildirdiği belirsizlikler (README'de): "durulur" ilk kapı ihlalinde durma diye okundu (sonraki adayı atlamak denenmedi — sabitler/kurallar değiştirilmediği için tuning yapılmadı); alpha-geçen fragmanların derinlik/ID yazdığı varsayımı; küme üyeliği provenance'tan okunuyor (yalnız kapsama bağımsız yeniden hesap); küme boyutları 8,7,8,8,7,9,8,9 (spec "8×8" diyordu).
 - **Hüküm (Karar 4 §4.3'e göre):** alt küme LOD2 ailesi bu sabit tarifle kazanç sağlamıyor; üçüncü temsil ailesi sanat kapısına bile gelmedi. Yol §4.3'te yazıldığı gibi **LOD1'i uzatma (ölçülmüş maliyetle) + hücre HLOD** kararına döner. Bu karar §4.1-D ölçüm (1)(2)(5) ve "LOD1 150 m kontrolü" olmadan verilmez. Sabitler değiştirilmedi, yeni ayar turu yapılmadı.
 - Açık, ölçülmemiş: LOD1'in 120–250 m'de görsel kabulü (art-director kontrol sorusu; `generate_lods=false` importla), 30 ana importta `generate_lods=true` sapmasının önceki karelere etkisi, hücre HLOD'un sanat/maliyet kabulü, iPad/şehir bütçesi.
+
+## Teknik karar 5 · palmiye dışı uzak temsil: tekil proxy BIRAKILIR; zincir LOD0 → LOD1 → hücre leke/HLOD (2026-10-27, Studio Director, kullanıcı yetkisiyle)
+
+Kullanıcı (2026-10-27, sohbet): kararları ben alacağım, detaylarda takılmayacağım; geliştirmeye durmadan devam. Aynı gün mahalle laboratuvarında (`assets/hero/vegetation/neighborhood_lab.*`, gerçek Godot) 900 m zoom-out'ta temsil kullanıcı tarafından "iyi görünüyor" diye değerlendirildi. Bu kullanıcı estetik onayı DEĞİL, yön sinyalidir; katalogda onay alanları değişmez.
+
+**Karar.** Üç tekil-ağaç uzak proxy ailesi (3 kart, F(P,C), kapalı kabuk) ve LOD2 alt kümesi elendi. Palmiye dışı 8 türde tekil ağaç başına ayrı "proxy" temsili artık T-057 kapsamında aranmaz. Zincir: **LOD0 (yakın) → LOD1 (orta) → ayrı görevde hücre başına birleşik ağaç lekesi/HLOD**. Gerekçe: mahalle ölçeğinde (300–900 m) tek ağaç ayrıntısı okunmaz; asıl uzak temsil hücre düzeyindedir (Karar 4 §4.1-D aritmetiği de aynı sonuca varıyordu). Önceki sabit 40-tri/50–120 m değerleri kullanıcı kanonu değildi; bırakılıyor.
+
+**Çalışma eşikleri (teknik çalışma tercihi, ölçülmüş cihaz sonucu DEĞİL):** LOD0 < 120 m, LOD1 < 400 m, ötesi hücre lekesi (T-057 dışı). Mahalle lab'ında bu kuralla görüldü. Karar 4 §4.4'teki ölçüm kuralı entegrasyon görevinde uygulanır; o zamana dek bu sayılar "working-model-not-integrated".
+
+**Palmiyeler** mevcut 40-tri PROXY'yi korur (sanat kapısı onları reddetmedi; uzak kabulleri ayrıca kanıtlanmış değil, raporda böyle yazılır).
+
+**Sözleşme değişiklikleri (Karar 4 §4.5, LOD2 hariç):** 8 palmiye dışı türün çapraz kart proxy GLB/import/proxy_canopy.gdshader/proxy_import.gd/proxy_bakes.json çıkarılır; rebuild.sh'tan bake/pack/proxy-only (palmiye proxy'si hariç) adımları kalkar; katalog zinciri bu türlerde LOD0/LOD1; `check_vegetation_import.gd` ve testler eski shader metnine değil yeni sözleşmeye (gerçek mesh/materyal/import/gölge/kaynak bütünlüğü + anlamlı negatifler) bağlanır; ana importlarda `generate_lods=false`. Atlas y640–1023 tile'ları bayt-eşit bırakılır (ölü piksel; sıfırlama ayrı adım). Eski 81 kayıt/67 GLB/14 PNG ve 10 LOD0 değişmez. Oyuna bağlama yok; hepsi proposed.
+
+**Kabul kanıtı:** mahalle lab'ında 150/300/900 m gerçek kareler (LOD0/LOD1/leke, ham PNG) bağımsız art-director tarafından; kontak sayfaları yeni zincirle; odaklı QA; en sonda final full.
