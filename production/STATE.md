@@ -3,11 +3,10 @@
 Tek devam noktası. `CHECKPOINT` bloğu SessionStart hook'u ile her oturuma enjekte edilir; `handoff` skill'i günceller. Geçmiş: `production/log/`.
 
 <!-- CHECKPOINT:BEGIN -->
-- 2026-10-27 SAFE PAUSE (Claude devri, aşama sonu). T-057 tamamlanmadı; palmiye dışı uzak temsil hâlâ çözülmemiş. STOP açık kullanıcı devam talimatıyla kaldırıldı; çıkışta kendi kilidim silindi, STOP yeniden yazılmadı.
-- Dal/worktree: agent/handover-imaro-m01-349562fb. Bu oturum: Teknik karar 4 (189d37b) + LOD2 alt küme deneyi. Main/push/ana checkout dokunulmadı.
-- Karar 4: 40-tri tekil proxy aranmıyor; ilk aday LOD2 = LOD1'in bit-eşit alt kümesi (kazanç kapısı tri<=172, fragment<=0,80). Sonuç: çınarda 288->270 tri, fragment 0,988 -> P4 FAIL; Godot/sanat aşamasına geçilmedi. Odun segmentlerinin çoğu korumalı (88/160 tri) olduğundan tavan yapısal olarak erişilemezdi. production/qa/T-057-technical-review.md Karar 4 + uygulama sonucu; experiments/t057-lod2/.
-- Doğrulama: audit.py bağımsız yeniden çalıştırıldı (P1/P2/P3/P5 PASS, P4 FAIL, N1/N2 doğru düştü). Korunan yollar değişmedi. Final full YOK; full-latest.json hâlâ eski T-056.
-- Ölçülmeyen: LOD1'in 120-250 m görsel kabulü (generate_lods=false ile), 30 ana importta generate_lods=true sapmasının önceki karelere etkisi, hücre HLOD, iPad/şehir bütçesi, ağaç yoğunluğu.
-- NEXT (kullanıcı/TD kararı): (1) çınar LOD0 vs LOD1 150/250 m ham kareler generate_lods=false ile + art-director; LOD1 kabulse "LOD1 uzat + hücre HLOD" ayrı görev/ADR. (2) göreli lab maliyet ölçümü (4.1-D). Yeni temsil ailesi/ayar turu yok. T-058-061 brief, başlamadı.
-- Q-018 ve T-055 kullanıcı değerlendirmesi açık. Oyun entegrasyonu yok. Eski artifacts/library/ ve tmp/ korunur. Handoff: docs/agent-handoff/T057_CLAUDE_SESSION_2026-10-27.md.
+- 2026-10-27 DEVAM (Claude devri) — kullanıcının açık talimatıyla durmadan sürüyor; STOP yok, kilit claude-t057-continue-20261027. Push/main/oyun entegrasyonu/ana checkout yok; kullanıcı onayı devralınmadı.
+- T-057 DONE (koşullu öneri teslimi): palmiye dışı zincir LOD0->LOD1 (Teknik karar 5; çapraz kart/kabuk/LOD2 alt küme elendi), generate_lods=false, katalog sözleşmesi yenilendi; mahalle lab'ı assets/hero/vegetation/neighborhood_lab.*; devredilenler: 120 m hareketli geçiş + hücre lekesi/HLOD (LOD1 tonunda). Çalışma eşikleri 120/400 m (ölçülmemiş).
+- T-058 DONE (koşullu): 8 sokak donatısı fur_hero_*_a, katalog 99 kayıt; QA 0 engelleyici; sanat PASS WITH FIXES -> B1/B2 düzeltildi -> PASS. Final full HEAD 0d8cf1d PASS (1633 test, canon-guard 105, smoke 180 kare).
+- Kanıt: production/tasks/T-057.md, T-058.md; production/qa/T-057-*.md, T-058-*.md; artifacts/verify/full-latest.json (T-058).
+- Açık (kullanıcı): Q-018 (palmiye/mevsim/çiçek, donatı/metal/kiosk/ışık), T-055 zemin değerlendirmesi, Q-003..Q-017. Hiçbiri onaylanmış sayılmaz.
+- NEXT: T-059 insan stil önerileri, sonra T-060 araç, T-061 yol kesiti; her biri üretim -> bağımsız QA + sanat -> düzelt -> final full. Ağaç/uzak temsil ve entegrasyon ayrı görev.
 <!-- CHECKPOINT:END -->

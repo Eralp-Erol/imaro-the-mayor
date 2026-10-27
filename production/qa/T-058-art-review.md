@@ -74,3 +74,14 @@ Ham kareler. Ortak dizin: `/Users/eralperol/Documents/Projects/imaro-the-mayor-h
 - Kırpım veya ölçekle açılanlar: `20261027-193507-t058-kiosk-back_lod0.png`, `20261027-193334-t058-bus_stop-back_lod0.png`, `20261027-193542-t058-context-scale.png` (durak ve küçük donatı kırpımı), `20261027-193548-t058-context-street.png` (örnekleme), ayrıca bollard/bike_rack/lamp_street/planter `*-far_lod1.png` 4× merkez kırpımı.
 
 Yalnız kontak sayfası üzerinden görülenler (ham olarak ayrıca açılmadı): diğer side/back/top/3q ham kareleri.
+
+## Ek: B1/B2 yeniden inceleme (2026-10-27, art-director)
+
+Hüküm: **PASS** (B1 ve B2 kapandı). Kullanıcı onayı değildir; varlıklar PROPOSED kalır, Q-018 açık.
+
+- B1 kapandı. `captures/20261027-195400-t058-planter-front_lod1.png` ile `-195331-...front_lod0.png` karşılaştırıldı: LOD1 çalısı kubbe biçiminde, toprağa oturuyor, ortalı, LOD0 zarfıyla aynı yükseklik ve genişlikte. 40 m çiftinde (`-195542-...40m_lod0`, `-195547-...40m_lod1`) siluet ve ton aynı, LOD geçişinde fark edilir bir sıçrama yok. LOD1'de saksının orta bandı yok; bu kabul edilebilir.
+- B2 kapandı. Ön, 3/4 ve context-scale karelerinde (`-195243`, `-195306`, `-195513`) güneşli cam açık gri-mavi okunuyor. Çapraz bant yok. Ekran ya da siyah kutu izlenimi kalmadı. Arka yüz (`-195254`) koyu slate, örnek ortalama ≈RGB(57,70,88). Çerçeveli üç panel olarak okunuyor, kara kutu gibi görünmüyor. Aynı karede figür kapsülü de koyu: bu, yüzün gölgede kalmasından geliyor (bu bir çıkarım). Engelleyici değil.
+- Yan etki yok. Kiosk servis penceresi `metal_dark` karosunu kullanıyor (assets.py), cam karosu değil. Koyu iç görünümü tente altında açık kepenk gibi okunuyor. Bank, ahşap ve metal tonlarıyla değişmemiş görünüyor. Durak plağı (D3) hâlâ açık beton olarak okunuyor.
+- Entegrasyona devredilenler (engelleyici değil):
+  - (i) Durağın arka yüzünü üretim ışığında/ortam ayarında yeniden kontrol et. Hâlâ "duvar" gibi okunursa camı yarı saydam yap ya da ışık tarafında çöz. Atlas karosunu daha da açma.
+  - (ii) Saksı çalısının yeşilini T-057 maki ile aynı karede yan yana doğrula.
