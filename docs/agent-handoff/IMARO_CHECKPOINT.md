@@ -6,6 +6,7 @@ Tarih: 2026-10-20 (gece). Hazırlayan: Claude (Studio Director oturumu). Bu dosy
 
 Kullanıcının “önemli bi iş bittiğinde safe pause” tercihi gereği uzak temsil teşhis aşaması kanıt/WIP ile kaydedildi. **T-057 tamamlanmadı.** Tek devam kaydı `production/STATE.md`; duraklama STOP dosyasıyla korunur, sahip olunan kilit bırakılır.
 
+- **Claude için kapsamlı devir:** `docs/agent-handoff/T057_CODEX_TO_CLAUDE_2026-10-27.md`; hazır prompt `docs/agent-handoff/T057_CLAUDE_PROMPT.md`. Son çalışmaWIP1c9c3c0; sonraki devir değişikliği yalnız belgedir. STOP korunuyor.
 - Gerçek worktree `/Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb`, dal `agent/handover-imaro-m01-349562fb`. ÖncekiWIP37d2d2b; bu kayıt yeni WIP commit'indedir. Son kabul edilmiş teslim T-056/fe89e29; ana checkout eski dev/m1-parallel ve korunmuştur.
 - T-057 uzak temsil: çapraz kart mimarisi REJECT, ayrı36tri kapalı kaynak-shell de bağımsız sanat FAIL.10son ham kare açıldı;150m kaynak tacı ve120mLOD1geçişi dolu/koyu geometrik hacme dönüşür. `production/qa/T-057-art-review.md`, `experiments/t057-proxy-shell/README.md`.
 - KaynakLOD0/LOD1 yönü ve eski81kayıt/67GLB/14PNG korunur. Son47odaklıtest PASS; ikiüretim GLB+provenance eşit, gerçekimport/normal/renk/kapalıgeometri/negatifdenetimler PASS. Teknik doğruluk sanat kabulü değildir.
