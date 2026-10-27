@@ -2,7 +2,8 @@ extends Node3D
 ## T-057 mahalle ölçeği laboratuvarı (yalnız lab; oyuna bağlı DEĞİL, hepsi PROPOSED).
 ## Yeni dokulu hero binalar + T-055 zemin dokuları + T-057 bitki önerileri, ~600 m'lik bir mahalle.
 ## Tuşlar: 1=150 m  2=300 m  3=900 m  B=uzak temsil (LOD1 / yeşil leke)  ←→ döndür  ↑↓ eğim  +/- mesafe
-## Bitki seviyesi kamera hedefine uzaklığa göre: <120 m LOD0, <lod1_max LOD1, ötesi yeşil leke (karar önizlemesi).
+## Bitki seviyesi AĞACIN KAMERAYA uzaklığına göre (kamera her değiştiğinde yeniden seçilir): <120 m LOD0,
+## <lod1_max LOD1, ötesi yeşil leke (karar önizlemesi).
 ## Argümanlar: --view=300 --lod1_max=400 --seed=7
 const SPECIES := ["plane", "olive_open", "olive_twisted", "pine_brutia", "cypress", "palm_date", "palm_slender",
 	"maquis", "hedge"]
@@ -38,6 +39,9 @@ func _ready() -> void:
 			_args[pair[0]] = pair[1]
 	_distance = float(_args.get("view", 300))
 	_lod1_max = float(_args.get("lod1_max", 400))
+	_far_blob = String(_args.get("far", "lod1")) == "blob"
+	_yaw = float(_args.get("yaw", _yaw))
+	_pitch = float(_args.get("pitch", _pitch))
 	var catalog: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/library/catalog.json"))
 	for entry in catalog["entries"]:
 		if entry.get("source", {}).get("kind") == "hero_vegetation":
@@ -58,8 +62,8 @@ func _ready() -> void:
 	_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_label.add_theme_constant_override("outline_size", 6)
 	add_child(_label)
-	_place_trees()
 	_update_camera()
+	_place_trees()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -86,8 +90,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			_pitch = maxf(12.0, _pitch - 6.0)
 		KEY_B:
 			_far_blob = not _far_blob
-			_place_trees()
 	_update_camera()
+	_place_trees()
 
 
 func _update_camera() -> void:
@@ -215,7 +219,7 @@ func _place_trees() -> void:
 	for spot in _tree_spots:
 		var pos: Vector3 = spot["pos"]
 		var species: String = spot["species"]
-		var d := Vector2(pos.x, pos.z).length()
+		var d := _camera.position.distance_to(pos)
 		var node: Node3D
 		if d < LOD0_MAX:
 			node = _tree("lod0", species)
