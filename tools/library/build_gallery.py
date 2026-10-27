@@ -13,6 +13,7 @@ FAMILIES = {"old_core": "Tarihî çekirdek", "bazaar": "Çarşı", "res_mid": "O
 GROUPS = {"building": "Binalar", "ground": "Zeminler", "lod": "Bina LOD", "vegetation": "Bitkiler", "furniture": "Donatılar", "human": "İnsanlar", "vehicle": "Araçlar", "road": "Yol kesitleri"}
 FOLDERS = {"vegetation-hero": "vegetation", "furniture-hero": "furniture", "human-hero": "human", "vehicle-hero": "vehicle", "road-hero": "road"}
 PLANT_LABELS = {"plane": "Çınar", "palm_date": "Geniş taçlı palmiye", "palm_slender": "İnce uzun palmiye", "pine_brutia": "Kızılçam", "pine_stone": "Fıstık çamı", "olive_open": "Açık taçlı zeytin", "olive_twisted": "Burgulu gövdeli zeytin", "cypress": "Servi", "maquis": "Maki / çalı kümesi", "hedge": "Budanmış çit"}
+PLANT_VIEWS = {"context-lineup": "Türler · ölçek karşılaştırması", "context-slope": "Yamaç bağlamı", "context-street": "Sokak bağlamı", "context-true": "Hero bina yanında ölçek", "cypress-50m-lod": "Servi · 50 m detay karşılaştırması", "nonpalms-150m-lod": "Sekiz tür · 150 m uzak görünüm", "proxy-side-top-proof": "Uzak modeller · yan ve üst görünüm", "olive_open-scissor-no-msaa": "Zeytin · kenar yumuşatma kapalı", "palm_date-scissor-no-msaa": "Palmiye · kenar yumuşatma kapalı"}
 
 
 def records(root=ROOT):
@@ -28,7 +29,9 @@ def records(root=ROOT):
         result.append((path, label, "lod", note + " · yakın / orta / uzak"))
     for folder, group in FOLDERS.items():
         for path in sorted((base / folder).glob("*.png")):
-            label = PLANT_LABELS.get(path.stem.removeprefix("veg_hero_").removesuffix("_a"), path.stem.replace("_", " ").replace("-", " · ")) if group == "vegetation" else path.stem.replace("_", " ").replace("-", " · ")
+            if group == "vegetation" and path.name == "broad-trees-150m-lod.png" and (base / folder / "nonpalms-150m-lod.png").exists():
+                continue  # Historical QA failure image; newer eight-species proof supersedes it.
+            label = PLANT_VIEWS.get(path.stem, PLANT_LABELS.get(path.stem.removeprefix("veg_hero_").removesuffix("_a"), path.stem.replace("_", " ").replace("-", " · "))) if group == "vegetation" else path.stem.replace("_", " ").replace("-", " · ")
             result.append((path, label, group, "Kütüphane önerisi · onay aktarılmaz"))
     return result
 

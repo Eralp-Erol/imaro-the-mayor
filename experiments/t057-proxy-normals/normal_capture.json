@@ -1,0 +1,175 @@
+{
+  "experimental": true,
+  "source": "assets/hero/vegetation/veg_hero_plane_a_lod0.glb",
+  "source_sha256": "fc10a6f221cda25f5434dc316040bbf032f0d20d91a8c63c68c61be31fbcdcfb",
+  "method": "raw effective object-space glTF normals; front/side/top orthographic; original source alpha>.45",
+  "axis_roundtrip_sentinels": 6,
+  "real_corner_samples": 3072,
+  "max_imported_normal_error": 0.00010005846915185511,
+  "views": [
+    {
+      "view": "front",
+      "path": "experiments/t057-proxy-normals/raw_front.png",
+      "backface_corner_sign_flips": 1440,
+      "region": [
+        0,
+        640,
+        128,
+        128
+      ],
+      "physical_size": [
+        10.012675,
+        13.755527
+      ],
+      "raw_alpha_byte_differences": 0,
+      "source_binary_alpha45_exact": true,
+      "data_region": [
+        0,
+        0,
+        128,
+        128
+      ],
+      "rgb_unique": 4289,
+      "rgba_sha256": "57885438ca0d1c13c9d1087092f2f16f7822f7682673a9c6942ee9ee49752456"
+    },
+    {
+      "view": "side",
+      "path": "experiments/t057-proxy-normals/raw_side.png",
+      "backface_corner_sign_flips": 1632,
+      "region": [
+        128,
+        640,
+        128,
+        128
+      ],
+      "physical_size": [
+        8.674449,
+        13.755527
+      ],
+      "raw_alpha_byte_differences": 0,
+      "source_binary_alpha45_exact": true,
+      "data_region": [
+        128,
+        0,
+        128,
+        128
+      ],
+      "rgb_unique": 4130,
+      "rgba_sha256": "3e91b0cf51a7e043fa3e7c7e5797c1d22f865dc0d3fd9d4bef8f38a18a1b11ae"
+    },
+    {
+      "view": "top",
+      "path": "experiments/t057-proxy-normals/raw_top.png",
+      "backface_corner_sign_flips": 1482,
+      "region": [
+        256,
+        640,
+        128,
+        128
+      ],
+      "physical_size": [
+        10.012675,
+        8.674449
+      ],
+      "raw_alpha_byte_differences": 48,
+      "source_binary_alpha45_exact": true,
+      "data_region": [
+        256,
+        0,
+        128,
+        128
+      ],
+      "rgb_unique": 7139,
+      "rgba_sha256": "cdc5257a9549a1f437936c7565f3000c2f4934a2b54f08d03d2017c953320fc8"
+    }
+  ],
+  "sentinel_linear_rgb": [
+    0.25,
+    0.5,
+    0.75
+  ],
+  "raw_gamma_sentinel_rgba": [
+    64,
+    127,
+    191,
+    255
+  ],
+  "axis_pixels": [
+    {
+      "xy": [
+        1000,
+        380
+      ],
+      "rgba": [
+        255,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "xy": [
+        1001,
+        380
+      ],
+      "rgba": [
+        0,
+        128,
+        128,
+        255
+      ]
+    },
+    {
+      "xy": [
+        1002,
+        380
+      ],
+      "rgba": [
+        128,
+        255,
+        128,
+        255
+      ]
+    },
+    {
+      "xy": [
+        1003,
+        380
+      ],
+      "rgba": [
+        128,
+        0,
+        128,
+        255
+      ]
+    },
+    {
+      "xy": [
+        1004,
+        380
+      ],
+      "rgba": [
+        128,
+        128,
+        255,
+        255
+      ]
+    },
+    {
+      "xy": [
+        1005,
+        380
+      ],
+      "rgba": [
+        128,
+        128,
+        0,
+        255
+      ]
+    }
+  ],
+  "data_png_sha256": "1eae2e5be5a929e296e63649510c1e98dd16908c15bd61f494c7ec448ea5bb6a",
+  "data_png_bytes": 52776,
+  "source_proxy_sha256": "90e756410062d4380821a7cc5591c3978c9edd0bc9772ccafc8f2b72b7eddf6b",
+  "experimental_glb_sha256": "bfddb1d9c52ceb5bef8c0074586c1355d60704f5186b818c73b982c6a629cd9f"
+}

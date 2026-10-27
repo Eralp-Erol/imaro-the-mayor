@@ -1,0 +1,9 @@
+{
+  "cached_normal_captures": true,
+  "files_equal": 3,
+  "hashes": {
+    "assets/hero/vegetation/normal_experiment/object_normals.png": "1eae2e5be5a929e296e63649510c1e98dd16908c15bd61f494c7ec448ea5bb6a",
+    "assets/hero/vegetation/normal_experiment/plane_proxy.glb": "bfddb1d9c52ceb5bef8c0074586c1355d60704f5186b818c73b982c6a629cd9f",
+    "experiments/t057-proxy-normals/normal_capture.json": "42cdccb49972cf50a072051f137125ea4cf85c95dbeedde2778a0cff2707dde4"
+  }
+}

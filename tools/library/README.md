@@ -74,7 +74,10 @@ normal Python test keşfindedir (`tests/library/test_hero_rear_uv.py`).
 
 ```
 uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py -- --base-only
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/bake_proxies.py
+uv run --with pillow==11.3.0 python art/blender/vegetation/pack_proxies.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py -- --proxy-only
 python3 tools/library/vegetation_catalog.py --write
 python3 tools/library/vegetation_catalog.py --check
 python3 tools/library/validate_catalog.py
@@ -91,3 +94,9 @@ var. Yapraklar çift taraflı MASK0.45; blend/sıralama yolu kullanılmaz. Lab
 bu lab ayarıdır, oyun profiline uygulanmaz. Tüm kaynaklar öneri, Q-018 açık.
 Yeni sayfalar `design/library/sheets/vegetation-hero/`; katalog ve `index.json`
 ölçüleri GLB'den gelir. Açıklama/sınırlamalar `design/library/vegetation-hero.md`.
+
+Bitki proxy sırası atlas→base-only→bake→pack→proxy-only zorunludur. Sekiz
+palmiye dışı adayın gerçek LOD0 albedo+alpha ön/yan/üst görünümü mevcut atlasın
+boş alt alanına24 tile olarak paketlenir; üst512 satır değişmez. Provenance
+`assets/hero/vegetation/proxy_bakes.json`; denetim:
+`uv run --with pillow==11.3.0 python tools/library/check_vegetation_proxy_tiles.py`.

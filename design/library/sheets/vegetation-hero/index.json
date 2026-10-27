@@ -172,5 +172,246 @@
         "front_proxy": "artifacts/screenshots/captures/20261027-010922-t057-hedge-front-proxy.png"
       }
     }
+  ],
+  "review_status": "pending independent QA and art; not approved",
+  "representation": {
+    "nonpalms": "source LOD0 albedo+alpha front/side/top crossed cards; 6 tris",
+    "palms": "procedural geometry; 40 tris",
+    "proxy_manifest": "assets/hero/vegetation/proxy_bakes.json",
+    "distance_m": {
+      "lod1": 50,
+      "proxy": 120
+    },
+    "lab_aa": "4xMSAA + alpha coverage; explicit scissor-only diagnostics retained"
+  },
+  "diagnostics": [
+    {
+      "path": "design/library/sheets/vegetation-hero/nonpalms-150m-lod.png",
+      "description": "8 nonpalms x3 LODs; same origin camera light at150m"
+    },
+    {
+      "path": "design/library/sheets/vegetation-hero/broad-trees-150m-lod.png",
+      "description": "first3 rows of current nonpalms comparison"
+    },
+    {
+      "path": "design/library/sheets/vegetation-hero/cypress-50m-lod.png",
+      "description": "same camera50m, source/300tri LOD1/6tri proxy"
+    },
+    {
+      "path": "design/library/sheets/vegetation-hero/proxy-side-top-proof.png",
+      "description": "plane and hedge source/proxy side/top at150m"
+    }
+  ],
+  "diagnostic_frames": [
+    {
+      "asset": "plane",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-010931-t057-impostor-plane-lod0-150.png"
+    },
+    {
+      "asset": "plane",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-010936-t057-impostor-plane-lod1-150.png"
+    },
+    {
+      "asset": "plane",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-010942-t057-impostor-plane-proxy-150.png"
+    },
+    {
+      "asset": "pine_brutia",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-010948-t057-impostor-pine_brutia-lod0-150.png"
+    },
+    {
+      "asset": "pine_brutia",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-010954-t057-impostor-pine_brutia-lod1-150.png"
+    },
+    {
+      "asset": "pine_brutia",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-010959-t057-impostor-pine_brutia-proxy-150.png"
+    },
+    {
+      "asset": "pine_stone",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011005-t057-impostor-pine_stone-lod0-150.png"
+    },
+    {
+      "asset": "pine_stone",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011011-t057-impostor-pine_stone-lod1-150.png"
+    },
+    {
+      "asset": "pine_stone",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011016-t057-impostor-pine_stone-proxy-150.png"
+    },
+    {
+      "asset": "olive_open",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011022-t057-impostor-olive_open-lod0-150.png"
+    },
+    {
+      "asset": "olive_open",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011028-t057-impostor-olive_open-lod1-150.png"
+    },
+    {
+      "asset": "olive_open",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011034-t057-impostor-olive_open-proxy-150.png"
+    },
+    {
+      "asset": "olive_twisted",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011039-t057-impostor-olive_twisted-lod0-150.png"
+    },
+    {
+      "asset": "olive_twisted",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011045-t057-impostor-olive_twisted-lod1-150.png"
+    },
+    {
+      "asset": "olive_twisted",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011051-t057-impostor-olive_twisted-proxy-150.png"
+    },
+    {
+      "asset": "cypress",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011056-t057-impostor-cypress-lod0-150.png"
+    },
+    {
+      "asset": "cypress",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011102-t057-impostor-cypress-lod1-150.png"
+    },
+    {
+      "asset": "cypress",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011108-t057-impostor-cypress-proxy-150.png"
+    },
+    {
+      "asset": "maquis",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011114-t057-impostor-maquis-lod0-150.png"
+    },
+    {
+      "asset": "maquis",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011120-t057-impostor-maquis-lod1-150.png"
+    },
+    {
+      "asset": "maquis",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011126-t057-impostor-maquis-proxy-150.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "lod0",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011132-t057-impostor-hedge-lod0-150.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "lod1",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011138-t057-impostor-hedge-lod1-150.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "proxy",
+      "distance_m": 150,
+      "frame": "artifacts/screenshots/captures/20261027-011143-t057-impostor-hedge-proxy-150.png"
+    },
+    {
+      "asset": "plane",
+      "level": "lod0",
+      "view": "side",
+      "frame": "artifacts/screenshots/captures/20261027-011151-t057-edge-plane-side-lod0.png"
+    },
+    {
+      "asset": "plane",
+      "level": "proxy",
+      "view": "side",
+      "frame": "artifacts/screenshots/captures/20261027-011157-t057-edge-plane-side-proxy.png"
+    },
+    {
+      "asset": "plane",
+      "level": "lod0",
+      "view": "top",
+      "frame": "artifacts/screenshots/captures/20261027-011203-t057-edge-plane-top-lod0.png"
+    },
+    {
+      "asset": "plane",
+      "level": "proxy",
+      "view": "top",
+      "frame": "artifacts/screenshots/captures/20261027-011209-t057-edge-plane-top-proxy.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "lod0",
+      "view": "side",
+      "frame": "artifacts/screenshots/captures/20261027-011215-t057-edge-hedge-side-lod0.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "proxy",
+      "view": "side",
+      "frame": "artifacts/screenshots/captures/20261027-011221-t057-edge-hedge-side-proxy.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "lod0",
+      "view": "top",
+      "frame": "artifacts/screenshots/captures/20261027-011227-t057-edge-hedge-top-lod0.png"
+    },
+    {
+      "asset": "hedge",
+      "level": "proxy",
+      "view": "top",
+      "frame": "artifacts/screenshots/captures/20261027-011233-t057-edge-hedge-top-proxy.png"
+    },
+    {
+      "asset": "cypress",
+      "level": "lod0",
+      "distance_m": 50,
+      "frame": "artifacts/screenshots/captures/20261027-011240-t057-cypress-lod0-50.png"
+    },
+    {
+      "asset": "cypress",
+      "level": "lod1",
+      "distance_m": 50,
+      "frame": "artifacts/screenshots/captures/20261027-011247-t057-cypress-lod1-50.png"
+    },
+    {
+      "asset": "cypress",
+      "level": "proxy",
+      "distance_m": 50,
+      "frame": "artifacts/screenshots/captures/20261027-011253-t057-cypress-proxy-50.png"
+    }
   ]
 }

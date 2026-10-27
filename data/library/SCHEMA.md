@@ -91,3 +91,10 @@ iletir; hero bina denetimine karıştırmaz. Bina araçları yalnız `source.kin
 kayıtlarını işler. Üretim `art/blender/vegetation/`; ölçüm/güncelleme
 `python3 tools/library/vegetation_catalog.py --write|--check`. Negatif drift,
 şema sınıflandırması, aynı Texture2D ve MASK/mipmap kontrolleri vardır.
+
+Sekiz palmiye dışı bitki zincirinde `proxy_source`, kaynak LOD0 hash’i,
+`proxy_bakes.json` yol/hash’i, üst512RGBA hash’i ve üç kaynak görünümün tile
+izini taşır. Proxy üç çapraz kart/6tri;24 türetilmiş tile aynı atlasın alt
+alanındadır. Doğrulayıcı kaynak/manifest/doku drift’ini reddeder; malformed
+source=None/string/list dispatch öncesi tanı verir. Palmiye40tri proxy’leri
+prosedürel kalır. Bu alan kullanıcı onayı veya oyun LOD entegrasyonu değildir.

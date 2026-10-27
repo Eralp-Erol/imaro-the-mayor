@@ -6014,7 +6014,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- cypress",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -6022,6 +6022,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -6208,7 +6221,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- hedge",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -6216,6 +6229,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -6402,7 +6428,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- maquis",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -6410,6 +6436,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -6596,7 +6635,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- olive_open",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -6604,6 +6643,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -6790,7 +6842,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- olive_twisted",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -6798,6 +6850,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -6984,7 +7049,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- palm_date",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -6992,6 +7057,7 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": null,
         "proxy_source": null,
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
@@ -7131,7 +7197,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- palm_slender",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -7139,6 +7205,7 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": null,
         "proxy_source": null,
         "status": "proposed",
         "generator": "art/blender/vegetation/build.py",
@@ -7278,7 +7345,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- pine_brutia",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -7286,6 +7353,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -7472,7 +7552,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- pine_stone",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -7480,6 +7560,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
@@ -7666,7 +7759,7 @@
         "kind": "hero_vegetation",
         "generator": "art/blender/vegetation/build.py",
         "manifest": null,
-        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- plane",
+        "rebuild": "bash art/blender/vegetation/rebuild.sh",
         "spec": "production/tasks/T-057.md"
       },
       "approval": "proposed",
@@ -7674,6 +7767,19 @@
       "approval_date": null,
       "user_note": "",
       "lod_chain": {
+        "proxy_runtime": {
+          "files": {
+            "proxy_canopy.gdshader": "d163f7e036abd352001aa1e4bbf1f6019841b8034d0e018de3ada6f86dce9aec",
+            "proxy_canopy.tres": "c3a3d3d7e588a05e81f2bdb6af19c1e5bd0df9edc3bc1b02dc1c04fc5d8d34dd",
+            "proxy_import.gd": "146a017ae57fc3c03971163b8c527ac86a6560ac548e7814a5469802caae56c9"
+          },
+          "normal": "shared position-based canopy field",
+          "received_shadows": false,
+          "casts_ground_shadow": "double-sided",
+          "ambient_occlusion": 0.55,
+          "ao_light_affect": 0.75,
+          "relightable": true
+        },
         "proxy_source": {
           "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
           "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",

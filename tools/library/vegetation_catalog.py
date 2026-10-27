@@ -34,7 +34,13 @@ def measure_chain(root,species):
     manifest_path=root/'assets/hero/vegetation/proxy_bakes.json'
     manifest=json.loads(manifest_path.read_text()) if not species.startswith('palm') else None
     proxy_source=None if manifest is None else {'manifest':'res://assets/hero/vegetation/proxy_bakes.json','manifest_sha256':sha(manifest_path),'source_lod0_sha256':manifest['assets'][species]['source_lod0_sha256'],'source_upper_rgba_sha256':manifest['source_upper_rgba_sha256'],'representation':'source albedo+alpha front/side/top crossed quads','views':manifest['assets'][species]['views']}
-    return {'proxy_source':proxy_source,'status':'proposed','generator':'art/blender/vegetation/build.py','levels':levels,
+    runtime=None
+    if manifest is not None:
+        files=['proxy_canopy.gdshader','proxy_canopy.tres','proxy_import.gd']
+        runtime={'files':{name:sha(root/'assets/hero/vegetation'/name) for name in files},'normal':'shared position-based canopy field','received_shadows':False,'casts_ground_shadow':'double-sided','ambient_occlusion':.55,'ao_light_affect':.75,'relightable':True}
+        config=(root/levels['PROXY']['glb'].removeprefix('res://')).with_suffix('.glb.import').read_text()
+        if 'import_script/path="res://assets/hero/vegetation/proxy_import.gd"' not in config:raise ValueError('proxy asset import policy missing')
+    return {'proxy_runtime':runtime,'proxy_source':proxy_source,'status':'proposed','generator':'art/blender/vegetation/build.py','levels':levels,
             'atlas':{'path':ATLAS,'sha256':sha(root/ATLAS.removeprefix('res://')),'size_px':[1024,1024],'layout':'res://assets/hero/vegetation/atlas_layout.json','layout_sha256':sha(root/'assets/hero/vegetation/atlas_layout.json')},
             'material_policy':{'alpha_mode':'MASK','alpha_cutoff':.45,'double_sided':True,'roughness':1},
             'distances_m':{'LOD0_max':50,'LOD1_max':120,'status':'working-model-not-integrated'},'budgets':limits(species)}
@@ -47,7 +53,7 @@ def entry(root,species):
             'glb':s['glb'],'glb_sha256':s['sha256'],'materials':s['materials'],
             'dimensions_m':{'width_x':round(hi[0]-lo[0],3),'depth_z':round(hi[2]-lo[2],3),'height_above_ground':round(hi[1],3),'foundation_skirt_depth':round(max(0,-lo[1]),3),'bbox_min':lo,'bbox_max':hi,'measured_from':'GLB POSITION accessors, glTF +Y up, metres'},
             'triangles':{k:v['triangles'] for k,v in chain['levels'].items()},'palette_rows':{'accent_rows':[],'roof_rows':[],'wall_rows':[]},
-            'source':{'kind':'hero_vegetation','generator':'art/blender/vegetation/build.py','manifest':None,'rebuild':'uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- '+species,'spec':'production/tasks/T-057.md'},
+            'source':{'kind':'hero_vegetation','generator':'art/blender/vegetation/build.py','manifest':None,'rebuild':'bash art/blender/vegetation/rebuild.sh','spec':'production/tasks/T-057.md'},
             'approval':'proposed','approval_by':None,'approval_date':None,'user_note':'','lod_chain':chain,
             'notes':'Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil.'}
 

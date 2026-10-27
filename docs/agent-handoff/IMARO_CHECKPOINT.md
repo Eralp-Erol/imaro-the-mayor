@@ -2,17 +2,16 @@
 
 Tarih: 2026-10-20 (gece). Hazırlayan: Claude (Studio Director oturumu). Bu dosya başka sohbet geçmişine ihtiyaç duymadan okunabilir.
 
-## 0. GÜNCEL DURUM (2026-10-27) — SAFE PAUSE NOW / T-057 WIP
+## 0. GÜNCEL DURUM (2026-10-27) — SAFE PAUSE / T-057 BLOCKED
 
-Son kullanıcı talimatı **“safe pause”, ardından “now”**: çalışma hemen durduruldu. Önceki otomatik devam ve görev bitince dur talimatlarının üstündedir. T-057 tamamlanmadı; yeni test/üretim başlatılmaz. Güncel tek devam kaydı `production/STATE.md`, görev sırası `production/autonomy/QUEUE.md`.
+Kullanıcının “önemli bi iş bittiğinde safe pause” tercihi gereği uzak temsil teşhis aşaması kanıt/WIP ile kaydedildi. **T-057 tamamlanmadı.** Tek devam kaydı `production/STATE.md`; duraklama STOP dosyasıyla korunur, sahip olunan kilit bırakılır.
 
-- Dal/worktree: `agent/handover-imaro-m01-349562fb`, `/Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb`; başlangıç HEAD `fe89e29` (T-056). Ana checkout eski `dev/m1-parallel` durumunda; orada güncel kütüphaneyi arama.
-- T-056 teslimi: 21 özgün hero korunarak 42 LOD modeli +21 proxy atlası; QA/sanat/final full PASS (1633 test, kanon guard105, runtime180kare). `design/library/hero-lod.md`.
-- **SAFE PAUSE ETKİN:** ~/.local/state/imaro-autonomy/STOP yazıldı. T-057 hedefli düzeltmesi WIP; tüm-tür son görsel/QA/sanat/full eksik. Eski rapor ve PNG bir kısmı ilk temsil içindir. Devam yalnız açık yeni kullanıcı talimatıyla.
-- PAUSED / WIP T-057 bitki hero önerileri. Hazır sıra T-058 donatı, T-059 insan stil seçenekleri, T-060 araçlar, T-061 yol kesitleri. Her görevde ölçüt/REQ/kanıt planı var. Üretim → bağımsız QA → sanat incelemesi sıralı, tek uygulayıcı ve aynı anda tek Godot.
-- Bütün yeni çıktılar proposed/lab. Kütüphane tamamlanmadan dünyaya ekleme yok; kullanıcıya ait Q-018 kararları/onaylar devralınmaz. T-055 zemin değerlendirmesi hâlâ açık.
-- Galeri: `python3 tools/library/build_gallery.py` → `artifacts/library/t056-gallery.html` (mevcut kullanıcı bağlantısı korunur). Yeni kategori görüntüleri teslimde eklenir.
-- Bu bir etkileşimli Codex oturumudur; arka planda oturumlar arası çalışan yeni zamanlayıcı/gözetmen kurulmuş değildir. Ana checkout, main/remote, izin ayarları ve foundation değiştirilmez.
+- Gerçek worktree `/Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb`, dal `agent/handover-imaro-m01-349562fb`. ÖncekiWIP37d2d2b; bu kayıt yeni WIP commit'indedir. Son kabul edilmiş teslim T-056/fe89e29; ana checkout eski dev/m1-parallel ve korunmuştur.
+- T-057 uzak temsil: çapraz kart mimarisi REJECT, ayrı36tri kapalı kaynak-shell de bağımsız sanat FAIL.10son ham kare açıldı;150m kaynak tacı ve120mLOD1geçişi dolu/koyu geometrik hacme dönüşür. `production/qa/T-057-art-review.md`, `experiments/t057-proxy-shell/README.md`.
+- KaynakLOD0/LOD1 yönü ve eski81kayıt/67GLB/14PNG korunur. Son47odaklıtest PASS; ikiüretim GLB+provenance eşit, gerçekimport/normal/renk/kapalıgeometri/negatifdenetimler PASS. Teknik doğruluk sanat kabulü değildir.
+- T-057 full YOK. Eski full-latest.json T-056fingerprint'ine aittir ve güncel kapsamdan farklıdır. Reddedilen deneyler onaylı galeriye aktarılmadı; geçersiz beyaz ilkimport kareleri ayrı işaretlendi.
+- Devam yalnız yeni açık kullanıcı talimatıyla: teknik direktör ayrı uzak temsil mimarisi/kanıt planı kurar. Reddedilen kart veya tek-hull yönteminde ayar döngüsü/bulk yok;LOD0 korunur, bütçe/mesafe sessiz gevşetilmez.
+- T-058–061 brief olarak bekler. Bütün yeni varlıklar proposed/lab; Q-018 ve T-055 kullanıcı değerlendirmesi açık. Oyun entegrasyonu, main merge, push, foundation değişikliği yok. Önceden var olan artifacts/library/ ve tmp/ korunur; yeni supervisor kurulmadı.
 
 ### Tarihî devir kayıtları (2026-10-21–25; güncel durum değildir)
 

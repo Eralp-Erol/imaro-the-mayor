@@ -3,16 +3,15 @@
 Tek devam noktası. `CHECKPOINT` bloğu SessionStart hook'u ile her oturuma enjekte edilir; `handoff` skill'i günceller. Geçmiş: `production/log/`.
 
 <!-- CHECKPOINT:BEGIN -->
-- SAFE PAUSE — kullanıcı 2026-10-27 açıkça “safe pause”, ardından “now” dedi. Önceki otomatik devam / görev bitince dur talimatlarının üstündedir. Yeni üretim/test/QA/capture başlatılmaz.
-- Dal/worktree: agent/handover-imaro-m01-349562fb · /Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb · Son tamamlanmış teslim fe89e29 (T-056); bu kayıt T-057 WIP duraklama commit'indedir.
-- STOP: ~/.local/state/imaro-autonomy/STOP yazıldı. Devam yalnız kullanıcının açık yeni devam talimatıyla; sahip olunan kilit süreçler kapandıktan sonra bırakılır.
-- T-057 TAMAMLANMADI: 10 proposed bitki /30 GLB /ortak atlas. İlk QA FAIL; taç kütlesi/servi LOD1 ve malformed source düzeltmesi yarım. Görev production/tasks/T-057.md; QA production/qa/T-057-review.md.
-- Uygulayıcı cleanup raporu: kendisine ait çalışan Godot/capture/Python/Blender süreci yok; yeni iş başlatılmadı. Durmadan önce 45 odaklı test geçtiğini bildirdi (son bağımsız kabul değildir).
-- Son WIP: 8 palmiye dışı proxy kaynak LOD0 ön/yan/üst albedo+alpha görünümünden çapraz kartlara çevriliyor (6tri), atlas boş alt bölgesi; servi LOD1 300tri; source typeguard/negatif test eklendi. İlk yeni çınar150m karesi görüldü; nonpalms-150m-lod.png / proxy-side-top-proof.png / cypress-50m-lod.png üretildi fakat henüz açılıp incelenmedi; yeni 33 dosyalık deterministik tekrar, son import audit ve full yapılmadı. Tamamlanmış düzeltme veya PASS denmez.
-- Rapor/PNG'ler kısmen ilk uygulamayı gösteriyor; design/library/vegetation-hero.md ve sheets/vegetation-hero/ son düzeltmeyi her yerde yansıtmayabilir. Galeri üreticisi tools/library/build_gallery.py; güncel WIP'i onaylı teslim gibi sunma.
-- Son bağımsız doğrulanmış T-057 ilk tur: 42 odaklı test, katalog91/0, 30 bitki ortak Texture2D +42 bina importu, eski81 kayıt/hash koruması PASS; bunlar son WIP değişikliklerinden ÖNCE ve görsel QA FAIL ile birlikteydi.
-- Son tamamlanmış broad gate T-056 içindir: artifacts/verify/full-latest.json, 1633 test /0 hata, guard105, runtime180kare. T-057 full BAŞLATILMADI; bu eski raporu T-057 kanıtı sayma.
-- T-058–T-061 yalnız hazır brief'ler; uygulama BAŞLAMADI. İnsan/araç/yol/bitki onayları Q-018 ve T-055 zemin değerlendirmesi açık; hiçbir yeni varlık oyuna bağlanmadı.
-- Devamda: WIP dosya bütünlüğü/katalog/atlas/proxy üretim sırasını kontrol et → kalan hedefli düzeltme/kanıt → QA → sanat → final full; ancak bunlar kullanıcı yeniden devam derse yapılır.
-- Önceden var olan artifacts/library/ ve tmp/ izlenmeyen içerikleri korundu; ana checkout/main/remote/foundation değiştirilmedi.
+- 2026-10-27 SAFE PAUSE — kullanıcının önemli aşama sonunda duraklama tercihi. Uzak bitki temsili araştırması kayıt altına alındı; T-057 tamamlanmadı.
+- Dal/worktree: agent/handover-imaro-m01-349562fb · /Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb. Commit öncesi HEAD37d2d2b; bu checkpoint yeni WIP commit'indedir. Son kabul edilmiş teslim fe89e29 (T-056).
+- T-057 BLOCKED: mevcut<=40tri/120m çalışma sınırında uzak temsil sanat kabulü alamadı. Üç çapraz kart REJECT; ayrı kapalı3D kaynak-shell de bağımsız sanat FAIL. production/tasks/T-057.md; production/qa/T-057-art-review.md.
+- Yakın10 bitki/30GLB ve serviLOD1 yönü korunur; bütün yeni varlıklar proposed/lab. T-057 ölçüt2/7 açık; done veya kullanıcı onayı verilmedi.
+- Teknik karar1–3 production/qa/T-057-technical-review.md. Son aday36tri:24kapalıtaç+8gövde+4çatal,14kaynakdestek,7,440,320alpha-geçerliörnek; gerçeknormaller/opaque/1materyal/0sampler. İkiüretim GLB+provenance birebir; negatifdenetimler PASS.
+- Son10düzeltilmişGodotPNG(142114–142204):150mön/yan/üst/sun60+120mLOD1geçişi bağımsız açıldı; kaynak yapraklıtaç koyu dolu geometrikhacme dönüşüyor. experiments/t057-proxy-shell/{README.md,comparison.png,frames.json}. Beyaz ilkimport kareleri INVALID'dir.
+- Son odaklı kontrol:47test/0hata, artifacts/verify/t057/shell-checkpoint-focused.log (19.158s). Kaynak81kayıt/67GLB/14PNG,10LOD0 veönceki44anaassetpolicy korunmuş; shell preservation.json. Teknik PASS sanat FAIL'i kapatmaz.
+- FINAL FULL YOK. artifacts/verify/full-latest.json eskiT-056'dır;fingerprint c96a3ba37077f18b3c837840d01bd67b509d52ed48977e2be2f1e2f4f549de71 güncel7a539821510dad6fe778e8e44d935bba6bdec41d363922bf21861c2b29cb1990 ilefarklıdır. T-057fullkanıtı sayma.
+- STOP dosyası duraklamada yazılır; yalnız sahip olunan codex-t057-resume-20261027 kilidi bırakılır. Uygulayıcı aktifPIDyok bildirdi; yeniGodot/üretim/test başlatılmaz. main/remote/foundation/ana checkout korunur.
+- NEXT (açık devam talimatından sonra): technical-director ayrı uzak-temsil mimarisi ve kanıt planı belirler; reddedilen yöntemlerde destek/renk/AO/alpha ayar döngüsü veya bulk yok. Bütçe/eşik varsayımları açık teknik karar olmadan gevşetilmez; LOD0 tekrar tasarlanmaz.
+- T-058–061 yalnız brief; T-057 bağımlılığı nedeniyle başlamadı. Q-018 ve T-055 kullanıcı değerlendirmesi açık. Oyun entegrasyonu yok. Eski artifacts/library/ ve tmp/ korunur; reddedilen deney galeri teslimi olarak yayımlanmadı.
 <!-- CHECKPOINT:END -->

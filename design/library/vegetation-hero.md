@@ -1,5 +1,3 @@
-> **SAFE PAUSE / WIP (2026-10-27):** Kullanıcı hemen durdurdu. Aşağıdaki raporun sayı/bulgu/görselleri ilk uygulama içindir; son impostor ve source guard düzeltmesini bütünüyle yansıtmaz. Yeni kanıt görselleri üretilmiş ama incelenmemiştir; son deterministik tekrar, bağımsız yeniden QA/sanat ve full yapılmadı. Bu bir kabul edilmiş teslim değildir. Devam noktası: production/STATE.md.
-
 # Bitki HERO kütüphanesi — T-057 · 2026-10-27
 
 **10 öneri, kullanıcı onayı değil; yalnız kütüphane/lab.** Q-018 palmiye türü,
@@ -31,7 +29,7 @@ konfigürasyonu açık hale getirildi; sonra10'lu dalgaya geçildi. İlk başar�
 capture (GDScript tip çıkarımı) kanıt olarak kullanılmadı. Sonraki çınar/pine
 incelemesinde yakın proxy'deki kopuk taç parçaları ve benzer şemsiye silüeti
 reddedildi: çınar yuvarlaklaştırıldı,3 geniş ağaç proxy'sine bağlı dal şeritleri
-eklendi. Son kanıtlar bu düzeltmeleri içerir.
+eklendi. Bu ilk temsil bağımsız QA tur1’de reddedildi; son kaynak-türetilmiş temsil aşağıdadır.
 
 ## Malzeme, LOD ve maliyet
 
@@ -48,8 +46,8 @@ eklendi. Son kanıtlar bu düzeltmeleri içerir.
   değiştirilmedi. Düşük AA'da ince kenar titreşimi ve uzakta yaprak kaplama
   kaybı riski sürer; dokunmatik/cihaz/iPad kalitesi doğrulanmadı.
 - LOD1 dal/yaprak sayısını azaltır; proxy bütçesi ağaç40, çalı/çit24 üçgen.
-  Geniş ağaç proxy'lerinde5 taç merkezi, çapraz bağlı dal şeritleri ve gövde
-  kullanılır. Yakın proxy tanısı görünüm farkını bilerek açık eder; yakın kamera
+  Sekiz palmiye dışı proxy, gerçek LOD0 ön/yan/üst albedo+alpha bake’inden
+  üç dik kesişen karttır (6 üçgen). Palmiye proxy’leri40 üçgen kalır. Yakın proxy tanısı görünüm farkını bilerek açık eder; yakın kamera
   kullanım önerisi değildir.50/120m mesafeleri yalnız çalışma değeridir;
   otomatik LOD seçimi, rüzgâr veya dünya yerleşimi bu teslimde yoktur.
 
@@ -57,7 +55,10 @@ eklendi. Son kanıtlar bu düzeltmeleri içerir.
 
 ```
 uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py
-/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py -- --base-only
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/bake_proxies.py
+uv run --with pillow==11.3.0 python art/blender/vegetation/pack_proxies.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py -- --proxy-only
 python3 tools/library/vegetation_catalog.py --write
 python3 tools/library/vegetation_catalog.py --check
 python3 tools/library/validate_catalog.py
@@ -89,34 +90,42 @@ binalı kent, yoğun ağaç grupları ve iPad bütçesi geçti sonucu çıkarıl
 
 | Kimlik | Yükseklik m | X×Z m | LOD0 / LOD1 / proxy |
 |---|---:|---:|---:|
-| veg_hero_cypress_a | 10.362 | 2.89×2.75 | 316 / 76 / 22 |
-| veg_hero_hedge_a | 1.197 | 4.80×1.25 | 360 / 100 / 14 |
-| veg_hero_maquis_a | 2.493 | 3.58×2.11 | 288 / 80 / 14 |
-| veg_hero_olive_open_a | 5.021 | 5.37×4.67 | 428 / 122 / 30 |
-| veg_hero_olive_twisted_a | 5.121 | 6.01×4.72 | 552 / 152 / 36 |
+| veg_hero_cypress_a | 10.362 | 2.89×2.75 | 316 / 300 / 6 |
+| veg_hero_hedge_a | 1.197 | 4.80×1.25 | 360 / 100 / 6 |
+| veg_hero_maquis_a | 2.493 | 3.58×2.11 | 288 / 80 / 6 |
+| veg_hero_olive_open_a | 5.021 | 5.37×4.67 | 428 / 122 / 6 |
+| veg_hero_olive_twisted_a | 5.121 | 6.01×4.72 | 552 / 152 / 6 |
 | veg_hero_palm_date_a | 9.425 | 6.84×6.84 | 610 / 150 / 40 |
 | veg_hero_palm_slender_a | 11.315 | 4.64×4.66 | 502 / 150 / 40 |
-| veg_hero_pine_brutia_a | 12.152 | 7.78×7.10 | 608 / 286 / 36 |
-| veg_hero_pine_stone_a | 12.792 | 9.66×8.74 | 544 / 272 / 36 |
-| veg_hero_plane_a | 13.720 | 10.01×8.67 | 1024 / 288 / 36 |
+| veg_hero_pine_brutia_a | 12.152 | 7.78×7.10 | 608 / 286 / 6 |
+| veg_hero_pine_stone_a | 12.792 | 9.66×8.74 | 544 / 272 / 6 |
+| veg_hero_plane_a | 13.720 | 10.01×8.67 | 1024 / 288 / 6 |
 
-30GLB +ortak PNG diskte **0.82MiB** (import cache hariç). Palmiye ölçüleri9.425/11.315m,11.5m çalışma üst sınırının içinde. Çit1.197m ile1.2m çalışma ölçüsüne yakın; değerler üreteç parametresinden değil dosyadan ölçüldü.
+30GLB +ortak PNG diskte **1.22MiB** (import cache hariç). Palmiye ölçüleri9.425/11.315m,11.5m çalışma üst sınırının içinde. Çit1.197m ile1.2m çalışma ölçüsüne yakın; değerler üreteç parametresinden değil dosyadan ölçüldü.
 
-## Açık görsel sorun · uzak proxy henüz onaylı değil
+## Kaynak-türetilmiş düzeltme · bağımsız karar bekliyor
 
-**Görsel PASS verilmedi.** `broad-trees-150m-lod.png`, çınar/kızılçam/fıstık
-çamının aynı origin ve kameradan150m mesafede LOD0/LOD1/proxy karşılaştırmasıdır.
-Proxy için yazılan >120m çalışma eşiğinde bile taç kütlesi kayboluyor: çınar
-beş ayrık yaprak yamasına, fıstık çamı seyrek dallı bir direğe yaklaşıyor.
-Dal bağlantısının teknik olarak düzeltilmesi, taç silüetinin korunduğu kanıtı
-değildir. Yakın kontaklar ve bu uzak kare açıkça bunu gösteriyor.
+İlk QA FAIL sonrası sekiz palmiye dışı adayın tamamı gerçek LOD0 GLB’den
+ışıksız Emission+Transparent /alpha0.45 ile ön, yan ve üst yönden512² bake edilir.
+Işık/gölge bake edilmez; çalışma zamanında tekrar ışıklanan albedodur.
+Her görünüm fiziksel bbox oranıyla kırpılır,112² içerik +8px kenarla128² tile’a
+paketlenir.24 tile mevcut1024² atlasın y640..1023 boş alanındadır; üst512 satır
+bark/yaprak/frond pikselleri bayt eşit korunur, yeni Texture2D/VRAM eklenmez.
+`proxy_bakes.json` kaynak GLB hash/bbox/görünüm/tile RGBA hash’lerini tutar;
+katalog `proxy_source` bu manifesti hash’ler. Üretim sırası önemlidir:
+atlas → base-only → bake → pack → proxy-only → katalog kontrolü. Atlası tek
+başına yeniden yapmak alt proxy tile’larını siler; zincir tamamlanmalıdır.
 
-LOD0 yönü (özellikle yuvarlak çınar vs şemsiye çam ayrımı) koordinatör tarafından
-olumlu değerlendirildi; bu, yeni varlıklara kullanıcı onayı değildir. Teknik
-drift/bütçe testlerinin geçmesi de proxy sanat kapısını kapatmaz. Bağımsız
-QA/art incelemesi beklenir. Muhtemel sınırlı çözüm, aynı bütçede kaynak LOD0'dan
-türetilmiş taç impostor/cross-card proxy'sidir; bu teslimde uygulanmış sayılmaz.
-Kullanıcının güvenli duraklama isteği nedeniyle yeni kategori/T-058 başlatılmaz.
+Servi LOD1 300 üçgenle kaynak sütunun daha sürekli yaprak örtüsünü korur;
+LOD0 stilleri ve çalışma eşikleri50/120m değiştirilmedi. `nonpalms-150m-lod.png`
+sekiz adayın tamamını aynı origin/kamera/ışıkta150m’de gösterir.
+`cypress-50m-lod.png` sütun tanısı; `proxy-side-top-proof.png` çınar/çit yan ve
+üst görünümüdür. Uygulayıcı bu üç gerçek sayfayı açtı: önceki ayrık beş yama
+problemi azalır ve taç kütlesi geri gelir; **görsel PASS verilmedi**. Üç sabit
+kartın açı/ışıklanma/paralaks farkları, özellikle üstten koyu çapraz çizgi ve
+uzakta ton farkı görünür. Yakın proxy kareleri kullanım önerisi değildir.
+Bağımsız QA/art bu sınırlamanın >120m çalışma eşiğinde kabulünü değerlendirecek.
+Kullanıcı onayı ve gerçek şehir/iPad kabulü yok; T-058 başlatılmaz.
 
 ## Dar lab ölçümü ve doğrulama
 
@@ -133,17 +142,63 @@ Texture monitor tüm lab ve render hedeflerini içerir; farkı yalnız atlas
 belleği diye yorumlamayın. MSAA'nın örnek/render hedefi maliyeti de vardır.
 Sık ağaçlık, gerçek şehir, iPad ve düşük-AA uzak görünüm onayı kanıtlanmadı.
 
-- Odaklı Python:42 test; katalog91 kayıt /0 hata /0 uyarı; building21 zincir
-  kontrolü ve genel katalog idempotence kontrolü de geçer.
-- Godot import:30 bitki mesh'i aynı tek Texture2D; çift taraf/MASK0.45/mipmap
-  açık; gerçek ithal üçgenler katalogla aynı. Eski42 bina LOD import denetimi
-  geçer. Kaynak türü ayrımı ve negatif geometri/doku drift testleri vardır.
-- Son tam üretim tekrarı:30GLB +PNG +layout,32/32 dosya bayt/hash eşit
-  (`artifacts/verify/t057/pause-delivery-determinism.json`).
-- Bütün81 eski katalog kaydı ve mevcut GLB hash'leri değişmedi. Yeni10 kayıt
-  proposed; oyun yükleyicisi, manifest, src/scenes ve foundation değişmedi.
--17 yayın PNG'si:10 kontak,4 bağlam,2 AA-off tanı,1 adet 150m LOD karşılaştırması.
-  Uygulayıcı10 kontağın tamamını, sokak/yamaç, AA-off ve150m karelerini açtı.
-- GDScript yeni lab/audit dosyaları ayrıca lint edildi. Tam quick/full bu
-  üretim adımlarında çalıştırılmadı; son teslim kapısı bağımsız inceleme sonrası
-  bir kez çalışacak. Görev done değil; proxy sorunu ve bağımsız karar açık.
+- Yeniden devam sonrası taze odaklı Python: **45 test PASS**
+  (`artifacts/verify/t057/resume-focused.log`); None/string/list source için
+  genel doğrulayıcı ve doğrudan bitki doğrulayıcısı istisna yerine tanı döndürür.
+  Gerçek proxy GLB UV/bbox/6tri, bozuk tile pikseli ve drift negatif testleri var.
+- Katalog91/0 hata/0 uyarı; vegetation/hero/build katalog check temiz.
+  Gerçek son Godot import:30 mesh, tek Texture2D, MASK/çift taraf/mipmap PASS
+  (`resume-import.log`, `resume-runtime-import.log`).
+- Tam üretim tekrarı **33/33 bayt/hash eşit**:30 GLB +PNG +layout +proxy manifest.
+  `artifacts/verify/t057/resume-determinism.json`; tüm komutlar/hash’ler kayıtta.
+- Tile audit:8 kaynak/24 görünüm; üst512RGBA korunumu, kaynak/tile hash ve alfa
+  kaplama kontrolü PASS. Önceki32-dosya sonucu son temsil kanıtı olarak kullanılmaz.
+- fe89e29 ile81 eski kayıt tam eşit;67 GLB +14 PNG hash’i korunur.10 bitki LOD0
+  hash’i düzeltme öncesiyle aynı (`resume-preservation.json`).
+-20 yayın PNG’si:10 güncel kontak,4 bağlam,2 AA-off tanı, geniş3 ve bütün8 aday
+  150m karşılaştırması, servi50m ve yan/üst tanı. `index.json` güncel6tri proxy
+  ve300tri servi LOD1 ölçümlerini/ham capture yollarını içerir; son ek tanı yolları
+  `diagnostics` alanındadır. Eski36tri kontaklar son kanıt diye bırakılmadı.
+- Yukarıdaki dar street ölçümü önceki LOD0 bağlamındandır; bu düzeltmede yeniden
+  ölçülmedi. LOD0 ve üst atlas pikselleri aynı; far-proxy performans ölçümü değildir.
+- Yeni broad quick/full çalıştırılmadı. Son durum: **bağımsız yeniden QA/art ve
+  ardından full bekliyor; görev done değil.**
+
+## Katalogdan tekrar üretim
+
+Katalogdaki her bitkinin `source.rebuild` komutu `bash art/blender/vegetation/rebuild.sh` olur. Ortak atlas nedeniyle tek türün atlasını sıfırlamak güvenli değildir; wrapper tüm batch için atlas → base-only → bake → pack → proxy-only → katalog güncelleme/doğrulama sırasını uygular. `IMARO_BLENDER_BIN` yalnız alternatif Blender binary yolu içindir; varsayılan yerel4.5.14 kurulumudur.
+
+## A1 sanat FAIL sonrası sınırlı materyal adayı · inceleme bekliyor
+
+`proxy_canopy.gdshader` / `proxy_canopy.tres` / `proxy_import.gd` gerçek asset
+import zinciridir.8 palmiye dışı `.glb.import` bu EditorScenePostImport betiğini
+kullanır; malzeme yalnız labda değiştirilmez. Kaynak GLB/atlas/bake dokunulmaz.
+Normaller kart yüzünden değil ortak model-pozisyonu/bbox alanından, yukarı
+0.25 bias ile türetilir; üç kartın kesişiminde aynı konum aynı normale sahiptir.
+Lambert, roughness1, specular0, cull_disabled ve alpha-scissor0.45 korunur.
+Sabit güneş veya emission/unshaded yoktur; canlı ışık/ambient ile tekrar ışıklanır.
+Tek atlas/Texture2D ve üçgen bütçesi aynı kalır. Importta8 küçük materyal örneği
+bbox parametresini taşır; yeni texture veya render pass eklenmez.
+
+`shadows_disabled` alınan gölgeyi kapatır, gölge üretimini kapatmaz
+([Godot4.7 spatial shader belgesi](https://docs.godotengine.org/en/4.7/tutorials/shaders/shader_reference/spatial_shader.html)).
+Mesh çift taraf gölge üretir: zemindeki alpha-silüet gölgesi kalır. Buna karşılık
+proxy başka bina/ağaçların gölgesini de almaz; uzak canopy için gerçek bir
+tradeoff’tur. AO0.55/AO_LIGHT_AFFECT0.75 çözümlenmeyen yaprak örtüşmesine kaba
+malzeme yaklaşımıdır; Compatibility görüntüsünde gölge kaybını bütünüyle telafi
+etmediği gözlendi. Kaynak albedo değiştirilmez veya önceden ışıklanmaz.
+
+İlk gerçek150m çınar ön/yan/üst adayı koyu X’i kaldırır fakat kaynakta görülen
+ince gölge/ışık dağılımından daha düzgün/açık kalır. **Sanat PASS’ı değildir.**
+Bu ilk aday henüz bütün8 uzak/contact kanıtına geçirilmedi; eski son sayfalar
+önceki materyali gösterir. İlk aday ham PNG’ler `artifacts/screenshots/captures/`
+altında `20261027-120851-t057-a1-plane-calibrated-front.png` ve
+`20261027-120855-t057-a1-plane-calibrated-top.png`; kaynak eşleri
+`20261027-120725-t057-a1-plane-front-lod0.png`,
+`20261027-120741-t057-a1-plane-top-lod0.png`.
+
+Odaklı suite47 PASS (`artifacts/verify/t057/a1-tests.log`); gerçek runtime audit
+30 mesh/tek texture/8 importlu shader policy/zemin gölgesi ayarı PASS
+(`a1-runtime.log`). İki yeni negatif test shader içeriği drift’i ve gerçek
+GLB import assignment kaldırılmasını reddeder. Materyal/helper/import SHA’ları
+katalog `proxy_runtime` içindedir. GDScript lint temiz (`a1-lint.log`).

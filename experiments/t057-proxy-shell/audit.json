@@ -1,0 +1,42 @@
+{
+  "connection": {
+    "stem_tip_inside_crown": true,
+    "fork_tip_inside_crown": true,
+    "fork_base_inside_stem": true
+  },
+  "actual_triangles": 36,
+  "components": [
+    {
+      "triangles": 24,
+      "signed_volume": 135.55149804905
+    },
+    {
+      "triangles": 8,
+      "signed_volume": 1.078725623880201
+    },
+    {
+      "triangles": 4,
+      "signed_volume": 0.08938945755793777
+    }
+  ],
+  "all_edges_two_faces": true,
+  "outward_winding": true,
+  "geometric_flat_normals": true,
+  "linear_vertex_color_max_error": 7.341104002467347e-09,
+  "source_supports_verified": 14,
+  "source_face_nearest16_color_verified": 24,
+  "textures": 0,
+  "materials": 1,
+  "bbox": {
+    "min": [
+      -4.7892262140909825,
+      -0.03381974995136261,
+      -3.7502340734004975
+    ],
+    "max": [
+      4.641501750051975,
+      13.422882914543152,
+      4.140020384391149
+    ]
+  }
+}

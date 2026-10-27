@@ -132,6 +132,22 @@ class VegetationCatalogTests(unittest.TestCase):
             public_errors,_=validate_catalog.validate(bad_catalog,str(ROOT),None)
             self.assertTrue(any('source must be an object' in error for error in public_errors))
 
+    def test_proxy_runtime_shader_drift_is_rejected(self):
+        entry=next(e for e in self.plants if e['family']=='hero_plane')
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);shutil.copytree(ROOT/'assets/hero/vegetation',root/'assets/hero/vegetation')
+            shader=root/'assets/hero/vegetation/proxy_canopy.gdshader'
+            shader.write_text(shader.read_text().replace('shadows_disabled','ambient_light_disabled'))
+            self.assertTrue(any('lod_chain' in error for error in vc.validate_chain(entry,root)))
+
+    def test_proxy_import_assignment_missing_is_rejected(self):
+        entry=next(e for e in self.plants if e['family']=='hero_plane')
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);shutil.copytree(ROOT/'assets/hero/vegetation',root/'assets/hero/vegetation')
+            config=root/'assets/hero/vegetation/veg_hero_plane_a_proxy.glb.import'
+            config.write_text(config.read_text().replace('import_script/path="res://assets/hero/vegetation/proxy_import.gd"','import_script/path=""'))
+            self.assertTrue(any('import policy missing' in error for error in vc.validate_chain(entry,root)))
+
     def test_unknown_family_is_rejected(self):
         e=copy.deepcopy(self.plants[0]);e['family']='hero_unknown_species'
         self.assertTrue(vc.validate_chain(e,ROOT))
