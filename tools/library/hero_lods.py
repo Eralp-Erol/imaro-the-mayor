@@ -55,7 +55,9 @@ def update(catalog,root):
 
 def validate_chain(entry,root):
     errors=[]
-    if 'lod_chain' not in entry: return errors
+    source=entry.get('source')
+    if not isinstance(source,dict):return [entry.get('id','?')+': source must be an object']
+    if 'lod_chain' not in entry or source.get('kind')!='hero': return errors
     ident=entry.get('id','?')
     try:
         expected=chain(Path(root),entry)

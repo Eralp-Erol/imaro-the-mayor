@@ -69,3 +69,25 @@ Proxy yalnız ön bake kullanır; yan/arka tile özgün albedoyu korur.
 `uv run --with pillow==11.3.0 python tools/library/check_proxy_side_tiles.py`
 bu tile'ın değişmediğini piksel üzerinden denetler. GLB arka yüz UV regresyonu
 normal Python test keşfindedir (`tests/library/test_hero_rear_uv.py`).
+
+## Bitki HERO önerileri (T-057, kütüphane/lab)
+
+```
+uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py
+/Applications/Blender.app/Contents/MacOS/Blender --background --factory-startup --python art/blender/vegetation/build.py
+python3 tools/library/vegetation_catalog.py --write
+python3 tools/library/vegetation_catalog.py --check
+python3 tools/library/validate_catalog.py
+tools/godot.sh --headless --path . --editor --import --quit
+tools/godot.sh --headless --path . --script res://tools/library/check_vegetation_import.gd
+uv run --with pillow==11.3.0 python tools/library/render_vegetation_sheets.py
+python3 -m unittest discover -s tests/library -p 'test_*.py' -q
+```
+
+GLB'ler gömülü PNG yükü taşımaz;30 model tek gerçek `vegetation_atlas.png`
+Texture2D kaynağını kullanır. PNG import ayarında mipmap açık, alpha-border düzeltmesi
+var. Yapraklar çift taraflı MASK0.45; blend/sıralama yolu kullanılmaz. Lab
+`--aa=off` ile MSAA/coverage olmadan tanı üretir; varsayılan4×MSAA+coverage yalnız
+bu lab ayarıdır, oyun profiline uygulanmaz. Tüm kaynaklar öneri, Q-018 açık.
+Yeni sayfalar `design/library/sheets/vegetation-hero/`; katalog ve `index.json`
+ölçüleri GLB'den gelir. Açıklama/sınırlamalar `design/library/vegetation-hero.md`.

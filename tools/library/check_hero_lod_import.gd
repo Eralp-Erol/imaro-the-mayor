@@ -11,7 +11,7 @@ func _check() -> void:
 	var checked := 0
 	var textures := {}
 	for entry in catalog["entries"]:
-		if not entry.has("lod_chain"):
+		if not entry.has("lod_chain") or entry.get("source", {}).get("kind") != "hero":
 			continue
 		var chain: Dictionary = entry["lod_chain"]
 		var original := (load(chain["levels"]["LOD0"]["glb"]) as PackedScene).instantiate()

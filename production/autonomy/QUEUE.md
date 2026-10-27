@@ -3,6 +3,8 @@
 Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CONTRACT.md`. Durumlar: ready · in-progress · done · blocked.
 "Deneme": başarısız/yarım bırakılan tur sayısı (3'te `blocked`).
 
+**SAFE PAUSE NOW (kullanıcı, 2026-10-27):** Pipeline hemen durduruldu; STOP etkin. T-057 WIP / ilk QA FAIL sonrası hedefli düzeltme yarım; done değil. T-058+ uygulanmadı. Yalnız yeni açık devam talimatıyla sürdür.
+
 | ID | Görev | Bağımlılık | Durum | Deneme | Not |
 |---|---|---|---|---|---|
 | T-040 | İlk nedensel döngü: imar → yatırımcı → inşaat → gerçek 3D yapı → ölçülebilir sonuç | — | **done** (2026-10-24) | 0 | QA tur 3 PASS · kapanış smoke SMOKE_OK (ort 6,86 / P95 13,01 ms) · açık kayıtlar: `production/tasks/T-040.md` KAPANIŞ |
@@ -15,6 +17,11 @@ Protokol: `production/autonomy/RUN-PROTOCOL.md` · Sözleşme: `production/M2-CO
 | T-054 | **TEMEL** Bina ailesi hero'ları batch 1 (kütüphane; OYUNA EKLENMEZ) | T-053 | **done** (f40b2d3; kullanıcı: "hepsi güzel") — in-progress eskiden: (2026-10-25, kullanıcı: "bu stil iyi base; tüm assetler hero olarak; library tamamlanmadan oyuna ekleme yok") | 0 | çarşı evi, orta/geç apartman, müstakil/yamaç, sanayi, kamu+saat kulesi; ardından insan/araç/yol kesiti/bitki/zemin/donatı hero'ları |
 | T-055 | **TEMEL** Zemin ve arazi hero'ları (doku kütüphanesi: taş döşeme, asfalt, toprak, ot/çalı/tarla, kum/çakıl/kaya) — OYUNA EKLENMEZ | T-054 | **teslim / kullanıcı değerlendirmesi bekliyor** (bc6d2e9, 14 doku; 2026-10-25) | 0 | kullanıcı: mevcut zemin "0 gerçekçi, blurry, piksel piksel; sadece kahverengiye boyanmış" — kent zemini 9d149b8 GEÇİCİ yer tutucu; çözüm doku tabanlı hero'lar; sonra kullanıcı onayı ve (kütüphane bitince) araziye bağlama |
 | T-056 | Hero LOD zincirleri (LOD0 hero ≤~100 m, LOD1 ~400–800 üçgen, proxy) + bütçe ölçümü — OYUNA EKLEMEDEN ÖNCE | T-054, T-055 | **done — kütüphane teslimi** (2026-10-26; QA + sanat + full PASS; 42 LOD +21 proxy atlası, kullanıcı onayı aktarılmadı) | 0 | kullanıcı 2026-10-25: tüm hero ailelerini beğendi ("hepsi güzel, buradan devam"); 54k bina tüm LOD0 olamaz: LOD/HLOD/MultiMesh hattı kullanılacak; kütüphane tamamlanmadan oyuna ekleme yok |
+| T-057 | **KÜTÜPHANE** Bitki hero önerileri (10+ varlık; LOD zinciri; yalnız lab) | T-054, T-056 | **in-progress — PAUSED WIP** (2026-10-27; kullanıcı safe pause now) | 0 | production/tasks/T-057.md; ardından donatı → insan → araç → yol kesiti önerileri; kullanıcı onayı devralınmaz |
+| T-058 | **KÜTÜPHANE** Sokak donatısı hero önerileri | T-057 | ready (2026-10-27; otomatik pipeline) | 0 | production/tasks/T-058.md; yalnız proposed/lab |
+| T-059 | **KÜTÜPHANE** İnsan stil seçenekleri — kullanıcı seçimi öncesi görsel öneri | T-057 | ready (2026-10-27; otomatik pipeline) | 0 | production/tasks/T-059.md; yalnız proposed/lab |
+| T-060 | **KÜTÜPHANE** Araç hero önerileri — ilk işlevsel silüet ailesi | T-057 | ready (2026-10-27; otomatik pipeline) | 0 | production/tasks/T-060.md; yalnız proposed/lab |
+| T-061 | **KÜTÜPHANE** Yol kesiti hero önerileri — ilk görsel katalog | T-057, T-058 | ready (2026-10-27; otomatik pipeline) | 0 | production/tasks/T-061.md; yalnız proposed/lab |
 | T-050 | **GÖRÜNÜR OYUN 4/4** Araç ve insan: ilk yaşam belirtisi (sim verisine bağlı) | T-048 | ready | 0 | `production/tasks/T-050.md` |
 | T-041 | Parsel/bölge denetçisi + nedensellik zinciri (metro/ilçe/sokak zoom) | T-040 | ready | 0 | görev dosyası: `production/tasks/T-041.md` |
 | T-042 | Oyuncu yol/kamusal alan çizimi → altyapı kapasitesi → yatırımcı kararı | T-040 | ready | 0 | `production/tasks/T-042.md` |

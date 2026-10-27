@@ -1,0 +1,176 @@
+{
+  "task": "T-057",
+  "source": "actual Godot frames",
+  "entries": [
+    {
+      "id": "veg_hero_plane_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_plane_a.png",
+      "height_m": 13.72,
+      "triangles": {
+        "LOD0": 1024,
+        "LOD1": 288,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-004106-t057-plane-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-004110-t057-plane-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004115-t057-plane-top-lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-004120-t057-plane-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010830-t057-plane-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_palm_date_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_palm_date_a.png",
+      "height_m": 9.425,
+      "triangles": {
+        "LOD0": 610,
+        "LOD1": 150,
+        "PROXY": 40
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003115-t057-palm_date-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003250-t057-palm_date-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004220-t057-palm_date-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-003259-t057-palm_date-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-003304-t057-palm_date-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_palm_slender_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_palm_slender_a.png",
+      "height_m": 11.315,
+      "triangles": {
+        "LOD0": 502,
+        "LOD1": 150,
+        "PROXY": 40
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003310-t057-palm_slender-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003315-t057-palm_slender-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004226-t057-palm_slender-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-003325-t057-palm_slender-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-003329-t057-palm_slender-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_pine_brutia_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_pine_brutia_a.png",
+      "height_m": 12.152,
+      "triangles": {
+        "LOD0": 608,
+        "LOD1": 286,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-004130-t057-pine_brutia-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-004135-t057-pine_brutia-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004139-t057-pine_brutia-top-lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-004144-t057-pine_brutia-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010836-t057-pine_brutia-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_pine_stone_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_pine_stone_a.png",
+      "height_m": 12.792,
+      "triangles": {
+        "LOD0": 544,
+        "LOD1": 272,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-004155-t057-pine_stone-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-004159-t057-pine_stone-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004204-t057-pine_stone-top-lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-004209-t057-pine_stone-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010842-t057-pine_stone-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_olive_open_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_olive_open_a.png",
+      "height_m": 5.021,
+      "triangles": {
+        "LOD0": 428,
+        "LOD1": 122,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003426-t057-olive_open-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003431-t057-olive_open-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004232-t057-olive_open-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-003440-t057-olive_open-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010849-t057-olive_open-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_olive_twisted_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_olive_twisted_a.png",
+      "height_m": 5.121,
+      "triangles": {
+        "LOD0": 552,
+        "LOD1": 152,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003451-t057-olive_twisted-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003456-t057-olive_twisted-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004238-t057-olive_twisted-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-003505-t057-olive_twisted-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010855-t057-olive_twisted-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_cypress_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_cypress_a.png",
+      "height_m": 10.362,
+      "triangles": {
+        "LOD0": 316,
+        "LOD1": 300,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003517-t057-cypress-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003521-t057-cypress-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004244-t057-cypress-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-010906-t057-cypress-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010901-t057-cypress-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_maquis_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_maquis_a.png",
+      "height_m": 2.493,
+      "triangles": {
+        "LOD0": 288,
+        "LOD1": 80,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003542-t057-maquis-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003546-t057-maquis-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004249-t057-maquis-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-003556-t057-maquis-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010913-t057-maquis-front-proxy.png"
+      }
+    },
+    {
+      "id": "veg_hero_hedge_a",
+      "path": "design/library/sheets/vegetation-hero/veg_hero_hedge_a.png",
+      "height_m": 1.197,
+      "triangles": {
+        "LOD0": 360,
+        "LOD1": 100,
+        "PROXY": 6
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-003607-t057-hedge-front-lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-003611-t057-hedge-side-lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-004255-t057-hedge-top-final.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-003622-t057-hedge-front-lod1.png",
+        "front_proxy": "artifacts/screenshots/captures/20261027-010922-t057-hedge-front-proxy.png"
+      }
+    }
+  ]
+}

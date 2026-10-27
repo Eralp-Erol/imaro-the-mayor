@@ -2,7 +2,20 @@
 
 Tarih: 2026-10-20 (gece). Hazırlayan: Claude (Studio Director oturumu). Bu dosya başka sohbet geçmişine ihtiyaç duymadan okunabilir.
 
-## 0. GÜNCEL DURUM (2026-10-21, akşam) — M2'ye geçiş (bu bölüm eski §1–§7'nin ÜSTÜNDEDİR)
+## 0. GÜNCEL DURUM (2026-10-27) — SAFE PAUSE NOW / T-057 WIP
+
+Son kullanıcı talimatı **“safe pause”, ardından “now”**: çalışma hemen durduruldu. Önceki otomatik devam ve görev bitince dur talimatlarının üstündedir. T-057 tamamlanmadı; yeni test/üretim başlatılmaz. Güncel tek devam kaydı `production/STATE.md`, görev sırası `production/autonomy/QUEUE.md`.
+
+- Dal/worktree: `agent/handover-imaro-m01-349562fb`, `/Users/eralperol/Documents/Projects/imaro-the-mayor-handover-imaro-m01-349562fb`; başlangıç HEAD `fe89e29` (T-056). Ana checkout eski `dev/m1-parallel` durumunda; orada güncel kütüphaneyi arama.
+- T-056 teslimi: 21 özgün hero korunarak 42 LOD modeli +21 proxy atlası; QA/sanat/final full PASS (1633 test, kanon guard105, runtime180kare). `design/library/hero-lod.md`.
+- **SAFE PAUSE ETKİN:** ~/.local/state/imaro-autonomy/STOP yazıldı. T-057 hedefli düzeltmesi WIP; tüm-tür son görsel/QA/sanat/full eksik. Eski rapor ve PNG bir kısmı ilk temsil içindir. Devam yalnız açık yeni kullanıcı talimatıyla.
+- PAUSED / WIP T-057 bitki hero önerileri. Hazır sıra T-058 donatı, T-059 insan stil seçenekleri, T-060 araçlar, T-061 yol kesitleri. Her görevde ölçüt/REQ/kanıt planı var. Üretim → bağımsız QA → sanat incelemesi sıralı, tek uygulayıcı ve aynı anda tek Godot.
+- Bütün yeni çıktılar proposed/lab. Kütüphane tamamlanmadan dünyaya ekleme yok; kullanıcıya ait Q-018 kararları/onaylar devralınmaz. T-055 zemin değerlendirmesi hâlâ açık.
+- Galeri: `python3 tools/library/build_gallery.py` → `artifacts/library/t056-gallery.html` (mevcut kullanıcı bağlantısı korunur). Yeni kategori görüntüleri teslimde eklenir.
+- Bu bir etkileşimli Codex oturumudur; arka planda oturumlar arası çalışan yeni zamanlayıcı/gözetmen kurulmuş değildir. Ana checkout, main/remote, izin ayarları ve foundation değiştirilmez.
+
+### Tarihî devir kayıtları (2026-10-21–25; güncel durum değildir)
+
 **Yön değişti:** kullanıcı M1'deki "M02 YOK / DUR" kısıtını kaldırdı; M1'in bekleyen kullanıcı/cihaz kabulleri (Q-015, iPad, Windows, T-009/T-010,
 art-director, demo incelemesi) `docs/agent-handoff/M01_OPEN_ITEMS.md`'de AÇIK kayıtlı, yeni geliştirmeyi durdurmaz ve kullanıcı adına verilmedi.
 M2 sözleşmesi: **`production/M2-CONTRACT.md`** (M1'in `exit 2` durdurmasını KULLANMAZ). İlk M2 görevi: **`production/tasks/T-040.md`**

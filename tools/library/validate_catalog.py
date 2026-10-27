@@ -17,6 +17,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import build_catalog as bc  # noqa: E402
 import hero_lods  # noqa: E402
+import vegetation_catalog  # noqa: E402
 
 ID_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -90,9 +91,12 @@ def check_entry(e, cats, root, errors, warnings):
     elif tris is not None:
         err("triangles must be an object")
 
-    errors.extend(hero_lods.validate_chain(e, root))
-
     src = e.get("source")
+    if isinstance(src, dict):
+        handler = vegetation_catalog if src.get("kind") == "hero_vegetation" else hero_lods
+        errors.extend(handler.validate_chain(e, root))
+    else:
+        err("source must be an object")
     if isinstance(src, dict):
         gen = src.get("generator")
         if src.get("kind") == "kit":
@@ -100,8 +104,7 @@ def check_entry(e, cats, root, errors, warnings):
                 err("source.generator missing on disk: %r" % gen)
         elif gen and not os.path.isfile(os.path.join(root, gen)) and appr != "proposed":
             err("source.generator missing on disk: %r" % gen)
-    elif src is not None:
-        err("source must be an object")
+
 
 
 def validate(catalog, root, manifest):
@@ -159,7 +162,7 @@ def validate(catalog, root, manifest):
                 errors.append("%s: PROXY %d tris over budget %d" % (m["id"], tris["PROXY"],
                                                                     budgets["proxy_max_tris"]))
         for e in entries:
-            if e.get("source", {}).get("kind") == "kit" and e.get("id") not in mod_ids:
+            if isinstance(e.get("source"), dict) and e["source"].get("kind") == "kit" and e.get("id") not in mod_ids:
                 if e.get("approval") == "provisional-in-use":
                     errors.append("%s: provisional-in-use but no longer in the manifest" % e["id"])
                 else:

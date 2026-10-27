@@ -1,0 +1,192 @@
+{
+  "size": 1024,
+  "regions": {
+    "bark": [
+      0,
+      0,
+      256,
+      256
+    ],
+    "olive": [
+      256,
+      0,
+      256,
+      256
+    ],
+    "plane": [
+      512,
+      0,
+      256,
+      256
+    ],
+    "pine": [
+      768,
+      0,
+      256,
+      256
+    ],
+    "palm_bark": [
+      0,
+      256,
+      256,
+      256
+    ],
+    "maquis": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "frond": [
+      512,
+      256,
+      512,
+      256
+    ],
+    "proxy_plane_front": [
+      0,
+      640,
+      128,
+      128
+    ],
+    "proxy_plane_side": [
+      128,
+      640,
+      128,
+      128
+    ],
+    "proxy_plane_top": [
+      256,
+      640,
+      128,
+      128
+    ],
+    "proxy_pine_brutia_front": [
+      384,
+      640,
+      128,
+      128
+    ],
+    "proxy_pine_brutia_side": [
+      512,
+      640,
+      128,
+      128
+    ],
+    "proxy_pine_brutia_top": [
+      640,
+      640,
+      128,
+      128
+    ],
+    "proxy_pine_stone_front": [
+      768,
+      640,
+      128,
+      128
+    ],
+    "proxy_pine_stone_side": [
+      896,
+      640,
+      128,
+      128
+    ],
+    "proxy_pine_stone_top": [
+      0,
+      768,
+      128,
+      128
+    ],
+    "proxy_olive_open_front": [
+      128,
+      768,
+      128,
+      128
+    ],
+    "proxy_olive_open_side": [
+      256,
+      768,
+      128,
+      128
+    ],
+    "proxy_olive_open_top": [
+      384,
+      768,
+      128,
+      128
+    ],
+    "proxy_olive_twisted_front": [
+      512,
+      768,
+      128,
+      128
+    ],
+    "proxy_olive_twisted_side": [
+      640,
+      768,
+      128,
+      128
+    ],
+    "proxy_olive_twisted_top": [
+      768,
+      768,
+      128,
+      128
+    ],
+    "proxy_cypress_front": [
+      896,
+      768,
+      128,
+      128
+    ],
+    "proxy_cypress_side": [
+      0,
+      896,
+      128,
+      128
+    ],
+    "proxy_cypress_top": [
+      128,
+      896,
+      128,
+      128
+    ],
+    "proxy_maquis_front": [
+      256,
+      896,
+      128,
+      128
+    ],
+    "proxy_maquis_side": [
+      384,
+      896,
+      128,
+      128
+    ],
+    "proxy_maquis_top": [
+      512,
+      896,
+      128,
+      128
+    ],
+    "proxy_hedge_front": [
+      640,
+      896,
+      128,
+      128
+    ],
+    "proxy_hedge_side": [
+      768,
+      896,
+      128,
+      128
+    ],
+    "proxy_hedge_top": [
+      896,
+      896,
+      128,
+      128
+    ]
+  },
+  "seed": 57001
+}

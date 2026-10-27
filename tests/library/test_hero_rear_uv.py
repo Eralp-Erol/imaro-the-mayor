@@ -54,7 +54,7 @@ class HeroRearUVTests(unittest.TestCase):
     def test_exported_rear_mapping_matches_approved_source(self):
         catalog=json.loads((ROOT/'data/library/catalog.json').read_text())
         for entry in catalog['entries']:
-            if 'lod_chain' not in entry:continue
+            if 'lod_chain' not in entry or entry.get('source',{}).get('kind')!='hero':continue
             family=hero_lods.FAMILY_MAP[entry['family']]
             dimensions={'W':hero_layout.W,'D':hero_layout.D,'H':hero_layout.H} if family=='old_core' else fam_layout.FAMILIES[family]()
             source=rear_corners(ROOT/entry['glb'].removeprefix('res://'),dimensions['W'],dimensions['D'],dimensions['H'])

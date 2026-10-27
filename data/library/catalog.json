@@ -5964,6 +5964,1852 @@
       "user_note": ""
     },
     {
+      "id": "veg_hero_cypress_a",
+      "label_tr": "Servi",
+      "category": "vegetation",
+      "family": "hero_cypress",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:cypress"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_lod0.glb",
+      "glb_sha256": "725571feea04ac4645635363576e7febc4d1bf58a794a969f0e953190ff2aa1a",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 2.894,
+        "depth_z": 2.755,
+        "height_above_ground": 10.362,
+        "foundation_skirt_depth": 0,
+        "bbox_min": [
+          -1.315632,
+          0.0,
+          -1.481942
+        ],
+        "bbox_max": [
+          1.578448,
+          10.361515,
+          1.2726
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 316,
+        "LOD1": 300,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- cypress",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "725571feea04ac4645635363576e7febc4d1bf58a794a969f0e953190ff2aa1a",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                2.89408,
+                10.361515
+              ],
+              "region": [
+                896,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "974cdf200b4c24c45aa47eb7ce90ab627a69c97933fee32a4b99c85fa656c854"
+            },
+            "side": {
+              "physical_size": [
+                2.754542,
+                10.361515
+              ],
+              "region": [
+                0,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "2d5ceab253463f0cef4b7903d9947821902dc9ebcedefa9c6fd5cc9d79b40994"
+            },
+            "top": {
+              "physical_size": [
+                2.89408,
+                2.754542
+              ],
+              "region": [
+                128,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "e784ad8cd745169882f1ad8ae60124e22f79eabca4141e865c7c27d5da8c206c"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_lod0.glb",
+            "sha256": "725571feea04ac4645635363576e7febc4d1bf58a794a969f0e953190ff2aa1a",
+            "triangles": 316,
+            "bbox_min": [
+              -1.315632,
+              0.0,
+              -1.481942
+            ],
+            "bbox_max": [
+              1.578448,
+              10.361515,
+              1.2726
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_lod1.glb",
+            "sha256": "a38102e501c062881790a29025077f9a8b933c55115abb023ad9ce84261ece87",
+            "triangles": 300,
+            "bbox_min": [
+              -1.315632,
+              0.0,
+              -1.481942
+            ],
+            "bbox_max": [
+              1.578448,
+              10.361515,
+              1.2726
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_proxy.glb",
+            "sha256": "dafbde33be9dba5b0f3f7fa26b4ed9e0509fd5dc679b269620ed4693f28d78b8",
+            "triangles": 6,
+            "bbox_min": [
+              -1.315632,
+              0.0,
+              -1.481942
+            ],
+            "bbox_max": [
+              1.578448,
+              10.361515,
+              1.2726
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_hedge_a",
+      "label_tr": "Budanmış çit",
+      "category": "vegetation",
+      "family": "hero_hedge",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:hedge"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_lod0.glb",
+      "glb_sha256": "e11658a658a4775ffc4b84d5da8a989c2c4783d8c0cf702254f02ff8d5d291ee",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 4.799,
+        "depth_z": 1.253,
+        "height_above_ground": 1.197,
+        "foundation_skirt_depth": 0.012,
+        "bbox_min": [
+          -2.358746,
+          -0.011508,
+          -0.650645
+        ],
+        "bbox_max": [
+          2.439819,
+          1.197041,
+          0.60213
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 360,
+        "LOD1": 100,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- hedge",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "e11658a658a4775ffc4b84d5da8a989c2c4783d8c0cf702254f02ff8d5d291ee",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                4.798565,
+                1.208549
+              ],
+              "region": [
+                640,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "00c73b21fb07bd783260a6c9ce30366e53539bbd0dc1c6b7133c9fad50046149"
+            },
+            "side": {
+              "physical_size": [
+                1.252775,
+                1.208549
+              ],
+              "region": [
+                768,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "4967207dac39624ba82ac1b5d1ded40e04b8dd0269df69b4418226a5f6ce8802"
+            },
+            "top": {
+              "physical_size": [
+                4.798565,
+                1.252775
+              ],
+              "region": [
+                896,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "cb789cec5984300a016715828d49ce62168952d3abd39b0df4b5133f356d8e7d"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_lod0.glb",
+            "sha256": "e11658a658a4775ffc4b84d5da8a989c2c4783d8c0cf702254f02ff8d5d291ee",
+            "triangles": 360,
+            "bbox_min": [
+              -2.358746,
+              -0.011508,
+              -0.650645
+            ],
+            "bbox_max": [
+              2.439819,
+              1.197041,
+              0.60213
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_lod1.glb",
+            "sha256": "040a0a14c37618f20ec0dc21e8318bc85d37874dde12c22549b0cf043d4ae4e2",
+            "triangles": 100,
+            "bbox_min": [
+              -2.358746,
+              -0.005754,
+              -0.692598
+            ],
+            "bbox_max": [
+              2.165479,
+              1.142495,
+              0.656657
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_proxy.glb",
+            "sha256": "e339b973641b942ee6568b444cff57d38bfd6625a601d5c442bf6fa1307a1def",
+            "triangles": 6,
+            "bbox_min": [
+              -2.358746,
+              -0.011508,
+              -0.650645
+            ],
+            "bbox_max": [
+              2.439819,
+              1.197041,
+              0.60213
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 600,
+          "LOD1": 120,
+          "PROXY": 24
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_maquis_a",
+      "label_tr": "Maki / çalı kümesi",
+      "category": "vegetation",
+      "family": "hero_maquis",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:maquis"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_lod0.glb",
+      "glb_sha256": "c3b67505817556a2b6f9cc1f1c4d1620b1a81221dedfe6f423b4f550b42f4db1",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 3.584,
+        "depth_z": 2.108,
+        "height_above_ground": 2.493,
+        "foundation_skirt_depth": 0.006,
+        "bbox_min": [
+          -1.789722,
+          -0.005582,
+          -1.134479
+        ],
+        "bbox_max": [
+          1.794505,
+          2.493092,
+          0.973682
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 288,
+        "LOD1": 80,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- maquis",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "c3b67505817556a2b6f9cc1f1c4d1620b1a81221dedfe6f423b4f550b42f4db1",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                3.584228,
+                2.498674
+              ],
+              "region": [
+                256,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "cb6bde5eabe300bd7df4b97b7686cd2d0234ae520128369c5ea65af417761277"
+            },
+            "side": {
+              "physical_size": [
+                2.10816,
+                2.498674
+              ],
+              "region": [
+                384,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "e9773700646390e5df90b4bb8d9099790a81f907a04f13ffb3cae5f20c461f73"
+            },
+            "top": {
+              "physical_size": [
+                3.584228,
+                2.10816
+              ],
+              "region": [
+                512,
+                896,
+                128,
+                128
+              ],
+              "rgba_sha256": "523459919be927ebcabc154f18de94f5ccc722524818f920e4c658c95335b88c"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_lod0.glb",
+            "sha256": "c3b67505817556a2b6f9cc1f1c4d1620b1a81221dedfe6f423b4f550b42f4db1",
+            "triangles": 288,
+            "bbox_min": [
+              -1.789722,
+              -0.005582,
+              -1.134479
+            ],
+            "bbox_max": [
+              1.794505,
+              2.493092,
+              0.973682
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_lod1.glb",
+            "sha256": "ee8846036990cba5685969f44e898176673e7de08df321c5ab664438057ae3fe",
+            "triangles": 80,
+            "bbox_min": [
+              -1.58379,
+              -0.002791,
+              -1.018247
+            ],
+            "bbox_max": [
+              1.78813,
+              2.48379,
+              0.813024
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_proxy.glb",
+            "sha256": "dc0035111e8b360fb54074a8444fa94561f8b577360da58210d3337d5535262f",
+            "triangles": 6,
+            "bbox_min": [
+              -1.789722,
+              -0.005582,
+              -1.134479
+            ],
+            "bbox_max": [
+              1.794505,
+              2.493092,
+              0.973682
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 600,
+          "LOD1": 120,
+          "PROXY": 24
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_olive_open_a",
+      "label_tr": "Zeytin · açık üç taç",
+      "category": "vegetation",
+      "family": "hero_olive_open",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:olive_open"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_lod0.glb",
+      "glb_sha256": "6fe81cc6b11b7e4c255c3a199bdcb86d0992ac36ec574b76229f798b664a1d9c",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 5.37,
+        "depth_z": 4.665,
+        "height_above_ground": 5.021,
+        "foundation_skirt_depth": 0.096,
+        "bbox_min": [
+          -2.768248,
+          -0.095674,
+          -2.62283
+        ],
+        "bbox_max": [
+          2.602051,
+          5.020819,
+          2.042171
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 428,
+        "LOD1": 122,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- olive_open",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "6fe81cc6b11b7e4c255c3a199bdcb86d0992ac36ec574b76229f798b664a1d9c",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                5.3703,
+                5.116493
+              ],
+              "region": [
+                128,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "1c081d378bcdf79c6ecdc0989abe756c2f7da95b93f272eace5e69339ea756af"
+            },
+            "side": {
+              "physical_size": [
+                4.665001,
+                5.116493
+              ],
+              "region": [
+                256,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "f2a463d284e2221c5e7fb25e4d98bc25a7ad3667e10c1402fdbd37f1d5b1bd06"
+            },
+            "top": {
+              "physical_size": [
+                5.3703,
+                4.665001
+              ],
+              "region": [
+                384,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "9199cc6fc0ae5a9d52aaa40dd44ee8e7cddc1635da0c6c7ca1084a422ef30691"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_lod0.glb",
+            "sha256": "6fe81cc6b11b7e4c255c3a199bdcb86d0992ac36ec574b76229f798b664a1d9c",
+            "triangles": 428,
+            "bbox_min": [
+              -2.768248,
+              -0.095674,
+              -2.62283
+            ],
+            "bbox_max": [
+              2.602051,
+              5.020819,
+              2.042171
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_lod1.glb",
+            "sha256": "fc80b9ece5e79452bf7e56cbd2ea4443d515a1bb752d744bce524f784bf45ee3",
+            "triangles": 122,
+            "bbox_min": [
+              -2.492052,
+              -0.076485,
+              -2.494612
+            ],
+            "bbox_max": [
+              2.705985,
+              5.197693,
+              1.971458
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_proxy.glb",
+            "sha256": "148e0be24ace535fb159df4eb46cb755a62ef8a50c15c7ac7f9f0aae1bce0a01",
+            "triangles": 6,
+            "bbox_min": [
+              -2.768248,
+              -0.095674,
+              -2.62283
+            ],
+            "bbox_max": [
+              2.602051,
+              5.020819,
+              2.042171
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_olive_twisted_a",
+      "label_tr": "Zeytin · burgulu yayvan taç",
+      "category": "vegetation",
+      "family": "hero_olive_twisted",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:olive_twisted"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_lod0.glb",
+      "glb_sha256": "45d58a0b4e83ab16d2582edd6525691f45a5f7173ed2281b9c7d21c32456a40c",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 6.011,
+        "depth_z": 4.719,
+        "height_above_ground": 5.121,
+        "foundation_skirt_depth": 0.096,
+        "bbox_min": [
+          -2.865498,
+          -0.095674,
+          -2.622202
+        ],
+        "bbox_max": [
+          3.145646,
+          5.121141,
+          2.096726
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 552,
+        "LOD1": 152,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- olive_twisted",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "45d58a0b4e83ab16d2582edd6525691f45a5f7173ed2281b9c7d21c32456a40c",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                6.011144,
+                5.216815
+              ],
+              "region": [
+                512,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "30a26991e28048270ba8ac1c44e65db18508e0bd48f300ee2e7901bfd454c615"
+            },
+            "side": {
+              "physical_size": [
+                4.718928,
+                5.216815
+              ],
+              "region": [
+                640,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "bd928fc65cbce429302c1d03bda54c7a3f85a5f6de292f94a98e55b00a7e0a8e"
+            },
+            "top": {
+              "physical_size": [
+                6.011144,
+                4.718928
+              ],
+              "region": [
+                768,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "9358d29bd7607087500db33feb1ea741d79ffe2c9f7b5277c9ca197b4a435fce"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_lod0.glb",
+            "sha256": "45d58a0b4e83ab16d2582edd6525691f45a5f7173ed2281b9c7d21c32456a40c",
+            "triangles": 552,
+            "bbox_min": [
+              -2.865498,
+              -0.095674,
+              -2.622202
+            ],
+            "bbox_max": [
+              3.145646,
+              5.121141,
+              2.096726
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_lod1.glb",
+            "sha256": "91b67eda30ee796ecbb7d9b2dc23ba35871d54b12a7a5fc1ba97edf05161f835",
+            "triangles": 152,
+            "bbox_min": [
+              -2.23655,
+              -0.076485,
+              -2.563975
+            ],
+            "bbox_max": [
+              3.432396,
+              5.324837,
+              1.956629
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_proxy.glb",
+            "sha256": "c33a5eca18f9b66b169cd0ca8a6908f6936acc8539d591a00d6133a90d594661",
+            "triangles": 6,
+            "bbox_min": [
+              -2.865498,
+              -0.095674,
+              -2.622202
+            ],
+            "bbox_max": [
+              3.145646,
+              5.121141,
+              2.096726
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_palm_date_a",
+      "label_tr": "Kalın gövdeli geniş taçlı palmiye",
+      "category": "vegetation",
+      "family": "hero_palm_date",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:palm_date"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_lod0.glb",
+      "glb_sha256": "5e0474786d80f5920c0732fbcb757d439fcd045e1ce2cd181097eb69a1822713",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 6.842,
+        "depth_z": 6.838,
+        "height_above_ground": 9.425,
+        "foundation_skirt_depth": 0.016,
+        "bbox_min": [
+          -3.231994,
+          -0.016148,
+          -3.388705
+        ],
+        "bbox_max": [
+          3.61,
+          9.425,
+          3.449602
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 610,
+        "LOD1": 150,
+        "PROXY": 40
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- palm_date",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": null,
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_lod0.glb",
+            "sha256": "5e0474786d80f5920c0732fbcb757d439fcd045e1ce2cd181097eb69a1822713",
+            "triangles": 610,
+            "bbox_min": [
+              -3.231994,
+              -0.016148,
+              -3.388705
+            ],
+            "bbox_max": [
+              3.61,
+              9.425,
+              3.449602
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_lod1.glb",
+            "sha256": "c50150ed6501c3d875e5d5c156d3a83161c5eb18ecb8f7ea7f1ca2f64a2faa71",
+            "triangles": 150,
+            "bbox_min": [
+              -3.112748,
+              -0.016148,
+              -3.388705
+            ],
+            "bbox_max": [
+              3.61,
+              9.425,
+              2.842853
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_proxy.glb",
+            "sha256": "d3835c23b13c16e18dcf6101397460552dadfd6d7955dceeeb7861925a3b6123",
+            "triangles": 40,
+            "bbox_min": [
+              -2.867826,
+              -0.004847,
+              -3.388705
+            ],
+            "bbox_max": [
+              3.61,
+              9.425,
+              2.631152
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_palm_slender_a",
+      "label_tr": "İnce uzun palmiye",
+      "category": "vegetation",
+      "family": "hero_palm_slender",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:palm_slender"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_lod0.glb",
+      "glb_sha256": "8571753a8b047633bac80979ca1a1b344b2dcbe497cf87d71d2c31ea3dc0416a",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 4.636,
+        "depth_z": 4.659,
+        "height_above_ground": 11.315,
+        "foundation_skirt_depth": 0.005,
+        "bbox_min": [
+          -2.192057,
+          -0.004687,
+          -2.321611
+        ],
+        "bbox_max": [
+          2.443483,
+          11.315001,
+          2.337826
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 502,
+        "LOD1": 150,
+        "PROXY": 40
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- palm_slender",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": null,
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_lod0.glb",
+            "sha256": "8571753a8b047633bac80979ca1a1b344b2dcbe497cf87d71d2c31ea3dc0416a",
+            "triangles": 502,
+            "bbox_min": [
+              -2.192057,
+              -0.004687,
+              -2.321611
+            ],
+            "bbox_max": [
+              2.443483,
+              11.315001,
+              2.337826
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_lod1.glb",
+            "sha256": "6c94c9bc196f285bcfcd24ed058b761ac5f98fa303d4fd007d03f76d75dc7232",
+            "triangles": 150,
+            "bbox_min": [
+              -2.192057,
+              -0.004687,
+              -2.249315
+            ],
+            "bbox_max": [
+              2.443483,
+              11.315001,
+              2.058115
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_proxy.glb",
+            "sha256": "d72c0b6bdc873a2bc4836b19c29896fca974a11aa93e6fa832cac5ffa75cd64e",
+            "triangles": 40,
+            "bbox_min": [
+              -1.765188,
+              -0.001406,
+              -2.249315
+            ],
+            "bbox_max": [
+              2.443483,
+              11.315001,
+              1.702715
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_pine_brutia_a",
+      "label_tr": "Kızılçam",
+      "category": "vegetation",
+      "family": "hero_pine_brutia",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:pine_brutia"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_lod0.glb",
+      "glb_sha256": "3a01277b2fada317d8685bae043af1c5e2a94cf98be8351622c7ccc06a50894d",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 7.783,
+        "depth_z": 7.104,
+        "height_above_ground": 12.152,
+        "foundation_skirt_depth": 0.025,
+        "bbox_min": [
+          -3.889853,
+          -0.025034,
+          -3.241848
+        ],
+        "bbox_max": [
+          3.8931,
+          12.151683,
+          3.862119
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 608,
+        "LOD1": 286,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- pine_brutia",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "3a01277b2fada317d8685bae043af1c5e2a94cf98be8351622c7ccc06a50894d",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                7.782953,
+                12.176716
+              ],
+              "region": [
+                384,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "41129a7468052cfb01c581818d35ca1bbc2ebea3cd70abff412f8720255918ec"
+            },
+            "side": {
+              "physical_size": [
+                7.103967,
+                12.176716
+              ],
+              "region": [
+                512,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "87605602b7ec0f0d58fc678269aa958ccf832e17ad63c3b3c2ea9a967211aba5"
+            },
+            "top": {
+              "physical_size": [
+                7.782953,
+                7.103967
+              ],
+              "region": [
+                640,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "cdeb3425b02899e842780e127e71d451375650c99c5517c3fced86588c100a12"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_lod0.glb",
+            "sha256": "3a01277b2fada317d8685bae043af1c5e2a94cf98be8351622c7ccc06a50894d",
+            "triangles": 608,
+            "bbox_min": [
+              -3.889853,
+              -0.025034,
+              -3.241848
+            ],
+            "bbox_max": [
+              3.8931,
+              12.151683,
+              3.862119
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_lod1.glb",
+            "sha256": "9486843366d65e535296a9d193a2febbc5a0e6e52257229d9d37a5f88ade38c4",
+            "triangles": 286,
+            "bbox_min": [
+              -3.672444,
+              -0.021815,
+              -3.762273
+            ],
+            "bbox_max": [
+              3.879661,
+              11.990708,
+              4.022488
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_proxy.glb",
+            "sha256": "9c314f3f3b85982cdc8d72e4a5e9698311dcfadf4b0d8169a57fa41c6a4f67e5",
+            "triangles": 6,
+            "bbox_min": [
+              -3.889853,
+              -0.025034,
+              -3.241848
+            ],
+            "bbox_max": [
+              3.8931,
+              12.151683,
+              3.862119
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_pine_stone_a",
+      "label_tr": "Fıstık çamı",
+      "category": "vegetation",
+      "family": "hero_pine_stone",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:pine_stone"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_lod0.glb",
+      "glb_sha256": "7bd7f18dcbac3d23b1c5f1d9f3c87100e9388fbf0878c6d81751b9a1a34d1323",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 9.661,
+        "depth_z": 8.742,
+        "height_above_ground": 12.792,
+        "foundation_skirt_depth": 0.016,
+        "bbox_min": [
+          -4.575644,
+          -0.015934,
+          -3.642632
+        ],
+        "bbox_max": [
+          5.085165,
+          12.791869,
+          5.099083
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 544,
+        "LOD1": 272,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- pine_stone",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "7bd7f18dcbac3d23b1c5f1d9f3c87100e9388fbf0878c6d81751b9a1a34d1323",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                9.660808,
+                12.807804
+              ],
+              "region": [
+                768,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "4c6b23926220a303ea9a4ee98d1e0b31fb28be15ee8f7dbd30cb9e8c55b3cd55"
+            },
+            "side": {
+              "physical_size": [
+                8.741715,
+                12.807804
+              ],
+              "region": [
+                896,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "48d290e7d1f4d9920ed78369373565f30be5380e11c2bf04244d0e8b8a867361"
+            },
+            "top": {
+              "physical_size": [
+                9.660808,
+                8.741715
+              ],
+              "region": [
+                0,
+                768,
+                128,
+                128
+              ],
+              "rgba_sha256": "d8f4151878ebacfc7bb2701e5f300bcf592df5f11685d756ae5c3b9454ac74bf"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_lod0.glb",
+            "sha256": "7bd7f18dcbac3d23b1c5f1d9f3c87100e9388fbf0878c6d81751b9a1a34d1323",
+            "triangles": 544,
+            "bbox_min": [
+              -4.575644,
+              -0.015934,
+              -3.642632
+            ],
+            "bbox_max": [
+              5.085165,
+              12.791869,
+              5.099083
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_lod1.glb",
+            "sha256": "b6f9e4f75efefa599831a016fd254ceaa74b5385cbd6dce28e529bad38c62893",
+            "triangles": 272,
+            "bbox_min": [
+              -5.089553,
+              -0.013875,
+              -3.922133
+            ],
+            "bbox_max": [
+              5.367486,
+              12.819357,
+              5.745994
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_proxy.glb",
+            "sha256": "a297e766c30f52376765b772b2ecd9b7292f55001e392f6f96ca2d5743387ef9",
+            "triangles": 6,
+            "bbox_min": [
+              -4.575644,
+              -0.015934,
+              -3.642632
+            ],
+            "bbox_max": [
+              5.085165,
+              12.791869,
+              5.099083
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
+      "id": "veg_hero_plane_a",
+      "label_tr": "Çınar",
+      "category": "vegetation",
+      "family": "hero_plane",
+      "variant": "a",
+      "era": "none",
+      "region": null,
+      "tags": [
+        "hero",
+        "vegetation-proposal",
+        "summer-neutral",
+        "alpha-mask",
+        "species:plane"
+      ],
+      "glb": "res://assets/hero/vegetation/veg_hero_plane_a_lod0.glb",
+      "glb_sha256": "fc10a6f221cda25f5434dc316040bbf032f0d20d91a8c63c68c61be31fbcdcfb",
+      "materials": [
+        "mat_vegetation_atlas"
+      ],
+      "dimensions_m": {
+        "width_x": 10.013,
+        "depth_z": 8.674,
+        "height_above_ground": 13.72,
+        "foundation_skirt_depth": 0.036,
+        "bbox_min": [
+          -4.986894,
+          -0.035899,
+          -3.989619
+        ],
+        "bbox_max": [
+          5.025781,
+          13.719627,
+          4.68483
+        ],
+        "measured_from": "GLB POSITION accessors, glTF +Y up, metres"
+      },
+      "triangles": {
+        "LOD0": 1024,
+        "LOD1": 288,
+        "PROXY": 6
+      },
+      "palette_rows": {
+        "accent_rows": [],
+        "roof_rows": [],
+        "wall_rows": []
+      },
+      "source": {
+        "kind": "hero_vegetation",
+        "generator": "art/blender/vegetation/build.py",
+        "manifest": null,
+        "rebuild": "uv run --with pillow==11.3.0 python art/blender/vegetation/atlas.py; Blender --background --factory-startup --python art/blender/vegetation/build.py -- plane",
+        "spec": "production/tasks/T-057.md"
+      },
+      "approval": "proposed",
+      "approval_by": null,
+      "approval_date": null,
+      "user_note": "",
+      "lod_chain": {
+        "proxy_source": {
+          "manifest": "res://assets/hero/vegetation/proxy_bakes.json",
+          "manifest_sha256": "211abb129d79fb12cc8d86b8cacb231c49453eb07ea25850716866f8b4990029",
+          "source_lod0_sha256": "fc10a6f221cda25f5434dc316040bbf032f0d20d91a8c63c68c61be31fbcdcfb",
+          "source_upper_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+          "representation": "source albedo+alpha front/side/top crossed quads",
+          "views": {
+            "front": {
+              "physical_size": [
+                10.012675,
+                13.755527
+              ],
+              "region": [
+                0,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "3948fce0db512ce5096245fe670dea3b2bbd0cf449cda70972bf81896d0158a2"
+            },
+            "side": {
+              "physical_size": [
+                8.674449,
+                13.755527
+              ],
+              "region": [
+                128,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "989fb517a8f0271b81ee5f591adb586b83107b9cddef9ce986b4fdc9e1a80250"
+            },
+            "top": {
+              "physical_size": [
+                10.012675,
+                8.674449
+              ],
+              "region": [
+                256,
+                640,
+                128,
+                128
+              ],
+              "rgba_sha256": "0cf15ed28544cf9fbad5b4e3e7f3a56f0d63bb9603b349025a79b43cbd1abc23"
+            }
+          }
+        },
+        "status": "proposed",
+        "generator": "art/blender/vegetation/build.py",
+        "levels": {
+          "LOD0": {
+            "glb": "res://assets/hero/vegetation/veg_hero_plane_a_lod0.glb",
+            "sha256": "fc10a6f221cda25f5434dc316040bbf032f0d20d91a8c63c68c61be31fbcdcfb",
+            "triangles": 1024,
+            "bbox_min": [
+              -4.986894,
+              -0.035899,
+              -3.989619
+            ],
+            "bbox_max": [
+              5.025781,
+              13.719627,
+              4.68483
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "LOD1": {
+            "glb": "res://assets/hero/vegetation/veg_hero_plane_a_lod1.glb",
+            "sha256": "2e5c465e313fd57cc9a2445ebfc2a796cfb6b986fcdbacbd9a2920c3613b9d6a",
+            "triangles": 288,
+            "bbox_min": [
+              -5.32528,
+              -0.035899,
+              -4.40904
+            ],
+            "bbox_max": [
+              5.15199,
+              14.101025,
+              4.960909
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          },
+          "PROXY": {
+            "glb": "res://assets/hero/vegetation/veg_hero_plane_a_proxy.glb",
+            "sha256": "90e756410062d4380821a7cc5591c3978c9edd0bc9772ccafc8f2b72b7eddf6b",
+            "triangles": 6,
+            "bbox_min": [
+              -4.986894,
+              -0.035899,
+              -3.989619
+            ],
+            "bbox_max": [
+              5.025781,
+              13.719627,
+              4.68483
+            ],
+            "materials": [
+              "mat_vegetation_atlas"
+            ]
+          }
+        },
+        "atlas": {
+          "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+          "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+          "size_px": [
+            1024,
+            1024
+          ],
+          "layout": "res://assets/hero/vegetation/atlas_layout.json",
+          "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+        },
+        "material_policy": {
+          "alpha_mode": "MASK",
+          "alpha_cutoff": 0.45,
+          "double_sided": true,
+          "roughness": 1
+        },
+        "distances_m": {
+          "LOD0_max": 50,
+          "LOD1_max": 120,
+          "status": "working-model-not-integrated"
+        },
+        "budgets": {
+          "LOD0": 1800,
+          "LOD1": 300,
+          "PROXY": 40
+        }
+      },
+      "notes": "Bitki hero önerisi; yalnız kütüphane/lab. Q-018 açık; oyun yerleşimi/tür oranı/son kullanıcı onayı değil."
+    },
+    {
       "id": "veg_plane",
       "category": "vegetation",
       "family": "veg_plane",

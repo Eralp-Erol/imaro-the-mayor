@@ -11,7 +11,7 @@ FAMILY={'hero_old_core':'old_core','hero_com_bazaar':'bazaar','hero_res_mid':'re
 catalog=json.loads((ROOT/'data/library/catalog.json').read_text())
 checked=0
 for e in catalog['entries']:
-    if 'lod_chain' not in e:continue
+    if 'lod_chain' not in e or e.get('source',{}).get('kind')!='hero':continue
     family=FAMILY[e['family']]
     layout=ROOT/('assets/hero/hero_atlas_layout.json' if family=='old_core' else 'assets/hero/fam/%s_layout.json'%family)
     x,y,w,h=json.loads(layout.read_text())['rects']['side']

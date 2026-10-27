@@ -77,3 +77,17 @@ LOD'lara taşımaz. `distances_m` 100/300 m çalışma değeridir; oyun entegras
 `python3 tools/library/hero_lods.py --write`, bayatlık kontrolü `--check`.
 Ana katalog doğrulayıcı, zincirin dosya/hash/üçgen/doku sürüklenmesini ve bütçeyi
 (LOD1 ≤800, proxy ≤80 üçgen) denetler. `approval*`, `user_note`, `user_*` korunur.
+
+## Bitki hero zincirleri (T-057)
+
+`source.kind: hero_vegetation`, `category: vegetation`. Yeni kimlikler
+`veg_hero_<species>_a`; öneriler `approval: proposed` başlar. Mevcut81 kayıt
+ve kullanıcı alanları değiştirilmez. Bu kayıtların `lod_chain` yapısında üç
+seviye (`LOD0/LOD1/PROXY`) için GLB yolu, hash, gerçek bbox/üçgen/malzeme;
+`atlas` için ortak RGBA PNG/layout yolu ve hash; `material_policy` (MASK0.45,
+çift taraf, mat); `budgets` ve entegrasyon olmayan çalışma mesafeleri bulunur.
+Ana doğrulayıcı zinciri `source.kind` ile `vegetation_catalog.validate_chain`'e
+iletir; hero bina denetimine karıştırmaz. Bina araçları yalnız `source.kind: hero`
+kayıtlarını işler. Üretim `art/blender/vegetation/`; ölçüm/güncelleme
+`python3 tools/library/vegetation_catalog.py --write|--check`. Negatif drift,
+şema sınıflandırması, aynı Texture2D ve MASK/mipmap kontrolleri vardır.
