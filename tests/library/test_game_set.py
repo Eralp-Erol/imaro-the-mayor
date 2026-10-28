@@ -24,13 +24,16 @@ def load():
         return json.load(fh)
 
 
+HERO_KIND = {"building": "hero", "vegetation": "hero_vegetation", "street_furniture": "hero_furniture"}
+
+
 def expected_ids(catalog, category):
     """Independent re-derivation from the catalog: approved + recorded hashes == current hashes."""
     out = set()
     for e in catalog["entries"]:
         if e.get("category") != category or e.get("approval") != "approved":
             continue
-        if category == "building" and (e.get("source") or {}).get("kind") != "hero":
+        if category in HERO_KIND and (e.get("source") or {}).get("kind") != HERO_KIND[category]:
             continue
         if e.get(aa.SHA_FIELD) and e[aa.SHA_FIELD] == aa.content_hashes(e):
             out.add(e["id"])
@@ -223,6 +226,141 @@ class GameSetTest(unittest.TestCase):
         finally:
             bgs.import_params = real
         self.assertTrue(any("mipmaps" in e for e in errors))
+
+
+class PlantFurnitureSetTest(unittest.TestCase):
+    """T-062 B0: game_plants.json / game_furniture.json (same gate; unapproved never enters)."""
+
+    build = GameSetTest.build
+    entry = GameSetTest.entry
+
+    def plants(self, docs):
+        return {m["id"]: m for m in docs["game_plants.json"]["plants"]}
+
+    def items(self, docs):
+        return {m["id"]: m for m in docs["game_furniture.json"]["items"]}
+
+    def test_ids_derived_from_catalog(self):
+        docs, errors = self.build()
+        self.assertEqual([], errors)
+        cat = load()
+        self.assertEqual(expected_ids(cat, "vegetation"), set(self.plants(docs)))
+        self.assertEqual(expected_ids(cat, "street_furniture"), set(self.items(docs)))
+        self.assertEqual(10, len(self.plants(docs)))
+        self.assertEqual(8, len(self.items(docs)))
+        self.assertEqual(sorted(self.plants(docs)), [m["id"] for m in docs["game_plants.json"]["plants"]])
+
+    def test_kit_plane_is_not_a_game_plant_but_is_listed(self):
+        docs, _ = self.build()
+        self.assertNotIn("veg_plane", self.plants(docs))
+        self.assertIn("veg_hero_plane_a", self.plants(docs))
+        ex = {x["id"]: x["reason"] for x in docs["game_plants.json"]["unapproved"]["entries"]}
+        self.assertEqual({"veg_plane": "not_in_this_table"}, ex)
+        d = docs["game_plants.json"]
+        self.assertEqual(11, d["included_count"] + d["unapproved"]["count"])
+
+    def test_unapproved_plants_and_furniture_never_enter(self):
+        for state in ("proposed", "rejected", "hold", "provisional-in-use"):
+            def mut(cat, s=state):
+                self.entry(cat, "veg_hero_palm_date_a")["approval"] = s
+                self.entry(cat, "veg_hero_pine_stone_a")["approval"] = s
+                self.entry(cat, "fur_hero_bench_a")["approval"] = s
+            docs, _ = self.build(mut)
+            self.assertNotIn("veg_hero_palm_date_a", self.plants(docs), state)
+            self.assertNotIn("veg_hero_pine_stone_a", self.plants(docs), state)
+            self.assertNotIn("fur_hero_bench_a", self.items(docs), state)
+            self.assertEqual(8, len(self.plants(docs)))
+            self.assertEqual(7, len(self.items(docs)))
+            ex = {x["id"]: x["reason"] for x in docs["game_plants.json"]["unapproved"]["entries"]}
+            self.assertEqual("not_approved", ex["veg_hero_palm_date_a"])
+
+    def test_hash_drift_and_missing_hash_are_excluded(self):
+        def mut(cat):
+            self.entry(cat, "veg_hero_olive_open_a")["lod_chain"]["levels"]["LOD1"]["sha256"] = "0" * 64
+            del self.entry(cat, "veg_hero_hedge_a")[aa.SHA_FIELD]
+            self.entry(cat, "fur_hero_kiosk_a")["lod_chain"]["atlas"]["sha256"] = "1" * 64
+        docs, _ = self.build(mut)
+        ex = {x["id"]: x["reason"] for x in docs["game_plants.json"]["unapproved"]["entries"]}
+        self.assertEqual("hash_drift", ex["veg_hero_olive_open_a"])
+        self.assertEqual("no_approved_hash", ex["veg_hero_hedge_a"])
+        self.assertNotIn("fur_hero_kiosk_a", self.items(docs))
+        self.assertEqual(8, len(self.plants(docs)))
+
+    def test_file_drift_is_excluded(self):
+        def mut(cat):
+            e = self.entry(cat, "veg_hero_maquis_a")
+            e["glb_sha256"] = "2" * 64
+            e[aa.SHA_FIELD]["glb"] = "2" * 64
+        docs, _ = self.build(mut)
+        self.assertNotIn("veg_hero_maquis_a", self.plants(docs))
+
+    def test_plant_records(self):
+        docs, _ = self.build()
+        plants = self.plants(docs)
+        species = {m["species"] for m in plants.values()}
+        self.assertEqual({"cypress", "hedge", "maquis", "olive_open", "olive_twisted", "palm_date", "palm_slender",
+                          "pine_brutia", "pine_stone", "plane"}, species)
+        for m in plants.values():
+            self.assertIn("LOD0", m["lods"])
+            self.assertIn("LOD1", m["lods"])
+            self.assertEqual("mat_vegetation_atlas", m["atlas"]["material"])
+            self.assertEqual([1024, 1024], m["atlas"]["size_px"])
+            self.assertFalse(any(l["import"]["generate_lods"] for l in m["lods"].values()))
+            self.assertEqual([0.0, 0.0, 0.0], m["pivot_offset_m"])
+            self.assertGreater(m["reach_m"], 0.0)
+            self.assertGreater(m["height_m"], 0.0)
+            b = m["lods"]["LOD0"]["aabb_m"]
+            self.assertLessEqual(b["min"][0], 0.0)
+            self.assertGreaterEqual(b["max"][0], 0.0)
+            self.assertEqual(m["triangles"], {k: v["tris"] for k, v in m["lods"].items()})
+            self.assertEqual(m["reach_m"], max(abs(b["min"][0]), abs(b["max"][0]), abs(b["min"][2]), abs(b["max"][2])))
+        self.assertEqual({"palm_date", "palm_slender"}, {m["species"] for m in plants.values() if "PROXY" in m["lods"]})
+        self.assertTrue(all(plants[i]["lods"]["PROXY"]["tris"] == 40 for i in plants if "PROXY" in plants[i]["lods"]))
+        self.assertIn("open", plants["veg_hero_palm_date_a"]["q018"])
+
+    def test_furniture_records(self):
+        docs, _ = self.build()
+        items = self.items(docs)
+        self.assertEqual({"bench", "bike_rack", "bin", "bollard", "bus_stop", "kiosk", "lamp_street", "planter"},
+                         {m["type"] for m in items.values()})
+        for m in items.values():
+            self.assertEqual(["LOD0", "LOD1"], sorted(m["lods"]))
+            self.assertEqual("mat_furniture_atlas", m["atlas"]["material"])
+            self.assertFalse(any(l["import"]["generate_lods"] for l in m["lods"].values()))
+            self.assertGreater(m["reach_m"], 0.0)
+
+    def test_origin_outside_bbox_is_a_contract_error(self):
+        real = bgs._measure
+        try:
+            bgs._measure = lambda root, res: (10, [5.0, 0.0, 5.0], [6.0, 2.0, 6.0], ["m"])
+            _docs, errors = self.build()
+        finally:
+            bgs._measure = real
+        self.assertTrue(any("origin is outside" in e for e in errors))
+
+    def test_generate_lods_true_on_plants_is_a_contract_error(self):
+        real = bgs.import_params
+        try:
+            bgs.import_params = lambda root, res: dict(real(root, res), **{"meshes/generate_lods": "true"})
+            _docs, errors = self.build()
+        finally:
+            bgs.import_params = real
+        self.assertTrue(any("veg_hero_" in e and "generate_lods" in e for e in errors))
+        self.assertTrue(any("fur_hero_" in e and "generate_lods" in e for e in errors))
+
+    def test_committed_plant_tables_equal_fresh_build_and_are_deterministic(self):
+        t1, e1 = bgs.build_sets(REAL, ROOT)
+        t2, _ = bgs.build_sets(REAL, ROOT)
+        self.assertEqual(t1, t2)
+        self.assertEqual([], e1)
+        for name in ("game_plants.json", "game_furniture.json"):
+            with open(os.path.join(ROOT, bgs.OUT_DIR, name), "r", encoding="utf-8") as fh:
+                self.assertEqual(t1[name], fh.read(), name + " is stale (python3 tools/library/build_game_set.py --write)")
+
+    def test_no_embedded_plant_id_list(self):
+        with open(os.path.join(ROOT, "tools/library/build_game_set.py"), encoding="utf-8") as fh:
+            src = fh.read()
+        self.assertIsNone(re.search(r"veg_hero_|fur_hero_", src), "no embedded id list allowed")
 
 
 if __name__ == "__main__":

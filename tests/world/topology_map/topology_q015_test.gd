@@ -5,7 +5,7 @@ extends GdUnitTestSuite
 const SOURCE_DIR := "res://src/world/topology_map"
 const DATA_DIR := "res://data/world/ismeral"
 const ALLOWED_DATA_FILES: Array[String] = ["world.json", "coast.json", "regions.json", "sites.json", "terrain.json",
-		"network.json", "settlement.json"]
+		"network.json", "settlement.json", "vegetation.json"]
 
 
 static func hardcoded_coordinates(text: String) -> PackedStringArray:

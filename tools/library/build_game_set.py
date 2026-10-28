@@ -6,13 +6,19 @@ CURRENT content hashes AND the files on disk are written to `data/library/game_*
 and listed with its reason (the game counts these as `unapproved`). Deterministic: sorted, fixed format, no clocks.
 
   python3 tools/library/build_game_set.py            # dry run: what would change
-  python3 tools/library/build_game_set.py --write    # write data/library/game_buildings.json, game_ground.json
+  python3 tools/library/build_game_set.py --write    # write data/library/game_buildings.json, game_ground.json,
+                                                     # game_plants.json, game_furniture.json (T-062 B0)
   python3 tools/library/build_game_set.py --check    # exit 1 if committed files differ / import contract broken
 
 Floors / eave / roof / ground-floor fields are read from the Blender generator parameter modules
 (art/blender/hero/fam_layout.py, hero_layout.py), never guessed; unreadable fields are the string "unknown".
 Pivot: the game table pivot is the footprint centre; hero GLBs are authored with the pivot on the facade line, so
 `pivot_offset_m` (to ADD to every vertex of every LOD) = -(LOD0 bbox XZ centre).
+
+Plants / street furniture (T-062 B0): same gate. Their GLBs are authored with the origin at the trunk / object base
+(y = 0 ground contact), so NO pivot shift is written; `reach_m` (largest XZ extent from the origin) and `footprint_m`
+(LOD0 bbox XZ) are measured from the GLB for placement clearance. The kit `veg_plane` is approved but is NOT a game
+plant (kit / mat_kit path): it is excluded as `not_in_this_table`; the hero plane (family hero_plane) is used instead.
 """
 import argparse
 import hashlib
@@ -39,6 +45,12 @@ FAMILY_MAP = {"hero_old_core": "old_core", "hero_com_bazaar": "bazaar", "hero_re
               "hero_civ_hero": "civic"}
 LAYOUT_SRC = {"old_core": "art/blender/hero/hero_layout.py"}  # all others: fam_layout.py FAMILIES[name]()
 FAM_LAYOUT = "art/blender/hero/fam_layout.py"
+PLANT_LEVELS = ("LOD0", "LOD1", "PROXY")  # PROXY only where the catalog chain has it (palms)
+FURNITURE_LEVELS = ("LOD0", "LOD1")
+PLANT_KIND = "hero_vegetation"
+FURNITURE_KIND = "hero_furniture"
+# Origin must sit inside the LOD0 XZ bbox and ground contact near y = 0 (hero plants/furniture authoring contract).
+GROUND_TOL_M = 0.15
 
 
 def _r(v, n=4):
@@ -229,6 +241,99 @@ def build_building(entry, root, specs, contract_errors):
     }
 
 
+def _lod_records(entry, root, level_names, contract_errors):
+    """lods{} for plants/furniture + the shared origin/ground contract checks (appends to contract_errors)."""
+    chain = entry["lod_chain"]
+    lods = {}
+    for lvl in level_names:
+        node = (chain.get("levels") or {}).get(lvl)
+        if node is None:
+            continue
+        tris, lo, hi, mats = _measure(root, node["glb"])
+        imp = import_params(root, node["glb"])
+        gl = imp.get("meshes/generate_lods")
+        if gl != "false":
+            contract_errors.append("%s %s: meshes/generate_lods must be false (got %s)" % (entry["id"], lvl, gl))
+        lods[lvl] = {"glb": node["glb"], "sha256": node["sha256"], "tris": tris,
+                     "aabb_m": {"min": [_r(v) for v in lo], "max": [_r(v) for v in hi]}, "materials": sorted(mats),
+                     "import": {"generate_lods": False}}
+    b0 = lods["LOD0"]["aabb_m"]
+    if not (b0["min"][0] <= 0.0 <= b0["max"][0] and b0["min"][2] <= 0.0 <= b0["max"][2]):
+        contract_errors.append("%s: origin is outside the LOD0 XZ bbox (pivot contract)" % entry["id"])
+    if b0["min"][1] < -GROUND_TOL_M or b0["min"][1] > GROUND_TOL_M:
+        contract_errors.append("%s: LOD0 bbox min y %.3f not near ground (pivot contract)" % (entry["id"], b0["min"][1]))
+    return lods
+
+
+def _object_geometry(lods):
+    b0 = lods["LOD0"]["aabb_m"]
+    reach = max(abs(b0["min"][0]), abs(b0["max"][0]), abs(b0["min"][2]), abs(b0["max"][2]))
+    return {
+        "footprint_m": [_r(b0["max"][0] - b0["min"][0]), _r(b0["max"][2] - b0["min"][2])],
+        "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+        "reach_m": _r(reach),
+        "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+        "height_m": _r(b0["max"][1]),
+        "ground_skirt_m": _r(max(0.0, -b0["min"][1])),
+        "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+        "pivot_offset_m": [0.0, 0.0, 0.0],
+        "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+    }
+
+
+def _atlas_record(chain, root, material):
+    atlas_png = res_to_path(root, chain["atlas"]["path"])
+    return {"path": chain["atlas"]["path"], "sha256": chain["atlas"]["sha256"], "size_px": png_size(atlas_png),
+            "material": material, "layout": chain["atlas"].get("layout"),
+            "layout_sha256": chain["atlas"].get("layout_sha256")}
+
+
+def build_plant(entry, root, contract_errors):
+    chain = entry["lod_chain"]
+    lods = _lod_records(entry, root, PLANT_LEVELS, contract_errors)
+    species = entry["family"].replace("hero_", "", 1)
+    rec = {
+        "id": entry["id"], "kind": "vegetation", "species": species, "family": entry["family"],
+        "variant": entry["variant"], "label_tr": entry.get("label_tr", ""), "generator": entry["source"]["generator"],
+        "lods": lods, "triangles": {l: lods[l]["tris"] for l in lods},
+    }
+    rec.update(_object_geometry(lods))
+    rec.update({
+        "atlas": _atlas_record(chain, root, "mat_vegetation_atlas"),
+        "material_policy": chain.get("material_policy", {}),
+        "far_representation": ("PROXY (catalog chain; palms keep the 40-tri proxy, T-057 decision 5)"
+                               if "PROXY" in lods else "none per tree: cell blob/HLOD (T-057 decision 5)"),
+        "lod_distances_m": {"LOD0_max": chain["distances_m"].get("LOD0_max"),
+                            "LOD1_max": chain["distances_m"].get("LOD1_max"),
+                            "status": chain["distances_m"].get("status"),
+                            "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"},
+        "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric",
+    })
+    return rec
+
+
+def build_furniture(entry, root, contract_errors):
+    chain = entry["lod_chain"]
+    lods = _lod_records(entry, root, FURNITURE_LEVELS, contract_errors)
+    types = [t.split(":", 1)[1] for t in entry.get("tags", []) if t.startswith("type:")]
+    rec = {
+        "id": entry["id"], "kind": "street_furniture", "type": types[0] if types else UNKNOWN,
+        "family": entry["family"], "variant": entry["variant"], "label_tr": entry.get("label_tr", ""),
+        "generator": entry["source"]["generator"], "lods": lods, "triangles": {l: lods[l]["tris"] for l in lods},
+    }
+    rec.update(_object_geometry(lods))
+    dist = chain.get("distances_m") or {}
+    rec.update({
+        "atlas": _atlas_record(chain, root, "mat_furniture_atlas"),
+        "material_policy": chain.get("material_policy", {}),
+        "lod_distances_m": {"LOD0_max": dist.get("LOD0_max"), "LOD1_max": dist.get("LOD1_max"),
+                            "beyond_lod1": dist.get("beyond_lod1"), "distance_class": dist.get("distance_class"),
+                            "status": dist.get("status"), "note": "working value, not an integration decision"},
+        "q018": "open: furniture style / placement is not a user decision",
+    })
+    return rec
+
+
 def add_constraints(modules):
     """Known limits derived from the data itself (no prose guesses)."""
     by_fam = {}
@@ -303,32 +408,47 @@ def build_sets(catalog_path, root):
         with open(lp, "r", encoding="utf-8") as fh:
             layers = {l["file"]: l for l in json.load(fh)["layers"]}
 
-    bld, gnd = [], []
+    bld, gnd, veg, fur = [], [], [], []
     for e in sorted(entries, key=lambda x: x["id"]):
-        is_hero = e.get("category") == "building" and e.get("family") in FAMILY_MAP and \
-            (e.get("source") or {}).get("kind") == "hero"
+        kind = (e.get("source") or {}).get("kind")
+        is_hero = e.get("category") == "building" and e.get("family") in FAMILY_MAP and kind == "hero"
         is_gnd = e.get("category") == "ground" and e.get("png")
-        if not (is_hero or is_gnd):
+        is_veg = e.get("category") == "vegetation" and kind == PLANT_KIND
+        is_fur = e.get("category") == "street_furniture" and kind == FURNITURE_KIND
+        if not (is_hero or is_gnd or is_veg or is_fur):
             continue
         ok, _r1, _d = gate(e, root)
         if not ok:
             continue
-        if is_hero and "lod_chain" in e and all(l in e["lod_chain"].get("levels", {}) for l in LEVELS):
+        levels = e.get("lod_chain", {}).get("levels", {})
+        if is_hero and all(l in levels for l in LEVELS):
             bld.append(build_building(e, root, specs, errors))
         elif is_gnd:
             gnd.append(build_ground(e, root, layers, errors))
+        elif is_veg and "LOD0" in levels and "LOD1" in levels:
+            veg.append(build_plant(e, root, errors))
+        elif is_fur and "LOD0" in levels and "LOD1" in levels:
+            fur.append(build_furniture(e, root, errors))
     add_constraints(bld)
+
+    record_keys = {"building": "modules", "ground": "layers", "vegetation": "plants", "street_furniture": "items"}
 
     def doc(table, items, category):
         ids = {m["id"] for m in items}
         ex = exclusions(entries, category, ids, root)
-        return {"format": FORMAT, "table": table, "source_catalog": CATALOG, "source_catalog_sha256": digest,
-                "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
-                "included_count": len(items), "unapproved": ex, "modules" if category == "building" else "layers": items}
+        d = {"format": FORMAT, "table": table, "source_catalog": CATALOG, "source_catalog_sha256": digest,
+             "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+             "included_count": len(items), "unapproved": ex, record_keys[category]: items}
+        if category == "vegetation":
+            d["notes"] = ["veg_plane (kit, mat_kit) is approved but not a game plant: the hero plane (family hero_plane) "
+                          "carries the role (ADR-0006 s4)."]
+        return d
 
     out = {
         "game_buildings.json": doc("buildings", bld, "building"),
         "game_ground.json": doc("ground", gnd, "ground"),
+        "game_plants.json": doc("vegetation", veg, "vegetation"),
+        "game_furniture.json": doc("furniture", fur, "street_furniture"),
     }
     texts = {k: json.dumps(v, indent=1, ensure_ascii=False) + "\n" for k, v in out.items()}
     return texts, errors

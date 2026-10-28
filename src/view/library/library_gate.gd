@@ -15,8 +15,12 @@ extends RefCounted
 const CATALOG_PATH := "res://data/library/catalog.json"
 const GAME_TABLE_PATHS := ["res://data/library/game_buildings.json", "res://data/library/game_ground.json"]
 const FORMAT := "imaro-game-set/1"
+## Bitki + sokak donatısı oyun tabloları (T-062 B0). Varsayılan kapıya EKLENMEZ (bina/zemin tüketicileri etkilenmez);
+## bitki yerleşimi `load_plants()` ile kendi kapısını kurar.
+const PLANT_TABLE_PATHS := ["res://data/library/game_plants.json", "res://data/library/game_furniture.json"]
 ## Tablo adı -> kayıt dizisi anahtarı. Bilinmeyen tablo adı reddedilir.
-const TABLE_RECORD_KEYS := {"buildings": "modules", "ground": "layers"}
+const TABLE_RECORD_KEYS := {"buildings": "modules", "ground": "layers", "vegetation": "plants",
+		"furniture": "items"}
 const LOD_ORDER := ["LOD0", "LOD1", "PROXY"]
 
 const REASON_REJECTED := "rejected"
@@ -54,6 +58,13 @@ var _table_excluded_count: int = 0
 static func load_default() -> LibraryGate:
 	var gate := LibraryGate.new()
 	gate.load_game_tables(PackedStringArray(GAME_TABLE_PATHS), CATALOG_PATH)
+	return gate
+
+
+## Bitki + donatı tabloları ve katalog (T-062 B0): bitki/donatı kimlikleri yalnız bu kapıdan alınır.
+static func load_plants() -> LibraryGate:
+	var gate := LibraryGate.new()
+	gate.load_game_tables(PackedStringArray(PLANT_TABLE_PATHS), CATALOG_PATH)
 	return gate
 
 

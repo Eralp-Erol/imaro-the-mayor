@@ -8,7 +8,7 @@ const SOURCE_DIR := "res://src/world/settlement"
 const DATA_DIR := "res://data/world/ismeral"
 ## Veri dizininde beklenen kural/kontrol dosyaları: üretilmiş yapı/koordinat verisi (BuildingColumns dökümü) olamaz.
 const ALLOWED_DATA_FILES: Array[String] = ["world.json", "coast.json", "regions.json", "sites.json", "terrain.json",
-		"network.json", "settlement.json"]
+		"network.json", "settlement.json", "vegetation.json"]
 
 
 ## Kaynakta gömülü haritaya-bağlı koordinat (4+ haneli Vector2 sabiti) var mı: eşleşmeler.
