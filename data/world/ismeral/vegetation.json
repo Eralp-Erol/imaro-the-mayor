@@ -78,7 +78,7 @@
 			"local": {"spacing_m": 12.0},
 			"field": {"spacing_m": 26.0}
 		},
-		"density": {"core": 0.65, "town": 0.6, "hill": 0.4, "industry": 0.12, "rural": 0.2},
+		"density": {"core": 0.95, "town": 0.9, "hill": 0.65, "industry": 0.2, "rural": 0.3},
 		"field_density": 0.18,
 		"weights": {
 			"core": {"plane": 0.62, "cypress": 0.38},
@@ -96,14 +96,14 @@
 		"green_mult": 2.5,
 		"near_building_m": 22.0,
 		"zones": {
-			"center": {"per_ha": 6.0, "vacant_mult": 2.0, "group": "urban"},
-			"historic": {"per_ha": 5.0, "vacant_mult": 2.0, "group": "urban"},
-			"dense": {"per_ha": 6.0, "vacant_mult": 2.0, "group": "urban"},
-			"town_center": {"per_ha": 9.0, "vacant_mult": 2.2, "group": "urban"},
-			"town": {"per_ha": 16.0, "vacant_mult": 2.2, "group": "garden"},
-			"village": {"per_ha": 24.0, "vacant_mult": 2.0, "group": "garden"},
-			"hill_center": {"per_ha": 12.0, "vacant_mult": 2.0, "group": "garden"},
-			"hillside": {"per_ha": 22.0, "vacant_mult": 2.0, "group": "garden"},
+			"center": {"per_ha": 12.0, "vacant_mult": 2.0, "group": "urban"},
+			"historic": {"per_ha": 10.0, "vacant_mult": 2.0, "group": "urban"},
+			"dense": {"per_ha": 12.0, "vacant_mult": 2.0, "group": "urban"},
+			"town_center": {"per_ha": 16.0, "vacant_mult": 2.2, "group": "urban"},
+			"town": {"per_ha": 24.0, "vacant_mult": 2.2, "group": "garden"},
+			"village": {"per_ha": 30.0, "vacant_mult": 2.0, "group": "garden"},
+			"hill_center": {"per_ha": 16.0, "vacant_mult": 2.0, "group": "garden"},
+			"hillside": {"per_ha": 28.0, "vacant_mult": 2.0, "group": "garden"},
 			"harbor": {"per_ha": 2.0, "vacant_mult": 1.5, "group": "industry"},
 			"yard": {"per_ha": 2.5, "vacant_mult": 1.5, "group": "industry"},
 			"farm": {"per_building": 7.0, "vacant_mult": 1.0, "group": "farm", "near_building": true}
@@ -149,22 +149,22 @@
 		"min_shore_m": 25.0,
 		"band_m": 450.0,
 		"max_urban_dist_m": 4500.0,
-		"per_ha": 7.0,
+		"per_ha": 20.0,
 		"weights": {"pine_brutia": 0.78, "maquis": 0.22}
 	},
 	"rural": {
 		"max_urban_dist_m": 3500.0,
-		"falloff_min": 0.25,
-		"olive_pocket": {"cell_m": 520.0, "threshold": 0.6, "per_ha": 5.0, "max_slope_deg": 18.0,
+		"falloff_min": 0.45,
+		"olive_pocket": {"cell_m": 520.0, "threshold": 0.5, "per_ha": 22.0, "max_slope_deg": 18.0,
 			"weights": {"olive_open": 0.5, "olive_twisted": 0.35, "cypress": 0.15}},
 		"classes": [
-			{"name": "high", "slope_deg": [0.0, 90.0], "elev_m": [350.0, 5000.0], "per_ha": 5.0,
+			{"name": "high", "slope_deg": [0.0, 90.0], "elev_m": [350.0, 5000.0], "per_ha": 22.0,
 				"weights": {"pine_stone": 0.6, "maquis": 0.4}},
-			{"name": "steep", "slope_deg": [22.0, 90.0], "elev_m": [-100.0, 350.0], "per_ha": 5.0,
+			{"name": "steep", "slope_deg": [22.0, 90.0], "elev_m": [-100.0, 350.0], "per_ha": 22.0,
 				"weights": {"maquis": 0.78, "pine_stone": 0.22}},
-			{"name": "hill", "slope_deg": [6.0, 22.0], "elev_m": [-100.0, 350.0], "per_ha": 7.0,
+			{"name": "hill", "slope_deg": [6.0, 22.0], "elev_m": [-100.0, 350.0], "per_ha": 32.0,
 				"weights": {"maquis": 0.45, "pine_stone": 0.28, "pine_brutia": 0.15, "olive_open": 0.12}},
-			{"name": "flat", "slope_deg": [0.0, 6.0], "elev_m": [-100.0, 350.0], "per_ha": 1.0,
+			{"name": "flat", "slope_deg": [0.0, 6.0], "elev_m": [-100.0, 350.0], "per_ha": 9.0,
 				"weights": {"cypress": 0.2, "olive_open": 0.35, "olive_twisted": 0.25, "pine_brutia": 0.2}}
 		]
 	}

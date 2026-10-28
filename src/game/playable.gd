@@ -18,6 +18,12 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --demo-zone=Z    demo imar anahtarı (varsayılan zone.mixed).
 ##   --no-smoke-save-load  --demo'nun kare 60'taki kayıt/yükleme smoke'unu atlar (ölçüm: yükleme sonrası tek
 ##                    seferlik tam eşitleme sürekli-rejim kare maliyetinden ayrı raporlanabilsin).
+##   --no-vegetation  bitki görünümü kapalı (T-062 B1; varsayılan AÇIK: B0 yerleşimi, `VegetationView`). Perf A/B ve
+##                    karşılaştırma içindir.  --veg-block: yerleşimi/önbelleği ana iş parçacığında BEKLER
+## (yakalama/ölçüm:
+##                    ilk karede bitki hazır; oyunda varsayılan değil, arka thread).  --veg-no-cache: disk önbelleği
+## kapalı.
+##                    --veg-force: başsız çalışmada da kur (varsayılan: başsızda atlanır, yerleşim ~14 sn).
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
 ##   --no-roads  yol görünümü kapalı (karşılaştırmalı ölçüm).
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
@@ -75,6 +81,8 @@ var _acc_ms: float = 0.0
 var _acc_n: int = 0
 var _max_ms: float = 0.0
 var _smoke_save_load_checked: bool = false
+var _vegetation: VegetationView = null
+var _veg_loader: VegetationLoader = null
 
 
 ## perf_probe: kare başına sim günü (tick'li karelerin ayrı raporlanması için); sim yoksa -1.
@@ -101,6 +109,7 @@ func _ready() -> void:
 	_on_hud_ready()
 	_m2_dev_setup()
 	_t47_dev_setup()
+	_start_vegetation()
 	_apply_perf_flags()
 	sim_stats["sim_setup_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
 	print("PLAYABLE ", JSON.stringify(sim_stats))
@@ -141,6 +150,8 @@ func _apply_perf_flags() -> void:
 		_hud.visible = false
 	if "markers" in hidden and _markers != null:
 		_markers.visible = false
+	if "veg" in hidden and _vegetation != null:
+		_vegetation.visible = false
 
 
 func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
@@ -202,6 +213,90 @@ func _kit_matches_settlement() -> bool:
 		if modules[i].idx != i or modules[i].id != _kit.ids[i]:
 			return false
 	return true
+
+
+## T-062 B1: bitki görünümü. Mesh'ler ve atlas rengi ana iş parçacığında (kapıdan) yüklenir; yerleşim (B0, ~14 sn) arka
+## thread'de ya da disk önbelleğinden gelir, hazır olunca `_adopt_vegetation` görünümü kurar. Başsızda varsayılan
+## atlanır.
+func _start_vegetation() -> void:
+	if _args.has("no-vegetation") or _settlement == null or _net == null:
+		return
+	if DisplayServer.get_name() == "headless" and not _args.has("veg-force"):
+		sim_stats["vegetation"] = "skipped (headless)"
+		return
+	var t0 := Time.get_ticks_usec()
+	var config := VegetationViewConfig.load_default()
+	if not config.valid():
+		push_error("playable: bitki görünüm ayarı geçersiz: %s" % "; ".join(config.errors))
+		return
+	var species := VegetationSpecies.load_default()
+	var rules := VegetationRules.load_path(VegetationRules.PATH, species)
+	if species.size() == 0 or not rules.is_valid():
+		push_error("playable: bitki tablosu/kuralları geçersiz: %s" % "; ".join(rules.errors))
+		return
+	_apply_vegetation_overrides(config)
+	var look := VegetationLook.load_full(species, config)
+	if not look.errors.is_empty():
+		push_error("playable: bitki görünüm tablosu eksik: %s" % "; ".join(look.errors))
+	_vegetation = VegetationView.new()
+	_vegetation.name = "Vegetation"
+	_view_root.add_child(_vegetation)
+	_vegetation.setup(look, config)
+	_vegetation.warm_up(_camera.camera)
+	var blocking := _args.has("veg-block")
+	_veg_loader = VegetationLoader.start(_settlement, species, rules, _world, blocking, not _args.has("veg-no-cache"))
+	sim_stats["vegetation_assets_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
+	if blocking:
+		_adopt_vegetation()
+
+
+## Yalnız ölçüm/A-B bayrakları (oyuncu yolunda etkisiz): kademe eşikleri ve leke/gölge anahtarları.
+##   --veg-lod0=M --veg-lod1=M  --veg-no-blob  --veg-no-shadow  --veg-blob-end=M
+func _apply_vegetation_overrides(config: VegetationViewConfig) -> void:
+	config.lod0_end_m = _arg_float(_args, "veg-lod0", config.lod0_end_m, 10.0, 2000.0)
+	config.lod1_end_m = _arg_float(_args, "veg-lod1", config.lod1_end_m, 20.0, 5000.0)
+	config.blob_end_m = _arg_float(_args, "veg-blob-end", config.blob_end_m, 100.0, 20000.0)
+	if _args.has("veg-no-blob"):
+		config.blob_enabled = false
+	if _args.has("veg-no-shadow"):
+		config.shadow_lod0 = false
+	config.palm_proxy_end_m = maxf(config.palm_proxy_end_m, config.lod1_end_m)
+	if config.blob_fade_begin_m <= config.lod1_end_m or config.blob_end_m <= config.blob_fade_begin_m:
+		config.blob_fade_begin_m = config.lod1_end_m + (config.blob_end_m - config.lod1_end_m) * 0.6
+	var problems := config.problems()
+	if not problems.is_empty():
+		push_error("playable: --veg-* geçersiz: %s" % "; ".join(problems))
+
+
+## Yerleşim hazırsa görünümü kurar (tek sefer). Hazır değilse hiçbir şey yapmaz.
+func _adopt_vegetation() -> void:
+	if _veg_loader == null or not _veg_loader.poll():
+		if _veg_loader != null and _veg_loader.state == VegetationLoader.State.FAILED:
+			push_error("playable: bitki yerleşimi başarısız: %s" % str(_veg_loader.stats.get("error", "?")))
+			_veg_loader = null
+		return
+	var loader := _veg_loader
+	_veg_loader = null
+	_vegetation.set_layout(loader.layout)
+	var cam := _vegetation_camera_position()
+	_vegetation.track_camera(cam)
+	if _args.has("veg-block"):
+		_vegetation.settle()
+	sim_stats["vegetation"] = loader.stats
+	build_stats["vegetation"] = _vegetation.stats
+	print("VEGETATION ", JSON.stringify({"loader": loader.stats, "instances": loader.columns.count,
+			"view": _vegetation.stats}))
+
+
+## Kameranın dünya konumu (rebasing'den bağımsız): LOD kararı dünya koordinatındadır.
+func _vegetation_camera_position() -> Vector3:
+	var p := _camera.camera.global_position
+	return Vector3(p.x + _camera.rebase_origin.x, p.y, p.z + _camera.rebase_origin.y)
+
+
+func _exit_tree() -> void:
+	if _veg_loader != null:
+		_veg_loader.wait()
 
 
 func _start_sim() -> void:
@@ -492,6 +587,10 @@ func _apply_sim_view(columns: BuildingColumns, version: int) -> void:
 
 func _process(delta: float) -> void:
 	super._process(delta)
+	if _veg_loader != null:
+		_adopt_vegetation()
+	elif _vegetation != null and _camera != null:
+		_vegetation.track_camera(_vegetation_camera_position())
 	if _facade == null:
 		return
 	_frames += 1
