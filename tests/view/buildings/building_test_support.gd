@@ -4,22 +4,40 @@ extends RefCounted
 ## ve BuildingColumns üreticileri. Başsız (render yok).
 
 const NETWORK_DATA_DIR := "res://data/world/ismeral"
+## Onaylı hero modül kimlikleri (T-062 A3; `game_buildings.json`). Testler dizini kimlikten okur, sayı gömmez.
+const MID_A := "bld_hero_res_mid_a"
+const MID_B := "bld_hero_res_mid_b"
+const LATE_A := "bld_hero_res_late_a"
+const HOUSE_A := "bld_hero_res_house_a"
+const HOUSE_B := "bld_hero_res_house_b"
+const CIVIC_A := "bld_hero_civ_hero_a"
+const BAZAAR_A := "bld_hero_com_bazaar_a"
 
-static var _lib: KitLibrary = null
+static var _loaded: Dictionary = {}
 static var _kit: BuildingKit = null
 
 
-static func library() -> KitLibrary:
-	if _lib == null:
-		_lib = KitLibrary.load_manifest()
-	return _lib
+## {"table": süzülmüş oyun bina tablosu, "gate": LibraryGate} (süreç başına bir kez; SALT OKUNUR).
+static func loaded_table() -> Dictionary:
+	if _loaded.is_empty():
+		_loaded = SettlementTable.load_game_table()
+	return _loaded
 
 
-## Manifest + PROXY şablonları (süreç başına bir kez; SALT OKUNUR).
+static func gate() -> LibraryGate:
+	return loaded_table()["gate"] as LibraryGate
+
+
+## Onaylı hero tablosu + PROXY şablonları + piştirilmiş renkler (süreç başına bir kez; SALT OKUNUR).
 static func kit() -> BuildingKit:
 	if _kit == null:
-		_kit = BuildingKit.from_library(library())
+		_kit = BuildingKit.from_game_table(loaded_table()["table"], gate())
 	return _kit
+
+
+## Yalnız tablo (mesh yüklemeden): şablonlar boş. Değiştirilebilir kopya: her çağrıda yeni.
+static func meta_kit() -> BuildingKit:
+	return BuildingKit.from_table(loaded_table()["table"], gate())
 
 
 ## Düz kara dünyası (isteğe bağlı su dikdörtgeni): tek bölge D1. Boyut m, hücre m.

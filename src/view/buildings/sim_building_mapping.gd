@@ -1,7 +1,8 @@
 class_name SimBuildingMapping
 extends RefCounted
 ## SimBuildingProjector geçici eşleme verisi (T-040; `data/view/sim_building_mapping.json`). Yalnız KÖPRÜ sayıları:
-## kit modülleri/aileleri/katlar manifestten, doku ağırlıkları `settlement.json`dan gelir (yeni sanat kararı yok).
+## hero modülleri/aileleri/katlar oyun bina tablosundan (`game_buildings.json`), doku ağırlıkları
+## `settlement.json`dan gelir (yeni sanat kararı yok).
 ## Görünüm tarafı verisidir: simülasyon bu dosyayı okumaz.
 
 const DEFAULT_PATH := "res://data/view/sim_building_mapping.json"

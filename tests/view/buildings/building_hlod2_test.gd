@@ -1,7 +1,7 @@
 extends GdUnitTestSuite
 ## T-012 ölçüt 2/7 · HLOD2 kent kütleleri (kit spec §7.2 ret ölçütleri): slab yok (kendi yükseklik kademesi),
-## baskın renk
-## (ortalama değil), en yüksek %10 + landmark ayrı kutu, geometri geçerliliği, boş girdi, determinizm.
+## baskın renk (ortalama değil), en yüksek %10 + landmark ayrı kutu, geometri geçerliliği, boş girdi, determinizm.
+## T-062 A3: kütle rengi kümedeki bir MODÜLÜN piştirilmiş (PROXY atlası) duvar/çatı rengidir; hero palet satırı taşımaz.
 
 var _kit: BuildingKit
 var _world: WorldData
@@ -31,7 +31,7 @@ func test_empty_input_gives_no_mesh() -> void:
 
 
 func test_vertex_normal_colour_arrays_are_consistent_triangles() -> void:
-	var cols := BuildingTestSupport.grid_columns(_kit.module_index("bld_res_mid_a"), 10, 30.0, 100.0, 100.0)
+	var cols := BuildingTestSupport.grid_columns(_kit.module_index(BuildingTestSupport.MID_A), 10, 30.0, 100.0, 100.0)
 	var r := _hlod(cols)
 	var v: PackedVector3Array = r["vertices"]
 	assert_int(v.size() % 3).is_equal(0)
@@ -42,7 +42,7 @@ func test_vertex_normal_colour_arrays_are_consistent_triangles() -> void:
 
 
 func test_every_triangle_faces_outward_with_godot_clockwise_winding() -> void:
-	var cols := BuildingTestSupport.grid_columns(_kit.module_index("bld_res_mid_a"), 6, 40.0, 100.0, 100.0)
+	var cols := BuildingTestSupport.grid_columns(_kit.module_index(BuildingTestSupport.MID_A), 6, 40.0, 100.0, 100.0)
 	var r := _hlod(cols)
 	var v: PackedVector3Array = r["vertices"]
 	var n: PackedVector3Array = r["normals"]
@@ -54,8 +54,8 @@ func test_every_triangle_faces_outward_with_godot_clockwise_winding() -> void:
 
 func test_each_mass_keeps_its_own_height_no_flat_slab() -> void:
 	# alçak (res_house) ve yüksek (res_late) yapılar yan yana, aynı 64 m ızgarasında: ayrı kademede, ayrı kutuda
-	var low := _kit.module_index("bld_res_house_a")
-	var high := _kit.module_index("bld_res_late_a")
+	var low := _kit.module_index(BuildingTestSupport.HOUSE_A)
+	var high := _kit.module_index(BuildingTestSupport.LATE_A)
 	var rows: Array = []
 	for i in 12:
 		rows.append({"m": low, "x": 100.0 + i * 8.0, "z": 100.0})
@@ -69,96 +69,108 @@ func test_each_mass_keeps_its_own_height_no_flat_slab() -> void:
 	assert_int(tops.size()).is_greater_equal(2)   # alçak ve yüksek kütle aynı tepeye düzleşmez
 
 
-func test_mass_colour_is_one_of_the_member_rows_never_an_average() -> void:
-	var m := _kit.module_index("bld_res_mid_a")
-	# 5 yapı W1 (satır 0), 2 yapı W10 (satır 9): ortalama sıcak gri-kahve olurdu; küme ya W1 ya W10'dur
+func _two_module_rows(a: int, b: int) -> Array:
+	# 5 yapı `a` modülü, 2 yapı `b` modülü, aynı 96 m hücre ve aynı yükseklik kademesi: alan ağırlıklı baskın = `a`
 	var rows: Array = []
 	for i in 7:
-		rows.append({"m": m, "x": 100.0 + i * 3.0, "z": 100.0, "wall": 0 if i < 5 else 9, "roof": 13})
-	var cols := BuildingTestSupport.columns(rows)
+		rows.append({"m": a if i < 5 else b, "x": 100.0 + i * 3.0, "z": 100.0})
+	return rows
+
+
+func _single_mass(cols: BuildingColumns, cfg: BuildingViewConfig) -> Dictionary:
+	var plan := BuildingChunkPlan.build(cols, _world.origin, 1000.0, 4)
+	var cells: Array = [BuildingChunkBuilder.build_cell(cols, plan, plan.keys()[0], _kit, _world, cfg)]
+	return BuildingHlod2.build(cells, cols, _kit, cfg, plan.super_origin(Vector2i(0, 0)))
+
+
+func test_mass_colour_is_one_of_the_member_modules_baked_colours_never_an_average() -> void:
+	var a := _kit.module_index(BuildingTestSupport.MID_A)
+	var b := _kit.module_index(BuildingTestSupport.LATE_A)   # aynı yükseklik kademesi (>= 18 m): aynı kütle
+	var cols := BuildingTestSupport.columns(_two_module_rows(a, b))
 	for sample in [true, false]:
 		var cfg := BuildingViewConfig.new()
 		cfg.hlod2_keep_top_share = 0.0
 		cfg.hlod2_sample_colors = sample
-		var plan := BuildingChunkPlan.build(cols, _world.origin, 1000.0, 4)
-		var cells: Array = [BuildingChunkBuilder.build_cell(cols, plan, plan.keys()[0], _kit, _world, cfg)]
-		var r := BuildingHlod2.build(cells, cols, _kit, cfg, plan.super_origin(Vector2i(0, 0)))
-		var allowed: Array[Color] = [_kit.shaded(0, 1.0), _kit.shaded(9, 1.0), _kit.shaded(13, 1.0)]
+		var r := _single_mass(cols, cfg)
+		var allowed: Array[Color] = [_kit.wall_color[a], _kit.roof_color[a], _kit.wall_color[b], _kit.roof_color[b]]
+		assert_int((r["colors"] as PackedColorArray).size()).is_greater(0)
 		for c in (r["colors"] as PackedColorArray):
 			var ok := false
-			for a in allowed:
-				ok = ok or c.is_equal_approx(a)
+			for allowed_c in allowed:
+				ok = ok or c.is_equal_approx(allowed_c)
 			assert_bool(ok).is_true()
 
 
-func test_dominant_mode_picks_the_area_dominant_row() -> void:
-	var m := _kit.module_index("bld_res_mid_a")
-	var rows: Array = []
-	for i in 7:
-		rows.append({"m": m, "x": 100.0 + i * 3.0, "z": 100.0, "wall": 0 if i < 5 else 9, "roof": 13})
-	var cols := BuildingTestSupport.columns(rows)
+func test_dominant_mode_picks_the_area_dominant_module() -> void:
+	var a := _kit.module_index(BuildingTestSupport.MID_A)
+	var b := _kit.module_index(BuildingTestSupport.LATE_A)   # aynı yükseklik kademesi (>= 18 m): aynı kütle
+	var cols := BuildingTestSupport.columns(_two_module_rows(a, b))
 	var cfg := BuildingViewConfig.new()
 	cfg.hlod2_keep_top_share = 0.0
 	cfg.hlod2_sample_colors = false
-	var plan := BuildingChunkPlan.build(cols, _world.origin, 1000.0, 4)
-	var cells: Array = [BuildingChunkBuilder.build_cell(cols, plan, plan.keys()[0], _kit, _world, cfg)]
-	var r := BuildingHlod2.build(cells, cols, _kit, cfg, plan.super_origin(Vector2i(0, 0)))
-	var saw_w1 := false
+	var r := _single_mass(cols, cfg)
+	var saw_a_wall := false
 	for c in (r["colors"] as PackedColorArray):
-		assert_bool(c.is_equal_approx(_kit.shaded(9, 1.0))).is_false()
-		saw_w1 = saw_w1 or c.is_equal_approx(_kit.shaded(0, 1.0))
-	assert_bool(saw_w1).is_true()
+		assert_bool(c.is_equal_approx(_kit.wall_color[b])).is_false()
+		saw_a_wall = saw_a_wall or c.is_equal_approx(_kit.wall_color[a])
+	assert_bool(saw_a_wall).is_true()
 
 
-func test_sampled_colours_preserve_the_mix_across_clusters_not_one_grey() -> void:
-	var m := _kit.module_index("bld_res_mid_a")
+func test_sampled_colours_preserve_the_module_mix_across_clusters_not_one_grey() -> void:
+	var picks: Array[int] = []
+	for id in [BuildingTestSupport.MID_A, BuildingTestSupport.MID_B, BuildingTestSupport.HOUSE_A,
+			BuildingTestSupport.HOUSE_B, BuildingTestSupport.LATE_A, BuildingTestSupport.CIVIC_A,
+			BuildingTestSupport.BAZAAR_A]:
+		picks.append(_kit.module_index(id))
 	var rows: Array = []
 	for j in 12:
 		for i in 12:
-			rows.append({"m": m, "x": 100.0 + i * 30.0, "z": 100.0 + j * 30.0, "wall": (i * 5 + j) % 7, "roof": 13})
-	var cols := BuildingTestSupport.columns(rows)
+			rows.append({"m": picks[(i * 5 + j) % picks.size()], "x": 100.0 + i * 30.0, "z": 100.0 + j * 30.0})
 	var cfg := BuildingViewConfig.new()
 	cfg.hlod2_keep_top_share = 0.0
-	var plan := BuildingChunkPlan.build(cols, _world.origin, 1000.0, 4)
-	var cells: Array = [BuildingChunkBuilder.build_cell(cols, plan, plan.keys()[0], _kit, _world, cfg)]
-	var r := BuildingHlod2.build(cells, cols, _kit, cfg, plan.super_origin(Vector2i(0, 0)))
+	var r := _single_mass(BuildingTestSupport.columns(rows), cfg)
 	var distinct := {}
 	for c in (r["colors"] as PackedColorArray):
 		distinct[c.to_html()] = true
-	assert_int(distinct.size()).is_greater_equal(4)   # 7 duvar satırının çoğu görünür (tek ortalama renk değil)
+	assert_int(distinct.size()).is_greater_equal(4)   # 7 modülün çoğu görünür (tek ortalama renk değil)
 
 
 func test_tallest_share_and_landmark_stay_as_separate_oriented_boxes() -> void:
-	var m := _kit.module_index("bld_res_mid_a")
-	var tower := _kit.module_index("bld_lmk_clocktower")
+	# Onaylı hero tablosunda landmark yok (saat kulesi rejected); landmark KURALI veriden (is_landmark) çalışır:
+	# bu testte tablo-yalnız kitin bir modülü landmark işaretlenir.
+	var kit := BuildingTestSupport.meta_kit()
+	var m := kit.module_index(BuildingTestSupport.MID_A)
+	var tower := kit.module_index(BuildingTestSupport.CIVIC_A)
+	kit.is_landmark[tower] = 1
 	var rows: Array = []
 	for i in 40:
 		rows.append({"m": m, "x": 100.0 + (i % 8) * 4.0, "z": 100.0 + (i / 8) * 4.0})
 	rows.append({"m": tower, "x": 150.0, "z": 150.0})
 	var cols := BuildingTestSupport.columns(rows)
-	var with_top := _hlod(cols)
-	var cfg := BuildingViewConfig.new()
-	cfg.hlod2_keep_top_share = 0.0
 	var plan := BuildingChunkPlan.build(cols, _world.origin, 1000.0, 4)
-	var cells: Array = [BuildingChunkBuilder.build_cell(cols, plan, plan.keys()[0], _kit, _world, cfg)]
-	var without_top := BuildingHlod2.build(cells, cols, _kit, cfg, plan.super_origin(Vector2i(0, 0)))
+	var results: Array[Dictionary] = []
+	for share in [0.1, 0.0]:
+		var cfg := BuildingViewConfig.new()
+		cfg.hlod2_keep_top_share = share
+		var cells: Array = [BuildingChunkBuilder.build_cell(cols, plan, plan.keys()[0], kit, _world, cfg)]
+		results.append(BuildingHlod2.build(cells, cols, kit, cfg, plan.super_origin(Vector2i(0, 0))))
 	# %10 + landmark ayrı kutu -> kutu sayısı artar; kule en az bir kutu olarak yükseklikle korunur
-	assert_int(_box_count(with_top)).is_greater(_box_count(without_top))
+	assert_int(_box_count(results[0])).is_greater(_box_count(results[1]))
 	var tallest := 0.0
-	for p: Vector3 in (without_top["vertices"] as PackedVector3Array):
+	for p: Vector3 in (results[1]["vertices"] as PackedVector3Array):
 		tallest = maxf(tallest, p.y)
-	assert_float(tallest).is_greater(20.0 + _kit.height_m[tower] - 1.0 - 0.5)   # zemin 20 - 0,2 + 23 m
+	assert_float(tallest).is_greater(20.0 + kit.height_m[tower] - 1.0 - 0.5)   # zemin 20 - 0,2 + yükseklik
 
 
 func test_clusters_are_far_fewer_than_buildings() -> void:
-	var cols := BuildingTestSupport.grid_columns(_kit.module_index("bld_res_mid_a"), 40, 20.0, 100.0, 100.0)
+	var cols := BuildingTestSupport.grid_columns(_kit.module_index(BuildingTestSupport.MID_A), 40, 20.0, 100.0, 100.0)
 	var r := _hlod(cols)
 	assert_int(_box_count(r)).is_less(cols.count / 3)
 	assert_int(_box_count(r)).is_greater(10)
 
 
 func test_same_input_gives_identical_geometry() -> void:
-	var cols := BuildingTestSupport.grid_columns(_kit.module_index("bld_res_late_a"), 15, 35.0, 100.0, 100.0)
+	var cols := BuildingTestSupport.grid_columns(_kit.module_index(BuildingTestSupport.LATE_A), 15, 35.0, 100.0, 100.0)
 	var a := _hlod(cols)
 	var b := _hlod(cols)
 	assert_array(a["vertices"]).is_equal(b["vertices"])
@@ -176,7 +188,7 @@ func test_footprint_corners_follow_yaw() -> void:
 
 
 func test_sparse_mass_shrinks_toward_its_centre_so_ground_shows_through() -> void:
-	var m := _kit.module_index("bld_res_house_a")
+	var m := _kit.module_index(BuildingTestSupport.HOUSE_A)
 	# aynı 96 m hücrede iki küçük ev, uzak köşelerde: sınır kutusu ~80 m, kaplama çok düşük
 	var cols := BuildingTestSupport.columns([{"m": m, "x": 110.0, "z": 110.0}, {"m": m, "x": 180.0, "z": 180.0}])
 	var cfg := BuildingViewConfig.new()

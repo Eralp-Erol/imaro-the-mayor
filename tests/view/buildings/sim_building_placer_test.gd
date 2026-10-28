@@ -99,6 +99,30 @@ func test_staging_is_monotonic_keeps_the_row_count_and_ends_in_the_final_module(
 		assert_bool(staged_any).override_failure_message("kademesiz tabloda kademe görüldü").is_false()
 
 
+func test_hero_pieces_carry_no_palette_rows_and_never_pick_a_stage_module() -> void:
+	# T-062 A3: hero modül palet satırı taşımaz (wall/roof/accent = 0, renk atlas dokusundan); tek boy (kademe yok).
+	var seen := 0
+	for pid in _ids:
+		for use in [&"residential", &"commercial"]:
+			var plan := _placer.plan(int(pid), use, 4)
+			if plan == null:
+				continue
+			for piece in plan.pieces:
+				seen += 1
+				assert_bool(piece.module.palette_free()).is_true()
+				assert_int(piece.wall).is_equal(0)
+				assert_int(piece.roof).is_equal(0)
+				assert_int(piece.accent).is_equal(0)   # dükkân vurgu satırı (kit varsayımı) hero'da uygulanmaz
+			for progress in [0, 300, 999]:
+				for r in _placer.rows_for(plan, progress):
+					assert_int(r.wall).is_equal(0)
+					assert_int(r.roof).is_equal(0)
+					assert_int(r.accent).is_equal(0)
+			for i in plan.pieces.size():   # tek boy: ilerleme ne olursa nihai modül
+				assert_int(_placer.rows_for(plan, 1)[i].module).is_equal(plan.pieces[i].module.idx)
+	assert_int(seen).is_greater(3)
+
+
 func test_commercial_plans_use_ground_shop_modules_and_residential_ones_do_not() -> void:
 	var seen := 0
 	for pid in _ids:

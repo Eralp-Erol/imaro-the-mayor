@@ -9,7 +9,7 @@ func before() -> void:
 
 
 func _mid() -> int:
-	return _kit.module_index("bld_res_mid_a")
+	return _kit.module_index(BuildingTestSupport.MID_A)
 
 
 func test_columns_split_into_1km_cells_and_every_row_lands_in_exactly_one_cell() -> void:

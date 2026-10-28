@@ -1,15 +1,22 @@
 class_name SimBuildingPlacer
 extends RefCounted
-## Sim'in tarif ettiği bir projeyi (kullanım + birim) parsel üzerinde kit modüllerine yerleştirir (T-040; render
+## Sim'in tarif ettiği bir projeyi (kullanım + birim) parsel üzerinde onaylı hero modüllerine yerleştirir (T-040; render
 ## tarafı, saf ve deterministik: aynı dünya + tohum + parsel + kullanım + birim -> aynı yerleşim). Sim'e YAZMAZ.
 ##
-## Kaynaklar (yeni sanat kararı yok): modül tablosu `SettlementRules` (kit manifesti), bölge dokusu ağırlıkları ve
+## Kaynaklar (yeni sanat kararı yok): modül tablosu `SettlementRules` (onaylı hero oyun tablosu, T-062), bölge
+## dokusu ağırlıkları ve
 ## çekme/aralık/kat toleransı `settlement.json` zone'ları (T0 ile aynı kural dosyası), parsel cephe çerçevesi
 ## `SettlementLot` (yön = cephe sokağa bakar). Köprü sayıları `SimBuildingMapping`. T0Settlement'ın yerleşim
 ## algoritması kopyalanmaz: burada tek sıra, cephe şeridinde, parsel poligonuna sığan basit bir yerleşim vardır.
 ##
-## İnşaat kademesi: kitte iskele modülü yok; nihai modülün ailesindeki daha az katlı modüllerle kat kademesi
-## (`rows_for`). Nihai modül yalnız tamamda (ya da aile içinde daha küçük modül yoksa) görünür.
+## İnşaat kademesi: iskele/inşaat modülü YOK ve hero aileleri TEK boydur (Studio Director kararı 2; a/b/c yalnız stil):
+## `_stage_module` aynı ailede daha az katlı modül arar, hero tablosunda bulamaz, dolayısıyla `rows_for` inşaat
+## başlayınca
+## NİHAİ modülü verir (görünür davranış: yapı tam boy belirir). Mekanizma veri güdümlüdür: ailede daha az katlı modül
+## onaylanırsa kademe kendiliğinden çalışır; kodda aile adı/kat sayısı yoktur.
+## Renk: hero modül palet satırı taşımaz (`SettlementModule.palette_free`): satır seçimi ve RNG tüketimi yoktur,
+## wall/roof/
+## accent = 0 (T0Settlement ile aynı kural); çatı ağırlığı da modülün `house` rolünden gelir, aile adından değil.
 
 const FRONT_PROBE_M := 0.05
 const MID_PROBE_M := 9.0
@@ -25,7 +32,7 @@ const FAIL_NO_PARCEL := &"no_parcel"
 const FAIL_T0_MERGED := &"t0_merged"
 const FAIL_NO_LOT := &"no_lot"
 const FAIL_NO_CANDIDATES := &"no_candidates"
-## Hiçbir kit modülü parselin cephe/derinlik/geri çekilme sınırına sığmıyor.
+## Hiçbir hero modülü parselin cephe/derinlik/geri çekilme sınırına sığmıyor.
 const FAIL_LOT_TOO_SMALL := &"lot_too_small"
 ## Sığan modül var ama ayak izi su/eğim/meydan denetiminden geçmedi.
 const FAIL_SITE_BLOCKED := &"site_blocked"
@@ -167,7 +174,7 @@ func plan(parcel_id: int, use: StringName, units: int) -> Plan:
 	var zone_cands := _candidates(zone, use)
 	var result := _pack(parcel_id, use, units, lot, zone, zone_cands, v0, rng)
 	if result == null:
-		# Doku adayları bu parsele sığmadı: kullanıma uyan TÜM kit modülleri (küçük ev/dükkân dahil) denenir.
+		# Doku adayları bu parsele sığmadı: kullanıma uyan TÜM hero modülleri (küçük ev/dükkân dahil) denenir.
 		result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), v0, rng)
 	if result == null and extra_attempts:
 		# Sim'in birimi en uzun modülden çok büyükse (kat tercihi ağırlığı sıfıra çöker) hedef kat sığan en uzun modüle
@@ -465,11 +472,13 @@ func _make_piece(m: SettlementModule, u0: float, v0: float, rng: RandomNumberGen
 	piece.module = m
 	piece.u0 = u0
 	piece.v0 = v0
-	piece.wall = _pick_row(m.wall_rows, _rules.wall_weights, rng)
-	var roof_weights: Dictionary = _rules.house_roof_weights if m.family == "res_house" else _rules.roof_weights
-	piece.roof = _pick_row(m.roof_rows, roof_weights, rng)
-	var accent_rows := _rules.shop_accent_rows if m.gf and not _rules.shop_accent_rows.is_empty() else m.accent_rows
-	piece.accent = accent_rows[rng.randi() % accent_rows.size()] if not accent_rows.is_empty() else 0
+	if not m.palette_free():
+		piece.wall = _pick_row(m.wall_rows, _rules.wall_weights, rng)
+		var roof_weights: Dictionary = _rules.house_roof_weights if m.house else _rules.roof_weights
+		piece.roof = _pick_row(m.roof_rows, roof_weights, rng)
+		var accent_rows := _rules.shop_accent_rows if m.gf and not _rules.shop_accent_rows.is_empty() \
+				else m.accent_rows
+		piece.accent = accent_rows[rng.randi() % accent_rows.size()] if not accent_rows.is_empty() else 0
 	piece.bright = rng.randi() % 256
 	piece.flags = BuildingColumns.FLAG_GROUND_SHOP if m.gf else 0
 	return piece

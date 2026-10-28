@@ -2,6 +2,7 @@ extends GdUnitTestSuite
 ## T-012 ölçüt 1/2/3/7 · BuildingView düğüm yapısı (başsız): chunk'lı MultiMesh + margin'li LOD aralıkları +
 ## HLOD1/HLOD2,
 ## WorldView altında rebasing eşdeğerliği, chunk-yerel yeniden kurulum, geçersiz girdinin reddi, gölge ayarı.
+## T-062 A3: modüller onaylı hero tablosundandır; MultiMesh örneği yalnız dönüşüm, materyal mesh yüzeyinde (atlas).
 ## (Dummy renderer: çizim/AABB doğrulanmaz; görüntü doğrulaması capture ile.)
 
 var _kit: BuildingKit
@@ -23,8 +24,8 @@ func _view(config: BuildingViewConfig = null) -> BuildingView:
 
 
 func _two_module_cols() -> BuildingColumns:
-	var a := _kit.module_index("bld_res_mid_a")
-	var b := _kit.module_index("bld_res_house_b")
+	var a := _kit.module_index(BuildingTestSupport.MID_A)
+	var b := _kit.module_index(BuildingTestSupport.HOUSE_B)
 	var rows: Array = []
 	for i in 10:
 		rows.append({"m": a, "x": 500.0 + i * 40.0, "z": 500.0, "parcel": 1 + i})
@@ -60,21 +61,65 @@ func test_set_columns_builds_cells_with_lod0_lod1_and_hlod1_per_cell() -> void:
 	assert_int(int(view.stats["dropped_water"])).is_equal(0)
 
 
-func test_multimesh_uses_custom_data_and_shared_kit_material() -> void:
+func test_multimesh_carries_transforms_only_and_the_mesh_surface_holds_the_atlas_material() -> void:
 	var view := _view()
 	view.set_columns(_two_module_cols(), 1)
-	var mmi: MultiMeshInstance3D = null
+	var seen := 0
 	for child in view.cell_node(Vector2i(0, 0)).get_children():
-		if child is MultiMeshInstance3D:
-			mmi = child
-			break
-	assert_object(mmi).is_not_null()
-	assert_bool(mmi.multimesh.use_custom_data).is_true()
-	assert_int(mmi.multimesh.transform_format).is_equal(MultiMesh.TRANSFORM_3D)
-	assert_int(mmi.multimesh.instance_count).is_equal(10)
-	var mat := mmi.material_override as ShaderMaterial
-	assert_object(mat).is_not_null()
-	assert_str(mat.resource_name).is_equal("mat_kit")
+		if not (child is MultiMeshInstance3D):
+			continue
+		var mmi := child as MultiMeshInstance3D
+		seen += 1
+		assert_bool(mmi.multimesh.use_custom_data).is_false()
+		assert_bool(mmi.multimesh.use_colors).is_false()
+		assert_int(mmi.multimesh.transform_format).is_equal(MultiMesh.TRANSFORM_3D)
+		assert_int(mmi.multimesh.instance_count).is_equal(10)
+		assert_object(mmi.material_override).is_null()   # materyal mesh yüzeyinde (modül başına atlas)
+		var mat := mmi.multimesh.mesh.surface_get_material(0) as StandardMaterial3D
+		assert_object(mat).is_not_null()
+		assert_object(mat.albedo_texture).is_not_null()
+		var id := str(mmi.get_meta(BuildingView.MODULE_META))
+		var rec := _kit.record(_kit.module_index(id))
+		var level_atlas := str(rec["proxy_atlas"]["path"]) if mmi.name.begins_with("L1_") or mmi.name.begins_with("S1_") \
+				else str(rec["atlas"]["path"])
+		assert_str(mat.albedo_texture.resource_path).is_equal(level_atlas)
+	assert_int(seen).is_greater_equal(4)
+
+
+func test_view_draws_only_approved_ids_and_counts_zero_unapproved() -> void:
+	var view := _view()
+	view.set_columns(_two_module_cols(), 1)
+	var gate := BuildingTestSupport.gate()
+	var drawn := view.drawn_module_ids()
+	assert_array(Array(drawn)).contains_exactly_in_any_order([BuildingTestSupport.MID_A, BuildingTestSupport.HOUSE_B])
+	for id in drawn:
+		assert_bool(gate.is_approved(id)).is_true()
+		assert_bool(id.begins_with("bld_hero_")).is_true()
+	assert_int(int(view.stats["unapproved_ids"])).is_equal(0)
+	assert_int(int(view.stats["approved_modules"])).is_equal(21)
+
+
+func test_rejected_kit_ids_are_never_drawn_even_if_the_table_leaks_them_negative() -> void:
+	var gate := LibraryGate.load_default()
+	gate.report_errors = false
+	var table: Dictionary = BuildingTestSupport.loaded_table()["table"].duplicate(true)
+	var fake: Dictionary = (table["modules"] as Array)[0].duplicate(true)
+	fake["id"] = "bld_res_mid_a"
+	(table["modules"] as Array).insert(0, fake)
+	var kit := BuildingKit.from_table(table, gate)
+	var view: BuildingView = auto_free(BuildingView.new())
+	add_child(view)
+	var cfg := BuildingViewConfig.new()
+	cfg.use_threads = false
+	view.setup(_world, kit, cfg)
+	var rows: Array = []
+	for m in kit.count:
+		rows.append({"m": m, "x": 500.0 + m * 40.0, "z": 500.0, "parcel": 1 + m})
+	assert_bool(view.set_columns(BuildingTestSupport.columns(rows), 1)["ok"]).is_true()
+	assert_int(view.drawn_module_ids().size()).is_equal(21)
+	assert_bool(view.drawn_module_ids().has("bld_res_mid_a")).is_false()
+	assert_int(int(view.stats["unapproved_ids"])).is_equal(1)   # kapı sayar, sessiz geçiş yok
+	assert_bool(gate.unapproved_ids.has("bld_res_mid_a")).is_true()
 
 
 func test_visibility_ranges_overlap_per_tier_with_margins() -> void:
@@ -214,7 +259,7 @@ func test_same_version_and_same_columns_is_a_noop() -> void:
 func test_inserting_in_another_cell_keeps_unchanged_cells_and_rebinds_their_indices() -> void:
 	var view := _view()
 	view.set_columns(_two_module_cols(), 1)
-	var a := _kit.module_index("bld_res_mid_a")
+	var a := _kit.module_index(BuildingTestSupport.MID_A)
 	var rows: Array = []
 	rows.append({"m": a, "x": 4600.0, "z": 4600.0, "parcel": 999})   # en başa yeni hücre: tüm sütun indeksleri kayar
 	var base := _two_module_cols()
@@ -268,7 +313,7 @@ func test_buildings_over_water_are_not_instanced() -> void:
 	var cfg := BuildingViewConfig.new()
 	cfg.use_threads = false
 	view.setup(world, _kit, cfg)
-	var a := _kit.module_index("bld_res_mid_a")
+	var a := _kit.module_index(BuildingTestSupport.MID_A)
 	var cols := BuildingTestSupport.columns([{"m": a, "x": 1000.0, "z": 1000.0}, {"m": a, "x": 5000.0, "z": 1000.0},
 			{"m": a, "x": 3990.0, "z": 2000.0}])
 	view.set_columns(cols, 1)

@@ -1,91 +1,85 @@
 class_name BuildingKit
 extends RefCounted
-## Render için kit tablosu (T-012): `kit_manifest.json` `modules[]` SIRASI = `BuildingColumns.module_idx`. Manifestten
-## boyutlar (footprint, yükseklik), mesh varlığı ve HLOD1 için PROXY şablonları. Bina bilgisi YALNIZ buradan/manifestten
-## okunur (kit spec §8); koda gömülü bina bilgisi yok.
+## Render için bina tablosu (T-012; T-062 A3, ADR-0006 §2.2/§3.1): onaylı hero oyun tablosu
+## (`data/library/game_buildings.json`, `SettlementTable`) `modules[]` SIRASI = `BuildingColumns.module_idx`
+## (yerleşimle AYNI tablo/dizin). Bina bilgisi (ayak izi, yükseklik, üçgen sayısı, pivot) YALNIZ tablodan okunur.
 ##
-## PROXY şablonu (`ProxyTemplate`): indekssiz üçgen listesi, köşeler (parça, gölge) GRUPLARINA göre sıralı -> HLOD1
-## birleştirmede renk, grup başına tek `fill` ile üretilir (köşe başına döngü yok). Renk = palet[satır] x parça çarpanı
-## x gölge x parlaklık: `mat_kit` shader'ının albedo'su ile AYNI formül (LOD1 <-> HLOD1'de ton kayması olmasın).
+## Kapı: kimlik `LibraryGate`ten geçmezse kit'e GİRMEZ (tablo `SettlementTable.filter` ile süzülür) ve mesh isteği de
+## her seferinde kapıdan yapılır; onaysız kimlik hiçbir yoldan yüklenmez, `gate.unapproved_ids` sayar.
+##
+## Kademe eşlemesi (görünüm kademesi -> hero seviyesi): LOD0 kademesi = hero LOD1 mesh'i (258-552 üçgen), LOD1
+## kademesi =
+## dokulu hero PROXY (30-80 üçgen). Hero LOD0 (1,5-6,7k üçgen) BU PAKETTE ÇİZİLMEZ (ADR-0006 §3.1). Gölge düşüren de
+## PROXY'dir. HLOD1 = PROXY şablonu, HLOD2 = kutu; ikisinin rengi PROXY atlasından YÜKLEME ANINDA piştirilir
+## (köşe rengi sRGB kodlu: kit `mat_kit_proxy` ile aynı sözleşme; ortalamalar doğrusal uzayda alınır).
+##
+## Hero palet satırı taşımaz: renk atlas dokusundan gelir; modül başına wall/roof rengi (HLOD2 kutusu) piştirilmiş
+## ortalama.
 
-const SLOT_WALL := 0
-const SLOT_ROOF := 1
-const SLOT_ACCENT := 2
-const SLOT_FIXED := 3
+## Görünüm kademesi -> hero seviye adı (`game_buildings.json` `lods.*`).
+const LEVEL_FOR_TIER := {BuildingLod.Tier.LOD0: "LOD1", BuildingLod.Tier.LOD1: "PROXY"}
+## PROXY şablonu rengi: üçgen UV alanı bu kadar alt üçgene bölünür (N x N), alt üçgen merkezlerinden doku örneklenir.
+const BAKE_SUBDIVISIONS := 4
+## Çatı/duvar ayrımı: yüzey normalinin Y bileşeni bu eşikten büyükse çatı, mutlak değeri küçükse duvar.
+const ROOF_NORMAL_Y := 0.5
+const WALL_NORMAL_Y := 0.5
 
-var library: KitLibrary = null
+var gate: LibraryGate = null
 var count: int = 0
 var ids: PackedStringArray = PackedStringArray()
 var kinds: PackedStringArray = PackedStringArray()
+var families: PackedStringArray = PackedStringArray()
 var footprint_w: PackedFloat32Array = PackedFloat32Array()
 var footprint_d: PackedFloat32Array = PackedFloat32Array()
-## Toplam yükseklik (LOD0 AABB tepe, m) ve saçak yüksekliği (m).
+## Toplam yükseklik (LOD0 AABB tepe, m) ve saçak yüksekliği (m); saçak bilinmiyorsa toplam.
 var height_m: PackedFloat32Array = PackedFloat32Array()
 var eave_m: PackedFloat32Array = PackedFloat32Array()
-var lod0_tris: PackedInt32Array = PackedInt32Array()
-var lod1_tris: PackedInt32Array = PackedInt32Array()
-var has_lod1: PackedByteArray = PackedByteArray()
+## Görünüm kademesi başına üçgen: `near_tris` = LOD0 kademesi (hero LOD1), `mid_tris` = LOD1 kademesi (hero PROXY).
+var near_tris: PackedInt32Array = PackedInt32Array()
+var mid_tris: PackedInt32Array = PackedInt32Array()
+## 1: modülün PROXY seviyesi tabloda var (LOD1 kademesi/gölge/HLOD1 çizilebilir).
+var has_mid: PackedByteArray = PackedByteArray()
 var is_landmark: PackedByteArray = PackedByteArray()
-## Palet satır renkleri (sRGB, 32 satır); `KitMaterial` ile aynı kaynak.
-var palette: PackedColorArray = PackedColorArray()
-## Modül başına PROXY şablonu (BuildingKit.ProxyTemplate) ya da null (şablonsuz modül HLOD1'de yok sayılır).
+## Modül başına pivot kayması (m): `pivot_offset_m`, köşelere eklenir (ayak izi merkezi pivot).
+var pivot_offset: PackedVector3Array = PackedVector3Array()
+## Piştirilmiş duvar/çatı rengi, sRGB kodlu köşe rengi (HLOD2 kutusu); `from_game_table` ile dolar, aksi halde nötr gri.
+var wall_color: PackedColorArray = PackedColorArray()
+var roof_color: PackedColorArray = PackedColorArray()
+## Modül başına HLOD1 şablonları: PROXY (BuildingKit.ProxyTemplate) ve kutu; mesh yüklenmediyse null.
 var proxies: Array = []
+var boxes: Array = []
 
-var _part_slot: PackedInt32Array = PackedInt32Array()
-var _part_row: PackedInt32Array = PackedInt32Array()
-var _part_mul: PackedFloat32Array = PackedFloat32Array()
+var _records: Array[Dictionary] = []
+var _mesh_cache: Dictionary = {}
 
 
-## PROXY şablonu: HLOD1 birleştirmede kullanılan, gruplara göre sıralı üçgen listesi.
+## HLOD1 birleştirmede kullanılan, indekssiz üçgen listesi; köşe rengi (sRGB kodlu) şablona piştirilmiştir.
 class ProxyTemplate:
 	extends RefCounted
 	var vertices: PackedVector3Array = PackedVector3Array()
 	var normals: PackedVector3Array = PackedVector3Array()
-	## Grup başına: bellek içi köşe sayısı, renk yuvası (SLOT_*), sabit palet satırı (yuva sabitse), çarpan.
-	var group_len: PackedInt32Array = PackedInt32Array()
-	var group_slot: PackedInt32Array = PackedInt32Array()
-	var group_row: PackedInt32Array = PackedInt32Array()
-	var group_mul: PackedFloat32Array = PackedFloat32Array()
+	var colors: PackedColorArray = PackedColorArray()
 
 	func triangle_count() -> int:
 		return vertices.size() / 3
 
 
-## Yalnız manifest sözlüğünden (mesh yüklemeden): boyutlar ve tablo. Testler ve başsız denetim için.
-static func from_manifest(manifest: Dictionary) -> BuildingKit:
+## Yalnız tablo sözlüğünden (mesh yüklemeden): boyutlar ve tablo. Testler ve başsız denetim için. `table` önce `gate`ten
+## süzülür (yerleşimle AYNI idempotent süzme: aynı dizin); `gate` null ise varsayılan kapı yüklenir.
+static func from_table(table: Dictionary, gate: LibraryGate = null) -> BuildingKit:
 	var kit := BuildingKit.new()
-	var modules: Array = manifest.get("modules", [])
-	kit.count = modules.size()
-	for e: Dictionary in modules:
-		kit.ids.append(str(e["id"]))
-		kit.kinds.append(str(e.get("kind", "")))
-		var fp: Array = e.get("footprint_m", [0.0, 0.0])
-		kit.footprint_w.append(float(fp[0]))
-		kit.footprint_d.append(float(fp[1]))
-		var aabb: Dictionary = e.get("aabb_lod0_m", {})
-		var top := 0.0
-		if aabb.has("max"):
-			top = float((aabb["max"] as Array)[1])
-		kit.height_m.append(top)
-		kit.eave_m.append(float(e.get("eave_height_m", top)))
-		var lods: Dictionary = e.get("lods", {})
-		kit.lod0_tris.append(int((lods.get("LOD0", {}) as Dictionary).get("tris", 0)))
-		kit.lod1_tris.append(int((lods.get("LOD1", {}) as Dictionary).get("tris", 0)))
-		kit.has_lod1.append(1 if lods.has("LOD1") else 0)
-		kit.is_landmark.append(1 if str(e.get("kind", "")) == "landmark" else 0)
-		kit.proxies.append(null)
-	kit._load_palette()
+	kit.gate = gate if gate != null else LibraryGate.load_default()
+	var approved := SettlementTable.filter(table, kit.gate)
+	for e: Dictionary in approved.get("modules", []):
+		kit._add_record(e)
 	return kit
 
 
-## Kütüphaneden: manifest + PROXY şablonları (ana iş parçacığında çağrılır; mesh okur).
-static func from_library(lib: KitLibrary) -> BuildingKit:
-	var kit := from_manifest(lib.manifest)
-	kit.library = lib
+## Tablo + PROXY şablonları ve piştirilmiş renkler (ana iş parçacığında çağrılır; GLB/atlas okur).
+static func from_game_table(table: Dictionary, gate: LibraryGate = null) -> BuildingKit:
+	var kit := from_table(table, gate)
 	for i in kit.count:
-		var mesh := lib.mesh(kit.ids[i], "PROXY")
-		if mesh != null and mesh.get_surface_count() > 0:
-			kit.proxies[i] = kit._make_template(mesh)
+		kit._bake_module(i)
 	return kit
 
 
@@ -93,44 +87,102 @@ func module_index(id: String) -> int:
 	return ids.find(id)
 
 
-## Modül LOD mesh'i (ana iş parçacığı); yoksa null.
-func mesh(module: int, lod: String) -> Mesh:
-	if library == null or module < 0 or module >= count:
+## Görünüm kademesi için mesh (pivot normalize, atlas materyalli yüzey); yoksa null. Ana iş parçacığı. İstek kapıdan
+## geçer; mesh bir kez yüklenir ve önbelleklenir. Hero LOD0 hiçbir kademeye eşlenmez.
+func tier_mesh(module: int, tier: BuildingLod.Tier) -> Mesh:
+	if not LEVEL_FOR_TIER.has(tier):
 		return null
-	return library.mesh(ids[module], lod)
+	return level_mesh(module, str(LEVEL_FOR_TIER[tier]))
 
 
-## Palet satırı rengi (sRGB) x çarpan, 0..1'e kırpılmış.
-func shaded(row: int, mul: float) -> Color:
-	var c := palette[clampi(row, 0, palette.size() - 1)]
-	return Color(minf(c.r * mul, 1.0), minf(c.g * mul, 1.0), minf(c.b * mul, 1.0), 1.0)
+## Hero seviyesi ("LOD1" | "PROXY") mesh'i; "LOD0" bilinçli olarak null (çizilmez).
+func level_mesh(module: int, level: String) -> Mesh:
+	if module < 0 or module >= count or not (level == "LOD1" or level == "PROXY"):
+		return null
+	var key := "%s/%s" % [ids[module], level]
+	if _mesh_cache.has(key):
+		return _mesh_cache[key]
+	var rec := gate.request(ids[module])   # onaysızsa boş + iz; yükleme yok
+	var lods: Variant = rec.get("lods")
+	if not (lods is Dictionary) or not (lods as Dictionary).has(level):
+		return null
+	var mesh := HeroMeshLoader.load_mesh(str(((lods as Dictionary)[level] as Dictionary)["glb"]), pivot_offset[module])
+	if mesh != null:
+		_mesh_cache[key] = mesh
+	return mesh
 
 
-func _load_palette() -> void:
-	palette.resize(KitMaterial.ROW_COUNT)
-	for r in KitMaterial.ROW_COUNT:
-		palette[r] = Color(1.0, 0.0, 1.0)
-	for row_entry: Dictionary in KitMaterial.palette().get("rows", []):
-		palette[int(row_entry["row"])] = Color.html(str(row_entry["hex"]))
-	_part_slot.resize(KitMaterial.PART_COUNT)
-	_part_row.resize(KitMaterial.PART_COUNT)
-	_part_mul.resize(KitMaterial.PART_COUNT)
-	for p in KitMaterial.PART_COUNT:
-		_part_slot[p] = SLOT_FIXED
-		_part_row[p] = 0
-		_part_mul[p] = 1.0
-	for part: Dictionary in KitMaterial.palette().get("parts", []):
-		var pid := int(part["id"])
-		_part_mul[pid] = float(part.get("mul", 1.0))
-		if part.has("row"):
-			_part_slot[pid] = SLOT_FIXED
-			_part_row[pid] = int(part["row"])
-		else:
-			_part_slot[pid] = {"x": SLOT_WALL, "y": SLOT_ROOF, "z": SLOT_ACCENT}[str(part["src"])]
+## Modülün kayıt kopyası (kapıdan; ret sayılır): atlas yolları vb. Onaysızsa boş.
+func record(module: int) -> Dictionary:
+	if module < 0 or module >= count:
+		return {}
+	return _records[module].duplicate(true)
 
 
-## Mesh -> ProxyTemplate: indeks açılır, üçgenler (yuva, satır, çarpan) grubuna göre kararlı sıralanır.
-func _make_template(mesh: Mesh) -> ProxyTemplate:
+func _add_record(e: Dictionary) -> void:
+	_records.append(e)
+	count += 1
+	ids.append(str(e["id"]))
+	kinds.append(str(e.get("kind", "")))
+	families.append(str(e.get("family", "")))
+	var fp: Array = e.get("footprint_m", [0.0, 0.0])
+	footprint_w.append(float(fp[0]))
+	footprint_d.append(float(fp[1]))
+	var top := float(e.get("height_m", 0.0))
+	height_m.append(top)
+	var gp: Dictionary = e.get("generator_params", {})
+	var eave: Variant = gp.get("eave_height_m", top)
+	eave_m.append(float(eave) if (eave is float or eave is int) else top)
+	var lods: Dictionary = e.get("lods", {})
+	near_tris.append(int((lods.get("LOD1", {}) as Dictionary).get("tris", 0)))
+	mid_tris.append(int((lods.get("PROXY", {}) as Dictionary).get("tris", 0)))
+	has_mid.append(1 if lods.has("PROXY") else 0)
+	is_landmark.append(1 if str(e.get("kind", "")) == "landmark" else 0)
+	var off: Array = e.get("pivot_offset_m", [0.0, 0.0, 0.0])
+	pivot_offset.append(Vector3(float(off[0]), float(off[1]), float(off[2])))
+	wall_color.append(Color(0.5, 0.5, 0.5, 1.0))
+	roof_color.append(Color(0.5, 0.5, 0.5, 1.0))
+	proxies.append(null)
+	boxes.append(null)
+
+
+## PROXY mesh'i + PROXY atlası -> HLOD1 şablonu, modül duvar/çatı rengi, kutu şablonu.
+func _bake_module(module: int) -> void:
+	if has_mid[module] != 1:
+		return
+	var mesh := level_mesh(module, "PROXY") as ArrayMesh
+	if mesh == null or mesh.get_surface_count() == 0:
+		return
+	var atlas := _proxy_atlas_image(module)
+	if atlas == null:
+		push_error("BuildingKit: PROXY atlası okunamadı (%s): HLOD renkleri nötr kalır" % ids[module])
+	var baked := _make_template(mesh, atlas)
+	proxies[module] = baked["template"]
+	wall_color[module] = baked["wall"]
+	roof_color[module] = baked["roof"]
+	boxes[module] = _make_box(footprint_w[module], footprint_d[module], height_m[module], baked["wall"], baked["roof"])
+
+
+func _proxy_atlas_image(module: int) -> Image:
+	var atlas: Variant = _records[module].get("proxy_atlas")
+	if not (atlas is Dictionary):
+		return null
+	var path := str((atlas as Dictionary).get("path", ""))
+	if path.is_empty():
+		return null
+	var tex := load(path) as Texture2D
+	if tex == null:
+		return null
+	var img := tex.get_image()
+	if img == null or img.is_empty():
+		return null
+	if img.is_compressed():
+		img.decompress()
+	return img
+
+
+## Mesh -> ProxyTemplate (indeks açılır; üçgen sırası mesh sırasıdır: deterministik) + alan ağırlıklı duvar/çatı rengi.
+func _make_template(mesh: ArrayMesh, atlas: Image) -> Dictionary:
 	var arrays := mesh.surface_get_arrays(0)
 	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
@@ -140,29 +192,105 @@ func _make_template(mesh: Mesh) -> ProxyTemplate:
 		idx.resize(verts.size())
 		for i in verts.size():
 			idx[i] = i
-	var tris: Array[Dictionary] = []
-	for t in range(0, idx.size() - 2, 3):
-		var v0 := idx[t]
-		var part := clampi(int(floor(uvs[v0].x * float(KitMaterial.PART_COUNT))), 0, KitMaterial.PART_COUNT - 1)
-		var slot := _part_slot[part]
-		var row := _part_row[part] if slot == SLOT_FIXED else -1
-		var mul := _part_mul[part] * uvs[v0].y
-		tris.append({"tri": t, "slot": slot, "row": row, "mul": snappedf(mul, 0.0001),
-				"key": slot * 1000000 + (row + 1) * 10000 + int(snappedf(mul, 0.0001) * 1000.0)})
-	tris.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		return int(a["key"]) < int(b["key"]) or (int(a["key"]) == int(b["key"]) and int(a["tri"]) < int(b["tri"])))
 	var tpl := ProxyTemplate.new()
-	var last_key := -1
-	for tri in tris:
-		var t := int(tri["tri"])
+	var wall_sum := Vector3.ZERO
+	var wall_area := 0.0
+	var roof_sum := Vector3.ZERO
+	var roof_area := 0.0
+	for t in range(0, idx.size() - 2, 3):
+		var tri_color := _bake_triangle_color(atlas, uvs[idx[t]], uvs[idx[t + 1]], uvs[idx[t + 2]])
+		var area := 0.5 * (verts[idx[t + 1]] - verts[idx[t]]).cross(verts[idx[t + 2]] - verts[idx[t]]).length()
 		for k in 3:
 			tpl.vertices.append(verts[idx[t + k]])
 			tpl.normals.append(normals[idx[t + k]])
-		if int(tri["key"]) != last_key:
-			last_key = int(tri["key"])
-			tpl.group_len.append(0)
-			tpl.group_slot.append(int(tri["slot"]))
-			tpl.group_row.append(int(tri["row"]))
-			tpl.group_mul.append(float(tri["mul"]))
-		tpl.group_len[tpl.group_len.size() - 1] += 3
+			tpl.colors.append(tri_color)
+		var up := (normals[idx[t]].y + normals[idx[t + 1]].y + normals[idx[t + 2]].y) / 3.0
+		var lin := tri_color.srgb_to_linear()   # alan ortalaması doğrusal uzayda
+		var rgb := Vector3(lin.r, lin.g, lin.b) * area
+		if up > ROOF_NORMAL_Y:
+			roof_sum += rgb
+			roof_area += area
+		elif absf(up) < WALL_NORMAL_Y:
+			wall_sum += rgb
+			wall_area += area
+	var wall := _mean_color(wall_sum, wall_area)
+	var roof := _mean_color(roof_sum, roof_area)
+	if wall_area <= 0.0:
+		wall = roof
+	if roof_area <= 0.0:
+		roof = wall
+	return {"template": tpl, "wall": wall, "roof": roof}
+
+
+static func _mean_color(sum: Vector3, area: float) -> Color:
+	if area <= 0.0:
+		return Color(0.5, 0.5, 0.5, 1.0)
+	var m := sum / area
+	return Color(m.x, m.y, m.z, 1.0).linear_to_srgb()
+
+
+## Üçgenin UV alanı N x N alt üçgene bölünür, her alt üçgenin merkezinde atlas örneklenir; ortalama DOĞRUSAL uzayda
+## alınır
+## ve sRGB'ye kodlanır (pencere pikseli tek başına yüzü karartmasın). Atlas yoksa nötr gri.
+static func _bake_triangle_color(atlas: Image, a: Vector2, b: Vector2, c: Vector2) -> Color:
+	if atlas == null:
+		return Color(0.5, 0.5, 0.5, 1.0)
+	var n := BAKE_SUBDIVISIONS
+	var acc := Vector3.ZERO
+	var samples := 0
+	var w := atlas.get_width()
+	var h := atlas.get_height()
+	for i in n:
+		for j in n - i:
+			# yukarı bakan alt üçgen (i, j) ve (varsa) ters alt üçgen
+			var up := [Vector2(i, j), Vector2(i + 1, j), Vector2(i, j + 1)]
+			acc += _sample_sub(atlas, w, h, a, b, c, up, n)
+			samples += 1
+			if i + j < n - 1:
+				var down := [Vector2(i + 1, j), Vector2(i + 1, j + 1), Vector2(i, j + 1)]
+				acc += _sample_sub(atlas, w, h, a, b, c, down, n)
+				samples += 1
+	var m := acc / float(maxi(samples, 1))
+	return Color(m.x, m.y, m.z, 1.0).linear_to_srgb()
+
+
+static func _sample_sub(atlas: Image, w: int, h: int, a: Vector2, b: Vector2, c: Vector2, corners: Array,
+		n: int) -> Vector3:
+	var u := Vector2.ZERO
+	for p: Vector2 in corners:
+		u += _bary_uv(a, b, c, p, n)
+	u /= 3.0
+	var px := clampi(int(floor(fposmod(u.x, 1.0) * float(w))), 0, w - 1)
+	var py := clampi(int(floor(fposmod(u.y, 1.0) * float(h))), 0, h - 1)
+	var col := atlas.get_pixel(px, py).srgb_to_linear()
+	return Vector3(col.r, col.g, col.b)
+
+
+static func _bary_uv(a: Vector2, b: Vector2, c: Vector2, p: Vector2, n: int) -> Vector2:
+	var fn := float(n)
+	var wb := p.x / fn
+	var wc := p.y / fn
+	return a * (1.0 - wb - wc) + b * wb + c * wc
+
+
+## Ayak izi x yükseklik kutusu (taban açık: 4 yan + üst), taban merkezi origin; HLOD1 `box` kaynağı.
+static func _make_box(w: float, d: float, h: float, wall: Color, roof: Color) -> ProxyTemplate:
+	var tpl := ProxyTemplate.new()
+	var hx := w * 0.5
+	var hz := d * 0.5
+	var b: Array[Vector3] = [Vector3(-hx, 0.0, -hz), Vector3(hx, 0.0, -hz), Vector3(hx, 0.0, hz), Vector3(-hx, 0.0, hz)]
+	var t: Array[Vector3] = []
+	for p in b:
+		t.append(Vector3(p.x, h, p.z))
+	for k in 4:
+		var k2 := (k + 1) % 4
+		var edge := b[k2] - b[k]
+		var n := Vector3(edge.z, 0.0, -edge.x).normalized()
+		var mid := (b[k] + b[k2]) * 0.5
+		if n.dot(mid) < 0.0:
+			n = -n
+		BuildingHlod2.emit_tri(tpl.vertices, tpl.normals, tpl.colors, b[k], t[k], t[k2], n, wall)
+		BuildingHlod2.emit_tri(tpl.vertices, tpl.normals, tpl.colors, b[k], t[k2], b[k2], n, wall)
+	BuildingHlod2.emit_tri(tpl.vertices, tpl.normals, tpl.colors, t[0], t[1], t[2], Vector3.UP, roof)
+	BuildingHlod2.emit_tri(tpl.vertices, tpl.normals, tpl.colors, t[0], t[2], t[3], Vector3.UP, roof)
 	return tpl

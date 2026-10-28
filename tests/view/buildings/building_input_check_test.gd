@@ -9,7 +9,7 @@ func before() -> void:
 
 
 func _good() -> BuildingColumns:
-	return BuildingTestSupport.grid_columns(_kit.module_index("bld_res_mid_a"), 3, 50.0, 100.0, 100.0)
+	return BuildingTestSupport.grid_columns(_kit.module_index(BuildingTestSupport.MID_A), 3, 50.0, 100.0, 100.0)
 
 
 func test_valid_and_empty_columns_pass() -> void:

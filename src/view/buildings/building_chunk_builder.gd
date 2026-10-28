@@ -1,12 +1,11 @@
 class_name BuildingChunkBuilder
 extends RefCounted
-## Bir chunk'ın render verisini üretir (T-012): sütunlar -> MultiMesh tamponları (LOD0/LOD1 ortak) + HLOD1 birleşik
-## mesh verisi. SAF ve iş parçacığı güvenli: Node/Mesh/RenderingServer yok; yalnız Packed* dizileri, `BuildingKit`
-## tablosu ve WorldData okuması. Determinizm: aynı sütun + aynı dünya -> aynı bayt.
+## Bir chunk'ın render verisini üretir (T-012; T-062 A3): sütunlar -> MultiMesh tamponları (LOD0/LOD1 kademesi ortak) +
+## HLOD1 birleşik mesh verisi. SAF ve iş parçacığı güvenli: Node/Mesh/RenderingServer yok; yalnız Packed* dizileri,
+## `BuildingKit` tablosu ve WorldData okuması. Determinizm: aynı sütun + aynı dünya -> aynı bayt.
+## Hero örneği yalnız dönüşümdür (3x4); palet/özel veri yok: renk modülün atlas dokusundan gelir.
 
-const FLOATS_PER_INSTANCE := 16
-## HLOD1 renk önbelleğinde parlaklık kovası (HLOD1'de ±%6 parlaklık ayırt edilmez; önbellek isabetini artırır).
-const HLOD_BRIGHT_BUCKETS := 8
+const FLOATS_PER_INSTANCE := 12
 
 
 static func build_cell(cols: BuildingColumns, plan: BuildingChunkPlan, key: Vector2i, kit: BuildingKit,
@@ -43,21 +42,20 @@ static func build_cell(cols: BuildingColumns, plan: BuildingChunkPlan, key: Vect
 		data.modules.append(m)
 		data.counts.append(rows.size())
 		data.buffers.append(_instance_buffer(cols, kept, base_y, rows, data.origin))
-		data.lod0_tris += kit.lod0_tris[m] * rows.size()
-		data.lod1_tris += (kit.lod1_tris[m] if kit.has_lod1[m] == 1 else kit.lod0_tris[m]) * rows.size()
+		data.lod0_tris += kit.near_tris[m] * rows.size()
+		data.lod1_tris += (kit.mid_tris[m] if kit.has_mid[m] == 1 else kit.near_tris[m]) * rows.size()
 	if config.build_hlod1:
 		_merge_hlod1(data, cols, kit, config)
 	return data
 
 
-## Örnek başına 16 float: 3x4 dönüşüm (satır öncelikli, `Basis(UP, yaw)` ölçek 1) + özel veri
-## (duvar, çatı, aksan satırı, parlaklık) / 32 (`KitMaterial.encode_instance`).
+## Örnek başına 12 float: 3x4 dönüşüm (satır öncelikli, `Basis(UP, yaw)` ölçek 1). Pivot ayak izi merkezidir
+## (mesh `BuildingKit`te normalize edilmiştir), yani `x/z` doğrudan yerleşim merkezidir.
 static func _instance_buffer(cols: BuildingColumns, kept: PackedInt32Array, base_y: PackedFloat32Array,
 		rows: PackedInt32Array, origin: Vector2) -> PackedFloat32Array:
 	var buf := PackedFloat32Array()
 	buf.resize(rows.size() * FLOATS_PER_INSTANCE)
 	var o := 0
-	var inv := 1.0 / KitMaterial.INSTANCE_SCALE
 	for r in rows:
 		var i := kept[r]
 		var c := cos(cols.yaw[i])
@@ -74,63 +72,30 @@ static func _instance_buffer(cols: BuildingColumns, kept: PackedInt32Array, base
 		buf[o + 9] = 0.0
 		buf[o + 10] = c
 		buf[o + 11] = cols.z[i] - origin.y
-		buf[o + 12] = cols.wall_row[i] * inv
-		buf[o + 13] = cols.roof_row[i] * inv
-		buf[o + 14] = cols.accent_row[i] * inv
-		buf[o + 15] = cols.bright_factor(i) * inv
 		o += FLOATS_PER_INSTANCE
 	return buf
 
 
-## PROXY şablonlarını hücre içinde tek mesh'te birleştirir (indekssiz; renk köşeye pişirilir).
+## HLOD1: kaynak şablonlar (`config.hlod1_source`: "proxy" = PROXY mesh'i, "box" = ayak izi kutusu) hücre içinde tek
+## mesh'te birleştirilir (indekssiz). Renk şablona piştirilmiştir (PROXY atlası, sRGB kodlu): örnek başına renk
+## hesabı yok.
 static func _merge_hlod1(data: BuildingCellData, cols: BuildingColumns, kit: BuildingKit,
 		config: BuildingViewConfig) -> void:
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
-	var color_cache: Dictionary = {}
+	var templates: Array = kit.boxes if config.hlod1_source == BuildingViewConfig.HLOD1_BOX else kit.proxies
 	for j in data.kept.size():
 		var i := data.kept[j]
 		var m := cols.module_idx[i]
-		var tpl: BuildingKit.ProxyTemplate = kit.proxies[m]
+		var tpl: BuildingKit.ProxyTemplate = templates[m]
 		if tpl == null:
 			continue
 		var basis := Basis(Vector3.UP, cols.yaw[i])
 		var xf := Transform3D(basis, Vector3(cols.x[i] - data.origin.x, data.base_y[j], cols.z[i] - data.origin.y))
 		verts.append_array(xf * tpl.vertices)
 		normals.append_array(Transform3D(basis, Vector3.ZERO) * tpl.normals)
-		var bucket := clampi(int(float(cols.bright[i]) / 256.0 * HLOD_BRIGHT_BUCKETS), 0, HLOD_BRIGHT_BUCKETS - 1)
-		var ck := ((m * 32 + cols.wall_row[i]) * 32 + cols.roof_row[i]) * 32 + cols.accent_row[i]
-		ck = ck * HLOD_BRIGHT_BUCKETS + bucket
-		if not color_cache.has(ck):
-			var bright_mul := BuildingColumns.BRIGHT_MIN + (BuildingColumns.BRIGHT_MAX - BuildingColumns.BRIGHT_MIN) \
-					* (float(bucket) + 0.5) / float(HLOD_BRIGHT_BUCKETS)
-			color_cache[ck] = template_colors(kit, tpl, cols.wall_row[i], cols.roof_row[i], cols.accent_row[i],
-					bright_mul, config.proxy_colors_linear)
-		colors.append_array(color_cache[ck] as PackedColorArray)
+		colors.append_array(tpl.colors)
 	data.hlod1_vertices = verts
 	data.hlod1_normals = normals
 	data.hlod1_colors = colors
-
-
-## Şablonun köşe renkleri: grup başına tek renk (palet satırı x parça çarpanı x gölge x parlaklık).
-static func template_colors(kit: BuildingKit, tpl: BuildingKit.ProxyTemplate, wall: int, roof: int, accent: int,
-		bright_mul: float, linear: bool = false) -> PackedColorArray:
-	var out := PackedColorArray()
-	for g in tpl.group_len.size():
-		var row := tpl.group_row[g]
-		match tpl.group_slot[g]:
-			BuildingKit.SLOT_WALL:
-				row = wall
-			BuildingKit.SLOT_ROOF:
-				row = roof
-			BuildingKit.SLOT_ACCENT:
-				row = accent
-		var c := kit.shaded(row, tpl.group_mul[g] * bright_mul)
-		if linear:
-			c = c.srgb_to_linear()
-		var block := PackedColorArray()
-		block.resize(tpl.group_len[g])
-		block.fill(c)
-		out.append_array(block)
-	return out

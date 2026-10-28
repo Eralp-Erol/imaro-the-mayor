@@ -6,18 +6,24 @@ extends Node3D
 ## Düğüm yapısı (WorldView altına eklenir: origin rebasing otomatik, ADR-0002 §2): her hücre (chunk) için `Cell_x_z`
 ## Node3D (dünya konumunda) -> modül başına LOD0 ve LOD1 MultiMeshInstance3D + `HLOD1` (birleşik PROXY mesh);
 ## süper-chunk başına `Super_x_z` HLOD2 MeshInstance3D. Kademe aralıkları BuildingLod (margin'li, çakışan).
+## T-062 A3: modüller onaylı hero tablosundandır (`BuildingKit`, `LibraryGate`); LOD0 kademesi hero LOD1 mesh'i,
+## LOD1 kademesi
+## dokulu hero PROXY'dir (hero LOD0 çizilmez). Mesh yüzeyinde modülün atlas materyali vardır (`material_override` YOK).
 ##
 ## Veri akışı: `set_columns(cols, version)` -> doğrula -> chunk planı -> hücre özetleri -> yalnız DEĞİŞEN hücreler
 ## (ve içerdikleri süper-chunk'lar) yeniden kurulur. Mesh VERİSİ iş parçacıklarında (BuildingChunkBuilder, saf);
 ## MultiMesh/ArrayMesh/düğüm kurulumu ana iş parçacığında. Yükseklik `WorldData.height_at`'ten (BuildingGround).
 ##
-## Gerçek kaynağa geçiş noktası: `set_columns()` parametresi. Stand-in (`DevBuildingSource`) ile gerçek üretici
-## (`T0Settlement.generate`) AYNI `BuildingColumns` türünü verir; değişen tek yer çağıran koddur.
+## Kaynak: `set_columns()` parametresi; gerçek üretici (`T0Settlement.generate`) ve sim projector'ı AYNI
+## `BuildingColumns`
+## türünü verir.
 
 signal cells_rebuilt(keys: Array)
 
 const SUPER_PREFIX := "Super_"
 const TRIS_META := &"tris"
+## MultiMeshInstance3D üstünde modül kimliği (onaylı kimlik denetimi/test için; `drawn_module_ids`).
+const MODULE_META := &"module_id"
 
 ## Son kurulumun ölçümleri (perf_probe / world_preview okur).
 var stats: Dictionary = {}
@@ -33,7 +39,6 @@ var _cell_nodes: Dictionary = {}
 var _cell_data: Dictionary = {}
 var _dropped: Dictionary = {}
 var _super_nodes: Dictionary = {}
-var _mat: ShaderMaterial = null
 var _proxy_mat: ShaderMaterial = null
 # iş parçacığı görev girdileri (set_columns sırasında geçerli)
 var _job_keys: Array[Vector2i] = []
@@ -47,8 +52,7 @@ func setup(world: WorldData, kit: BuildingKit, p_config: BuildingViewConfig = nu
 	_kit = kit
 	if p_config != null:
 		config = p_config
-	_mat = KitMaterial.create()
-	_proxy_mat = KitMaterial.create_proxy()
+	_proxy_mat = HeroMeshLoader.flat_color_material()
 
 
 func clear() -> void:
@@ -107,6 +111,18 @@ func height_at(x: float, z: float) -> float:
 	return _world.height_at(x, z) if _world != null else 0.0
 
 
+## Çizilen (MultiMesh düğümü kurulan) DISTINCT modül kimlikleri, sıralı. Hepsi kapıdan geçmiş kimliklerdir.
+func drawn_module_ids() -> PackedStringArray:
+	var seen: Dictionary = {}
+	for k: Vector2i in _cell_nodes:
+		for child in (_cell_nodes[k] as Node3D).get_children():
+			if child is MultiMeshInstance3D and child.has_meta(MODULE_META):
+				seen[str(child.get_meta(MODULE_META))] = true
+	var out := PackedStringArray(seen.keys())
+	out.sort()
+	return out
+
+
 func building_count() -> int:
 	return _cols.count if _cols != null else 0
 
@@ -152,17 +168,16 @@ func warm_up(camera: Camera3D, frames: int = 3) -> void:
 	camera.add_child(root)
 	var ahead := -(camera.near + 1.0) * 2.0
 	for m in _kit.count:
-		if _kit.kinds[m] != "building" or not _kit.has_lod1[m] == 1:
+		if _kit.kinds[m] != "building" or not _kit.has_mid[m] == 1:
 			continue
-		for lod in ["LOD0", "LOD1"]:
-			var mesh := _kit.mesh(m, lod)
+		for tier in [BuildingLod.Tier.LOD0, BuildingLod.Tier.LOD1]:
+			var mesh := _kit.tier_mesh(m, tier)
 			if mesh == null:
 				continue
 			var mmi := _make_mmi(mesh, 1)
 			mmi.multimesh.set_instance_transform(0, Transform3D(Basis.from_scale(Vector3.ONE * 0.001),
 					Vector3(0.0, 0.0, ahead)))
-			mmi.multimesh.set_instance_custom_data(0, Color(0.0, 0.0, 0.0, 1.0 / 32.0))
-			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if lod == "LOD0" \
+			mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if tier == BuildingLod.Tier.LOD0 \
 					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			root.add_child(mmi)
 		break
@@ -269,21 +284,23 @@ func _install_cell(data: BuildingCellData) -> void:
 		var m := data.modules[n]
 		var count := data.counts[n]
 		var casts := config.cast_shadows
-		var lod1_caster := casts and config.shadow_caster_lod == 1 and _kit.has_lod1[m] == 1
+		var lod1_caster := casts and config.shadow_caster_lod == 1 and _kit.has_mid[m] == 1
 		if config.build_lod0:
-			var mesh0 := _kit.mesh(m, "LOD0")
+			var mesh0 := _kit.tier_mesh(m, BuildingLod.Tier.LOD0)
 			if mesh0 != null:
 				var mmi0 := _make_mmi(mesh0, count)
+				mmi0.set_meta(MODULE_META, _kit.ids[m])
 				mmi0.multimesh.buffer = data.buffers[n]
 				mmi0.name = "L0_%s" % _kit.ids[m]
 				mmi0.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts and not lod1_caster \
 						else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 				config.lod.apply(mmi0, BuildingLod.Tier.LOD0)
 				cell.add_child(mmi0)
-		if (config.build_lod1 or lod1_caster) and _kit.has_lod1[m] == 1:
-			var mesh1 := _kit.mesh(m, "LOD1")
+		if (config.build_lod1 or lod1_caster) and _kit.has_mid[m] == 1:
+			var mesh1 := _kit.tier_mesh(m, BuildingLod.Tier.LOD1)
 			if mesh1 != null:
 				var mmi1 := _make_mmi(mesh1, count)
+				mmi1.set_meta(MODULE_META, _kit.ids[m])
 				mmi1.multimesh.buffer = data.buffers[n]
 				if config.build_lod1:
 					mmi1.name = "L1_%s" % _kit.ids[m]
@@ -292,10 +309,10 @@ func _install_cell(data: BuildingCellData) -> void:
 					config.lod.apply(mmi1, BuildingLod.Tier.LOD1)
 					cell.add_child(mmi1)
 				if lod1_caster:
-					# yalnız-gölge: aynı MultiMesh (LOD1 mesh'i), LOD0 menzilinde; görsel düğüm değil
+					# yalnız-gölge: aynı MultiMesh (hero PROXY mesh'i), LOD0 menzilinde; görsel düğüm değil
 					var caster := MultiMeshInstance3D.new()
 					caster.multimesh = mmi1.multimesh
-					caster.material_override = _mat
+					caster.set_meta(MODULE_META, _kit.ids[m])
 					caster.name = "S1_%s" % _kit.ids[m]
 					caster.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
 					# K8 görsel LOD0 menzilinden ayrı: gölgeler 700 m'de biter.
@@ -335,12 +352,10 @@ func _install_super(skey: Vector2i, result: Dictionary) -> void:
 func _make_mmi(mesh: Mesh, count: int) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_custom_data = true
 	mm.mesh = mesh
 	mm.instance_count = count
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
-	mmi.material_override = _mat
 	return mmi
 
 
@@ -387,6 +402,8 @@ func _refresh_stats() -> void:
 	for k: Vector2i in _super_nodes:
 		hlod2_tris += int((_super_nodes[k] as MeshInstance3D).get_meta(TRIS_META, 0))
 	stats["buildings"] = _cols.count if _cols != null else 0
+	stats["approved_modules"] = _kit.count
+	stats["unapproved_ids"] = _kit.gate.unapproved_ids.size()
 	stats["drawn"] = kept
 	stats["dropped_water"] = dropped
 	stats["cells"] = _cell_nodes.size()

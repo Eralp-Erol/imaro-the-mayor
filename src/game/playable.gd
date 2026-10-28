@@ -152,11 +152,13 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 		return {}
 	_net = NetworkGenerator.generate(_world, net_control, world_seed)
 	var t1 := Time.get_ticks_usec()
-	var lib := KitLibrary.load_manifest()
 	# generate() == generate_detailed().columns; ayrıntı (bölge dokusu, meydan, çok parsellileri) projector'a gerekir.
-	# T-062 A2: yerleşim modül tablosu onaylı hero oyun tablosudur (SettlementTable). `lib` (kit) YALNIZ görünüm içindir ve
-	# A3'te (hero mesh yükleyici) aynı tabloya geçer: o zamana dek module_idx görünüm kit dizinleriyle UYUŞMAZ.
-	_settlement = T0Settlement.generate_detailed(_world, _net, SettlementTable.game_table(), world_seed, rules)
+	# T-062 A2/A3: yerleşim ve görünüm AYNI süzülmüş oyun bina tablosunu (onaylı hero, `LibraryGate`) okur: module_idx
+	# tablo sırasıdır ve `BuildingKit` dizinleriyle birebir aynıdır.
+	var loaded := SettlementTable.load_game_table()
+	var game_table: Dictionary = loaded["table"]
+	var gate: LibraryGate = loaded["gate"]
+	_settlement = T0Settlement.generate_detailed(_world, _net, game_table, world_seed, rules)
 	var cols: BuildingColumns = _settlement.columns
 	_t0_columns = cols
 	for pid in cols.occupied_parcels():
@@ -167,7 +169,9 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	_buildings = BuildingView.new()
 	_buildings.name = "Buildings"
 	_view_root.add_child(_buildings)
-	_kit = BuildingKit.from_library(lib)
+	_kit = BuildingKit.from_game_table(game_table, gate)
+	if not _kit_matches_settlement():
+		push_error("playable: görünüm modül dizini yerleşim tablosuyla uyuşmuyor (module_idx)")
 	_buildings.setup(_world, _kit, config)
 	var report := _buildings.set_columns(cols, _net.graph_version)
 	if not report.get("ok", false):
@@ -180,12 +184,24 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	stats["view_ms"] = snappedf((Time.get_ticks_usec() - t2) / 1000.0, 0.1)
 	stats["parcels"] = _net.parcels.size()
 	stats["buildings"] = cols.count
+	stats["unapproved_ids"] = gate.unapproved_ids.size()
 	# T-040: sim'in geliştirdiği yapılar için ayrı, başlangıçta BOŞ görünüm (aynı dünya/kit/ayar; kendi sütunları).
 	_sim_buildings = BuildingView.new()
 	_sim_buildings.name = "SimBuildings"
 	_view_root.add_child(_sim_buildings)
 	_sim_buildings.setup(_world, _kit, config)
 	return stats
+
+
+## Görünüm kiti ile yerleşim kuralları AYNI modül sırasında mı (module_idx birebir)?
+func _kit_matches_settlement() -> bool:
+	var modules := _settlement.rules.modules
+	if modules.size() != _kit.count:
+		return false
+	for i in modules.size():
+		if modules[i].idx != i or modules[i].id != _kit.ids[i]:
+			return false
+	return true
 
 
 func _start_sim() -> void:

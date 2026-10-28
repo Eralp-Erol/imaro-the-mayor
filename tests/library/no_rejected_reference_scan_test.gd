@@ -3,10 +3,14 @@ extends GdUnitTestSuite
 ## referans taraması: src/, scenes/, data/ (data/library/ hariç: katalog ve oyun tabloları kimlikleri zaten listeler)
 ## ve assets/kit/.
 ## YENİ referans eklenemez: her (dosya, belirteç) çifti aşağıdaki "bilinen kalan referans" listesinde olmalı.
-## Liste AŞAĞI doğru küçülür: bir referans kaldırıldığında girdi de silinmeli (bayat girdi testi düşürür). A2
-## (settlement.json, dünya katmanı yükleyicileri: BİTTİ) ve A3 (kit yolu, KitLibrary) sonrası liste BOŞALIR;
-## kit_lab (scenes/dev) ADR'ye
-## göre izinli ama kit dosyaları silinene kadar listede kalır.
+## Liste AŞAĞI doğru küçülür: bir referans kaldırıldığında girdi de silinmeli (bayat girdi testi düşürür).
+## A2 (settlement.json, dünya yükleyicileri) ve A3 (görünüm: BuildingKit/BuildingView/playable/world_preview/placer,
+## `DevBuildingSource` kaldırıldı) sonrası ÜRETİM kodunda (src/, scenes/game, data/) referans YOKTUR: bunu
+## `test_production_roots_have_no_known_remaining_entries` ayrıca zorlar. Kalanlar YALNIZ eski (REDDEDİLMİŞ) kiti
+## inceleyen araç dosyalarıdır (ADR-0006 §3.4 kabul 2: "izinli liste: kit_lab ve tools"):
+## kit_lab/kit_validator/KitLibrary,
+## hepsi bu kitin kimliklerine/yoluna doğası gereği bağlıdır; reddedilmiş kit dosyaları silinene (ADR §8.6 ayrı temizlik
+## görevi) kadar listede kalırlar.
 
 const ROOTS := ["res://src", "res://scenes", "res://data", "res://assets/kit"]
 const SKIP_DIRS := ["res://data/library"]
@@ -14,8 +18,9 @@ const TEXT_EXTENSIONS := ["gd", "json", "tscn", "tres", "gdshader"]
 ## Reddedilmiş kit modüllerinin GLB ağacı (kit_manifest.json burada): yol referansı da bağımlılıktır.
 const KIT_PATH_TOKEN := "assets/models/buildings/"
 
-## BİLİNEN KALAN REFERANSLAR (dosya -> belirteçler). A2, settlement.json + dünya yükleyicilerini (topology_loader,
-## settlement_preview_cli) çıkardı; kalanlar A3'ün (görünüm/kit) işidir. YENİ girdi eklemek için gerekçe gerekir.
+## BİLİNEN KALAN REFERANSLAR (dosya -> belirteçler): yalnız eski-kit araçları (yukarı bak). YENİ girdi eklemek için
+## gerekçe
+## gerekir; üretim kökleri (PRODUCTION_PREFIXES) altında girdi OLAMAZ.
 const KNOWN_REMAINING := {
 	"res://assets/kit/kit_library.gd": ["assets/models/buildings/"],
 	"res://assets/kit/kit_validator.gd": ["prop_chimney", "prop_human", "veh_car"],
@@ -29,11 +34,9 @@ const KNOWN_REMAINING := {
 		"bld_res_old_c_gf", "prop_human", "veh_car",
 	],
 	"res://scenes/dev/kit_lab_metrics.gd": ["bld_lmk_clocktower"],
-	"res://src/view/buildings/dev_building_source.gd": [
-		"bld_civ_hall_b", "bld_ind_heritage_b", "bld_ind_shed_b", "bld_lmk_clocktower", "bld_res_old_c",
-		"bld_res_old_c_gf",
-	],
 }
+## Üretim (oyun/çalışma zamanı) kodu ve verisi: burada reddedilmiş kit referansı HİÇ olamaz.
+const PRODUCTION_PREFIXES := ["res://src/", "res://scenes/game/", "res://data/"]
 
 
 ## Katalogdaki approved OLMAYAN kimlikler (rejected/proposed; sıralı).
@@ -116,6 +119,25 @@ func test_known_remaining_list_has_no_stale_entries() -> void:
 	assert_array(stale).override_failure_message(
 		"referans kaldırıldı; KNOWN_REMAINING'den de sil: %s" % str(stale)
 	).is_empty()
+
+
+func test_production_roots_have_no_known_remaining_entries() -> void:
+	var leaked: Array[String] = []
+	for path in KNOWN_REMAINING:
+		for prefix in PRODUCTION_PREFIXES:
+			if String(path).begins_with(prefix):
+				leaked.append(String(path))
+	assert_array(leaked).override_failure_message(
+		"üretim kodunda rejected kit referansı bırakılamaz (ADR-0006 kabul 2): %s" % str(leaked)
+	).is_empty()
+	# Taramanın kendisi de aynısını görür: üretim kökündeki HER dosya temiz.
+	var hits := scan_files()
+	var found: Array[String] = []
+	for path in hits:
+		for prefix in PRODUCTION_PREFIXES:
+			if String(path).begins_with(prefix):
+				found.append("%s -> %s" % [path, str(hits[path])])
+	assert_array(found).override_failure_message("üretim kökünde rejected kit referansı: %s" % str(found)).is_empty()
 
 
 func test_scanner_detects_a_planted_rejected_reference_and_ignores_lookalikes() -> void:

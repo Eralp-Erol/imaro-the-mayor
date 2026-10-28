@@ -3,12 +3,12 @@ extends RefCounted
 ## HLOD2 (T-012 ölçüt 2; kit spec §7.2): süper-chunk başına TEK mesh, kent KÜTLELERİ. SAF ve iş parçacığı güvenli.
 ##
 ## Kurallar (spec "HLOD kuralları"): (1) düz slab yok: kütle `hlod2_cell_m` ızgarasında ve YÜKSEKLİK KADEMESİNDE
-## kümelenir, her kutu kendi yüksekliğini taşır; (2) renk ORTALAMA değil, kümedeki bir duvar/çatı SATIRIdır:
-## varsayılan alan ağırlıklı ÖRNEKLEME (kütle anahtarından türeyen deterministik; her satır alanı kadar
-## şansla, böylece kent tek gri/kahveye inmez, metro genelinde satır dağılımı korunur);
-## `hlod2_sample_colors = false` ise alan ağırlıklı BASKIN;
-## (3) landmark ve en yüksek %10 yapı ayrı (yönlü) kutu olarak korunur -> silüet/yükseklik sırası; (4) renkler aynı
-## paletten (BuildingKit.shaded) -> LOD1 <-> HLOD'da ton kayması yok.
+## kümelenir, her kutu kendi yüksekliğini taşır; (2) renk ORTALAMA değil, kümedeki bir MODÜLÜN duvar/çatı rengidir
+## (T-062 A3: hero palet satırı taşımaz; modül başına renk PROXY atlasından piştirilmiş, `BuildingKit.wall_color` /
+## `roof_color`): varsayılan alan ağırlıklı ÖRNEKLEME (kütle anahtarından türeyen deterministik; her modül alanı kadar
+## şansla, böylece kent tek gri/kahveye inmez); `hlod2_sample_colors = false` ise alan ağırlıklı BASKIN modül;
+## (3) landmark ve en yüksek %10 yapı ayrı (yönlü) kutu olarak korunur -> silüet/yükseklik sırası; (4) renkler
+## HLOD1 ile AYNI piştirilmiş değerlerdir -> kademeler arası ton kayması yok.
 ## Kutu: tabanı açık, 4 yan (duvar rengi) + üst (çatı rengi); alt kenar tabandan SKIRT_M aşağıda (yamaçta havada kalma
 ## yok).
 
@@ -28,10 +28,10 @@ class Mass:
 	var low_y: float = INF
 	var top_weighted: float = 0.0
 	var area: float = 0.0
-	var wall_area: Dictionary = {}
-	var roof_area: Dictionary = {}
+	## Modül -> bu kütledeki toplam ayak izi alanı (renk modül başınadır).
+	var module_area: Dictionary = {}
 
-	func add(corners: PackedVector2Array, ground_y: float, top_y: float, a: float, wall: int, roof: int) -> void:
+	func add(corners: PackedVector2Array, ground_y: float, top_y: float, a: float, module: int) -> void:
 		for c in corners:
 			xmin = minf(xmin, c.x)
 			xmax = maxf(xmax, c.x)
@@ -40,8 +40,7 @@ class Mass:
 		low_y = minf(low_y, ground_y)
 		top_weighted += top_y * a
 		area += a
-		wall_area[wall] = float(wall_area.get(wall, 0.0)) + a
-		roof_area[roof] = float(roof_area.get(roof, 0.0)) + a
+		module_area[module] = float(module_area.get(module, 0.0)) + a
 
 	func top_y() -> float:
 		return top_weighted / maxf(area, 0.001)
@@ -106,7 +105,7 @@ static func build(cells: Array, cols: BuildingColumns, kit: BuildingKit, config:
 		var area := kit.footprint_w[m] * kit.footprint_d[m]
 		if singles.has(i) or kit.is_landmark[m] == 1:
 			var single := Mass.new()
-			single.add(corners, float(it["ground"]), float(it["top"]), area, cols.wall_row[i], cols.roof_row[i])
+			single.add(corners, float(it["ground"]), float(it["top"]), area, m)
 			boxes += _emit_box(verts, normals, colors, single, kit, origin, corners, false, 0)
 			continue
 		var tier := 0
@@ -118,8 +117,7 @@ static func build(cells: Array, cols: BuildingColumns, kit: BuildingKit, config:
 		var mk := (gx * 65536 + gz) * 4 + tier
 		if not masses.has(mk):
 			masses[mk] = Mass.new()
-		(masses[mk] as Mass).add(corners, float(it["ground"]), float(it["top"]), area, cols.wall_row[i],
-				cols.roof_row[i])
+		(masses[mk] as Mass).add(corners, float(it["ground"]), float(it["top"]), area, m)
 	var mass_keys: Array = masses.keys()
 	mass_keys.sort()
 	for mk: int in mass_keys:
@@ -164,13 +162,11 @@ static func _emit_box(verts: PackedVector3Array, normals: PackedVector3Array, co
 		quad = PackedVector2Array([Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)])
 	var y0 := mass.low_y - SKIRT_M
 	var y1 := maxf(mass.top_y(), mass.low_y + 2.0)
-	var wall_row := mass.dominant(mass.wall_area)
-	var roof_row := mass.dominant(mass.roof_area)
+	var colour_module := mass.dominant(mass.module_area)
 	if sample:
-		wall_row = mass.sampled(mass.wall_area, _unit_hash(mass_key, 1))
-		roof_row = mass.sampled(mass.roof_area, _unit_hash(mass_key, 2))
-	var wall_c := kit.shaded(wall_row, 1.0)
-	var roof_c := kit.shaded(roof_row, 1.0)
+		colour_module = mass.sampled(mass.module_area, _unit_hash(mass_key, 1))
+	var wall_c := kit.wall_color[colour_module]
+	var roof_c := kit.roof_color[colour_module]
 	var o := Vector3(origin.x, 0.0, origin.y)
 	var base: Array[Vector3] = []
 	for q in quad:
@@ -189,10 +185,10 @@ static func _emit_box(verts: PackedVector3Array, normals: PackedVector3Array, co
 		var mid := (base[k] + base[k2]) * 0.5
 		if n.dot(mid - centre) < 0.0:
 			n = -n
-		_emit_tri(verts, normals, colors, base[k], top[k], top[k2], n, wall_c)
-		_emit_tri(verts, normals, colors, base[k], top[k2], base[k2], n, wall_c)
-	_emit_tri(verts, normals, colors, top[0], top[1], top[2], Vector3.UP, roof_c)
-	_emit_tri(verts, normals, colors, top[0], top[2], top[3], Vector3.UP, roof_c)
+		emit_tri(verts, normals, colors, base[k], top[k], top[k2], n, wall_c)
+		emit_tri(verts, normals, colors, base[k], top[k2], base[k2], n, wall_c)
+	emit_tri(verts, normals, colors, top[0], top[1], top[2], Vector3.UP, roof_c)
+	emit_tri(verts, normals, colors, top[0], top[2], top[3], Vector3.UP, roof_c)
 	return 1
 
 
@@ -204,8 +200,9 @@ static func _unit_hash(key: int, salt: int) -> float:
 	return float(h & 0xFFFFFF) / float(0x1000000)
 
 
-## Üçgen ekler; Godot ön yüz = saat yönü: (b-a)x(c-a) normalle AYNI yöne bakıyorsa b/c değiştirilir.
-static func _emit_tri(verts: PackedVector3Array, normals: PackedVector3Array, colors: PackedColorArray,
+## Üçgen ekler (BuildingKit kutu şablonu da kullanır); Godot ön yüz = saat yönü: (b-a)x(c-a) normalle AYNI yöne
+## bakıyorsa b/c değiştirilir.
+static func emit_tri(verts: PackedVector3Array, normals: PackedVector3Array, colors: PackedColorArray,
 		a: Vector3, b: Vector3, c: Vector3, n: Vector3, color: Color) -> void:
 	var p1 := b
 	var p2 := c

@@ -15,9 +15,9 @@ extends Node3D
 ## Kamera = CameraRig (T-003, src/view/camera/): girdi YALNIZ InputProfile ile. Masaüstü: sol sürükle kaydır, orta tuş
 ##   sürükle döndür, tekerlek/trackpad kıstır imleçte zoom; WASD/oklar kaydır, Q/E döndür, PageUp/PageDown zoom;
 ##   R/F eğim (GEÇİCİ). Dokunmatik (`-- --imaro-input-profile=touch`): tek parmak kaydır, iki parmak kıstır/bük.
-## Yapılar (T-012): varsayılan AÇIK. `--no-buildings` kapatır (T-001/T-003 karşılaştırmaları için). Kaynak = STAND-IN
-##   `DevBuildingSource` (gerçek WorldNetwork parselleri); gerçek T0 yerleşimi (`T0Settlement.generate`) gelince
-##   `_build_buildings()` içindeki TEK satır değişir. Ayarlar: --bld-seed=N --bld-cell=M (chunk m) --lod0-end=M
+## Yapılar (T-012): varsayılan AÇIK. `--no-buildings` kapatır (T-001/T-003 karşılaştırmaları için). Kaynak = gerçek T0
+##   yerleşimi (`T0Settlement.generate`; T-062 A3: onaylı hero oyun tablosu `SettlementTable`, görünüm AYNI tabloyu
+##   `BuildingKit` ile okur; stand-in `DevBuildingSource` kaldırıldı). Ayarlar: --bld-seed=N --bld-cell=M (chunk m) --lod0-end=M
 ##   --lod1-end=M --hlod1-end=M --lod1-shadows --bld-no-hlod2 --bld-no-hlod1 --bld-no-lod0 --bld-no-lod1
 ##   --shadow-caster=0|1 (gölgeyi LOD0 mu LOD1 yalnız-gölge mi düşürür)
 ##   --no-warmup (gölge hattı ısıtmasını kapat, ölçüm için) --light=t001 (eski T-001 ışığı 0,7/0,85; varsayılan
@@ -264,8 +264,7 @@ func _apply_camera_overrides(args: Dictionary) -> void:
 	_camera.apply_state(s, true)
 
 
-## STAND-IN yapı kaynağı (WorldNetwork -> DevBuildingSource) + BuildingView (WorldView altında: rebasing otomatik).
-## Gerçek kaynağa geçiş noktası: `cols` satırı -> `T0Settlement.generate(_world, net, lib.manifest, seed, control)`.
+## T0 yapı kaynağı (WorldNetwork -> T0Settlement, onaylı hero tablosu) + BuildingView (WorldView altında: rebasing otomatik).
 func _build_buildings(control: Dictionary, world_seed: int) -> Dictionary:
 	var t0 := Time.get_ticks_usec()
 	var net_control: Variant = JSON.parse_string(FileAccess.get_file_as_string("%s/network.json" % DATA_DIR))
@@ -274,10 +273,15 @@ func _build_buildings(control: Dictionary, world_seed: int) -> Dictionary:
 		return {}
 	var net := NetworkGenerator.generate(_world, net_control, world_seed)
 	var t1 := Time.get_ticks_usec()
-	var lib := KitLibrary.load_manifest()
-	var kit := BuildingKit.from_library(lib)
-	var cols: BuildingColumns = DevBuildingSource.generate(_world, net, lib.manifest,
-			_arg_int(_args, "bld-seed", world_seed, -2147483648, 2147483647))
+	var rules: Variant = JSON.parse_string(FileAccess.get_file_as_string("%s/settlement.json" % DATA_DIR))
+	if not rules is Dictionary:
+		push_error("world_preview: settlement.json okunamadı, yapılar kurulmadı")
+		return {}
+	var loaded := SettlementTable.load_game_table()
+	var game_table: Dictionary = loaded["table"]
+	var kit := BuildingKit.from_game_table(game_table, loaded["gate"] as LibraryGate)
+	var cols: BuildingColumns = T0Settlement.generate(_world, net, game_table,
+			_arg_int(_args, "bld-seed", world_seed, -2147483648, 2147483647), rules as Dictionary)
 	var t2 := Time.get_ticks_usec()
 	var config := BuildingViewConfig.new()
 	config.cell_m = _arg_float(_args, "bld-cell", config.cell_m, 100.0, 4000.0)

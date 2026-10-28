@@ -2,12 +2,12 @@ extends GdUnitTestSuite
 ## T-040 ölçüt 8 · CAN-03 koruması (olumsuz test): oyuncu doğrudan yapı ekleyemez; `BuildingColumns` / `BuildingView`
 ## girdisini sim durumundan üreten TEK yol SimBuildingProjector'dır. Statik tarama (kaynak metni) + davranış testi.
 
-## `BuildingColumns` üreten / dolduran dosyalar (yalnız bunlar): T0 üreteci, dev stand-in, sim projector.
+## `BuildingColumns` üreten / dolduran dosyalar (yalnız bunlar): T0 üreteci, sim projector (dev stand-in
+## `DevBuildingSource` T-062 A3'te kaldırıldı).
 const COLUMN_PRODUCERS := [
 	"res://src/world/settlement/building_columns.gd",
 	"res://src/world/settlement/t0_settlement.gd",
 	"res://src/world/settlement/settlement_result.gd",
-	"res://src/view/buildings/dev_building_source.gd",
 	"res://src/view/buildings/sim_building_projector.gd",
 	"res://src/view/buildings/sim_building_placer.gd",
 	"res://src/game/playable_stock.gd",

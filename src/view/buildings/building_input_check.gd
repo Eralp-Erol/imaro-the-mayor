@@ -4,6 +4,8 @@ extends RefCounted
 ## düzeltilmez: hata listesi döner (BuildingView.set_columns reddeder, mevcut görüntü bozulmaz).
 
 const MAX_ERRORS := 12
+## Sütun şeması: palet satırı 0..31 (BuildingColumns bayt sütunları; hero modülde hep 0, görünüm palet kullanmaz).
+const PALETTE_ROWS := 32
 
 
 ## Boş liste = geçerli. Sütun uzunlukları (`BuildingColumns.shape_errors`), modül aralığı, palet satırı, sonlu
@@ -22,9 +24,9 @@ static func errors(cols: BuildingColumns, module_count: int) -> PackedStringArra
 			out.append("satır %d: module_idx %d aralık dışı [0, %d)" % [i, m, module_count])
 		elif not is_finite(cols.x[i]) or not is_finite(cols.z[i]) or not is_finite(cols.yaw[i]):
 			out.append("satır %d: konum/yön sonlu değil" % i)
-		elif cols.wall_row[i] >= KitMaterial.ROW_COUNT or cols.roof_row[i] >= KitMaterial.ROW_COUNT \
-				or cols.accent_row[i] >= KitMaterial.ROW_COUNT:
-			out.append("satır %d: palet satırı >= %d" % [i, KitMaterial.ROW_COUNT])
+		elif cols.wall_row[i] >= PALETTE_ROWS or cols.roof_row[i] >= PALETTE_ROWS \
+				or cols.accent_row[i] >= PALETTE_ROWS:
+			out.append("satır %d: palet satırı >= %d" % [i, PALETTE_ROWS])
 		if out.size() >= MAX_ERRORS:
 			out.append("... (daha fazla hata kesildi)")
 			break
