@@ -35,6 +35,18 @@ Bu repo bir **oyun stüdyosu**dur. Oyun: yaşayan 3D city-builder + siyasi kariy
 
 Kural: tek dosyalık/küçük işleri ana oturum doğrudan yapar; uzman yalnızca ölçülebilir değer kattığında çağrılır. Bağımsız işler paralel; aynı dosyalara iki yazıcı asla. Ajan çağrılarında modeli her zaman açıkça ver (`opus` veya `sonnet`) — **Haiku hiçbir koşulda kullanılmaz.** Opus yalnız director kararları ve büyük teslim incelemeleri içindir.
 
+## Sahip modu (2026-10-28; aşağıdaki İş akışı'ndan önce gelir)
+
+Kullanıcı teknik olmayan sahip/creative director'dır; ajans müşterisi değil. Süreç ona hizmet eder.
+
+- **Konuşma:** düz Türkçe, kısa. Mesajda en fazla 3-5 satır ve en fazla 2-3 net karar noktası; ayrıntı dosyada. Soruları seçenekli kart olarak (öneri ilk, "Önerilen" etiketli) sor.
+- **Tepki önce gelir:** kullanıcı görsel/his tepkisi verirse ("kötü duruyor", "ağaç yok") bunu kuyruk sırasına göre ertelenecek cila sayma; önce onu çöz. Ürün sorusunu (kamera, kapsam, görsel yön, neyin gerekli olduğu) iş büyümeden önce sor; "kanonda var" tek başına yeni bir iş hattı açmak için yetmez.
+- **Göster:** bir aşama kullanıcının görebileceği hale gelince çalışan demoyu onun için aç (`scenes/game/playable.tscn --demo`); ayrı ekran görüntüsü gönderme. QA/art kareleri dahili kalır. Kütüphane kontak sayfası işlerinde PNG gönderme geçerli.
+- **Hafif süreç:** küçük/tek alanlı işte görev dosyası, director incelemesi ve bağımsız QA zorunlu değil (satır log + kısa not yeter). `verify quick` commit öncesi, `full` milestone/teslimde; her ara adımda 11-17 dk beklenmez. Director/QA kapıları büyük teslimde veya kullanıcı isterse.
+- **Korunanlar (pazarlıksız kalır):** kanon koruması, determinizm/simülasyon testleri, CAN-03, sahte HUD sayısı yok, push/geri alınamaz git kullanıcı onayıyla.
+- **Karar kaydı:** kullanıcı soru kartı/sohbetle karar verirse `design/decisions/D-NNN`'e kendi sözleriyle yaz; ajanlar kullanıcı adına karar yazmaz.
+- Açık: hangi kararları sormadan vereceğim ve kullanıcının "ilk 5 dakikada ne yapmak istiyorum" cevabı henüz alınmadı; alınınca bu bölüme eklenecek.
+
 ## İş akışı
 
 1. Görev `production/tasks/T-NNN.md` (şablon: `production/tasks/_TEMPLATE.md`); kabul ölçütleri + REQ kimlikleri + kanıt planı olmadan uygulamaya başlanmaz. `/dev-task T-NNN` tam döngüyü yürütür.

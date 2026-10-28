@@ -25,6 +25,7 @@ Durumlar:
 | Q-016 | Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları: ekonomi birimi↔kit katı oranı, inşaat kademesinin görünümü (iskele modülü var mı), başlangıç altyapı kapasitesi/hane talebi, otonom yatırımcı büyümesi oynanabilirde açık mı | **open** | — (engellemiyor) |
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 | Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
+| Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
 - Kullanıcı eski POC'yi referans görselleriyle birlikte sildi; kullanılmaz.
@@ -84,3 +85,14 @@ Sorular (gruplu):
 3. **Dönüşümde bedel/gecikme/tepki:** yıkım bedeli kimin, süre, hangi grup nasıl tepki verir (SIM-12 gereği gerekçeli; tarihî yapı, işçi mahallesi)?
 ÖNERİLEN VARSAYILAN (yalnız öneri, kanon değil): 1(a) şimdilik + arayüzde dürüst uyarı (T-047 uyguladı); ileride 1(b) "yatırımcı kararı" (yeni gerekçeli karar anahtarı), belediye kamulaştırması ayrı ve pahalı seçenek 1(c); 2(b): park/yeşil alan belediye inşası olarak CAN-04 altında (etiket tek başına park yaratmaz).
 Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulmaz; imar akışı yapılı parselde "mevcut yapıyı KALDIRMAZ" der; kullanıcı yanıtlayınca `design/decisions/` altına kendi sözleriyle kaydedilir.
+
+### Q-019 · Görünüm modları: kamera tavanı, strateji haritası, geçiş, en yakın bakış, ülke ölçeği (status: open — engellemiyor)
+- Context: Creative Director (sohbette, 2026-10-28, Studio Director aktardı): "bu kadar zoom out yapamamalısın; o başka bir mod olabilir". Bugün açılış görüntüsü 58 km'den 40 km'lik Ismeral kutusunu boşlukta bir ada gibi gösteriyor (hesap: dünya ekran genişliğinin ~%53'ü, dört kenar kadrajda); bu, F01/WLD-10'daki kesintisiz ana karayı görsel olarak yalanlıyor. Ayrıntı ve hesaplar: `design/specs/ux/VIEW-MODES-AND-DESIGN-SYSTEM.md` §A, §D. Etkilenen: T-041 (ölçüt 3 zoom bantları), T-043 (açılış kamerası), önerilen T-063/T-064/T-068/T-069. Q-011'in "zoom akışı (sürekli/ölçek kapısı)" maddesini ayrıntılandırır.
+- Options:
+  1. Serbest 3D tavanı: A) metropol çekirdeği ~18 km, dünya kenarı asla kadrajda değil, metropol bütünü yalnız haritada · B) ~31 km "metropol sığar" (kenar payı küçülür, ada etkisi kısmen geri gelir) · C) yalnız açılış görüntüsü değişir, tavan kalır.
+  2. Strateji haritasının görünümü: A) aynı 3D dünyanın tepeden sadeleştirilmiş görünümü + sembol katmanı · B) aynı veriden 2D kartografik ("kâğıt") harita · C) metropolde A, ülke ölçeğinde Ref A yönünde kuşbakışı.
+  3. 3D → harita geçişi: A) yalnız düğme/kısayol · B) tavanda uzaklaştırmayı sürdürünce otomatik geçiş · C) düğme + tavanda tek dokunuşluk ipucu, otomatik değil.
+  4. En yakın bakış: A) ~50 m "balkon" bakışı, göz hizası yok · B) bugünkü göz hizası (~25 m) · C) A + ileride ayrı "yakından bak" modu.
+  5. Anderva ülke ölçeği: A) yalnız strateji modunda, M2 sonrası, önce Ismeral'i aynı koordinatla içeren ülke verisi · B) serbest 3D'den de erişilir (1. soruyla çelişir).
+- Recommendation: 1A (itirazı doğrudan karşılar, ada görüntüsünü yapı gereği engeller), 2A (aynı kıyı/yol geometrisini ve sanat gramerini garanti eder, WLD-01/VIS-01), 3C (istem dışı mod değişimi yok), 4A (sokak hayatı okunur kalır; en pahalı yakın kademeler M2'den çıkar; street perf tabanı zaten bütçe sınırında), 5A.
+- Meanwhile: tüm sınırlar veri dosyasında ÇALIŞMA DEĞERİ (öneri değerleri: tavan 18 km, alt sınır 50 m / 12°, kenar payı 1,5 km); "kadraj dünya içinde" kuralı teknik karar olarak (ADR-0007) uygulanır; açılış ve Home başlangıç ilçesine (`start_district_id`, D-002); harita modu yapılırsa aynı WorldData'dan ve nötr görünümle; hiçbir değer kanon gibi yazılmaz. Yanıt yalnız veri değerlerini ve harita görünümünü değiştirir; kullanıcının sözleri `design/decisions/` altına kaydedilir.
