@@ -7,6 +7,7 @@ signal chunks_rebuilt(keys: Array[Vector2i])
 
 ## Bu sayıdan az chunk yeniden kurulurken iş parçacığı kullanılmaz (yerel düzenleme yolu).
 const MIN_THREADED_CHUNKS := 4
+const SHADER_PATH := "res://art/shaders/road_surface.gdshader"
 
 var stats: Dictionary = {}
 var style: RoadStyle
@@ -20,7 +21,8 @@ var build_far_mesh: bool = false
 var _net: WorldNetwork
 var _plan: RoadChunkPlan
 var _chunks: Dictionary = {}
-var _material: StandardMaterial3D
+var _material: ShaderMaterial
+var _layers: GroundLayerSet
 var _far_parts: Dictionary = {}
 var _far_node: MeshInstance3D = null
 var _far_mode: bool = false
@@ -30,13 +32,44 @@ func build(net: WorldNetwork, road_style: RoadStyle = null) -> void:
 	clear()
 	_net = net
 	style = road_style if road_style != null else RoadStyle.load_default()
-	_material = StandardMaterial3D.new()
-	_material.vertex_color_use_as_albedo = true
-	_material.roughness = 1.0
-	_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	# T-062 A4: yüzey onaylı zemin katmanlarından (ana iş parçacığında bir kez çözülür; mesh iş parçacıkları yalnız okur).
+	_layers = GroundLayerSet.shared()
+	style.bind_layers(_layers)
+	_material = _make_material(_layers, style)
 	var started := Time.get_ticks_usec()
 	_plan = RoadChunkPlan.build(net, style)
 	_rebuild_with_plan(_plan.keys(), started)
+
+
+## Ortak yol malzemesi (testler/ölçüm).
+func material() -> ShaderMaterial:
+	return _material
+
+
+func _make_material(layers: GroundLayerSet, road_style: RoadStyle) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = load(SHADER_PATH)
+	if layers.array != null:
+		m.set_shader_parameter("layers", layers.array)
+	var tiles := PackedFloat32Array()
+	tiles.resize(TerrainLook.MAX_LAYERS)
+	for i in mini(layers.count(), TerrainLook.MAX_LAYERS):
+		tiles[i] = layers.tile_m[i]
+	m.set_shader_parameter("tile_m", tiles)
+	m.set_shader_parameter("walk_layer", float(road_style.walk_layer()))
+	var surface: Dictionary = road_style.data["surface"]
+	m.set_shader_parameter("curb_m", float(surface["curb_m"]))
+	m.set_shader_parameter("curb_dark", float(surface["curb_dark"]))
+	m.set_shader_parameter("detail_far", float(surface["detail_far_m"]))
+	var fade: Array = surface["fade_to_mean_m"]
+	m.set_shader_parameter("fade_to_mean", Vector2(float(fade[0]), float(fade[1])))
+	# Hava tonu arazi ile AYNI veriden (uzak yollar araziden kopmasın).
+	var haze: Dictionary = TerrainLook.shared().data["haze"]
+	var hc: Array = haze["color"]
+	m.set_shader_parameter("haze_color", Color(float(hc[0]), float(hc[1]), float(hc[2])))
+	m.set_shader_parameter("haze_range", Vector2(float(haze["start_m"]), float(haze["end_m"])))
+	m.set_shader_parameter("haze_amount", float(haze["amount"]))
+	return m
 
 
 func clear() -> void:
@@ -207,6 +240,8 @@ func _mesh_node(data: Dictionary) -> MeshInstance3D:
 	arrays[Mesh.ARRAY_VERTEX] = data["vertices"]
 	arrays[Mesh.ARRAY_NORMAL] = data["normals"]
 	arrays[Mesh.ARRAY_COLOR] = data["colors"]
+	if data.has("uvs"):
+		arrays[Mesh.ARRAY_TEX_UV] = data["uvs"]
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var node := MeshInstance3D.new()

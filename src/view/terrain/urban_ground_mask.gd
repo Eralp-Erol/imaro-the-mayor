@@ -1,12 +1,41 @@
 class_name UrbanGroundMask
 extends RefCounted
 ## Kent zemini maskesi (T-051 kısım 2, spec §8.2/4 "kent zemini kenttir"): yapı barındıran parsellerin (ve çoğu dolu
-## blokların boş parsellerinin) ayak izinden BİR KEZ hesaplanan düşük çözünürlüklü RG8 maske. R = kent zemini
-## kaplaması [0,1], G = sanayi/avlu bayrağı [0,1]. Arazi gölgelendiricisi bunu dünya x/z'den örnekler; yeni malzeme,
+## blokların boş parsellerinin) ayak izinden BİR KEZ hesaplanan düşük çözünürlüklü RGBA8 maske. R = kent zemini
+## kaplaması [0,1], G = sanayi/avlu bayrağı [0,1], B = döşeme (plaza_stone_a) seçimi, A = yeşil (grass_green) seçimi;
+## B=A=0 -> dirt_courtyard (T-062 A4: parsel/blok kimliği hash'iyle, veri güdümlü ağırlıklar; aşağıda `variant_of`).
+## Arazi gölgelendiricisi bunu dünya x/z'den örnekler; yeni malzeme,
 ## draw call ya da kare-başı iş YOK. Kaynak: WorldNetwork parselleri + BuildingColumns (sihirli koordinat yok, Q-015).
 ## Parametreler `data/view/terrain_look.json` "urban.mask". Saf hesap (Node/RenderingServer yok): iş parçacığı güvenli.
 
-## Sonuç: {"image": Image (RG8), "origin": Vector2, "size": Vector2, "cell_m": float, "parcels": int, "ms": float}
+## Seçim kodları (`variant_of`).
+const VARIANT_PLAZA := 0
+const VARIANT_DIRT := 1
+const VARIANT_GREEN := 2
+
+
+## Saf, deterministik 32-bit karma [0, 1): aynı (kimlik, tohum) -> aynı değer (`ViewHash`).
+static func hash01(id: int, variant_seed: int) -> float:
+	return ViewHash.hash01(id, variant_seed)
+
+
+## Konut zemini seçimi: `weights` {plaza, dirt, green} (toplam 1'e normalleşir). Aynı kimlik -> aynı seçim.
+static func variant_of(id: int, variant_seed: int, weights: Dictionary) -> int:
+	var plaza := maxf(float(weights.get("plaza", 0.0)), 0.0)
+	var dirt := maxf(float(weights.get("dirt", 1.0)), 0.0)
+	var green := maxf(float(weights.get("green", 0.0)), 0.0)
+	var total := plaza + dirt + green
+	if total <= 0.0:
+		return VARIANT_DIRT
+	var u := hash01(id, variant_seed) * total
+	if u < plaza:
+		return VARIANT_PLAZA
+	if u < plaza + dirt:
+		return VARIANT_DIRT
+	return VARIANT_GREEN
+
+
+## Sonuç: {"image": Image (RGBA8), "origin": Vector2, "size": Vector2, "cell_m": float, "parcels": int, "ms": float}
 ## ya da boş sözlük (yapı yok).
 static func build(net: WorldNetwork, cols: BuildingColumns, params: Dictionary) -> Dictionary:
 	if net == null or cols == null or cols.count == 0:
@@ -17,6 +46,10 @@ static func build(net: WorldNetwork, cols: BuildingColumns, params: Dictionary) 
 	var max_px := int(params.get("max_px", 2048))
 	var min_cell := float(params.get("min_cell_m", 10.0))
 	var block_fill_min := float(params.get("block_fill_min", 0.35))
+	var variants: Dictionary = params.get("variants", {})
+	var variant_seed := int(variants.get("seed", 0))
+	var by_block := str(variants.get("unit", "parcel")) == "block"
+	var weights: Dictionary = variants.get("residential", {})
 
 	# Parsel -> sanayi bayrağı (en az bir sanayi yapısı) ve dolu parsel kümesi.
 	var industrial: Dictionary = {}
@@ -52,6 +85,7 @@ static func build(net: WorldNetwork, cols: BuildingColumns, params: Dictionary) 
 	var hi := Vector2(-INF, -INF)
 	var polys: Array[PackedVector2Array] = []
 	var ind_flags := PackedByteArray()
+	var variant_codes := PackedByteArray()
 	for pid in paint:
 		var parcel: WorldParcel = net.parcels.get(pid)
 		if parcel == null or parcel.outline.size() < 3:
@@ -62,6 +96,7 @@ static func build(net: WorldNetwork, cols: BuildingColumns, params: Dictionary) 
 			outline = grown[0]
 		polys.append(outline)
 		ind_flags.append(1 if industrial.has(pid) else 0)
+		variant_codes.append(variant_of(parcel.block_id if by_block else int(pid), variant_seed, weights))
 		for p in outline:
 			lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
 			hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
@@ -74,17 +109,18 @@ static func build(net: WorldNetwork, cols: BuildingColumns, params: Dictionary) 
 	var w := int(ceil(extent.x / cell))
 	var h := int(ceil(extent.y / cell))
 	var data := PackedByteArray()
-	data.resize(w * h * 2)
+	data.resize(w * h * 4)
 	for k in polys.size():
-		_fill(data, w, h, lo, cell, polys[k], ind_flags[k] == 1)
-	var image := Image.create_from_data(w, h, false, Image.FORMAT_RG8, data)
+		_fill(data, w, h, lo, cell, polys[k], ind_flags[k] == 1, variant_codes[k])
+	var image := Image.create_from_data(w, h, false, Image.FORMAT_RGBA8, data)
 	return {"image": image, "origin": lo, "size": Vector2(w, h) * cell, "cell_m": cell, "parcels": polys.size(),
 			"ms": snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)}
 
 
-## Çokgeni piksel merkezi içindeyse boyar (R = 255; sanayi ise G = 255). Çok küçük çokgen en az bir piksel boyar.
+## Çokgeni piksel merkezi içindeyse boyar (R = 255; sanayi ise G = 255; B/A = döşeme/yeşil seçimi).
+## Çok küçük çokgen en az bir piksel boyar.
 static func _fill(data: PackedByteArray, w: int, h: int, origin: Vector2, cell: float, poly: PackedVector2Array,
-		is_industrial: bool) -> void:
+		is_industrial: bool, variant: int) -> void:
 	var bmin := Vector2(INF, INF)
 	var bmax := Vector2(-INF, -INF)
 	for p in poly:
@@ -99,18 +135,21 @@ static func _fill(data: PackedByteArray, w: int, h: int, origin: Vector2, cell: 
 		for x in range(x0, x1 + 1):
 			var c := origin + (Vector2(x, y) + Vector2(0.5, 0.5)) * cell
 			if Geometry2D.is_point_in_polygon(c, poly):
-				_put(data, (y * w + x) * 2, is_industrial)
+				_put(data, (y * w + x) * 4, is_industrial, variant)
 				painted = true
 	if not painted:
 		var mid := (bmin + bmax) * 0.5
 		var mx := clampi(int(floor((mid.x - origin.x) / cell)), 0, w - 1)
 		var my := clampi(int(floor((mid.y - origin.y) / cell)), 0, h - 1)
-		_put(data, (my * w + mx) * 2, is_industrial)
+		_put(data, (my * w + mx) * 4, is_industrial, variant)
 
 
-static func _put(data: PackedByteArray, o: int, is_industrial: bool) -> void:
+static func _put(data: PackedByteArray, o: int, is_industrial: bool, variant: int) -> void:
 	data[o] = 255
 	if is_industrial:
 		data[o + 1] = 255
 	elif data[o + 1] != 255:
 		data[o + 1] = 0
+	# Seçim: sanayi parselinde yok (gravel); konutta son boyayan parsel kazanır (deterministik sıra).
+	data[o + 2] = 255 if (variant == VARIANT_PLAZA and not is_industrial) else 0
+	data[o + 3] = 255 if (variant == VARIANT_GREEN and not is_industrial) else 0

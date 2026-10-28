@@ -87,6 +87,7 @@ static func build_land(world: WorldData, palette: TerrainPalette, cx: int, cz: i
 	var gnormals: PackedVector3Array = grid["normals"]
 	var gcolors: PackedColorArray = grid["colors"]
 	var gshore: PackedFloat32Array = grid["shore"]
+	var gfield: PackedFloat32Array = grid["field"]
 	var gw: int = grid["width"]
 	var n := 0
 	var heights := world.heights
@@ -107,7 +108,7 @@ static func build_land(world: WorldData, palette: TerrainPalette, cx: int, cz: i
 			if maxf(maxf(h00, h10), maxf(h01, h11)) >= sea:
 				var c := [gj * gw + gi, gj * gw + gi + 1, (gj + 1) * gw + gi, (gj + 1) * gw + gi + 1]
 				var p := [Vector3(x0, h00, z0), Vector3(x1, h10, z0), Vector3(x0, h01, z1), Vector3(x1, h11, z1)]
-				var quad := {"p": p, "c": c, "gn": gnormals, "gc": gcolors, "gs": gshore, "origin": origin}
+				var quad := {"p": p, "c": c, "gn": gnormals, "gc": gcolors, "gs": gshore, "gf": gfield, "origin": origin}
 				if uses_main_diagonal(h00, h10, h01, h11, span):
 					n = _emit_land_tri(quad, [0, 1, 3], sea, shading_exaggeration, look, verts, normals, colors,
 						uvs, uv2s, n)
@@ -152,7 +153,9 @@ static func _vertex_grid(world: WorldData, palette: TerrainPalette, rect: Rect2i
 	var gnormals := PackedVector3Array()
 	var gcolors := PackedColorArray()
 	var gshore := PackedFloat32Array()
+	var gfield := PackedFloat32Array()
 	gshore.resize(cols.size() * rows.size())
+	gfield.resize(cols.size() * rows.size())
 	gnormals.resize(cols.size() * rows.size())
 	gcolors.resize(cols.size() * rows.size())
 	var k := 0
@@ -172,8 +175,9 @@ static func _vertex_grid(world: WorldData, palette: TerrainPalette, rect: Rect2i
 			col.a = 1.0
 			gcolors[k] = col
 			gshore[k] = shore[idx]
+			gfield[k] = palette.field_weight(heights[idx] - sea, slope, idx)
 			k += 1
-	return {"normals": gnormals, "colors": gcolors, "shore": gshore, "width": cols.size()}
+	return {"normals": gnormals, "colors": gcolors, "shore": gshore, "field": gfield, "width": cols.size()}
 
 
 ## Su chunk'ı (indeksli, düz yüzey; köşe rengi `palette.water_color_at`: bükülmüş, ana karaya uzaklığa bağlı
@@ -292,6 +296,7 @@ static func _emit_land_tri(quad: Dictionary, corners: Array, sea: float, k_shade
 	var gn: PackedVector3Array = quad["gn"]
 	var gc: PackedColorArray = quad["gc"]
 	var gs: PackedFloat32Array = quad["gs"]
+	var gf: PackedFloat32Array = quad["gf"]
 	var origin: Vector3 = quad["origin"]
 	var p0: Vector3 = p[corners[0]]
 	var p1: Vector3 = p[corners[1]]
@@ -314,7 +319,7 @@ static func _emit_land_tri(quad: Dictionary, corners: Array, sea: float, k_shade
 		normals[k + m] = gn[c[corner]].lerp(facet, fw).normalized()
 		colors[k + m] = gc[c[corner]]
 		uvs[k + m] = Vector2(origin.x + pos.x, origin.z + pos.z)
-		uv2s[k + m] = Vector2(gs[c[corner]], 0.0)
+		uv2s[k + m] = Vector2(gs[c[corner]], gf[c[corner]])
 	return n + 1
 
 

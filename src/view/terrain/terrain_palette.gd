@@ -101,15 +101,24 @@ func land_color(elev: float, slope_deg: float, shore_m: float, sample: int, x: f
 	c = c.lerp(maquis, smoothstep(430.0, 700.0, e) * 0.9)
 	c = c.lerp(ROCK.lerp(ROCK_HIGH, smoothstep(520.0, 820.0, e)), rock_weight(e, slope_deg) * 0.92)
 	# Ova: düz ve alçaksa tarla mozaiği.
-	var flat_t := (1.0 - smoothstep(2.5, 8.0, slope_deg)) * (1.0 - smoothstep(55.0, 170.0, elev))
-	if flat_t > 0.0:
-		var strength := lerpf(FIELD_STRENGTH_OTHER, 1.0, _field_weight[sample] if sample < _field_weight.size() else 0.0)
-		c = c.lerp(_field_tone(x, z, broad), flat_t * strength)
+	var field_t := field_weight(elev, slope_deg, sample)
+	if field_t > 0.0:
+		c = c.lerp(_field_tone(x, z, broad), field_t)
 	# Kıyı şeridi: ince kum.
 	var sand_t := (1.0 - smoothstep(20.0, 120.0, shore_m)) * (1.0 - smoothstep(6.0, 16.0, slope_deg))
 	c = c.lerp(SAND, sand_t * 0.6)
 	# Parlaklık oynaması gölgelendiricide (dünya-uzayı gürültü, T-049b); köşe başına hash'li jitter piksel izi verirdi.
 	return c
+
+
+## Tarla mozaiği ağırlığı [0, 1] (düz + alçak yer x bölge gücü): renk karışımı VE arazi gölgelendiricisinin tarla
+## katmanları (UV2.y, T-062 A4) AYNI değeri kullanır. `sample` WorldData örnek indeksi.
+func field_weight(elev: float, slope_deg: float, sample: int) -> float:
+	var flat_t := (1.0 - smoothstep(2.5, 8.0, slope_deg)) * (1.0 - smoothstep(55.0, 170.0, elev))
+	if flat_t <= 0.0:
+		return 0.0
+	var strength := lerpf(FIELD_STRENGTH_OTHER, 1.0, _field_weight[sample] if sample < _field_weight.size() else 0.0)
+	return flat_t * strength
 
 
 ## Kaya ağırlığı [0, 1] (satış kuralı: gri kaya yalnız DİK ve YÜKSEK yerde): eğim eşiği yalnız ~650 m üstünde etkindir;

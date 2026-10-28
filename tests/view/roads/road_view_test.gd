@@ -95,14 +95,14 @@ func test_same_input_and_insertion_order_independent_mesh_hash() -> void:
 	assert_str(_hash(_data(Vector2i.ZERO))).is_equal(first)
 
 
-func test_class_width_and_color_come_from_data_and_preserve_network_corridor() -> void:
+func test_class_width_and_surface_come_from_data_and_preserve_network_corridor() -> void:
 	for cls: StringName in WorldRoadEdge.ROAD_CLASSES:
 		_net = NetworkTestSupport.empty_network(_world)
 		var eid := _edge(Vector2(100, 200), Vector2(800, 200), cls, 18.0)
 		var edge: WorldRoadEdge = _net.edges[eid]
 		assert_float(_style.width_of(edge)).is_equal(18.0)
 		_style.data["classes"][String(cls)]["width_scale"] = 1.25
-		_style.data["classes"][String(cls)]["color"] = "#cc2244"
+		_style.data["classes"][String(cls)]["brightness"] = 1.5
 		var data := _data(Vector2i.ZERO)
 		var min_z := INF
 		var max_z := -INF
@@ -110,7 +110,10 @@ func test_class_width_and_color_come_from_data_and_preserve_network_corridor() -
 			min_z = minf(min_z, p.z)
 			max_z = maxf(max_z, p.z)
 		assert_float(max_z - min_z).is_equal_approx(22.5, 0.0001)
-		assert_bool((data["colors"] as PackedColorArray)[0].is_equal_approx(Color.html("#cc2244"))).is_true()
+		# Köşe rengi yüzey kodu: G = parlaklık / 2 (veriden); R = katman indeksi.
+		var color: Color = (data["colors"] as PackedColorArray)[0]
+		assert_float(color.g).is_equal_approx(0.75, 0.0001)
+		assert_int(RoadStyle.layer_from_color(color)).is_equal(_style.layer_of(edge))
 
 
 func test_metro_is_thinner_and_has_fewer_triangles_with_engine_distance_lod() -> void:
@@ -275,3 +278,87 @@ func test_threaded_and_inline_builds_produce_identical_meshes() -> void:
 			assert_bool(a[Mesh.ARRAY_NORMAL] == b[Mesh.ARRAY_NORMAL]).is_true()
 			assert_bool(a[Mesh.ARRAY_COLOR] == b[Mesh.ARRAY_COLOR]).is_true()
 	assert_int(int(threaded.stats["near_triangles"])).is_equal(int(inline.stats["near_triangles"]))
+
+
+func _bound_style() -> RoadStyle:
+	var style := RoadStyle.load_default()
+	style.bind_layers(GroundLayerSet.shared())
+	return style
+
+
+func test_surface_layers_come_from_approved_asphalt_ids_by_class_and_edge_hash() -> void:
+	# T-062 A4: asfalt new/worn sınıfa ve kenar kimliği hash'ine göre; kimlikler kapıdan geçen onaylı katmanlar.
+	var style := _bound_style()
+	var layers := GroundLayerSet.shared()
+	var new_idx := layers.index_of("gnd_tex_asphalt_new")
+	var worn_idx := layers.index_of("gnd_tex_asphalt_worn")
+	assert_int(new_idx).is_greater_equal(0)
+	assert_int(worn_idx).is_greater_equal(0)
+	var seen_new := 0
+	var seen_worn := 0
+	for id in 600:
+		var edge := WorldRoadEdge.new()
+		edge.id = id
+		edge.road_class = &"local"
+		var layer := style.layer_of(edge)
+		assert_bool(layer == new_idx or layer == worn_idx).is_true()
+		assert_int(layer).is_equal(style.layer_of(edge))   # aynı kenar -> aynı yüzey (deterministik)
+		assert_bool(layer == worn_idx).is_equal(style.is_worn(edge))
+		if layer == worn_idx:
+			seen_worn += 1
+		else:
+			seen_new += 1
+	# local eskimiş payı veriden (0.45): ikisi de görülür ve oran payı izler.
+	var share := float(style.data["classes"]["local"]["surface"]["worn_share"])
+	assert_float(float(seen_worn) / 600.0).is_equal_approx(share, 0.07)
+	assert_int(seen_new).is_greater(0)
+	# arter yolu yerele göre daha az eskimiş (sınıf payı).
+	var worn_art := 0
+	for id in 600:
+		var e := WorldRoadEdge.new()
+		e.id = id
+		e.road_class = &"arterial"
+		if style.is_worn(e):
+			worn_art += 1
+	assert_int(worn_art).is_less(seen_worn)
+
+
+func test_unapproved_surface_id_is_never_loaded_and_falls_back_with_a_gate_denial() -> void:
+	# Negatif: yol stilinde onaysız/bilinmeyen kimlik -> katman yüklenmez (yedek asfalt), kapı ret sayar.
+	var gate := LibraryGate.load_default()
+	gate.report_errors = false
+	var layers := GroundLayerSet.build(gate, false)
+	var style := RoadStyle.load_default()
+	style.data["classes"]["local"]["surface"]["base"] = "gnd_tex_asphalt_REJECTED_x"
+	style.bind_layers(layers)
+	assert_array(Array(gate.unapproved_ids)).contains(["gnd_tex_asphalt_REJECTED_x"])
+	assert_bool(layers.has_layer("gnd_tex_asphalt_REJECTED_x")).is_false()
+	var edge := WorldRoadEdge.new()
+	edge.road_class = &"local"
+	edge.id = 1
+	# Taban katman "surface.fallback" (onaylı asfalt) katmanına düştü: onaysız kimlik hiçbir indeks üretmez.
+	var fallback_idx := layers.index_of(str(style.data["surface"]["fallback"]))
+	assert_int(fallback_idx).is_greater_equal(0)
+	var checked := 0
+	for id in 50:
+		edge.id = id
+		if not style.is_worn(edge):
+			assert_int(style.layer_of(edge)).is_equal(fallback_idx)
+			checked += 1
+	assert_int(checked).is_greater(0)
+
+
+func test_view_material_is_a_shader_material_sharing_the_ground_array_with_world_xz_sampling() -> void:
+	var view := _view_with_style()
+	var mat := view.material()
+	assert_object(mat).is_not_null()
+	assert_object(mat.shader).is_not_null()
+	assert_bool(mat.shader.code.contains("MODEL_MATRIX")).is_true()   # dünya xz örnekleme
+	assert_object(mat.get_shader_parameter("layers")).is_same(GroundLayerSet.shared().array)
+	var node: MeshInstance3D = view.chunk_node(Vector2i.ZERO).get_child(0)
+	assert_object(node.material_override).is_same(mat)
+
+
+func _view_with_style() -> RoadView:
+	_edge(Vector2(100, 100), Vector2(500, 100), &"arterial", 20.0)
+	return _view()

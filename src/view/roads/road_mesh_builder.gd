@@ -25,6 +25,12 @@ class Sink:
 	var vertices := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var colors := PackedColorArray()
+	## T-062 A4: köşe başına (eksene yanal ofset m, yarım genişlik m); kavşak dolgusunda (0, 0) = kaldırım yok.
+	var uvs := PackedVector2Array()
+	var axis_on := false
+	var axis_a := Vector2.ZERO
+	var axis_n := Vector2.ZERO
+	var half_w := 0.0
 	## true: şerit parçası kavşak kırpmasından çıktı, içbükey olabilir -> Geometry2D yoluyla işlenir.
 	var concave := false
 	var color := Color.WHITE
@@ -75,6 +81,10 @@ static func build(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, key:
 				patch_b = []
 			var count := maxi(1, ceili(a.distance_to(b) / step))
 			var before := sink.vertices.size()
+			sink.axis_on = true
+			sink.axis_a = a
+			sink.axis_n = normal.normalized()
+			sink.half_w = normal.length()
 			for s in count:
 				var start := a.lerp(b, float(s) / count)
 				var end := a.lerp(b, float(s + 1) / count)
@@ -88,6 +98,7 @@ static func build(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, key:
 					pieces = _minus_patch(pieces, patch_b, sink)
 				for piece in pieces:
 					_emit(piece, color, net.world, chunk, sink)
+			sink.axis_on = false
 			if sink.vertices.size() > before:
 				strips += 1
 		for nid: int in bucket["nodes"]:
@@ -100,7 +111,7 @@ static func build(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, key:
 			sink.concave = false
 			_emit(patch[0], style.color_of(dominant), net.world, chunk, sink)
 			junctions += 1
-	return {"vertices": sink.vertices, "normals": sink.normals, "colors": sink.colors,
+	return {"vertices": sink.vertices, "normals": sink.normals, "colors": sink.colors, "uvs": sink.uvs,
 		"strips": strips, "junctions": junctions}
 
 
@@ -395,6 +406,11 @@ static func _append(polygon: PackedVector2Array, sink: Sink) -> void:
 	var vertices := sink.vertices
 	var normals := sink.normals
 	var colors := sink.colors
+	var uvs := sink.uvs
+	var axis_on := sink.axis_on
+	var axis_a := sink.axis_a
+	var axis_n := sink.axis_n
+	var half_w := sink.half_w
 	for i in range(0, indices.size(), 3):
 		var p0 := ring[indices[i]]
 		var p1 := ring[indices[i + 1]]
@@ -414,6 +430,14 @@ static func _append(polygon: PackedVector2Array, sink: Sink) -> void:
 		colors.append(color)
 		colors.append(color)
 		colors.append(color)
+		if axis_on:
+			uvs.append(Vector2((p0 - axis_a).dot(axis_n), half_w))
+			uvs.append(Vector2((p1 - axis_a).dot(axis_n), half_w))
+			uvs.append(Vector2((p2 - axis_a).dot(axis_n), half_w))
+		else:
+			uvs.append(Vector2.ZERO)
+			uvs.append(Vector2.ZERO)
+			uvs.append(Vector2.ZERO)
 
 
 ## Bilineer sorgu yerine görünür terrain üçgeninin barycentrik yüksekliği.

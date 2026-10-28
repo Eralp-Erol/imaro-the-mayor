@@ -6,6 +6,15 @@ extends RefCounted
 
 const DATA_PATH := "res://data/view/terrain_look.json"
 const SHADER_PATH := "res://art/shaders/terrain_land.gdshader"
+## Zemin rolleri: sıra `terrain_land.gdshader` R_* sabitleriyle AYNI (slot_layer[] indeksi).
+## JSON "ground.roles" anahtarları.
+const GROUND_ROLES: Array[StringName] = [
+	&"natural_default", &"natural_green", &"scrub", &"olive", &"rock", &"coast_sand", &"coast_gravel",
+	&"field_a", &"field_b", &"field_edge", &"urban_plaza", &"urban_dirt", &"urban_green", &"urban_industrial",
+	&"urban_sidewalk",
+]
+## Gölgelendirici uniform dizisi boyutu (tile_m[], slot_layer[]).
+const MAX_LAYERS := 16
 
 static var _cache: TerrainLook = null
 
@@ -84,7 +93,8 @@ func make_noise_texture() -> ImageTexture:
 	return ImageTexture.create_from_image(img)
 
 
-func make_material() -> ShaderMaterial:
+## `layers`: onaylı zemin kümesi (null = paylaşılan, `LibraryGate.load_default()`). Ana iş parçacığında çağrılır.
+func make_material(layers: GroundLayerSet = null) -> ShaderMaterial:
 	var d: Dictionary = data["detail"]
 	var p: Dictionary = data["patches"]
 	var c: Dictionary = data["coast"]
@@ -100,54 +110,107 @@ func make_material() -> ShaderMaterial:
 	m.set_shader_parameter("tone_fine", float(d["tone_fine"]))
 	m.set_shader_parameter("tone_mid", float(d["tone_mid"]))
 	m.set_shader_parameter("fine_fade", _vec2(d["fine_fade_m"]))
-	m.set_shader_parameter("dark_color", _color(p["dark_color"]))
 	m.set_shader_parameter("dark_threshold", _vec2(p["dark_threshold"]))
 	m.set_shader_parameter("dark_strength", float(p["dark_strength"]))
-	m.set_shader_parameter("dry_color", _color(p["dry_color"]))
 	m.set_shader_parameter("dry_threshold", _vec2(p["dry_threshold"]))
 	m.set_shader_parameter("dry_strength", float(p["dry_strength"]))
 	m.set_shader_parameter("patch_max_slope", float(p["max_slope_deg"]))
 	m.set_shader_parameter("patch_max_height", float(p["max_height_m"]))
 	m.set_shader_parameter("sea_level", float(c["sea_level_m"]))
-	m.set_shader_parameter("sand_color", _color(c["sand_color"]))
-	m.set_shader_parameter("gravel_color", _color(c["gravel_color"]))
 	m.set_shader_parameter("sand_height", _vec2(c["sand_height_m"]))
 	m.set_shader_parameter("sand_shore", _vec2(c["sand_shore_m"]))
 	m.set_shader_parameter("gravel_height", float(c["gravel_height_m"]))
 	m.set_shader_parameter("coast_max_slope", float(c["max_slope_deg"]))
 	m.set_shader_parameter("coast_strength", float(c["strength"]))
-	m.set_shader_parameter("rock_color", _color(r["color"]))
-	m.set_shader_parameter("rock_color_dark", _color(r["color_dark"]))
 	m.set_shader_parameter("rock_slope", _vec2(r["slope_deg"]))
 	m.set_shader_parameter("rock_strength", float(r["strength"]))
-	m.set_shader_parameter("strata_period", float(r["strata_period_m"]))
-	m.set_shader_parameter("strata_amount", float(r["strata_amount"]))
 	m.set_shader_parameter("haze_color", _color(h["color"]))
 	m.set_shader_parameter("haze_range", Vector2(float(h["start_m"]), float(h["end_m"])))
 	m.set_shader_parameter("haze_amount", float(h["amount"]))
 	_apply_urban_params(m)
+	_apply_ground_params(m, layers if layers != null else GroundLayerSet.shared())
 	return m
 
 
-## Kent zemini renk/eşik uniform'ları (T-051); bölüm yoksa maske zaten uygulanmaz.
+## Rol -> katman çözümü: JSON kimliği kümede (kapıdan geçmiş) değilse yüklenmez; kapıya sorulur (ret sayılır) ve
+## "ground.fallback" katmanı kullanılır. Dönüş: rol sırasıyla katman indeksleri (GROUND_ROLES).
+func resolve_ground_roles(layers: GroundLayerSet) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	var g: Dictionary = data["ground"]
+	var roles: Dictionary = g["roles"]
+	var fallback := str(g.get("fallback", ""))
+	for role in GROUND_ROLES:
+		out.append(layers.resolve(str(roles.get(String(role), "")), fallback))
+	return out
+
+
+## Zemin katmanı uniform'ları (T-062 A4): dizi + tile_m + rol->katman + karışım/uzaklık/alan parametreleri.
+func _apply_ground_params(m: ShaderMaterial, layers: GroundLayerSet) -> void:
+	if not data.has("ground"):
+		return
+	var g: Dictionary = data["ground"]
+	if layers.array != null:
+		m.set_shader_parameter("layers", layers.array)
+	var tiles := PackedFloat32Array()
+	tiles.resize(MAX_LAYERS)
+	for i in mini(layers.count(), MAX_LAYERS):
+		tiles[i] = layers.tile_m[i]
+	m.set_shader_parameter("tile_m", tiles)
+	var slots := PackedFloat32Array()
+	slots.resize(MAX_LAYERS)
+	var resolved := resolve_ground_roles(layers)
+	for i in resolved.size():
+		slots[i] = float(resolved[i])
+	m.set_shader_parameter("slot_layer", slots)
+	var b: Dictionary = g["blend"]
+	m.set_shader_parameter("base_weight", float(b["base_weight"]))
+	m.set_shader_parameter("blend_width", float(b["blend_width"]))
+	m.set_shader_parameter("edge_jitter", float(b["edge_jitter"]))
+	var dist: Dictionary = g["distance"]
+	m.set_shader_parameter("detail_far", float(dist["detail_far_m"]))
+	m.set_shader_parameter("fade_to_mean", _vec2(dist["fade_to_mean_m"]))
+	m.set_shader_parameter("far_base_mix", float(dist["far_base_mix"]))
+	m.set_shader_parameter("far_base_range", _vec2(dist["far_base_range_m"]))
+	m.set_shader_parameter("scale_breaker", float(dist["breaker_scale_m"]))
+	var n: Dictionary = g["natural"]
+	m.set_shader_parameter("scrub_height", _vec2(n["scrub_height_m"]))
+	m.set_shader_parameter("scrub_slope", _vec2(n["scrub_slope_deg"]))
+	m.set_shader_parameter("scrub_weight", float(n["scrub_weight"]))
+	m.set_shader_parameter("green_bias", float(n["green_bias"]))
+	m.set_shader_parameter("green_gain", float(n["green_gain"]))
+	m.set_shader_parameter("grove_threshold", _vec2(n["grove_threshold"]))
+	m.set_shader_parameter("grove_weight", float(n["grove_weight"]))
+	var f: Dictionary = g["fields"]
+	m.set_shader_parameter("field_rot", float(f["rotation_rad"]))
+	m.set_shader_parameter("field_size", _vec2(f["size_m"]))
+	m.set_shader_parameter("field_threshold", _vec2(f["threshold"]))
+	m.set_shader_parameter("field_share_a", float(f["share_plowed"]))
+	m.set_shader_parameter("field_share_b", float(f["share_stubble"]))
+	m.set_shader_parameter("field_edge_m", float(f["edge_m"]))
+
+
+## Kent zemini uniform'ları (T-051 + T-062 A4); bölüm yoksa maske zaten uygulanmaz.
 func _apply_urban_params(m: ShaderMaterial) -> void:
 	if not data.has("urban"):
 		return
 	var u: Dictionary = data["urban"]
-	m.set_shader_parameter("urban_res_a", _color(u["residential"]["color_a"]))
-	m.set_shader_parameter("urban_res_b", _color(u["residential"]["color_b"]))
-	m.set_shader_parameter("urban_ind_a", _color(u["industrial"]["color_a"]))
-	m.set_shader_parameter("urban_ind_b", _color(u["industrial"]["color_b"]))
 	m.set_shader_parameter("urban_strength", float(u["strength"]))
 	m.set_shader_parameter("urban_edge", _vec2(u["edge"]))
 	m.set_shader_parameter("urban_sharp_fade", _vec2(u["sharp_fade_m"]))
 	m.set_shader_parameter("urban_slope", _vec2(u["slope_deg"]))
-	m.set_shader_parameter("urban_tone", float(u["tone"]))
+	if u.has("sidewalk"):
+		m.set_shader_parameter("walk_band", _vec2(u["sidewalk"]["band"]))
+		m.set_shader_parameter("walk_strength", float(u["sidewalk"]["strength"]))
 
 
 ## Maske parametreleri (UrbanGroundMask.build girdisi); bölüm yoksa boş.
 func urban_mask_params() -> Dictionary:
-	return (data["urban"]["mask"] as Dictionary) if data.has("urban") else {}
+	if not data.has("urban"):
+		return {}
+	var params: Dictionary = (data["urban"]["mask"] as Dictionary).duplicate()
+	if data["urban"].has("variants"):
+		params["variants"] = data["urban"]["variants"]
+	return params
 
 
 static func _vec2(a: Array) -> Vector2:

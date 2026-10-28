@@ -3,8 +3,14 @@
 `RoadView.build(network)` yalnız `mode() == road` kenarlarını okur; kapalı yolun fiziksel yüzeyi kalır.
 `layer` taban/delta kaynağıdır, yükseklik katı değildir. Dünya/ağ/sim/kayıt değiştirilmez.
 
-`data/view/road_style.json` geçici sanat verisidir. Sınıf rengi ve genişlik katsayısı buradadır;
-varsayılan katsayı 1, ağın parsel cephesini belirleyen `edge.width` koridorunu korur.
+`data/view/road_style.json` geçici sanat verisidir. Sınıf yüzeyi (onaylı asfalt/çakıl katmanı kimlikleri) ve genişlik
+katsayısı buradadır; varsayılan katsayı 1, ağın parsel cephesini belirleyen `edge.width` koridorunu korur.
+
+**T-062 A4 (yüzey):** yollar `art/shaders/road_surface.gdshader` ShaderMaterial'iyle çizilir; arazi ile AYNI onaylı
+`Texture2DArray`'i (`GroundLayerSet`, `LibraryGate` kimlikleri) dünya-xz UV ile örnekler. Sınıf başına taban/eskimiş
+katman ve eskimiş payı veridedir; seçim kenar kimliği hash'iyle (`ViewHash`, deterministik). Köşe rengi yüzey kodudur
+(R katman indeksi, G parlaklık, B kaldırım bandı m/8); köşe UV'si (eksene yanal ofset, yarım genişlik) kesit kenarında
+`sidewalk_cobble` kaldırımı + koyu bordürü shader'da çizer: ek geometri/draw call yok. Kavşak dolgusunda kaldırım yok.
 Şerit ekseni düğüm konumlarıdır; bina yönü/cephe verisi yeniden yorumlanmaz.
 
 `chunk_m` (veri: `road_style.json`, şimdi 2 km; T-049 perf'te 1 km'den çıkarıldı) başına yakın ve metro meshleri bir kez kurulur. Yakın görünüm ilçe/sokakta gerçek genişliktedir;

@@ -95,11 +95,57 @@ func test_view_applies_mask_to_the_shared_land_material_without_new_nodes() -> v
 	assert_object(mat.get_shader_parameter("urban_tex")).is_not_null()
 
 
-func test_look_data_has_urban_section_with_warm_ground_colors() -> void:
+func test_look_data_has_urban_section_with_variant_weights_and_sidewalk() -> void:
+	# T-062 A4: renkler kalktı (onaylı döşeme katmanları); parsel hash'i seçimi veri ağırlığıyla yapılır.
 	var look := TerrainLook.from_file(TerrainLook.DATA_PATH)
 	var u: Dictionary = look.data["urban"]
-	for key in ["residential", "industrial"]:
-		var c: Array = u[key]["color_a"]
-		assert_float(float(c[0])).is_greater_equal(float(c[2]))  # çim değil: kırmızı >= mavi
-		assert_float(float(c[1])).is_less(float(c[0]) + 0.05)
+	var w: Dictionary = u["variants"]["residential"]
+	assert_float(float(w["plaza"]) + float(w["dirt"]) + float(w["green"])).is_equal_approx(1.0, 0.0001)
+	# yeşil payı bilinçli düşük (ağaç/peyzaj sonraki paket: B/C)
+	assert_float(float(w["green"])).is_less_equal(0.25)
+	var band: Array = u["sidewalk"]["band"]
+	assert_float(float(band[0])).is_less(float(band[1]))
 	assert_int(int(look.urban_mask_params()["max_px"])).is_between(512, 4096)
+	assert_bool(look.urban_mask_params().has("variants")).is_true()
+
+
+func test_variant_choice_is_a_pure_hash_of_the_id_and_follows_the_weights() -> void:
+	var weights := {"plaza": 0.3, "dirt": 0.55, "green": 0.15}
+	var counts := [0, 0, 0]
+	for id in 4000:
+		var a := UrbanGroundMask.variant_of(id, 6201, weights)
+		assert_int(a).is_equal(UrbanGroundMask.variant_of(id, 6201, weights))   # aynı kimlik -> aynı seçim
+		counts[a] += 1
+	# Oranlar ağırlıkları izler (hash düzgün) ve her sonuç ortaya çıkar.
+	assert_float(float(counts[UrbanGroundMask.VARIANT_PLAZA]) / 4000.0).is_equal_approx(0.3, 0.04)
+	assert_float(float(counts[UrbanGroundMask.VARIANT_DIRT]) / 4000.0).is_equal_approx(0.55, 0.04)
+	assert_float(float(counts[UrbanGroundMask.VARIANT_GREEN]) / 4000.0).is_equal_approx(0.15, 0.04)
+	# Tohum seçimi değiştirir (negatif: sabit bir dönüş olamaz).
+	var diff := 0
+	for id in 200:
+		if UrbanGroundMask.variant_of(id, 1, weights) != UrbanGroundMask.variant_of(id, 2, weights):
+			diff += 1
+	assert_int(diff).is_greater(20)
+	# Ağırlık sıfırsa o seçim hiç çıkmaz.
+	for id in 500:
+		assert_int(UrbanGroundMask.variant_of(id, 6201, {"plaza": 0.0, "dirt": 1.0, "green": 0.0})).is_equal(
+				UrbanGroundMask.VARIANT_DIRT)
+
+
+func test_same_parcel_gets_the_same_ground_variant_in_the_mask_and_industrial_gets_none() -> void:
+	var params := PARAMS.duplicate()
+	params["variants"] = {"seed": 6201, "unit": "parcel", "residential": {"plaza": 0.5, "dirt": 0.0, "green": 0.5}}
+	var net := _net_with([[1, 1, 0.0, 0.0], [2, 2, 200.0, 0.0], [3, 3, 400.0, 0.0]])
+	var cols := _cols([[1, 0.0, 0.0, 0], [2, 200.0, 0.0, 0], [3, 400.0, 0.0, BuildingColumns.FLAG_INDUSTRY]])
+	var a := UrbanGroundMask.build(net, cols, params)
+	var b := UrbanGroundMask.build(net, cols, params)
+	assert_array((a["image"] as Image).get_data()).is_equal((b["image"] as Image).get_data())
+	# Her konut parseli tam bir seçim taşır: ya B (plaza) ya A (yeşil); sanayide ikisi de 0 (gravel).
+	for x in [0.0, 200.0]:
+		var px := _px(a, x, 0.0)
+		assert_float(px.b + px.a).is_equal_approx(1.0, 0.001)
+	var want1 := UrbanGroundMask.variant_of(1, 6201, params["variants"]["residential"])
+	assert_float(_px(a, 0.0, 0.0).b).is_equal(1.0 if want1 == UrbanGroundMask.VARIANT_PLAZA else 0.0)
+	var ind := _px(a, 400.0, 0.0)
+	assert_float(ind.g).is_greater(0.9)
+	assert_float(ind.b + ind.a).is_equal(0.0)

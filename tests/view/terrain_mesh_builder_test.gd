@@ -122,6 +122,25 @@ func test_steep_triangles_keep_the_facet_normal_and_flat_ones_are_smooth() -> vo
 	assert_int(facet_tris).is_greater(0)
 
 
+func test_land_vertices_carry_field_weight_in_uv2_y_from_the_palette() -> void:
+	# T-062 A4: UV2.y = tarla bölgesi ağırlığı (paletin aynı kuralı); gölgelendirici tarla katmanlarını buna bağlar.
+	var data := TerrainMeshBuilder.build_land(_world, _palette, 1, 1, CHUNK_CELLS, 1, true)
+	var verts: PackedVector3Array = data["vertices"]
+	var uv2s: PackedVector2Array = data["uv2s"]
+	var colors: PackedColorArray = data["colors"]
+	var positive := 0
+	for k in verts.size():
+		if colors[k].a < 0.5:
+			continue
+		assert_float(uv2s[k].y).is_between(0.0, 1.0)
+		if uv2s[k].y > 0.0:
+			positive += 1
+	assert_int(positive).is_greater(0)   # düz/alçak parçalar var: tarla ağırlığı hep sıfır değil
+	# Palet kuralı: dik yamaçta sıfır (negatif durum), düz alçakta pozitif.
+	assert_float(_palette.field_weight(10.0, 40.0, 0)).is_equal(0.0)
+	assert_float(_palette.field_weight(5.0, 0.5, 0)).is_greater(0.0)
+
+
 func test_land_vertices_carry_world_uvs_and_detail_mask() -> void:
 	var data := TerrainMeshBuilder.build_land(_world, _palette, 1, 1, CHUNK_CELLS, 1, true)
 	var verts: PackedVector3Array = data["vertices"]

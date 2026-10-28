@@ -93,6 +93,7 @@ func build(world: WorldData) -> void:
 		"land_triangles": land_tris, "water_triangles": water_tris, "land_vertices": land_verts,
 		"palette_ms": palette_ms, "data_ms": snappedf((t1 - t0) / 1000.0, 0.1), "mesh_ms": snappedf((t2 - t1) / 1000.0, 0.1),
 		"threaded": use_threads, "far_nodes": _far_nodes.size(), "far_ms": far_ms,
+		"ground": _ground_stats(),
 	}
 
 
@@ -114,6 +115,19 @@ func apply_urban_ground(net: WorldNetwork, cols: BuildingColumns) -> Dictionary:
 	_material.set_shader_parameter("urban_rect", Vector4(origin.x, origin.y, size.x, size.y))
 	stats["urban_mask"] = {"px": image.get_size(), "cell_m": mask["cell_m"], "parcels": mask["parcels"], "ms": mask["ms"]}
 	return stats["urban_mask"]
+
+
+## Ortak arazi malzemesi (testler/ölçüm).
+func material() -> ShaderMaterial:
+	return _material
+
+
+## T-062 A4: zemin katmanı kümesi ölçümleri (onaylı katman sayısı, boyut, kapı ret sayacı, kurulum hataları).
+func _ground_stats() -> Dictionary:
+	var layers := GroundLayerSet.shared()
+	return {"layers": layers.count(), "size_px": layers.size_px, "mips": layers.mip_levels,
+		"errors": layers.errors.size(), "unapproved_ids": layers.gate.unapproved_ids.size(),
+		"array_ok": layers.array != null}
 
 
 func clear() -> void:
