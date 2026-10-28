@@ -169,6 +169,10 @@ func _build_buildings(_control: Dictionary, world_seed: int) -> Dictionary:
 	var loaded := SettlementTable.load_game_table()
 	var game_table: Dictionary = loaded["table"]
 	var gate: LibraryGate = loaded["gate"]
+	if game_table.is_empty():
+		# Fail-closed (LibraryGate kapalı ya da tablo okunamadı): yapı yok, ama oyun çökmez (SettlementTable hatayı logladı).
+		push_error("playable: oyun bina tablosu yok/kapı kapalı; yapılar kurulmadı")
+		return {"error": "game_table_unavailable"}
 	_settlement = T0Settlement.generate_detailed(_world, _net, game_table, world_seed, rules)
 	var cols: BuildingColumns = _settlement.columns
 	_t0_columns = cols

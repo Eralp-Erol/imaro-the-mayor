@@ -96,6 +96,7 @@
 - **Kabul:**
   1. `playable.tscn --demo` içinde çizilen her modül/katman kimliği `LibraryGate`'ten `approved`. Test ve çalışma zamanı sayacında `unapproved_ids = 0`.
   2. Rejected kit yolu/kimliği `src/`, `scenes/game/`, `data/world/`, `data/view/`, `data/library/game_*.json`'da yok. İzinli liste: kit_lab ve tools.
+     - Açıklama (T-062 QA B-3): `data/library/game_*.json` ölçütü YÜKLENEN kayıtlar (`modules[]`/`layers[]`/`plants[]`/`items[]`) içindir. `game_buildings.json` `unapproved.entries` bölümü 42 reddedilmiş `bld_*` kimliğini denetim listesi olarak taşır (yükleme yok; `catalog.json` zaten hepsini listeler), bu yüzden `no_rejected_reference_scan_test` `data/library/` dizinini atlar; sızmama `test_unapproved_audit_ids_never_leak_into_loaded_records` ile zorlanır.
   3. Sim deterministik: iki koşu aynı `state_hash`; save/load smoke OK.
   4. Windowed yakalamalar (street/district/metro + `--m2-advance` sim yapısı) ve art-director PASS.
   5. Perf §6'ya göre ölçülmüş.

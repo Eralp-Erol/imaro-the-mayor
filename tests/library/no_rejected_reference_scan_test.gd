@@ -13,7 +13,18 @@ extends GdUnitTestSuite
 ## görevi) kadar listede kalırlar.
 
 const ROOTS := ["res://src", "res://scenes", "res://data", "res://assets/kit"]
+## `data/library/` TARANMAZ, gerekçe: ADR-0006 §3.4 kabul 2 "`data/library/game_*.json`'da yok" ölçütü
+## `modules[]`/`layers[]` (yani YÜKLENEN kayıtlar) için geçerlidir. `game_buildings.json` `unapproved.entries`
+## bölümü 42 reddedilmiş `bld_*` kimliğini DENETİM listesi olarak taşır (A0 derleme kapısının dışladıkları;
+## `LibraryGate.table_excluded_ids()` yalnız sayar, hiçbir asset yüklenmez) ve `catalog.json` zaten tüm kimlikleri
+## listeler. Bu yüzden dizin bu taramadan atlanır; yerine
+## `test_unapproved_audit_ids_never_leak_into_loaded_records` bölümün kayıt dizilerine SIZMADIĞINI zorlar.
 const SKIP_DIRS := ["res://data/library"]
+## Oyun tablosu dosyaları -> yüklenen kayıt dizisi anahtarı (LibraryGate.TABLE_RECORD_KEYS ile aynı).
+const GAME_TABLE_RECORD_KEYS := {
+	"res://data/library/game_buildings.json": "modules", "res://data/library/game_ground.json": "layers",
+	"res://data/library/game_plants.json": "plants", "res://data/library/game_furniture.json": "items",
+}
 const TEXT_EXTENSIONS := ["gd", "json", "tscn", "tres", "gdshader"]
 ## Reddedilmiş kit modüllerinin GLB ağacı (kit_manifest.json burada): yol referansı da bağımlılıktır.
 const KIT_PATH_TOKEN := "assets/models/buildings/"
@@ -138,6 +149,41 @@ func test_production_roots_have_no_known_remaining_entries() -> void:
 			if String(path).begins_with(prefix):
 				found.append("%s -> %s" % [path, str(hits[path])])
 	assert_array(found).override_failure_message("üretim kökünde rejected kit referansı: %s" % str(found)).is_empty()
+
+
+## ADR-0006 §3.4 kabul 2 (data/library/game_*.json): `unapproved.entries` kimlikleri hiçbir zaman yüklenen kayıtlara
+## (modules/layers/plants/items) girmez ve katalogda approved değildir; yüklenen her kayıt katalogda approved'dır.
+func test_unapproved_audit_ids_never_leak_into_loaded_records() -> void:
+	var approved: Dictionary = {}
+	var non_approved: Dictionary = {}
+	var catalog: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://data/library/catalog.json"))
+	for entry in (catalog as Dictionary)["entries"] as Array:
+		var d := entry as Dictionary
+		if str(d["approval"]) == "approved":
+			approved[str(d["id"])] = true
+		else:
+			non_approved[str(d["id"])] = true
+	var audit_total := 0
+	var leaks: Array[String] = []
+	for path in GAME_TABLE_RECORD_KEYS:
+		var table: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+		assert_bool(table is Dictionary).override_failure_message("okunamadı: %s" % path).is_true()
+		var records: Array = (table as Dictionary)[GAME_TABLE_RECORD_KEYS[path]]
+		var loaded_ids: Dictionary = {}
+		for rec in records:
+			var id := str((rec as Dictionary)["id"])
+			loaded_ids[id] = true
+			if not approved.has(id) or non_approved.has(id):
+				leaks.append("%s: yüklenen kayıt katalogda approved değil: %s" % [path, id])
+		var audit: Array = ((table as Dictionary).get("unapproved", {}) as Dictionary).get("entries", [])
+		audit_total += audit.size()
+		for entry in audit:
+			var audit_id := str((entry as Dictionary)["id"])
+			if loaded_ids.has(audit_id):
+				leaks.append("%s: 'unapproved' kimliği yüklenen kayıtlarda: %s" % [path, audit_id])
+	assert_array(leaks).override_failure_message("unapproved sızıntısı: %s" % str(leaks)).is_empty()
+	# Denetim bölümü gerçekten dolu (aksi halde bu test boşa geçer): bina tablosundaki 42 reddedilmiş kimlik.
+	assert_int(audit_total).is_greater_equal(42)
 
 
 func test_scanner_detects_a_planted_rejected_reference_and_ignores_lookalikes() -> void:

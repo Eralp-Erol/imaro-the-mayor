@@ -132,7 +132,7 @@ func _ready() -> void:
 	_apply_camera_overrides(args)
 	if not args.has("no-buildings"):
 		building_stats = _build_buildings(control, world_seed)
-		if not args.has("no-warmup"):
+		if not args.has("no-warmup") and _buildings != null:
 			_buildings.warm_up(_camera.camera)
 	if args.has("sweep"):
 		var street_spec := str(args["sweep"]) if str(args["sweep"]) != "true" else "street:port"

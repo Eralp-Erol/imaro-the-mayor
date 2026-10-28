@@ -8,8 +8,10 @@ extends RefCounted
 ## Saf veri katmanı: RefCounted, node/autoload/zaman/RNG yok, GLB/PNG YÜKLEMEZ (yalnız yol verir; yüklemek çağıranın işi
 ## ve yalnız kapıdan dönen yolla olur). Sıra deterministiktir: tablo sırası (buildings, ground), tablo içi dosya sırası.
 ## Katalog (`catalog.json`) ikinci kilittir: tablodaki kimlik katalogda `approved` değilse kabul edilmez ve ret nedeni
-## (`rejected`/`proposed`/`unknown_id`) katalogdan okunur. Yol verilen katalog okunamıyorsa kapı KAPALI kalır
-## (fail-closed).
+## (`rejected`/`proposed`/`unknown_id`) katalogdan okunur. Fail-closed: `load_game_tables` katalog yolu verilmişse ve
+## katalog okunamıyor/bozuksa YA DA bir tablonun `source_catalog_sha256` değeri kataloğun gerçek hash'iyle uyuşmuyorsa
+## kapı KAPANIR (`is_closed()`): hiçbir kimlik onaylı sayılmaz, `request`/`request_paths` hep reddeder, hata
+## `load_errors`a yazılır ve `push_error` ile görünür kılınır. Çağıranlar `is_closed()` ile kapalı durumu görür.
 ## Asset hash'i çalışma zamanında denetlenmez (dışa aktarımda kaynak yok): `verify full` içindeki doğrulayıcı denetler.
 
 const CATALOG_PATH := "res://data/library/catalog.json"
@@ -28,6 +30,7 @@ const REASON_PROPOSED := "proposed"
 const REASON_UNKNOWN := "unknown_id"
 const REASON_NOT_IN_GAME_SET := "not_in_game_set"
 const REASON_EMPTY_ID := "empty_id"
+const REASON_GATE_CLOSED := "gate_closed"
 
 ## false ise ret/yükleme hatası `push_error` yazmaz (testler; kayıt yine tutulur).
 var report_errors: bool = true
@@ -42,6 +45,10 @@ var granted_requests: int = 0
 var denial_log: Array[Dictionary] = []
 
 var _catalog_loaded: bool = false
+## Kataloğun içerik hash'i (`load_catalog_text` metninden); tablodaki `source_catalog_sha256` ile karşılaştırılır.
+var _catalog_sha256: String = ""
+## Fail-closed: katalog okunamadı ya da hash uyuşmadı; hiçbir kimlik kabul edilmez.
+var _closed: bool = false
 ## Katalog kimliği -> approval ("approved"/"rejected"/"proposed"/...).
 var _catalog_status: Dictionary = {}
 ## Onaylı kimlik -> kayıt (tablo girdisi), ve ekleme sırası.
@@ -69,14 +76,24 @@ static func load_plants() -> LibraryGate:
 
 
 ## Katalog (boş yol = çapraz denetim yok) sonra tablolar. Hepsi hatasızsa true.
+## Katalog yolu verilmiş ve katalog yüklenemezse tablolar HİÇ kabul edilmez: kapı kapanır (fail-closed).
 func load_game_tables(table_paths: PackedStringArray, catalog_path: String = "") -> bool:
 	var ok := true
 	if not catalog_path.is_empty():
 		var catalog_text := _read_text(catalog_path)
-		ok = load_catalog_text(catalog_text, catalog_path) and ok
+		if not load_catalog_text(catalog_text, catalog_path):
+			_close("katalog yüklenemedi (%s): kapı KAPALI, hiçbir kimlik onaylanmadı" % catalog_path)
+			return false
 	for path in table_paths:
 		ok = add_table_text(_read_text(path), path) and ok
+		if _closed:
+			return false
 	return ok
+
+
+## Kapı kapalı mı? Kapalıyken hiçbir kimlik onaylı sayılmaz (katalog yok/bozuk ya da hash uyuşmazlığı).
+func is_closed() -> bool:
+	return _closed
 
 
 func load_catalog_text(text: String, source: String) -> bool:
@@ -94,13 +111,22 @@ func load_catalog_text(text: String, source: String) -> bool:
 		status[str(d["id"])] = str(d.get("approval", ""))
 	_catalog_status = status
 	_catalog_loaded = true
+	_catalog_sha256 = text.sha256_text()
 	return true
 
 
 ## Bir oyun tablosunu kabul eder. Herhangi bir şema/çakışma hatasında tablonun HİÇBİR kimliği kabul edilmez.
+## Katalog yüklüyse ve tablo `source_catalog_sha256` taşıyorsa hash kataloğunkiyle eşit olmalı; değilse tablo
+## reddedilir VE kapı kapanır (önceden kabul edilmiş kimlikler de düşer).
 func add_table_text(text: String, source: String) -> bool:
+	if _closed:
+		return _fail("%s: kapı kapalı, tablo kabul edilmedi" % source)
 	var data: Variant = _parse(text, source)
 	if not (data is Dictionary):
+		return false
+	var declared: Variant = (data as Dictionary).get("source_catalog_sha256")
+	if _catalog_loaded and declared != null and str(declared) != _catalog_sha256:
+		_close("%s: source_catalog_sha256 kataloğun hash'iyle uyuşmuyor (tablo eski/katalog değişmiş): kapı KAPALI" % source)
 		return false
 	var staged := _stage_table(data as Dictionary, source)
 	if staged.has("error"):
@@ -121,12 +147,12 @@ func add_table_text(text: String, source: String) -> bool:
 
 ## Saf sorgu: sayaç/iz YOK.
 func is_approved(id: String) -> bool:
-	return _records.has(id)
+	return not _closed and _records.has(id)
 
 
 ## Kimlik kapıdan geçerse tablo kaydının kopyasını, geçmezse BOŞ sözlük döndürür (ret sayılır ve izlenir).
 func request(id: String) -> Dictionary:
-	if _records.has(id):
+	if not _closed and _records.has(id):
 		granted_requests += 1
 		return (_records[id] as Dictionary).duplicate(true)
 	_deny(id, "request")
@@ -138,7 +164,7 @@ func request(id: String) -> Dictionary:
 ## Yalnız yol verir, hiçbir şey yüklemez.
 func request_paths(id: String) -> PackedStringArray:
 	var paths := PackedStringArray()
-	if not _records.has(id):
+	if _closed or not _records.has(id):
 		_deny(id, "request_paths")
 		return paths
 	granted_requests += 1
@@ -210,6 +236,7 @@ func stats() -> Dictionary:
 		"load_errors": load_errors.size(),
 		"tables": _tables_loaded.duplicate(),
 		"catalog_cross_check": _catalog_loaded,
+		"closed": _closed,
 	}
 
 
@@ -218,6 +245,8 @@ func stats() -> Dictionary:
 func deny_reason(id: String) -> String:
 	if id.is_empty():
 		return REASON_EMPTY_ID
+	if _closed:
+		return REASON_GATE_CLOSED
 	if _catalog_loaded:
 		return _catalog_reason(id)
 	return REASON_NOT_IN_GAME_SET
@@ -245,6 +274,18 @@ func _deny(id: String, via: String) -> void:
 		unapproved_ids.append(id)
 	if report_errors:
 		push_error("LibraryGate: onaysız kimlik '%s' reddedildi (%s, %s)" % [id, reason, via])
+
+
+## Kapıyı kapatır: onaylı kayıtlar silinir, hata kaydedilir ve görünür loglanır.
+func _close(message: String) -> void:
+	_closed = true
+	_records.clear()
+	_order = PackedStringArray()
+	_table_of.clear()
+	_tables_loaded = PackedStringArray()
+	_table_excluded.clear()
+	_table_excluded_count = 0
+	_fail(message)
 
 
 func _fail(message: String) -> bool:

@@ -9,13 +9,17 @@ const PATH := "res://data/library/game_buildings.json"
 
 
 ## {"table": Dictionary (modules[] yalnız kapıdan geçenler; diğer alanlar korunur), "gate": LibraryGate}.
-## `table` boş sözlükse dosya okunamadı. Kapıdan geçmeyen kimlikler `gate.unapproved_ids`ta kalır.
+## `table` boş sözlükse dosya okunamadı ya da kapı KAPALI (katalog yok/bozuk, hash uyuşmuyor: fail-closed; hata
+## loglanır, `gate.is_closed()` true). Kapıdan geçmeyen kimlikler `gate.unapproved_ids`ta kalır.
 static func load_game_table(path: String = PATH, gate: LibraryGate = null) -> Dictionary:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not (parsed is Dictionary):
 		push_error("SettlementTable: bina tablosu okunamadı: %s" % path)
 		return {"table": {}, "gate": gate}
 	var the_gate := gate if gate != null else LibraryGate.load_default()
+	if the_gate.is_closed():
+		push_error("SettlementTable: LibraryGate KAPALI (%s); bina tablosu boş döndü" % "; ".join(the_gate.load_errors))
+		return {"table": {}, "gate": the_gate}
 	return {"table": filter(parsed as Dictionary, the_gate), "gate": the_gate}
 
 
