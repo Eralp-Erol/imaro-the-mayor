@@ -1,5 +1,6 @@
 # ADR-0008 · Görünür üçgen ve kare bütçesi: yoğun çekirdek kök nedeni ve düzeltme sırası
 
+- **Güncelleme (D-007, kullanıcı kararı, 2026-10-28):** masaüstü kabul eşiği ort <= 14 ms ve tiksiz p95 <= 20 ms olarak yumuşatıldı; bu ADR'deki katı ölçütler iPad / hedef cihaz hedefi olarak kalır; T-071/T-072/T-074 askıda (T-070 ölçümü: `production/log/2026-10-28-T-070-ucgen-dagilimi.md`).
 - Durum: önerildi · Tarih: 2026-10-28 · Karar veren: technical-director. Görseli gözle değiştiren tek seçim §Kullanıcıya bölümündedir (Q-020 önerisi). Bu ADR o seçimi yapmaz. Kanon, D-006 ve ADR-0007 değişmez.
 - Karşıladığı gereksinimler: TEK-01, TEK-03, TEK-05, VIS-01, VIS-03, VIS-04, PLT-05, PLT-06
 - Dayanak: ADR-0001 (render kare süresi sim durdurulmuşken ölçülür; ort ≤ 8 ms, p95 ≤ 16,6 ms), ADR-0004, ADR-0006 §2.5/§3.1/§3.4/§4/§12, ADR-0007, QA raporu `production/log/2026-10-28-T-062-QA-raporu.md` (bulgu B-1), ham ölçüm `artifacts/library/t062/qa/perf/*.json`.
