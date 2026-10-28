@@ -80,6 +80,23 @@ static func interval_of(poly: PackedVector2Array, v: float) -> Vector2:
 	return Vector2(lo, hi)
 
 
+## İlk `count` çokgenin v derinliğindeki birleşik (bitişik) u aralığı; ara kopukluk `touch_m`i aşarsa zincir orada biter
+## (Vector2(INF, -INF)). Çok parselli yapı zincirleri (T0Settlement) kullanır.
+static func union_interval(polys: Array[PackedVector2Array], count: int, v: float, touch_m: float) -> Vector2:
+	var first := interval_of(polys[0], v)
+	if first.x > first.y:
+		return first
+	var lo := first.x
+	var hi := first.y
+	for j in range(1, count):
+		var iv := interval_of(polys[j], v)
+		if iv.x > iv.y or iv.x > hi + touch_m:
+			return Vector2(INF, -INF)
+		lo = minf(lo, iv.x)
+		hi = maxf(hi, iv.y)
+	return Vector2(lo, hi)
+
+
 ## Yapının yönü (rad): modülün +Z yüzü sokağa (içe bakan normalin tersine) bakar.
 func yaw() -> float:
 	return atan2(-n.x, -n.y)

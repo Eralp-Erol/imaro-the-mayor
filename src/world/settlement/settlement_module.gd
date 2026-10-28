@@ -28,6 +28,9 @@ var civic: bool = false
 var heritage_eligible: bool = false
 var wide_allowed: bool = false
 var wide_only: bool = false
+## Çok parselli yerleşimde yaw + 90 derece dönerek de sığabilir (`family_roles.rotate_fit`; ayak izi lot derinliğinden
+## uzun, sokak boyunca yatay sığan sanayi kütlesi; T-062 A2-düzeltme).
+var rotate_fit: bool = false
 ## Kat sayısı katalogda bilinmiyor ve `family_roles.floors_unknown` ÇALIŞMA DEĞERİ kullanıldı mı.
 var floors_working_value: bool = false
 var era: int = BuildingColumns.ERA_NONE

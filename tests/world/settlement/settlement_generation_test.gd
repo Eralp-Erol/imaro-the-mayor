@@ -213,11 +213,10 @@ func test_every_working_region_has_a_real_centre_housing_and_workplaces() -> voi
 		assert_int(s["buildings"]).override_failure_message("%s yapı sayısı" % code).is_greater(400)
 		assert_int(s["housing"]).override_failure_message("%s konut" % code).is_greater(200)
 		assert_int(s["shops"]).override_failure_message("%s zemin kat dükkân (çarşı/merkez)" % code).is_greater(15)
-		# T-062 A2: ind_hero ayak izi 22 x 39,5 m; çekirdek/kompakt lot derinliği 34-38 m -> D1/D6 (0) ve D5 (2)
-		# işyeri yok
-		# (kit: 115/135/21). Karma ekonomi WLD-04 boşluğu: rapora yazıldı; yalnız sığdığı bölgeler sınanır.
-		if code in [&"D2", &"D3", &"D4"]:
-			assert_int(s["workplaces"]).override_failure_message("%s işyeri (atölye/depo)" % code).is_greater(8)
+		# T-062 A2-düzeltme: ind_hero 22 x 39,5 m çekirdek/kompakt lot derinliğine (<= 38 m) dik sığmıyordu (A2: D1/D6/D5
+		# işyeri 0/0/2; kit: 115/135/21); `rotate_fit` ile uzun kenar sokağa paralel yerleşir (ölçülen 103/134/17).
+		# Her bölge > 8; D1/D6/D5 için kit düzeyinin en az yarısı settlement_industry_fit_test.gd'de.
+		assert_int(s["workplaces"]).override_failure_message("%s işyeri (atölye/depo)" % code).is_greater(8)
 		assert_int(s["civic"]).override_failure_message("%s sivil/kamu yapısı" % code).is_greater(0)
 	assert_object(rules).is_not_null()
 

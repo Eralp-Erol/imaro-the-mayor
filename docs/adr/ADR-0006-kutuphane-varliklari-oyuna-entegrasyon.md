@@ -201,6 +201,7 @@
 - **Kararlar uygulandı:** (1) landmark yok: `tower.module=""`, `stats["tower"]="none-approved"`, meydan ayrılmaz; (2) hero tek boy: `SimBuildingPlacer` kat kademesi bulamaz, nihai modül inşaat başlayınca görünür; (3) dükkân rolü yalnız `hero_com_bazaar` (`family_roles.ground_shop`); (4) yeni aile yok; (5) `hero_ind_hero` kat=1 ÇALIŞMA DEĞERİ (`family_roles.floors_unknown`; `SettlementModule.floors_working_value`).
 - **Palet:** hero modülde satır yok; wall/roof/accent=0, renk seçimi ve RNG tüketimi atlanır. Kiremit bütçesi/duvar çeşitliliği/palet tabanlı çatı payı hero'da etkisizdir (veri korunur).
 - **Ölçülen etki (varsayılan test tohumu, tam Ismeral):** yapı sayısı 49.967 -> 32.264, topoloji (doluluk) hash'i değişmedi; ayrıntı T-062 görev dosyasında.
+- **A2-düzeltme (2026-10-28):** `hero_ind_hero` (22 x 39,5 m) çekirdek lot derinliğine dik sığmadığı için D1/D6/D5 iş yeri çöktü (0/0/2). `family_roles.rotate_fit` (ÇM, veri) ile çok parselli yerleşimde yaw + 90 derece; ölçüm ve sapmalar T-062 görev dosyasında.
 
 ## 11. A4 teslim notu (godot-engineer, 2026-10-28) — zemin: uygulanan tasarım
 

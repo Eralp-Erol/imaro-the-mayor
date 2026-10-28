@@ -131,6 +131,7 @@ func _build_modules(manifest: Dictionary) -> void:
 			m.heritage_eligible = bool(role.get("heritage_eligible", false))
 			m.wide_allowed = bool(role.get("wide", false))
 			m.wide_only = bool(role.get("wide_only", false))
+			m.rotate_fit = bool(role.get("rotate_fit", false))
 			m.era = SettlementModule.era_code(str(entry.get("era", "")))
 			var pal: Dictionary = entry.get("palette", {})
 			m.wall_rows = _rows_of(pal.get("wall_rows", []))

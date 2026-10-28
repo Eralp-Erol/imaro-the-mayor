@@ -132,7 +132,8 @@ func _run(world: WorldData, net: WorldNetwork, kit_manifest: Dictionary, settle_
 	_occ = (control.get("occupancy", {}) as Dictionary)
 	_occ_seed = NetworkRules.stream_seed(int(net.rules.control.get("layout_seed", 0)), "occupancy")
 	_stats = {"parcels": 0, "zoned": 0, "lottery_built": 0, "units": 0, "dropped_water": 0, "dropped_slope": 0,
-			"dropped_fit": 0, "dropped_plaza": 0, "wide": 0, "consumed": 0, "farms": 0, "tower": _rules.tower_state()}
+			"dropped_fit": 0, "dropped_plaza": 0, "wide": 0, "wide_rotated": 0, "consumed": 0, "farms": 0,
+			"tower": _rules.tower_state()}
 	for fp in net.rules.footprints:
 		_footprints[String(fp.id)] = fp
 	var ids := PackedInt32Array(net.parcels.keys())
@@ -825,35 +826,49 @@ func _place_wide(parcels: PackedInt32Array, k: int, lot0: SettlementLot, zone: S
 		rng: RandomNumberGenerator, hist: _Hist) -> bool:
 	if zone.wide_modules.is_empty():
 		return false
-	var margin := _margin
-	var parapet := _parapet
 	var order := _weighted_order(zone.wide_weights, rng)
 	var v0 := rng.randf_range(zone.setback_min, zone.setback_max)
 	for oi in mini(order.size(), WIDE_TRIES):
 		var m := zone.wide_modules[order[oi]]
-		var v1 := v0 + m.d
-		var probes := PackedFloat32Array([v0 + FRONT_PROBE_M, (v0 + v1) * 0.5, v1])
-		var chain := _civic_chain(parcels, k, lot0, probes, m.w + 2.0 * margin)
-		if chain.is_empty():
-			continue
-		var lo: float = chain["lo"]
-		var hi: float = chain["hi"]
-		var u_center := (lo + hi) * 0.5
-		var center := lot0.to_world(u_center, v0 + m.d * 0.5)
-		if _tower_active and center.distance_to(_tower_pos) <= _frame_radius + FRAME_RADIUS_PAD_M \
-				and m.top_m(parapet) > _frame_cap_top:
-			continue
-		var wall := _pick_wall(m, hist.mods, hist.walls, _cell_of(center), rng, zone)
-		var host := _civic_host(parcels, k, int(chain["count"]), lot0, u_center, probes[1])
-		if _finish_unit(host, lot0.yaw(), center, zone, m, wall, rng, hist):
-			for j in range(k, k + int(chain["count"])):
-				_skip[parcels[j]] = true
-				if parcels[j] != host:
-					_res.consumed[parcels[j]] = true
-					_stats["consumed"] += 1
-			_stats["wide"] += 1
+		if _try_wide(parcels, k, lot0, zone, m, v0, false, rng, hist):
+			return true
+		# T-062 A2-düzeltme: lot derinliğine sığmayan sanayi hero'su (`rotate_fit`) yaw + 90 derece ile sığar (RNG yok).
+		if m.rotate_fit and _try_wide(parcels, k, lot0, zone, m, v0, true, rng, hist):
 			return true
 	return false
+
+
+## Geniş yapıyı bir yönde dener; `rotated`: yaw + 90 derece (sokak ekseninde `m.d`, derinlikte `m.w`). Zinciri tüketir.
+func _try_wide(parcels: PackedInt32Array, k: int, lot0: SettlementLot, zone: SettlementZone, m: SettlementModule,
+		v0: float, rotated: bool, rng: RandomNumberGenerator, hist: _Hist) -> bool:
+	var margin := _margin
+	var along := m.d if rotated else m.w
+	var depth := m.w if rotated else m.d
+	var v1 := v0 + depth
+	var probes := PackedFloat32Array([v0 + FRONT_PROBE_M, (v0 + v1) * 0.5, v1])
+	var chain := _civic_chain(parcels, k, lot0, probes, along + 2.0 * margin)
+	if chain.is_empty():
+		return false
+	var lo: float = chain["lo"]
+	var hi: float = chain["hi"]
+	var u_center := (lo + hi) * 0.5
+	var center := lot0.to_world(u_center, v0 + depth * 0.5)
+	if _tower_active and center.distance_to(_tower_pos) <= _frame_radius + FRAME_RADIUS_PAD_M \
+			and m.top_m(_parapet) > _frame_cap_top:
+		return false
+	var wall := _pick_wall(m, hist.mods, hist.walls, _cell_of(center), rng, zone)
+	var host := _civic_host(parcels, k, int(chain["count"]), lot0, u_center, probes[1])
+	var yaw := lot0.yaw() + (PI * 0.5 if rotated else 0.0)
+	if not _finish_unit(host, yaw, center, zone, m, wall, rng, hist):
+		return false
+	for j in range(k, k + int(chain["count"])):
+		_skip[parcels[j]] = true
+		if parcels[j] != host:
+			_res.consumed[parcels[j]] = true
+			_stats["consumed"] += 1
+	_stats["wide"] += 1
+	_stats["wide_rotated"] += 1 if rotated else 0
+	return true
 
 
 ## Sıralı komşu parseller zincirinin üç derinlik probunda kesişen u aralığı; yeterli genişliğe ulaşırsa
@@ -871,7 +886,7 @@ func _civic_chain(parcels: PackedInt32Array, k: int, lot0: SettlementLot, probes
 		var hi := INF
 		var ok := true
 		for v in probes:
-			var iv := _union_interval(polys, count, v)
+			var iv := SettlementLot.union_interval(polys, count, v, CIVIC_TOUCH_M)
 			if iv.x > iv.y:
 				ok = false
 				break
@@ -882,22 +897,6 @@ func _civic_chain(parcels: PackedInt32Array, k: int, lot0: SettlementLot, probes
 		if hi - lo >= need_w:
 			return {"lo": lo + margin, "hi": hi - margin, "count": count}
 	return {}
-
-
-## İlk `count` parselin v derinliğindeki birleşik (bitişik) u aralığı; ara kopukluk varsa zincir orada biter.
-static func _union_interval(polys: Array[PackedVector2Array], count: int, v: float) -> Vector2:
-	var first := SettlementLot.interval_of(polys[0], v)
-	if first.x > first.y:
-		return first
-	var lo := first.x
-	var hi := first.y
-	for j in range(1, count):
-		var iv := SettlementLot.interval_of(polys[j], v)
-		if iv.x > iv.y or iv.x > hi + CIVIC_TOUCH_M:
-			return Vector2(INF, -INF)
-		lo = minf(lo, iv.x)
-		hi = maxf(hi, iv.y)
-	return Vector2(lo, hi)
 
 
 ## Yapının merkezini (u) ortadaki derinlikte kapsayan zincir parseli; yoksa ilk parsel.

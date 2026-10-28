@@ -133,7 +133,8 @@ static func check_port_west_of_d4(res: SettlementResult) -> PackedStringArray:
 	return out
 
 
-## Cephe yönü: modülün +Z yüzü parselin cephe yoluna bakar; uzun ekseni cephe doğrultusuna <= 25 derece paralel.
+## Cephe yönü: modülün +Z yüzü parselin cephe yoluna bakar; genişlik ekseni cephe doğrultusuna <= 25 derece paralel
+## (`rotate_fit` modül: ya da yaw+90 derece, uzun kenar sokağa paralel).
 static func check_orientation(res: SettlementResult) -> PackedStringArray:
 	var out := PackedStringArray()
 	var net := res.net
@@ -153,9 +154,16 @@ static func check_orientation(res: SettlementResult) -> PackedStringArray:
 		var ahead := NetworkGeometry.distance_point_segment(center + face * (m.d * 0.5 + 2.0), a, b)
 		var behind := NetworkGeometry.distance_point_segment(center - face * (m.d * 0.5 + 2.0), a, b)
 		var side := Vector2(cos(c.yaw[i]), -sin(c.yaw[i]))
-		var cos_angle := absf(float(side.dot((b - a).normalized())))
-		if ahead >= behind or cos_angle < cos(deg_to_rad(ORIENT_MAX_DEG)):
-			_cap(out, "yapı %d: cephe yönü yola göre yanlış" % i)
+		var road_dir := (b - a).normalized()
+		var cos_angle := absf(float(side.dot(road_dir)))
+		var min_cos := cos(deg_to_rad(ORIENT_MAX_DEG))
+		if ahead < behind and cos_angle >= min_cos:
+			continue
+		# T-062 A2-düzeltme: `rotate_fit` modül (sanayi hero) yaw+90 derece döndürülmüş olabilir: uzun kenar (yerel Z)
+		# sokağa paralel, cephe yüzü sokak boyunca. Yalnız bu rol için ve yalnız dik eksen sapması <= 25 derece.
+		if m.rotate_fit and absf(float(face.dot(road_dir))) >= min_cos:
+			continue
+		_cap(out, "yapı %d: cephe yönü yola göre yanlış" % i)
 	return out
 
 
