@@ -7,9 +7,14 @@ extends Node3D
 ## aradeğeri geçerli olmayabilir). Pan uzaklığı değiştirmez (pan çözüm sırası: eğim -> odak).
 ##
 ## GİRDİ YALNIZ `InputProfile` SİNYALLERİYLE (ADR-0004; masaüstü ve dokunmatik AYNI fiiller): pan_requested,
-## zoom_requested, rotate_requested + held_*_axis. Ham olaydan yalnız işaretçinin EKRAN KONUMU okunur (pan sinyalinde
-## konum yok; içerik imleci/parmağı izlesin diye) -- fiil kararı hiçbir yerde ham olaydan verilmez. Bu sözleşme
-## eksikliği raporlandı (pan_requested'e anchor). Eğim (pitch) fiili sözleşmede YOK: R/F tuşları GEÇİCİ.
+## zoom_requested, rotate_requested, camera_tilt_requested + held_*_axis. Ham olaydan yalnız işaretçinin EKRAN KONUMU
+## okunur (pan sinyalinde konum yok; içerik imleci/parmağı izlesin diye) -- fiil kararı hiçbir yerde ham olaydan
+## verilmez. Bu sözleşme eksikliği raporlandı (pan_requested'e anchor).
+##
+## EĞİM: İSTENEN eğim (`desired_pitch_deg`, oyuncunun tercihi) ile FİİLİ eğim (`target_state().pitch_deg`) ayrıdır.
+## K1/zarf yalnız fiili eğimi `max(istenen, gereken)` olarak yükseltir; istenen eğime dokunmaz. Zoom-in gereken eğimi
+## düşürünce fiili eğim (mevcut yumuşatmayla) tercihe geri iner. Tercihi yalnız oyuncunun eğim fiili, preset/Home
+## (başlangıç eğimi) ve `apply_state` ile açıkça verilen eğim değiştirir; zoom/pan/döndür değiştirmez.
 ## Girdi `_unhandled_input`'tadır: UI (Control) olayı önce tüketir (ADR-0004).
 ##
 ## Kamera bir görünüm kavramıdır: WorldData'yı yalnız OKUR, simülasyona dokunmaz.
@@ -32,7 +37,7 @@ const SMOOTH_RATE_PER_S := 14.0
 const HELD_PAN_SPEED_PER_DISTANCE := 0.55
 const HELD_ROTATE_DEG_PER_S := 60.0
 const HELD_ZOOM_BASE_PER_S := 2.5
-## GEÇİCİ eğim tuşları (sözleşmede eğim fiili yok): R yukarı bak (dik), F alçalt.
+## Tuşla eğim hızı (R dikleş, F alçal; `InputProfile.held_tilt_axis`).
 const TILT_DEG_PER_S := 40.0
 const SNAP_EPS_M := 0.001
 
@@ -63,8 +68,8 @@ var viewport_size_override: Vector2 = Vector2.ZERO
 var _target: CameraState = CameraState.new()
 var _current: CameraState = CameraState.new()
 var _pointer_px: Vector2 = Vector2(NAN, NAN)
-var _tilt_up: bool = false
-var _tilt_down: bool = false
+## Oyuncunun istediği eğim (derece). Fiili eğim zarf/K1 yüzünden bundan dik olabilir (alçak olamaz, zarf tabanı hariç).
+var _desired_pitch: float = 50.0
 var _ready_done: bool = false
 
 
@@ -96,7 +101,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _scroll_blocked_by_ui(event):
 		return
 	_note_pointer(event)
-	_note_tilt_key(event)
 	if input_profile != null and input_profile.handle_event(event):
 		get_viewport().set_input_as_handled()
 
@@ -139,6 +143,10 @@ func apply_state(state: CameraState, snap: bool = true) -> void:
 	if not state.is_valid():
 		push_error("CameraRig.apply_state: geçersiz durum (NaN/sıfır uzaklık) yok sayıldı")
 		return
+	# Eğim, çağıranın verdiği değerse yeni tercihtir; fiili eğimle aynı bırakıldıysa (odak taşıyan çağıranlar)
+	# mevcut tercih korunur.
+	if not is_equal_approx(state.pitch_deg, _target.pitch_deg):
+		_desired_pitch = clampf(state.pitch_deg, 0.0, envelope.pitch_max_deg)
 	_target = _sanitized(state)
 	if snap:
 		_current = _target.copy()
@@ -149,6 +157,11 @@ func apply_state(state: CameraState, snap: bool = true) -> void:
 func snap_to_target() -> void:
 	_current = _target.copy()
 	_apply_pose()
+
+
+## Oyuncunun istediği eğim (derece); fiili eğim (`target_state().pitch_deg`) bundan dik olabilir (K1/zarf).
+func desired_pitch_deg() -> float:
+	return _desired_pitch
 
 
 func target_state() -> CameraState:
@@ -198,8 +211,6 @@ func set_rebase_origin(origin: Vector2) -> void:
 func reset_input() -> void:
 	if input_profile != null:
 		input_profile.reset()
-	_tilt_up = false
-	_tilt_down = false
 
 
 # --- Girdi fiilleri (InputProfile sinyalleri) ---
@@ -207,30 +218,35 @@ func reset_input() -> void:
 func on_pan(screen_delta: Vector2) -> void:
 	var size := _viewport_size()
 	var to_px := _pointer_px if _pointer_px.is_finite() else size * 0.5 + screen_delta
-	_target = _enforce(CameraMath.pan_grab(_target, to_px - screen_delta, to_px, size, _ground(), world_bounds()),
-			CameraEnvelope.MODE_PAN)
+	_target = _enforce_desired(CameraMath.pan_grab(_target, to_px - screen_delta, to_px, size, _ground(),
+			world_bounds()), CameraEnvelope.MODE_PAN)
 	_settle_if_unsmoothed()
 
 
 func on_zoom(factor: float, anchor: Vector2) -> void:
 	var f := factor if continuous_zoom else _gated_factor(factor)
 	var limits := Vector2(envelope.d_min_m, envelope.d_max_m)
-	_target = _enforce(CameraMath.zoom_at(_target, f, anchor, _viewport_size(), _ground(), world_bounds(), limits))
+	_target = _enforce_desired(CameraMath.zoom_at(_target, f, anchor, _viewport_size(), _ground(), world_bounds(),
+			limits))
 	_settle_if_unsmoothed()
 
 
 func on_rotate(radians: float, anchor: Vector2) -> void:
-	_target = _enforce(CameraMath.rotate_about(_target, radians, anchor, _viewport_size(), _ground(), world_bounds()))
+	_target = _enforce_desired(CameraMath.rotate_about(_target, radians, anchor, _viewport_size(), _ground(),
+			world_bounds()))
 	_settle_if_unsmoothed()
 
 
-## GEÇİCİ: eğim (derece, + = daha dik).
+## Oyuncu eğimi (derece, + = daha dik): TERCİHİ günceller. Tercih aralığı [zarfın en alçak eğimi, pitch_max]; FİİLİ
+## eğim ayrıca pitch_min(d) ve K1 ile sınırlanır. Dikleştirme GÖRÜNEN eğimden başlar (anında karşılık); alçaltma
+## tercihten düşer (K1/zarf tabanında görünür değişmez ama zoom-in'de alçak eğim beklenir).
 func tilt(delta_deg: float) -> void:
-	if is_finite(delta_deg):
-		var tilted := _target.copy()
-		tilted.pitch_deg += delta_deg
-		_target = _enforce(tilted)
-		_settle_if_unsmoothed()
+	if not is_finite(delta_deg) or delta_deg == 0.0:
+		return
+	var base := maxf(_desired_pitch, _target.pitch_deg) if delta_deg > 0.0 else minf(_desired_pitch, _target.pitch_deg)
+	_desired_pitch = clampf(base + delta_deg, envelope.pitch_min_deg(envelope.d_min_m), envelope.pitch_max_deg)
+	_target = _enforce_desired(_target)
+	_settle_if_unsmoothed()
 
 
 # --- Özel ---
@@ -240,6 +256,7 @@ func _connect_input_profile() -> void:
 	input_profile.zoom_requested.connect(on_zoom)
 	input_profile.rotate_requested.connect(on_rotate)
 	input_profile.camera_home_requested.connect(go_home)
+	input_profile.camera_tilt_requested.connect(tilt)
 
 
 func _apply_held(delta: float) -> void:
@@ -247,15 +264,15 @@ func _apply_held(delta: float) -> void:
 	var pan := input_profile.held_pan_axis()
 	if pan != Vector2.ZERO:
 		var step := _target.distance * HELD_PAN_SPEED_PER_DISTANCE * delta
-		_target = _enforce(CameraMath.move_focus(_target, pan.x * step, -pan.y * step, _ground(), world_bounds()),
-				CameraEnvelope.MODE_PAN)
+		_target = _enforce_desired(CameraMath.move_focus(_target, pan.x * step, -pan.y * step, _ground(),
+				world_bounds()), CameraEnvelope.MODE_PAN)
 	var rot := input_profile.held_rotate_axis()
 	if rot != 0.0:
 		on_rotate(rot * deg_to_rad(HELD_ROTATE_DEG_PER_S) * delta, center)
 	var zoom := input_profile.held_zoom_axis()
 	if zoom != 0.0:
 		on_zoom(pow(HELD_ZOOM_BASE_PER_S, zoom * delta), center)
-	var tilt_axis := float(_tilt_up) - float(_tilt_down)
+	var tilt_axis := input_profile.held_tilt_axis()
 	if tilt_axis != 0.0:
 		tilt(tilt_axis * TILT_DEG_PER_S * delta)
 
@@ -309,6 +326,8 @@ func _apply_resolved(r: Dictionary) -> bool:
 		push_error("CameraRig: %s; %s kullanılıyor" % [r["error"], CameraPresets.FALLBACK])
 	preset_name = r["name"]
 	apply_state(r["state"], true)
+	# Tercih = preset'in K1 ÖNCESİ eğimi (başlangıç eğimi): Home tercihi buna sıfırlar; K1 yükselttiyse zoom-in'de iner.
+	_desired_pitch = clampf(float(r["raw_pitch_deg"]), 0.0, envelope.pitch_max_deg)
 	preset_applied.emit(preset_name)
 	return r["ok"]
 
@@ -317,6 +336,13 @@ func _sanitized(state: CameraState) -> CameraState:
 	var s := state.copy()
 	s.heading_deg = wrapf(s.heading_deg, 0.0, 360.0)
 	return _enforce(s)
+
+
+## Hedef durumu TERCİH EDİLEN eğimle çözer: pozu çağıran işlem üretir (fiili eğimle), eğim ise `max(tercih, gereken)`.
+func _enforce_desired(s: CameraState, mode: StringName = CameraEnvelope.MODE_DEFAULT) -> CameraState:
+	var wanted := s.copy()
+	wanted.pitch_deg = _desired_pitch
+	return _enforce(wanted, mode)
 
 
 ## Zarf + K1 (saf `CameraEnvelope.resolve`); dünya yoksa yalnız uzaklık/eğim sınırları.
@@ -407,15 +433,3 @@ func _note_pointer(event: InputEvent) -> void:
 	var drag := event as InputEventScreenDrag
 	if drag != null:
 		_pointer_px = drag.position
-
-
-## GEÇİCİ eğim tuşları (R/F). UI olayı tüketirse buraya gelmez.
-func _note_tilt_key(event: InputEvent) -> void:
-	var key := event as InputEventKey
-	if key == null or key.echo:
-		return
-	var code: Key = key.physical_keycode if key.physical_keycode != KEY_NONE else key.keycode
-	if code == KEY_R:
-		_tilt_up = key.pressed
-	elif code == KEY_F:
-		_tilt_down = key.pressed

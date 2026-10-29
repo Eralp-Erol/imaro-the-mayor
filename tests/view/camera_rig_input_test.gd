@@ -142,7 +142,7 @@ func test_held_keys_pan_rotate_and_zoom_through_the_profile_axes() -> void:
 	assert_bool(rig.current_state().is_close_to(steady, 0.001)).is_true()
 
 
-func test_temporary_tilt_keys_clamp_the_pitch_to_the_envelope() -> void:
+func test_tilt_keys_clamp_the_pitch_to_the_envelope() -> void:
 	# Sokak bandı (K1 yok): tavan pitch_max_deg, taban uzaklığa bağlı pitch_min(d) (zarf, güvenlik tabanı değil).
 	var rig := _rig(DesktopInputProfile.new(), "street:port")
 	rig._unhandled_input(_key(KEY_R, true))

@@ -3,9 +3,12 @@ extends InputProfile
 ## Masaüstü girdi profili (fare + klavye + macOS trackpad), ADR-0004 §Karar 2. Sözleşme: `InputProfile`.
 ##
 ## Fare: sol tık = seç; sol sürükle (eşik sonrası) = pan; sağ tık veya Ctrl+sol tık (macOS bağlam tıklaması) = bağlam;
-## orta tuş sürükle (yatay) = döndür; tekerlek = imleç noktasında yakınlaş/uzaklaş.
-## Trackpad (macOS): iki parmak kaydırma (`InputEventPanGesture`) = pan; kıstırma (`InputEventMagnifyGesture`) = zoom.
-## Klavye (ortak): WASD/oklar pan, Q/E döndür, PageUp/PageDown zoom, Boşluk duraklat, =/- hız, Esc iptal.
+## orta tuş sürükle = döndür (yatay) + eğ (dikey); Option(Alt)+sol sürükle = aynı yörünge (yatay döndür, dikey eğ;
+## basışta karar verilir, sürüklerken Option bırakılsa da yörünge sürer); tekerlek = imleç noktasında yakınlaş/uzaklaş.
+## Trackpad (macOS): iki parmak kaydırma (`InputEventPanGesture`) = pan; Option basılıyken aynı kaydırma = yörünge
+## (yatay döndür, dikey eğ); kıstırma (`InputEventMagnifyGesture`) = zoom. Orta tuşsuz trackpad: Option+tıkla-sürükle.
+## Aşağı sürükle = dikleş (kuş bakışına), yukarı = ufka.
+## Klavye (ortak): WASD/oklar pan, Q/E döndür, R/F eğ, PageUp/PageDown zoom, Boşluk duraklat, =/- hız, Esc iptal.
 ## Dokunma olayları (`InputEventScreenTouch/Drag`) YOK SAYILIR.
 ##
 ## DOĞRULANMADI (cihaz yok): trackpad kaydırma/kıstırma işaret ve ölçekleri gerçek trackpad ile denenmedi;
@@ -24,6 +27,7 @@ var _left_down: bool = false
 var _left_origin: Vector2 = Vector2.ZERO
 var _left_last: Vector2 = Vector2.ZERO
 var _left_dragging: bool = false
+var _orbit_down: bool = false
 var _middle_down: bool = false
 
 
@@ -46,7 +50,11 @@ func _handle_pointer_event(event: InputEvent) -> bool:
 	var pan := event as InputEventPanGesture
 	if pan != null:
 		var sign_factor := 1.0 if invert_trackpad_pan else -1.0
-		pan_requested.emit(pan.delta * trackpad_pan_px * sign_factor)
+		var screen := pan.delta * trackpad_pan_px * sign_factor
+		if pan.alt_pressed:
+			_emit_orbit(screen, pan.position)
+		else:
+			pan_requested.emit(screen)
 		return true
 	return false
 
@@ -54,6 +62,7 @@ func _handle_pointer_event(event: InputEvent) -> bool:
 func _reset_pointer() -> void:
 	_left_down = false
 	_left_dragging = false
+	_orbit_down = false
 	_middle_down = false
 
 
@@ -84,14 +93,16 @@ func _on_left(event: InputEventMouseButton) -> bool:
 			return true
 		_left_down = true
 		_left_dragging = false
+		_orbit_down = event.alt_pressed
 		_left_origin = event.position
 		_left_last = event.position
 		return true
 	if not _left_down:
 		return false
-	var was_drag := _left_dragging
+	var was_drag := _left_dragging or _orbit_down
 	_left_down = false
 	_left_dragging = false
+	_orbit_down = false
 	if not was_drag:
 		select_requested.emit(event.position)
 	return true
@@ -99,10 +110,13 @@ func _on_left(event: InputEventMouseButton) -> bool:
 
 func _on_motion(event: InputEventMouseMotion) -> bool:
 	if _middle_down:
-		rotate_requested.emit(event.relative.x * rotate_rad_per_px, event.position)
+		_emit_orbit(event.relative, event.position)
 		return true
 	if not _left_down:
 		return false
+	if _orbit_down:
+		_emit_orbit(event.relative, event.position)
+		return true
 	if not _left_dragging:
 		if event.position.distance_to(_left_origin) <= drag_slop_px:
 			return true
@@ -111,3 +125,10 @@ func _on_motion(event: InputEventMouseMotion) -> bool:
 	pan_requested.emit(event.position - _left_last)
 	_left_last = event.position
 	return true
+
+
+## Yörünge: yatay hareket döndürür, dikey hareket eğer (aşağı = dikleş). `screen` piksel (y aşağı).
+func _emit_orbit(screen: Vector2, anchor: Vector2) -> void:
+	rotate_requested.emit(screen.x * rotate_rad_per_px, anchor)
+	if screen.y != 0.0:
+		camera_tilt_requested.emit(screen.y * InputProfile.TILT_DEG_PER_PX)

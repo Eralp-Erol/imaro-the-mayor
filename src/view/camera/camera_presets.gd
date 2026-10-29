@@ -40,9 +40,11 @@ const D5_SLOPES_DISTANCE_M := 7000.0
 const D5_SLOPES_PITCH_DEG := 35.0
 
 
-## Metin -> {"ok": bool, "state": CameraState, "name": StringName, "clamped": bool, "adjusted": bool, "error": String}.
+## Metin -> {"ok": bool, "state": CameraState, "name": StringName, "clamped": bool, "adjusted": bool, "error": String,
+## "raw_pitch_deg": float}.
 ## Geçersiz/bilinmeyen/emekli preset: ok = false, `error` dolu, `state` `core` (güvenli yedek).
 ## `envelope` boşsa oyuncu zarfı.
+## `raw_pitch_deg`: preset'in zarf/K1 ÖNCESİ eğimi (kamera rig'inin tercih edilen eğimi / Home sıfırlaması).
 ## `adjusted`: zarf/K1 durumu ham preset'ten farklı çözdü (kenar ilçe kadrajları için tanı).
 static func resolve(spec: String, world: WorldData, ground: Callable = Callable(), envelope: CameraEnvelope = null,
 		aspect: float = CameraEnvelope.DEFAULT_ASPECT) -> Dictionary:
@@ -97,7 +99,8 @@ static func resolve(spec: String, world: WorldData, ground: Callable = Callable(
 	var raw := state.copy()
 	state = env.resolve(state, aspect, ground, world.bounds(), CameraEnvelope.MODE_DEFAULT, world.sea_level)
 	var adjusted := not state.is_close_to(raw, 0.01, 0.01)
-	return {"ok": ok, "state": state, "name": StringName(kind), "clamped": clamped, "adjusted": adjusted, "error": error}
+	return {"ok": ok, "state": state, "name": StringName(kind), "clamped": clamped, "adjusted": adjusted, "error": error,
+			"raw_pitch_deg": raw.pitch_deg}
 
 
 ## Açılış/Home (ADR-0007 §Karar 5): `district(kod)` + zarf çözümü. Kod boş/bilinmiyorsa `core` (kodda ilçe kimliği

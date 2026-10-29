@@ -27,9 +27,14 @@ extends RefCounted
 ##                                      üst sınır `PlatformProfile.max_game_speed`
 ##   cancel_requested                   Esc
 ##   camera_home_requested              Home (başlangıç görünümü; dokunmatikte HUD düğmesi aynı sinyali sürer)
+##   camera_tilt_requested(delta_deg)   kamera eğimi (T-064 düzeltmesi): POZİTİF = daha DİK (kuş bakışına doğru),
+##                                      negatif = ufka doğru. Sürükleme bölgesi "aşağı sürükle = dikleş" der.
 ## SÜREKLİ (her karede yoklanır): held_pan_axis() (WASD/oklar, ekran yönü, y aşağı, uzunluk <= 1),
-##   held_rotate_axis() (Q = -1, E = +1; saat yönü +), held_zoom_axis() (PageUp = +1 yakınlaş, PageDown = -1).
-## Eğim (pitch) fiili tanımlı DEĞİL; T-003 gerekirse sözleşmeye ekletir (iki profile birden eklenir).
+##   held_rotate_axis() (Q = -1, E = +1; saat yönü +), held_zoom_axis() (PageUp = +1 yakınlaş, PageDown = -1),
+##   held_tilt_axis() (R = +1 dikleş, F = -1 alçal; kalıcı, iki profilde ortak).
+## Eğim eşlemesi (ADR-0007 notu): masaüstü Option(Alt)+sürükle (dikey eğim, yatay döndür), orta tuş sürükle (aynı),
+## Option + iki parmak kaydırma (trackpad); dokunmatik: üç parmakla dikey sürükle (iki parmak jesti pan/zoom/döndür
+## olarak kalır, çakışma yok); klavye R/F.
 ##
 ## Alt sınıflar yalnız işaretçiyi (fare/trackpad ya da dokunma) işler; klavye ve sürekli eksenler burada ortaktır
 ## (iPad'e harici klavye takılabilir). Bir profil diğerinin olaylarını YOK SAYAR (çift tetik olmasın: Godot dokunmadan
@@ -45,18 +50,24 @@ signal speed_step_requested(direction: int)
 signal cancel_requested
 ## Kamera Home / başlangıç görünümü (masaüstü: Home tuşu; dokunmatikte HUD düğmesi aynı sinyali sürer). T-064.
 signal camera_home_requested
+## Kamera eğimi (derece; + = daha dik). Aralığı kamera belirler (zarf pitch_min(d)..pitch_max); profil sınırlamaz.
+signal camera_tilt_requested(delta_deg: float)
 
 const PROFILE_DESKTOP := &"desktop"
 const PROFILE_TOUCH := &"touch"
 
 const _HELD_KEYS: Array[Key] = [
 	KEY_W, KEY_A, KEY_S, KEY_D, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_Q, KEY_E, KEY_PAGEUP, KEY_PAGEDOWN,
+	KEY_R, KEY_F,
 ]
 
 const _SCRIPT_BY_PROFILE := {
 	&"desktop": "res://src/app/input_profile_desktop.gd",
 	&"touch": "res://src/app/input_profile_touch.gd",
 }
+
+## Eğim ölçeği: işaretçi sürüklemesinde piksel başına derece (fare, trackpad, üç parmak ortak).
+const TILT_DEG_PER_PX := 0.25
 
 ## Sürükleme eşiği (viewport pikseli): bundan az hareket "tıklama/dokunma" sayılır.
 var drag_slop_px: float = 8.0
@@ -109,6 +120,10 @@ func held_rotate_axis() -> float:
 
 func held_zoom_axis() -> float:
 	return float(_is_held(KEY_PAGEUP)) - float(_is_held(KEY_PAGEDOWN))
+
+
+func held_tilt_axis() -> float:
+	return float(_is_held(KEY_R)) - float(_is_held(KEY_F))
 
 
 ## Alt sınıf: işaretçi olayı (fare/trackpad/dokunma). Fiile katıldıysa true.

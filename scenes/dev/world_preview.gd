@@ -18,7 +18,7 @@ extends Node3D
 ## Tuşlar: F3 işaretleri aç/kapa (varsayılan KAPALI), 1-5 T-001 preset'leri, M core, T odakta sokak ölçeği, Home başlangıç.
 ## Kamera = CameraRig (T-003, src/view/camera/): girdi YALNIZ InputProfile ile. Masaüstü: sol sürükle kaydır, orta tuş
 ##   sürükle döndür, tekerlek/trackpad kıstır imleçte zoom; WASD/oklar kaydır, Q/E döndür, PageUp/PageDown zoom;
-##   R/F eğim (GEÇİCİ). Dokunmatik (`-- --imaro-input-profile=touch`): tek parmak kaydır, iki parmak kıstır/bük.
+##   R/F eğim, Option+sürükle yörünge (eğim+döndür). Dokunmatik (`-- --imaro-input-profile=touch`): tek parmak kaydır, iki parmak kıstır/bük.
 ## Yapılar (T-012): varsayılan AÇIK. `--no-buildings` kapatır (T-001/T-003 karşılaştırmaları için). Kaynak = gerçek T0
 ##   yerleşimi (`T0Settlement.generate`; T-062 A3: onaylı hero oyun tablosu `SettlementTable`, görünüm AYNI tabloyu
 ##   `BuildingKit` ile okur; stand-in `DevBuildingSource` kaldırıldı). Ayarlar: --bld-seed=N --bld-cell=M (chunk m) --lod0-end=M

@@ -5,14 +5,15 @@ extends InputProfile
 ## Tek parmak: dokun-bırak = seç; sürükle (eşik sonrası) = pan; hareketsiz uzun bas = bağlam.
 ## İki parmak: kıstır = zoom, bükül = döndür (küçük bir eşikten sonra, kıstırırken titreyen dönüş olmasın), merkez
 ## kayması = pan. İkinci parmak bir kez gelince jest bitene kadar tek parmak pan/seçme geri dönmez (zıplama ve
-## yanlış seçim olmasın). Üç ve daha fazla parmak: ilk ikisi kullanılır.
+## yanlış seçim olmasın). Üç ve daha fazla parmak: EĞİM -- ilk üçünün ağırlık merkezi dikey sürüklenir (aşağı = dikleş);
+## bu sırada pan/zoom/döndür yok. Eğim iki parmaklı jestlerden ayrı sayıda parmakla yapılır: pan/zoom/döndürle çakışmaz.
 ## Fare ve trackpad olayları YOK SAYILIR (Godot dokunmadan fare olayı da üretir; çift tetik olmasın).
 ## Klavye (harici klavye) ortak sınıftan gelir.
 ##
 ## DOĞRULANMADI (cihaz yok): gerçek iPad parmak ölçekleri, eşik değerleri, `canceled` davranışı (sistem jestleri).
 ## Eşikler yer tutucudur (iOS uzun basma ≈ 0,5 sn).
 
-enum Mode { IDLE, PENDING, PANNING, LONG_FIRED, MULTI, BLOCKED }
+enum Mode { IDLE, PENDING, PANNING, LONG_FIRED, MULTI, BLOCKED, TILT }
 
 ## Uzun basma süresi (sn); `process(delta)` ile biriken süre.
 var long_press_s: float = 0.5
@@ -28,6 +29,7 @@ var _press_time: float = 0.0
 var _prev_center: Vector2 = Vector2.ZERO
 var _prev_dist: float = 0.0
 var _prev_angle: float = 0.0
+var _prev_tilt_y: float = 0.0
 var _rot_accum: float = 0.0
 var _rot_active: bool = false
 
@@ -81,6 +83,8 @@ func _on_touch(event: InputEventScreenTouch) -> bool:
 			_press_time = 0.0
 		elif _order.size() == 2:
 			_begin_multi()
+		else:
+			_begin_tilt()
 		return true
 	if not _touches.has(event.index):
 		return false  # izlenmeyen bırakma (basışı UI tüketmişti): yok say
@@ -96,8 +100,10 @@ func _on_touch(event: InputEventScreenTouch) -> bool:
 			select_requested.emit(event.position)
 	elif _order.size() == 1:
 		_mode = Mode.BLOCKED
-	else:
+	elif _order.size() == 2:
 		_begin_multi()
+	else:
+		_begin_tilt()
 	return true
 
 
@@ -116,6 +122,8 @@ func _on_drag(event: InputEventScreenDrag) -> bool:
 				_pan_single(event.position)
 		Mode.MULTI:
 			_update_multi()
+		Mode.TILT:
+			_update_tilt()
 	return true
 
 
@@ -133,6 +141,26 @@ func _begin_multi() -> void:
 	_prev_center = (a + b) * 0.5
 	_prev_dist = a.distance_to(b)
 	_prev_angle = (b - a).angle()
+
+
+func _begin_tilt() -> void:
+	_mode = Mode.TILT
+	_prev_tilt_y = _tilt_center_y()
+
+
+## İlk üç parmağın ağırlık merkezinin dikey kayması -> eğim (aşağı = dikleş).
+func _update_tilt() -> void:
+	var y := _tilt_center_y()
+	if y != _prev_tilt_y:
+		camera_tilt_requested.emit((y - _prev_tilt_y) * InputProfile.TILT_DEG_PER_PX)
+	_prev_tilt_y = y
+
+
+func _tilt_center_y() -> float:
+	var sum := 0.0
+	for i in 3:
+		sum += (_touches[_order[i]] as Vector2).y
+	return sum / 3.0
 
 
 func _update_multi() -> void:

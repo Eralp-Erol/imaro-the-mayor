@@ -41,6 +41,12 @@ Sonuç [hesap]: 18 km tavan yalnız merkez çevresinde erişilir; kenar bölgele
    - **Bütçe:** harita modu ADR-0001'in preset bütçesine tabidir (dev Mac ort. ≤ 8 ms, p95 ≤ 16,6 ms, draw call ≤ 400); dönüş sonrası 120 kare p95 da aynı bütçe (akış yeniden ısınması). Hipotez [ölçülmedi]: harita, `metro_legacy_bench`'in alt kümesini çizdiği için ondan ucuzdur.
    - **Anderva (ÇM, M2 dışı):** ülke ölçeği yalnız harita modunda; önkoşul Ismeral'i aynı metre koordinatlarıyla alt dikdörtgen olarak içeren makro veri + ayrı ADR (T-069). Bu ADR yalnız ilkeyi koyar.
 
+## Ek (2026-10-29): istenen eğim ile fiili eğim ayrıdır; eğim fiili `camera_tilt` (sahip geri bildirimi)
+- **Sorun:** K1'in yükselttiği eğim `_target`a yazılıp kalıcı oluyordu; zoom-out sınırında kuş bakışına geçen kamera zoom-in'de eski açıya dönemiyordu, ayrıca eğimi kontrol eden kalıcı bir girdi yoktu (yalnız geçici R/F).
+- **Karar:** `CameraRig` oyuncunun **istenen eğimini** (`desired_pitch_deg`) ayrı tutar. Her hedef güncellemesi (pan/zoom/döndür/eğ) pozu üretir, eğimi `istenen` yapıp `CameraEnvelope.resolve`'a verir; K1 yalnız fiili eğimi `max(istenen, gereken)` yapar, istenene dokunmaz. Zoom-in gereken eğimi düşürünce fiili eğim mevcut yumuşatmayla tercihe iner (sıçrama yok). Çözüm sırası, pan'da uzaklığın değişmemesi ve K1 garantisi (dört köşe `sınır − pay` içinde) DEĞİŞMEZ; `resolve` aynı.
+- **Tercihi değiştirenler:** yalnız oyuncunun eğim fiili (dikleştirme görünen eğimden, alçaltma tercihten başlar; fiili aralık `pitch_min(d)..pitch_max`; tercih tabanı eğrinin en düşüğü), preset/Home (ham başlangıç eğimi, `raw_pitch_deg`) ve `apply_state` ile açıkça verilen eğim.
+- **Girdi sözleşmesi (iki profile birden, ADR-0004):** `camera_tilt_requested(delta_deg)` (+ = dik) ve `held_tilt_axis()`. Masaüstü: R/F; Option(Alt)+sol sürükle ve orta tuş sürükle = yörünge (dikey eğ, yatay döndür; aşağı = dikleş); trackpad Option + iki parmak kaydırma aynı yörünge. Dokunmatik: üç parmakla dikey sürükle (iki parmak jesti pan/zoom/döndür kalır, çakışmaz). Gerekçe: Option+sürükle orta tuşsuz trackpad'de de çalışır ve mevcut sol-sürükle pan'ı ile çakışmaz; üç parmak iki parmaklı jestlerle karışmaz. Gerçek trackpad/iPad hissi DOĞRULANMADI.
+
 ## Yeniden tabanlanacak testler (T-064 içinde; gerekçe raporda)
 | Dosya:satır | Bugün | Yeni taban |
 |---|---|---|
