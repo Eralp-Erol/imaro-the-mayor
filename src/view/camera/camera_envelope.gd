@@ -39,6 +39,15 @@ var map_exit_distance_m: float = 0.0
 var fog_enabled: bool = false
 var fog_full_below_m: float = 0.0
 var fog_gone_above_m: float = 0.0
+## Bina farkında göz açıklığı (ADR-0007 Ek c): göz, çevresindeki `roof_radius_m` içindeki en yüksek çatı +
+## `roof_margin_m` üstünde kalır. `roof_active_below_m` altında tam, `roof_fade_to_m`e doğru doğrusal söner.
+## `roof_smooth_rate_per_s`: kaldırmanın üstel yumuşatma hızı (kare başı sıçrama yok).
+var roof_enabled: bool = false
+var roof_radius_m: float = 0.0
+var roof_margin_m: float = 0.0
+var roof_active_below_m: float = 0.0
+var roof_fade_to_m: float = 0.0
+var roof_smooth_rate_per_s: float = 0.0
 ## Yükleme/doğrulama hataları (boş = geçerli).
 var errors: PackedStringArray = PackedStringArray()
 
@@ -107,6 +116,13 @@ static func from_dict(d: Dictionary, env_id: StringName, fov_deg: float = DEFAUL
 	env.fog_enabled = bool(fog.get("enabled", false))
 	env.fog_full_below_m = float(fog.get("full_below_m", 0.0))
 	env.fog_gone_above_m = float(fog.get("gone_above_m", 0.0))
+	var roof: Dictionary = d.get("eye_roof_clearance", {})
+	env.roof_enabled = bool(roof.get("enabled", false))
+	env.roof_radius_m = float(roof.get("radius_m", 0.0))
+	env.roof_margin_m = float(roof.get("margin_m", 0.0))
+	env.roof_active_below_m = float(roof.get("active_below_m", 0.0))
+	env.roof_fade_to_m = float(roof.get("fade_to_m", 0.0))
+	env.roof_smooth_rate_per_s = float(roof.get("smooth_rate_per_s", 0.0))
 	return env
 
 
@@ -162,6 +178,7 @@ static func validate(d: Dictionary, fov_deg: float = DEFAULT_FOV_DEG) -> PackedS
 	var exit_m := float(d["map_exit_distance_m"])
 	if exit_m < d_min or exit_m > d_max:
 		out.append("map_exit_distance_m zarf içinde olmalı")
+	out.append_array(_validate_roof(d.get("eye_roof_clearance", {})))
 	return out
 
 
@@ -211,6 +228,17 @@ func next_band(distance: float, current: StringName) -> StringName:
 ## TopBar metni anahtarı (`data/ui/strings.tr.json`): yalnız bant sinyalinden türer.
 static func band_text_key(band: StringName) -> StringName:
 	return StringName("zoom.%s" % band)
+
+
+## 0..1: bina farkında göz açıklığının uzaklık ağırlığı (tam `roof_active_below_m` altında, `roof_fade_to_m`de 0).
+func roof_weight(distance: float) -> float:
+	if not roof_enabled:
+		return 0.0
+	if distance <= roof_active_below_m:
+		return 1.0
+	if distance >= roof_fade_to_m:
+		return 0.0
+	return 1.0 - (distance - roof_active_below_m) / (roof_fade_to_m - roof_active_below_m)
 
 
 ## 0..1: sokak bandında dünya-uzayı kenar sisinin gücü (kamera uzaklığına göre; K1 bandında sis kapanır).
@@ -456,6 +484,26 @@ static func _validate_curve(raw: Variant, d_min: float, d_max: float, pitch_max:
 	var last := Vector2(float(((raw as Array)[(raw as Array).size() - 1] as Array)[0]), 0.0)
 	if first.x > d_min or last.x < d_max:
 		out.append("pitch_min_curve [d_min_m, d_max_m] aralığını kapsamıyor")
+	return out
+
+
+static func _validate_roof(raw: Variant) -> PackedStringArray:
+	var out := PackedStringArray()
+	if not raw is Dictionary:
+		out.append("eye_roof_clearance sözlük olmalı")
+		return out
+	var r := raw as Dictionary
+	if r.is_empty() or not bool(r.get("enabled", false)):
+		return out
+	for key in ["radius_m", "margin_m", "active_below_m", "fade_to_m", "smooth_rate_per_s"]:
+		if not r.has(key) or not is_finite(float(r[key])):
+			out.append("eye_roof_clearance.%s eksik/sonlu değil" % key)
+	if not out.is_empty():
+		return out
+	if float(r["radius_m"]) <= 0.0 or float(r["margin_m"]) < 0.0 or float(r["smooth_rate_per_s"]) <= 0.0:
+		out.append("eye_roof_clearance: radius_m > 0, margin_m >= 0, smooth_rate_per_s > 0 olmalı")
+	if float(r["active_below_m"]) <= 0.0 or float(r["fade_to_m"]) <= float(r["active_below_m"]):
+		out.append("eye_roof_clearance: 0 < active_below_m < fade_to_m olmalı")
 	return out
 
 

@@ -19,7 +19,8 @@
 		"zoom_gates_m": [50.0, 150.0, 800.0, 4000.0, 18000.0],
 		"solve_order": {"default": ["pitch", "distance", "focus"], "pan": ["pitch", "focus"]},
 		"map_exit_distance_m": 6000.0,
-		"edge_fog": {"enabled": true, "full_below_m": 1500.0, "gone_above_m": 2250.0}
+		"edge_fog": {"enabled": true, "full_below_m": 1500.0, "gone_above_m": 2250.0},
+		"eye_roof_clearance": {"enabled": true, "radius_m": 15.0, "margin_m": 2.0, "active_below_m": 600.0, "fade_to_m": 900.0, "smooth_rate_per_s": 8.0}
 	},
 	"legacy": {
 		"_note": "Yalnız geliştirici: --envelope=legacy (ADR-0007 §Karar 6). Eski 90 km / 25 m / 8 derece, K1 yok; metro_legacy_bench perf serisini kırmasın diye.",
@@ -41,6 +42,7 @@
 		"zoom_gates_m": [30.0, 150.0, 800.0, 4000.0, 20000.0, 58000.0],
 		"solve_order": {"default": ["pitch", "distance", "focus"], "pan": ["pitch", "focus"]},
 		"map_exit_distance_m": 6000.0,
-		"edge_fog": {"enabled": false, "full_below_m": 300.0, "gone_above_m": 450.0}
+		"edge_fog": {"enabled": false, "full_below_m": 300.0, "gone_above_m": 450.0},
+		"eye_roof_clearance": {"enabled": false}
 	}
 }

@@ -57,3 +57,13 @@ func test_invalid_files_are_rejected_with_a_reason() -> void:
 	var bad_blob := _dict()
 	bad_blob["blob"]["fade_begin_m"] = 100.0   # <= lod1_end_m: leke ile ağaç kademesi çakışır
 	assert_bool(VegetationViewConfig.from_dict(bad_blob).valid()).is_false()
+
+
+func test_blob_clumps_stay_house_scale_after_t062_b5() -> void:
+	# B-5: leke yaricapi tavani 8 m (10-14 m evlerden buyuk tumsek yok), kume ızgarasi 24 m; veri dosyasindan.
+	var d: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://data/view/vegetation_view.json"))
+	var b: Dictionary = d["blob"]
+	assert_float(float(b["max_clump_radius_m"])).is_less_equal(8.0)
+	assert_float(float(b["radius_mult"])).is_less_equal(1.0)
+	assert_float(float(b["clump_m"])).is_less_equal(24.0)
+	assert_float(float(b["min_clump_radius_m"])).is_equal(3.0)

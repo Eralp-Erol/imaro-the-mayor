@@ -8,6 +8,8 @@ render_mode diffuse_lambert, specular_disabled, cull_back;
 // (alfa karisimi yok; Compatibility'de siralama sorunu yok). Mesafe = goruntu uzayinda fragman uzakligi (kamera orijin).
 
 uniform float begin_m = 400.0;
+// Yakin uc: begin_m +- near_fade_m arasi ekran-uzayi dither ile belirir (B-5: 360-440 m caprazlama; agaclar 400 m'de biter).
+uniform float near_fade_m = 40.0;
 uniform float fade_begin_m = 1400.0;
 uniform float end_m = 2200.0;
 
@@ -21,7 +23,8 @@ float bayer4(vec2 p) {
 
 void fragment() {
 	float d = length(VERTEX);
-	if (d < begin_m) {
+	float near_t = smoothstep(begin_m - near_fade_m, begin_m + near_fade_m, d);
+	if (near_t <= bayer4(FRAGCOORD.xy)) {
 		discard;
 	}
 	float fade = smoothstep(fade_begin_m, end_m, d);

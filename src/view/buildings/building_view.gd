@@ -24,6 +24,8 @@ const SUPER_PREFIX := "Super_"
 const TRIS_META := &"tris"
 ## MultiMeshInstance3D üstünde modül kimliği (onaylı kimlik denetimi/test için; `drawn_module_ids`).
 const MODULE_META := &"module_id"
+## Bina farkında göz açıklığı kaynağı (ADR-0007 Ek c): kamera rig'i enjekte edilmediyse bu gruptan bulur.
+const ROOF_SOURCE_GROUP := &"eye_roof_clearance_source"
 
 ## Son kurulumun ölçümleri (perf_probe / world_preview okur).
 var stats: Dictionary = {}
@@ -40,6 +42,8 @@ var _cell_data: Dictionary = {}
 var _dropped: Dictionary = {}
 var _super_nodes: Dictionary = {}
 var _proxy_mat: ShaderMaterial = null
+## Kameranın göz açıklığı için çatı yükseklik dizini (aynı sütunlardan; `set_columns` yeniler, aynı nesne kalır).
+var _roofs: RoofClearance = RoofClearance.new()
 # iş parçacığı görev girdileri (set_columns sırasında geçerli)
 var _job_keys: Array[Vector2i] = []
 var _job_cells: Array[BuildingCellData] = []
@@ -50,6 +54,7 @@ func setup(world: WorldData, kit: BuildingKit, p_config: BuildingViewConfig = nu
 	clear()
 	_world = world
 	_kit = kit
+	add_to_group(ROOF_SOURCE_GROUP)
 	if p_config != null:
 		config = p_config
 	_proxy_mat = HeroMeshLoader.flat_color_material()
@@ -67,6 +72,7 @@ func clear() -> void:
 	_plan = null
 	_cols = null
 	_version = -1
+	_roofs.clear()
 	stats = {}
 
 
@@ -89,6 +95,9 @@ func set_columns(cols: BuildingColumns, version: int = -1) -> Dictionary:
 	_cols = cols
 	_plan = new_plan
 	_version = version
+	var tr0 := Time.get_ticks_usec()
+	_roofs.set_from_columns(_world, cols, _kit)
+	stats["roof_index_ms"] = snappedf((Time.get_ticks_usec() - tr0) / 1000.0, 0.1)
 	# değişmeyen hücrelerin sütun indeksleri yeni plana bağlanır
 	for k: Vector2i in _cell_data:
 		if new_hashes.has(k) and _hashes.get(k, "") == new_hashes[k]:
@@ -104,6 +113,11 @@ func set_columns(cols: BuildingColumns, version: int = -1) -> Dictionary:
 	return {"ok": true, "skipped": false, "cells": new_plan.cells.size(), "rebuilt": changed.size(),
 			"rebuilt_keys": changed, "supers_rebuilt": supers.size(), "plan_ms": stats["last_plan_ms"],
 			"build_ms": stats["last_build_ms"], "errors": []}
+
+
+## Çatı yükseklik sağlayıcısı (kamera göz açıklığı). Nesne ömür boyu aynıdır; içeriği `set_columns` ile yenilenir.
+func roof_clearance() -> RoofClearance:
+	return _roofs
 
 
 ## Yükseklik: görünümün kullandığı veri (WorldData.height_at; arazi mesh'i ile aynı kaynak).

@@ -1,3 +1,4 @@
+# gdlint:disable=max-public-methods
 class_name CameraRig
 extends Node3D
 ## Çok ölçekli kamera rig'i (T-003; WLD-01, TEK-03, TEK-04, PLT-02, VIS-03): uzak uçtan (`CameraEnvelope.d_max_m`,
@@ -16,6 +17,14 @@ extends Node3D
 ## düşürünce fiili eğim (mevcut yumuşatmayla) tercihe geri iner. Tercihi yalnız oyuncunun eğim fiili, preset/Home
 ## (başlangıç eğimi) ve `apply_state` ile açıkça verilen eğim değiştirir; zoom/pan/döndür değiştirmez.
 ## Girdi `_unhandled_input`'tadır: UI (Control) olayı önce tüketir (ADR-0004).
+##
+## BİNA FARKINDA GÖZ AÇIKLIĞI (ADR-0007 Ek c): yatay bakışta (3° taban) göz yerden ~3 m kalır ve yapıların içine
+## girebilir. `roof_clearance` (RoofClearance; yapı sütunlarından deterministik çatı yükseklikleri) verilirse göz,
+## çevresindeki `envelope.roof_radius_m` içindeki en yüksek çatı + `roof_margin_m` üstüne YUMUŞAKÇA itilir. Yalnız
+## gözün y'si değişir (dönüş, eğim, odak, uzaklık aynı: istenen ve fiili eğim, K1 ve eğim tabanı etkilenmez); yalnız
+## yakın bantlarda (`roof_active_below_m`, sonra `roof_fade_to_m`e sönüm). Verilmezse rig, sahnedeki
+## `BuildingView.ROOF_SOURCE_GROUP` grubundan kaynağı kendisi bulur. Seçim/pan/zoom matematiği HAM yörünge gözünü
+## kullanır (`eye_lift_m` yalnız sunum ofsetidir; arazi açıklığı da böyledir).
 ##
 ## Kamera bir görünüm kavramıdır: WorldData'yı yalnız OKUR, simülasyona dokunmaz.
 ##
@@ -40,6 +49,7 @@ const HELD_ZOOM_BASE_PER_S := 2.5
 ## Tuşla eğim hızı (R dikleş, F alçal; `InputProfile.held_tilt_axis`).
 const TILT_DEG_PER_S := 40.0
 const SNAP_EPS_M := 0.001
+const ROOF_PROBE_INTERVAL_S := 0.5
 
 @export var smoothing_enabled: bool = true
 @export var smoothing_rate: float = SMOOTH_RATE_PER_S
@@ -56,6 +66,9 @@ var world: WorldData = null
 var preset_name: StringName = CameraPresets.FALLBACK
 ## Kamera zarfı (oyuncu zarfı; `--envelope=legacy` yalnız geliştirici sahnesi/araçları verir). Kapılı zoom da buradan.
 var envelope: CameraEnvelope = null
+## Çatı yükseklik sağlayıcısı (boşsa bina farkında açıklık kapalı; sahnede grup üzerinden aranır, bkz
+## `_probe_roof_source`).
+var roof_clearance: RoofClearance = null
 ## Ölçek bandı (son sinyal).
 var scale_band: StringName = &""
 ## Home hedefi: başlangıç ilçe kodu (oturum/veri; boşsa `core`). Kodda ilçe kimliği yoktur.
@@ -71,6 +84,9 @@ var _pointer_px: Vector2 = Vector2(NAN, NAN)
 ## Oyuncunun istediği eğim (derece). Fiili eğim zarf/K1 yüzünden bundan dik olabilir (alçak olamaz, zarf tabanı hariç).
 var _desired_pitch: float = 50.0
 var _ready_done: bool = false
+## Gözün çatı açıklığı için yukarı itildiği miktar (m, >= 0): sunum ofseti, kare başı yumuşar.
+var _eye_lift: float = 0.0
+var _roof_probe_s: float = 0.0
 
 
 func _init() -> void:
@@ -94,6 +110,7 @@ func _process(delta: float) -> void:
 		input_profile.process(delta)
 		_apply_held(delta)
 	_smooth(delta)
+	_advance_eye_lift(delta)
 	_apply_pose()
 
 
@@ -150,18 +167,25 @@ func apply_state(state: CameraState, snap: bool = true) -> void:
 	_target = _sanitized(state)
 	if snap:
 		_current = _target.copy()
+		_eye_lift = _eye_lift_goal()
 	_apply_pose()
 
 
 ## Yumuşatmayı bitirip hedefe oturur (capture/test).
 func snap_to_target() -> void:
 	_current = _target.copy()
+	_eye_lift = _eye_lift_goal()
 	_apply_pose()
 
 
 ## Oyuncunun istediği eğim (derece); fiili eğim (`target_state().pitch_deg`) bundan dik olabilir (K1/zarf).
 func desired_pitch_deg() -> float:
 	return _desired_pitch
+
+
+## Gözün çatı açıklığı için yukarı itildiği miktar (m, >= 0).
+func eye_lift_m() -> float:
+	return _eye_lift
 
 
 func target_state() -> CameraState:
@@ -281,6 +305,7 @@ func _apply_held(delta: float) -> void:
 func _settle_if_unsmoothed() -> void:
 	if not smoothing_enabled:
 		_current = _target.copy()
+		_eye_lift = _eye_lift_goal()
 		_apply_pose()
 
 
@@ -294,6 +319,53 @@ func _smooth(delta: float) -> void:
 	else:
 		# İki geçerli durumun aradeğeri geçerli olmayabilir: yumuşatılmış poz da zarftan geçer (K1).
 		_current = _enforce(_current)
+
+
+## Çatı açıklığı hedefi (m): çevredeki en yüksek çatı + pay, görünen gözün (arazi açıklıklı) üstünde kalan kısım;
+## uzaklık ağırlığı ile çarpılır. Sağlayıcı yoksa ya da çatı yoksa 0. Yalnız `_current` okunur; kaldırma gözün x/z'sini
+## değiştirmediği için hedef kendine geri beslenmez.
+func _eye_lift_goal() -> float:
+	if roof_clearance == null or envelope == null:
+		return 0.0
+	var weight := envelope.roof_weight(_current.distance)
+	if weight <= 0.0:
+		return 0.0
+	var eye := CameraMath.eye_xyz(_current, _ground())
+	var roof := roof_clearance.max_roof_y(eye[0], eye[2], envelope.roof_radius_m)
+	if roof <= RoofClearance.NO_ROOF:
+		return 0.0
+	return maxf(roof + envelope.roof_margin_m - eye[1], 0.0) * weight
+
+
+## Kaldırmayı hedefe üstel yaklaştırır (kare hızından bağımsız; yükselme ve alçalma aynı hız). Yumuşatma kapalıysa
+## anında.
+func _advance_eye_lift(delta: float) -> void:
+	if roof_clearance == null:
+		_probe_roof_source(delta)
+		if roof_clearance == null:
+			return
+	var goal := _eye_lift_goal()
+	if not smoothing_enabled or envelope.roof_smooth_rate_per_s <= 0.0:
+		_eye_lift = goal
+		return
+	_eye_lift = lerpf(_eye_lift, goal, 1.0 - exp(-envelope.roof_smooth_rate_per_s * maxf(delta, 0.0)))
+	if absf(_eye_lift - goal) < SNAP_EPS_M:
+		_eye_lift = goal
+
+
+## Sağlayıcı enjekte edilmediyse sahnedeki BuildingView'u (grup) yarım saniyede bir arar.
+func _probe_roof_source(delta: float) -> void:
+	if not is_inside_tree():
+		return
+	_roof_probe_s -= delta
+	if _roof_probe_s > 0.0:
+		return
+	_roof_probe_s = ROOF_PROBE_INTERVAL_S
+	for node in get_tree().get_nodes_in_group(BuildingView.ROOF_SOURCE_GROUP):
+		var source := node as BuildingView
+		if source != null:
+			roof_clearance = source.roof_clearance()
+			return
 
 
 func _apply_pose() -> void:
@@ -314,6 +386,7 @@ func _place_camera() -> void:
 		return
 	var s := _current
 	var eye := CameraMath.eye_relative(s, rebase_origin.x, rebase_origin.y, _ground())
+	eye.y += _eye_lift
 	camera.transform = Transform3D(CameraMath.basis_for(s.heading_deg, s.pitch_deg), eye)
 	var nf := CameraMath.near_far(s.distance)
 	camera.near = nf.x

@@ -1,8 +1,8 @@
 {
   "mode": "full",
-  "started_at": "2026-10-27T18:57:14Z",
-  "git_head": "0d8cf1de35cde3cb219fcd817d8aed0dc9c1779a",
-  "fingerprint": "a315b455287685f0f3affffe4d708b8b2d8ac5f66466ed934b3a63cc8253f002",
+  "started_at": "2026-10-29T16:19:16Z",
+  "git_head": "b498479689317187703198f6fd2e9b1cda02e4bc",
+  "fingerprint": "58167cd97d1b96bfdaf78dc5ed4313eb6174b0eb9fadc7acf7fa97951548750b",
   "steps": [
     {
       "name": "canon-check",
@@ -19,25 +19,25 @@
     {
       "name": "gdlint",
       "status": "pass",
-      "seconds": 37,
+      "seconds": 43,
       "summary": "Success: no problems found"
     },
     {
       "name": "import",
       "status": "pass",
-      "seconds": 14,
+      "seconds": 12,
       "summary": "içe aktarma temiz"
     },
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 779,
-      "summary": "1633 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 1186,
+      "summary": "1856 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",
       "status": "pass",
-      "seconds": 82,
+      "seconds": 108,
       "summary": "  PASS  CLAUDE_PROJECT_DIR ana checkout'u gösterse bile oturum cwd'si kullanılıyor  canon-guard testi: 105 PASS, 0 FAIL "
     },
     {

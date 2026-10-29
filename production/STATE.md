@@ -10,3 +10,4 @@ Tek devam noktası. `CHECKPOINT` bloğu SessionStart hook'u ile her oturuma enje
 - Açık (kullanıcı): Q-018 (insan stili, palmiye/mevsim), T-055 zemin değerlendirmesi hâlâ işaretli ama zeminler approved; Q-003..Q-017. T-060 araç, T-061 yol kesiti T-062'den sonra.
 - Ölçülmedi: şehir/iPad bütçesi, hareketli LOD geçişi, hücre lekesi (HLOD).
 <!-- CHECKPOINT:END -->
+- 2026-10-29 DURAKLAMA (kullanıcı: "t-062den sonra pause"): T-062 kapandı (koşullu), verify full PASS 1856 test; kamera 50 m-18 km + eğim + çatı açıklığı. Yeni iş başlatılmadı; ayrıntı production/log/2026-10-29-T-062-kapanis-duraklama.md.

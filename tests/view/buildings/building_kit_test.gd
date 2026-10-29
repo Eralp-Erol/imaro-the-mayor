@@ -196,3 +196,22 @@ func test_table_only_kit_has_no_templates_and_loads_no_mesh() -> void:
 	for m in meta.count:
 		assert_object(meta.proxies[m]).is_null()
 		assert_object(meta.boxes[m]).is_null()
+
+
+func test_flat_roof_modules_match_the_lod1_roof_tone_within_8_of_255() -> void:
+	# T-062 B-4: listedeki modullerin PROXY/HLOD2 cati rengi hedefe (154,146,127) <= 8/255 yakin; renk verisi guduslu.
+	var d: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(BuildingKit.ROOF_TONE_PATH))
+	var tgt: Array = d["flat_roof_target_srgb"]
+	var listed: Array = d["modules"]
+	assert_int(listed.size()).is_greater(0)
+	for id: String in listed:
+		var m := _kit.module_index(id)
+		assert_int(m).is_greater_equal(0)
+		var c := _kit.roof_color[m]
+		assert_float(absf(c.r * 255.0 - float(tgt[0]))).is_less(8.0)
+		assert_float(absf(c.g * 255.0 - float(tgt[1]))).is_less(8.0)
+		assert_float(absf(c.b * 255.0 - float(tgt[2]))).is_less(8.0)
+	# Negatif: listede olmayan kiremit catili modul degismez (kirmizimsi baskin kalir).
+	var tiled := _kit.module_index("bld_hero_res_mid_c")
+	assert_bool(not listed.has("bld_hero_res_mid_c")).is_true()
+	assert_float(_kit.roof_color[tiled].r - _kit.roof_color[tiled].b).is_greater(0.2)

@@ -8,7 +8,7 @@ uniform sampler2D depth_tex : hint_depth_texture, repeat_disable, filter_nearest
 uniform vec4 box = vec4(0.0, 0.0, 1.0, 1.0); // x0, z0, x1, z1 (sahne = rebase edilmiş kök koordinatı)
 uniform float margin_m = 1500.0;
 uniform float strength : hint_range(0.0, 1.0) = 1.0;
-uniform vec4 fog_color : source_color = vec4(0.045, 0.06, 0.085, 1.0);
+uniform vec4 fog_color : source_color = vec4(0.80, 0.84, 0.86, 1.0);
 
 void vertex() {
 	POSITION = vec4(VERTEX.xy, 1.0, 1.0);

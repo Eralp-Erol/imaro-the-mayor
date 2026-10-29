@@ -9,7 +9,7 @@ extends MeshInstance3D
 
 const SHADER: Shader = preload("res://src/view/camera/edge_fog.gdshader")
 ## Kutu dışı boşluğun rengi ile aynı olmalı (sahne arka plan rengi): kenarda pus boşluğa karışır.
-const DEFAULT_COLOR := Color(0.045, 0.06, 0.085)
+const DEFAULT_COLOR := Color(0.80, 0.84, 0.86)
 const VISIBLE_EPS := 0.002
 
 var _material: ShaderMaterial = ShaderMaterial.new()

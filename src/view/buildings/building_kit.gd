@@ -23,6 +23,10 @@ const BAKE_SUBDIVISIONS := 4
 ## Çatı/duvar ayrımı: yüzey normalinin Y bileşeni bu eşikten büyükse çatı, mutlak değeri küçükse duvar.
 const ROOF_NORMAL_Y := 0.5
 const WALL_NORMAL_Y := 0.5
+## Çatı tonu verisi (T-062 sanat kapısı B-4): PROXY atlasındaki düz çatılar LOD1 çatı malzemesinden açık kalır;
+## listedeki modüllerin çatı üçgenleri, alan ortalaması `flat_roof_target_srgb` olacak biçimde kanal başına
+## çarpılır. Onaylı asset ve katalog hash'i değişmez (yalnız yükleme anındaki piştirme).
+const ROOF_TONE_PATH := "res://data/view/building_roof_tone.json"
 
 var gate: LibraryGate = null
 var count: int = 0
@@ -156,7 +160,7 @@ func _bake_module(module: int) -> void:
 	var atlas := _proxy_atlas_image(module)
 	if atlas == null:
 		push_error("BuildingKit: PROXY atlası okunamadı (%s): HLOD renkleri nötr kalır" % ids[module])
-	var baked := _make_template(mesh, atlas)
+	var baked := _make_template(mesh, atlas, _roof_target_for(ids[module]))
 	proxies[module] = baked["template"]
 	wall_color[module] = baked["wall"]
 	roof_color[module] = baked["roof"]
@@ -182,7 +186,7 @@ func _proxy_atlas_image(module: int) -> Image:
 
 
 ## Mesh -> ProxyTemplate (indeks açılır; üçgen sırası mesh sırasıdır: deterministik) + alan ağırlıklı duvar/çatı rengi.
-func _make_template(mesh: ArrayMesh, atlas: Image) -> Dictionary:
+func _make_template(mesh: ArrayMesh, atlas: Image, roof_target: Color = Color(-1.0, -1.0, -1.0)) -> Dictionary:
 	var arrays := mesh.surface_get_arrays(0)
 	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
@@ -213,6 +217,10 @@ func _make_template(mesh: ArrayMesh, atlas: Image) -> Dictionary:
 		elif absf(up) < WALL_NORMAL_Y:
 			wall_sum += rgb
 			wall_area += area
+	if roof_target.r >= 0.0 and roof_area > 0.0:
+		_retone_roof(tpl, roof_sum / roof_area, roof_target)
+		var tgt := roof_target.srgb_to_linear()
+		roof_sum = Vector3(tgt.r, tgt.g, tgt.b) * roof_area
 	var wall := _mean_color(wall_sum, wall_area)
 	var roof := _mean_color(roof_sum, roof_area)
 	if wall_area <= 0.0:
@@ -220,6 +228,36 @@ func _make_template(mesh: ArrayMesh, atlas: Image) -> Dictionary:
 	if roof_area <= 0.0:
 		roof = wall
 	return {"template": tpl, "wall": wall, "roof": roof}
+
+
+## Çatı üçgenlerinin doğrusal rengini hedef/ortalama oranıyla kanal başına çarpar (şablonda yerinde).
+static func _retone_roof(tpl: ProxyTemplate, mean_lin: Vector3, target_srgb: Color) -> void:
+	var tgt := target_srgb.srgb_to_linear()
+	var mult := Vector3(tgt.r / maxf(mean_lin.x, 1.0e-4), tgt.g / maxf(mean_lin.y, 1.0e-4),
+			tgt.b / maxf(mean_lin.z, 1.0e-4))
+	for i in range(0, tpl.colors.size() - 2, 3):
+		if tpl.normals[i].y <= ROOF_NORMAL_Y:
+			continue
+		var lin := tpl.colors[i].srgb_to_linear()
+		var c := Color(minf(lin.r * mult.x, 1.0), minf(lin.g * mult.y, 1.0), minf(lin.b * mult.z, 1.0), 1.0)
+		c = c.linear_to_srgb()
+		tpl.colors[i] = c
+		tpl.colors[i + 1] = c
+		tpl.colors[i + 2] = c
+
+
+## Modülün çatı hedef rengi (sRGB) ya da (-1,-1,-1) = ton ayarı yok. Veri: `ROOF_TONE_PATH`.
+static func _roof_target_for(id: String) -> Color:
+	var none := Color(-1.0, -1.0, -1.0)
+	var text := FileAccess.get_file_as_string(ROOF_TONE_PATH)
+	var d: Variant = JSON.parse_string(text)
+	if not (d is Dictionary):
+		return none
+	var mods: Variant = (d as Dictionary).get("modules", [])
+	var tgt: Variant = (d as Dictionary).get("flat_roof_target_srgb", [])
+	if not (mods is Array) or not (tgt is Array) or (tgt as Array).size() != 3 or not (mods as Array).has(id):
+		return none
+	return Color(float(tgt[0]) / 255.0, float(tgt[1]) / 255.0, float(tgt[2]) / 255.0, 1.0)
 
 
 static func _mean_color(sum: Vector3, area: float) -> Color:

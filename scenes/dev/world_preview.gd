@@ -49,6 +49,9 @@ const AMBIENT_ENERGY := 0.7
 ## T-051: ortam rengi (gölge tarafı). Önceki (0.60, 0.65, 0.74) mavi-gri baskı yaratıyordu (spec §1/2: soğuk mavi-gri
 ## yalnız sanayi sacı/yeni yapıda); nötr-ılık gri, kısık doygunluk.
 const AMBIENT_COLOR := Color(0.70, 0.68, 0.64)
+const SKY_TOP_COLOR := Color(0.42, 0.60, 0.80)
+const SKY_HORIZON_COLOR := Color(0.80, 0.84, 0.86)
+const SKY_GROUND_COLOR := Color(0.45, 0.47, 0.42)
 const T001_SUN_ENERGY := 0.7
 const T001_AMBIENT_ENERGY := 0.85
 ## Gölge uzaklığı = kamera uzaklığı x çarpan, [min, max] aralığında. Alt sınır sokak ölçeğinde de gölge verir
@@ -368,8 +371,19 @@ func _parse_args() -> Dictionary:
 
 func _setup_environment() -> void:
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.045, 0.06, 0.085)
+	# T-062 sanat kapisi B-5/madde 5: gunduz gokyuzu. Ambient kaynagi COLOR kalir (gok radyansi aydinlatmaya girmez).
+	var sky_mat := ProceduralSkyMaterial.new()
+	sky_mat.sky_top_color = SKY_TOP_COLOR
+	sky_mat.sky_horizon_color = SKY_HORIZON_COLOR
+	sky_mat.ground_horizon_color = SKY_HORIZON_COLOR
+	sky_mat.ground_bottom_color = SKY_GROUND_COLOR
+	sky_mat.sun_angle_max = 0.0
+	sky_mat.sun_curve = 0.0001
+	var sky := Sky.new()
+	sky.sky_material = sky_mat
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
+	env.background_mode = Environment.BG_SKY
+	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = AMBIENT_COLOR
 	env.ambient_light_energy = _arg_float(_args, "ambient",
