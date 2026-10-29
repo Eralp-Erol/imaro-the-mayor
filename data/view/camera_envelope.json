@@ -1,0 +1,46 @@
+{
+	"_header": "T-064 · Kamera zarfı (ADR-0007 §Karar 1, D-006). Hepsi ÇALIŞMA DEĞERİ: hesaplandı, çalışan oyunda ölçülmedi. Sahip: godot-engineer. Kod bu sayıları gömmez; CameraEnvelope bu dosyadan okur.",
+	"player": {
+		"d_min_m": 50.0,
+		"d_max_m": 18000.0,
+		"pitch_max_deg": 88.0,
+		"pitch_min_curve": [[50.0, 12.0], [300.0, 22.0], [1500.0, 25.0], [18000.0, 40.0]],
+		"k1_enabled": true,
+		"edge_margin_m": 1500.0,
+		"k1_epsilon_deg": 1.0,
+		"k1_min_distance_m": 300.0,
+		"bands": [
+			{"name": "street", "min_m": 50.0, "max_m": 300.0},
+			{"name": "neighborhood", "min_m": 300.0, "max_m": 1500.0},
+			{"name": "district", "min_m": 1500.0, "max_m": 8000.0},
+			{"name": "metro", "min_m": 8000.0, "max_m": 18000.0}
+		],
+		"hysteresis": 0.10,
+		"zoom_gates_m": [50.0, 150.0, 800.0, 4000.0, 18000.0],
+		"solve_order": {"default": ["pitch", "distance", "focus"], "pan": ["pitch", "focus"]},
+		"map_exit_distance_m": 6000.0,
+		"edge_fog": {"enabled": true, "full_below_m": 300.0, "gone_above_m": 450.0}
+	},
+	"legacy": {
+		"_note": "Yalnız geliştirici: --envelope=legacy (ADR-0007 §Karar 6). Eski 90 km / 25 m / 8 derece, K1 yok; metro_legacy_bench perf serisini kırmasın diye.",
+		"d_min_m": 25.0,
+		"d_max_m": 90000.0,
+		"pitch_max_deg": 88.0,
+		"pitch_min_curve": [[25.0, 8.0], [90000.0, 8.0]],
+		"k1_enabled": false,
+		"edge_margin_m": 0.0,
+		"k1_epsilon_deg": 1.0,
+		"k1_min_distance_m": 300.0,
+		"bands": [
+			{"name": "street", "min_m": 25.0, "max_m": 300.0},
+			{"name": "neighborhood", "min_m": 300.0, "max_m": 1500.0},
+			{"name": "district", "min_m": 1500.0, "max_m": 8000.0},
+			{"name": "metro", "min_m": 8000.0, "max_m": 90000.0}
+		],
+		"hysteresis": 0.10,
+		"zoom_gates_m": [30.0, 150.0, 800.0, 4000.0, 20000.0, 58000.0],
+		"solve_order": {"default": ["pitch", "distance", "focus"], "pan": ["pitch", "focus"]},
+		"map_exit_distance_m": 6000.0,
+		"edge_fog": {"enabled": false, "full_below_m": 300.0, "gone_above_m": 450.0}
+	}
+}

@@ -3,12 +3,12 @@ extends SceneTree
 ## ilk `--warmup` kareyi atar, sonraki kareleri ölçer; JSON yazar ve özet basar. tools/perf.sh sarar.
 ##   godot --path . [--resolution WxH] --script res://tools/godot/perf_probe.gd -- --scene=res://x.tscn
 ##         --out=/abs/x.json
-##         [--frames=360] [--warmup=60] [--name=ad] [sahneye geçecek argümanlar, örn. --preset=metro]
+##         [--frames=360] [--warmup=60] [--name=ad] [sahneye geçecek argümanlar, örn. --preset=core]
 ## Kare süresi = ardışık process_frame duvar saati (VSync KAPALI zorlanır; CPU+GPU+takas dahil). Draw call/obje/üçgen
 ## Performance monitörleri ile (RENDER_TOTAL_*_IN_FRAME) ve RenderingServer.get_rendering_info ile çapraz okunur.
 ## GPU süresi Compatibility renderer'da ölçülemeyebilir (viewport_get_measured_render_time_gpu → 0 ise raporlanır).
 ## Sahnede `perf_tag() -> String` varsa her kare etiketlenir ve `by_tag` altında etiket başına kare süresi / draw call /
-## üçgen ayrıca raporlanır (T-003: otomatik yörünge+zoom taramasında metro/district/local/street aşamaları).
+## üçgen ayrıca raporlanır (T-003: otomatik yörünge+zoom taramasında aşamalar; T-064: oyuncu zarfında street/neighborhood/district/metro bantları).
 ## Sahnede `perf_tick() -> int` (sim günü) varsa kare başına tick okunur ve rapora `tick_correlation` eklenir: yavaş
 ## karelerin kaçı sim tick'ine denk geldi, tick'li/tick'siz karelerin süresi. Ortalama/P95 tek başına tick kaynaklı
 ## takılmaları gizler (T-030 metro bulgusu); `--frames-out=/abs/x.json` ham kare serisini (kare süresi + tick) yazar.

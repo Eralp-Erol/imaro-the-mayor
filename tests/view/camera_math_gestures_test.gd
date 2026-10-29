@@ -31,31 +31,38 @@ func test_naive_center_zoom_moves_the_cursor_point_so_the_anchor_test_is_sensiti
 	assert_float(shift).is_greater(50.0)
 
 
-func test_zoom_in_moves_continuously_across_metro_to_street_scales_without_gates() -> void:
+func test_zoom_in_moves_continuously_across_the_whole_player_envelope_without_gates() -> void:
+	var env := CameraEnvelope.load_default()
+	var limits := Vector2(env.d_min_m, env.d_max_m)
 	var g := CTS.flat
-	var s := CTS.make_state(g, 0.0, 0.0, 58000.0, 50.0, 0.0)
+	var s := CTS.make_state(g, 0.0, 0.0, env.d_max_m, 50.0, 0.0)
 	var last := s.distance
 	var steps := 0
-	while s.distance > CameraMath.MIN_DISTANCE_M + 0.001 and steps < 400:
-		s = CameraMath.zoom_at(s, 1.1, CTS.VIEWPORT * 0.5 + Vector2(120.0, -80.0), CTS.VIEWPORT, g)
+	while s.distance > env.d_min_m + 0.001 and steps < 400:
+		s = CameraMath.zoom_at(s, 1.1, CTS.VIEWPORT * 0.5 + Vector2(120.0, -80.0), CTS.VIEWPORT, g, Rect2(), limits)
 		assert_float(s.distance).is_less_equal(last + 1.0e-6)
 		assert_float(last / s.distance).is_less(1.2)  # her adım ~%10: ölçek kapısı/sıçrama yok
 		last = s.distance
 		steps += 1
-	assert_float(s.distance).is_equal_approx(CameraMath.MIN_DISTANCE_M, 0.01)
-	assert_int(steps).is_between(80, 140)  # 58 km -> 25 m, ~%10 adımlarla
+	assert_float(s.distance).is_equal_approx(env.d_min_m, 0.01)
+	assert_int(steps).is_between(30, 80)  # d_max -> d_min (~18 km -> 50 m, ln(360)/ln(1.1) ~ 62 adım)
 
 
-func test_zoom_respects_distance_limits_and_ignores_garbage_factors() -> void:
+func test_zoom_respects_the_envelope_distance_limits_and_ignores_garbage_factors() -> void:
+	var env := CameraEnvelope.load_default()
+	var limits := Vector2(env.d_min_m, env.d_max_m)
 	var g := CTS.flat
-	var s := CTS.make_state(g, 0.0, 0.0, 80000.0, 50.0, 0.0)
-	var out := CameraMath.zoom_at(s, 0.1, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g)
-	assert_float(out.distance).is_less_equal(CameraMath.MAX_DISTANCE_M)
-	var near := CTS.make_state(g, 0.0, 0.0, CameraMath.MIN_DISTANCE_M, 50.0, 0.0)
-	var zoomed := CameraMath.zoom_at(near, 4.0, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g)
-	assert_float(zoomed.distance).is_greater_equal(CameraMath.MIN_DISTANCE_M - 0.001)
+	var s := CTS.make_state(g, 0.0, 0.0, env.d_max_m * 0.8, 50.0, 0.0)
+	# Uzaklaşma d_max'ta durur (tavan aşılmaz); çok küçük çarpan tek adımda dünyayı aşamaz.
+	var out := CameraMath.zoom_at(s, 0.1, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g, Rect2(), limits)
+	assert_float(out.distance).is_less_equal(env.d_max_m + 0.001)
+	var out2 := CameraMath.zoom_at(out, 0.5, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g, Rect2(), limits)
+	assert_float(out2.distance).is_less_equal(env.d_max_m + 0.001)
+	var near := CTS.make_state(g, 0.0, 0.0, env.d_min_m, 50.0, 0.0)
+	var zoomed := CameraMath.zoom_at(near, 4.0, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g, Rect2(), limits)
+	assert_float(zoomed.distance).is_greater_equal(env.d_min_m - 0.001)
 	for bad in [0.0, -2.0, NAN, INF]:
-		var same := CameraMath.zoom_at(s, bad, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g)
+		var same := CameraMath.zoom_at(s, bad, CTS.VIEWPORT * 0.5, CTS.VIEWPORT, g, Rect2(), limits)
 		assert_bool(same.is_close_to(s)).is_true()
 
 

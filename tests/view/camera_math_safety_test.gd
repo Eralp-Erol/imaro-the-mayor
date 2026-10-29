@@ -5,21 +5,23 @@ const CTS = preload("res://tests/view/camera_test_support.gd")
 
 # --- Arazi üstünde kalma ---
 
-func test_eye_never_goes_below_the_terrain_over_all_scales_and_pitches() -> void:
+func test_eye_never_goes_below_the_terrain_over_the_player_envelope_and_the_legacy_envelope() -> void:
+	# T-064: rastgele durumlar iki zarfın kendi aralığından (oyuncu: d_min..d_max, pitch_min(d)..88; legacy: 25 m-90 km).
 	var g := CTS.hills
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 1467
-	for i in 400:
-		var s := CameraState.new()
-		s.focus_x = rng.randf_range(-3000.0, 3000.0)
-		s.focus_z = rng.randf_range(-3000.0, 3000.0)
-		s.distance = exp(rng.randf_range(log(CameraMath.MIN_DISTANCE_M), log(90000.0)))
-		s.pitch_deg = rng.randf_range(CameraMath.MIN_PITCH_DEG, CameraMath.MAX_PITCH_DEG)
-		s.heading_deg = rng.randf_range(0.0, 360.0)
-		CameraMath.reseat(s, g)
-		var eye := CameraMath.eye_world(s, g)
-		var floor_y := float(g.call(eye.x, eye.z)) + CameraMath.clearance_m(s.distance)
-		assert_float(eye.y).is_greater_equal(floor_y - 0.001)
+	for env in [CameraEnvelope.load_default(), CameraEnvelope.legacy()]:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 1467
+		for i in 400:
+			var s := CameraState.new()
+			s.focus_x = rng.randf_range(-3000.0, 3000.0)
+			s.focus_z = rng.randf_range(-3000.0, 3000.0)
+			s.distance = exp(rng.randf_range(log(env.d_min_m), log(env.d_max_m)))
+			s.pitch_deg = rng.randf_range(env.pitch_min_deg(s.distance), env.pitch_max_deg)
+			s.heading_deg = rng.randf_range(0.0, 360.0)
+			CameraMath.reseat(s, g)
+			var eye := CameraMath.eye_world(s, g)
+			var floor_y := float(g.call(eye.x, eye.z)) + CameraMath.clearance_m(s.distance)
+			assert_float(eye.y).is_greater_equal(floor_y - 0.001)
 
 
 func test_without_the_clearance_clamp_a_low_hillside_camera_would_be_underground() -> void:
@@ -41,7 +43,8 @@ func test_without_the_clearance_clamp_a_low_hillside_camera_would_be_underground
 # --- Yakın/uzak düzlem ---
 
 func test_near_far_scale_with_distance_and_keep_depth_resolution_small_where_it_matters() -> void:
-	for d in [CameraMath.MIN_DISTANCE_M, 100.0, 1000.0, 10000.0, 58000.0, 90000.0]:
+	# Saf matematik: legacy zarf aralığı (25 m - 90 km) dahil; oyuncu zarfının 18 km noktası eklendi (T-064).
+	for d in [CameraMath.SAFETY_MIN_DISTANCE_M, 50.0, 100.0, 1000.0, 10000.0, 18000.0, 58000.0, 90000.0]:
 		var nf := CameraMath.near_far(d)
 		assert_float(nf.x).is_between(CameraMath.NEAR_MIN_M, CameraMath.NEAR_MAX_M)
 		assert_float(nf.y).is_greater(nf.x * 100.0)
@@ -51,8 +54,8 @@ func test_near_far_scale_with_distance_and_keep_depth_resolution_small_where_it_
 		assert_float(CameraMath.depth_resolution_m(nf.x, nf.y, d * 3.0) / (d * 3.0)).is_less(1.0e-4)
 
 
-func test_a_fixed_tiny_near_plane_would_fail_the_depth_budget_at_metro_scale() -> void:
-	# Olumsuz varyant: sabit near=0.5 + far=120 km (metro) -> odakta çözünürlük uzaklığın 1e-5'ini aşar.
+func test_a_fixed_tiny_near_plane_would_fail_the_depth_budget_at_legacy_58km_scale() -> void:
+	# Olumsuz varyant (legacy zarf, 58 km): sabit near=0.5 + far=120 km -> odakta çözünürlük uzaklığın 1e-5'ini aşar.
 	assert_float(CameraMath.depth_resolution_m(0.5, 120000.0, 58000.0) / 58000.0).is_greater(1.0e-5)
 
 # --- Origin rebasing ---

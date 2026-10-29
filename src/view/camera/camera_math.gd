@@ -10,10 +10,12 @@ extends RefCounted
 ##
 ## Tüm fonksiyonlar saf ve salt okunurdur; durum değiştirenler yeni `CameraState` döndürür.
 
-const MIN_DISTANCE_M := 25.0
-const MAX_DISTANCE_M := 90000.0
-const MIN_PITCH_DEG := 8.0
-const MAX_PITCH_DEG := 88.0
+## Yalnız NaN/sonsuz GÜVENLİK tabanı (T-064, ADR-0007): oyun sınırı değildir. Oyun sınırları `CameraEnvelope`
+## (`data/view/camera_envelope.json`) üzerindendir; bu sayılar eski (legacy) zarfla aynıdır, hiçbir zarfı dışlamaz.
+const SAFETY_MIN_DISTANCE_M := 25.0
+const SAFETY_MAX_DISTANCE_M := 90000.0
+const SAFETY_MIN_PITCH_DEG := 8.0
+const SAFETY_MAX_PITCH_DEG := 88.0
 ## Tek zoom olayının çarpan sınırı (aşırı tekerlek/kıstırma sıçraması tek adımda dünyayı aşmasın).
 const MIN_ZOOM_FACTOR := 0.2
 const MAX_ZOOM_FACTOR := 5.0
@@ -45,16 +47,17 @@ const PAN_ITERATIONS := 4
 
 # --- Temel geometri ---
 
+## Güvenlik tabanı kenetlemesi (zarf değil; bkz `CameraEnvelope`).
 static func clamp_distance(distance: float) -> float:
 	if not is_finite(distance):
-		return MIN_DISTANCE_M
-	return clampf(distance, MIN_DISTANCE_M, MAX_DISTANCE_M)
+		return SAFETY_MIN_DISTANCE_M
+	return clampf(distance, SAFETY_MIN_DISTANCE_M, SAFETY_MAX_DISTANCE_M)
 
 
 static func clamp_pitch_deg(pitch_deg: float) -> float:
 	if not is_finite(pitch_deg):
-		return MIN_PITCH_DEG
-	return clampf(pitch_deg, MIN_PITCH_DEG, MAX_PITCH_DEG)
+		return SAFETY_MIN_PITCH_DEG
+	return clampf(pitch_deg, SAFETY_MIN_PITCH_DEG, SAFETY_MAX_PITCH_DEG)
 
 
 ## Bakış yönü (birim). heading 0 = kuzey (-z), 90 = doğu (+x); pitch 90 = aşağı.
@@ -98,13 +101,13 @@ static func clearance_m(distance: float) -> float:
 ## Göz konumu, dünya koordinatı (Vector3 = 32-bit: BİLGİ/test amaçlı; hassas yol `eye_relative`). Zemin açıklığı
 ## uygulanmıştır: göz arazinin `clearance_m` altına inmez.
 static func eye_world(s: CameraState, ground: Callable) -> Vector3:
-	var e := _eye_xyz(s, ground)
+	var e := eye_xyz(s, ground)
 	return Vector3(e[0], e[1], e[2])
 
 
 ## Göz konumu origin'e GÖRE (rebasing): çıkarma 64-bit yapılır, 32-bit'e yalnız küçük sonuç iner.
 static func eye_relative(s: CameraState, origin_x: float, origin_z: float, ground: Callable) -> Vector3:
-	var e := _eye_xyz(s, ground)
+	var e := eye_xyz(s, ground)
 	return Vector3(e[0] - origin_x, e[1], e[2] - origin_z)
 
 
@@ -155,7 +158,7 @@ static func ray_ground_hit(ox: float, oy: float, oz: float, dir: Vector3, ground
 ## Ekran noktasının altındaki zemin {ok, x, y, z}. Zemin kesişimi yoksa odak yüksekliğindeki yatay düzleme
 ## kesişim (ok = true); o da yoksa (gökyüzü) ok = false.
 static func grab_point(s: CameraState, px: Vector2, viewport: Vector2, ground: Callable) -> Dictionary:
-	var eye := _eye_xyz(s, ground)
+	var eye := eye_xyz(s, ground)
 	var dir := ray_dir(s, px, viewport)
 	var hit := ray_ground_hit(eye[0], eye[1], eye[2], dir, ground, _march_range(s))
 	if hit["hit"]:
@@ -173,15 +176,15 @@ static func grab_point(s: CameraState, px: Vector2, viewport: Vector2, ground: C
 ## ölçeklenir (göz' = A + (göz - A) / çarpan); yön değişmez. Çarpan > 1 yakınlaşır. Geçersiz/NaN/<=0 çarpan: durum
 ## değişmez. Uzaklık [MIN, MAX] içinde kalır. Gökyüzü altındaysa anchor = ışın üzerinde odak uzaklığındaki nokta.
 static func zoom_at(s: CameraState, factor: float, px: Vector2, viewport: Vector2, ground: Callable,
-		bounds: Rect2 = Rect2()) -> CameraState:
+		bounds: Rect2 = Rect2(), limits_m: Vector2 = Vector2(SAFETY_MIN_DISTANCE_M, SAFETY_MAX_DISTANCE_M)) -> CameraState:
 	if not is_finite(factor) or factor <= 0.0 or not s.is_valid():
 		return s.copy()
 	var f := clampf(factor, MIN_ZOOM_FACTOR, MAX_ZOOM_FACTOR)
-	var wanted := clamp_distance(s.distance / f)
+	var wanted := clampf(s.distance / f, limits_m.x, limits_m.y)
 	var f_eff := s.distance / wanted
 	if absf(f_eff - 1.0) < 1.0e-9:
 		return s.copy()
-	var eye := _eye_xyz(s, ground)
+	var eye := eye_xyz(s, ground)
 	var dir := ray_dir(s, px, viewport)
 	var hit := ray_ground_hit(eye[0], eye[1], eye[2], dir, ground, _march_range(s))
 	var ax: float = hit["x"] if hit["hit"] else eye[0] + dir.x * s.distance
@@ -292,7 +295,7 @@ static func snap_origin(value: float) -> float:
 # --- Özel ---
 
 ## Göz konumu 64-bit bileşenler [x, y, z] (ground geçerliyse zemin açıklığı uygulanır).
-static func _eye_xyz(s: CameraState, ground: Callable) -> PackedFloat64Array:
+static func eye_xyz(s: CameraState, ground: Callable) -> PackedFloat64Array:
 	var off := eye_offset(s)
 	var out := PackedFloat64Array([s.focus_x + off.x, s.focus_y + off.y, s.focus_z + off.z])
 	if ground.is_valid():

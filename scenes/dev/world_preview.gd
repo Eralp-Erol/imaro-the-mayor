@@ -1,17 +1,21 @@
 extends Node3D
 ## T-001 dünya önizleme sahnesi (DEV): WorldData üretir → chunk'lı flat-shaded arazi + su → tek güneş,
 ## ışık, kamera.
-## Açma: tools/godot.sh --path . res://scenes/dev/world_preview.tscn -- --preset=metro  (veya editörde F6).
-## Komut satırı (-- sonrası): --preset=metro|bay_west|plain_east|harbor|d5_slopes  --seed=N  --cell=M (hücre m)
+## Açma: tools/godot.sh --path . res://scenes/dev/world_preview.tscn -- --preset=core  (veya editörde F6).
+## Komut satırı (-- sonrası): --preset=core|bay_west|plain_east|harbor|d5_slopes  --seed=N  --cell=M (hücre m)
 ## --chunk=N (hücre)
 ##   (geçersiz değer → net hata + varsayılan; --cell en az 20 m)
 ##   --exag=K (gölgeleme eğim abartısı) --sun-el=DERECE --sun-az=DERECE --sun-energy=E --ambient=E --no-shadows
 ##   --stride=N (LOD deneyi)  --markers (D-kodu/saha işaretleri açık başlar)  --no-threads.
-##   --preset=metro | district:D4 | street:12500,8300 | street:port | bay_west | plain_east | harbor | d5_slopes
-##   (bkz CameraPresets); --heading=D --pitch=D --distance=M (preset'ten sonra kamera geçersiz kılma, capture için)
-##   --sweep[=street:port] otomatik yörünge+zoom taraması (metro->ilçe->sokak->ilçe->metro, kareye bağlı; perf için)
-##   --sweep-leg=KARE (etap uzunluğu, varsayılan 150) --sweep-hold=KARE (başta metro bekleme, varsayılan 60).
-## Tuşlar: F3 işaretleri aç/kapa (varsayılan KAPALI), 1-5 T-001 preset'leri, M metro, T odakta sokak ölçeği.
+##   --preset=core | district:D4 | street:12500,8300 | street:port | bay_west | plain_east | harbor | d5_slopes
+##   (bkz CameraPresets; `metro` EMEKLİ ve hata verir); --preset verilmezse açılış = `start_view(start_district_id)`:
+##   değer `world.json`'daki isteğe bağlı `start_district_id` ya da `--start-district=KOD` (yoksa `core`).
+##   --heading=D --pitch=D --distance=M (preset'ten sonra kamera geçersiz kılma, capture için; zarfa çözülür)
+##   --envelope=legacy GELİŞTİRİCİ: eski 90 km/25 m/8 derece zarfı, K1 yok (yalnız metro_legacy_bench perf serisi için;
+##   dışa aktarılan sürümde yok sayılır). Bayraksız oyuncu zarfı (~18 km / ~50 m + K1) geçerlidir.
+##   --sweep[=street:port] otomatik yörünge+zoom taraması (core->ilçe->sokak->ilçe->core, kareye bağlı; perf için)
+##   --sweep-leg=KARE (etap uzunluğu, varsayılan 150) --sweep-hold=KARE (başta uzak uçta bekleme, varsayılan 60).
+## Tuşlar: F3 işaretleri aç/kapa (varsayılan KAPALI), 1-5 T-001 preset'leri, M core, T odakta sokak ölçeği, Home başlangıç.
 ## Kamera = CameraRig (T-003, src/view/camera/): girdi YALNIZ InputProfile ile. Masaüstü: sol sürükle kaydır, orta tuş
 ##   sürükle döndür, tekerlek/trackpad kıstır imleçte zoom; WASD/oklar kaydır, Q/E döndür, PageUp/PageDown zoom;
 ##   R/F eğim (GEÇİCİ). Dokunmatik (`-- --imaro-input-profile=touch`): tek parmak kaydır, iki parmak kıstır/bük.
@@ -65,6 +69,7 @@ var _view_root: Node3D
 var _terrain: TerrainView
 var _camera: CameraRig
 var _sweep: CameraSweep = null
+var _edge_fog: EdgeFog = null
 var _sweep_frame: int = 0
 var _frames_alive: int = 0
 var _markers: WorldDebugMarkers
@@ -125,10 +130,17 @@ func _ready() -> void:
 	_camera = CameraRig.new()
 	_camera.name = "CameraRig"
 	_camera.view_root = _view_root
+	if args.has("envelope"):
+		_camera.envelope = _envelope_from_arg(str(args["envelope"]))
+	_camera.home_district = StringName(str(args.get("start-district", control["world"].get("start_district_id", ""))))
 	add_child(_camera)
 	_camera.set_world(_world, _terrain.surface_height_at)
 	_camera.make_current()
-	_camera.apply_preset(str(args.get("preset", "metro")))
+	_setup_edge_fog()
+	if args.has("preset"):
+		_camera.apply_preset(str(args["preset"]))
+	else:
+		_camera.go_home()
 	_apply_camera_overrides(args)
 	if not args.has("no-buildings"):
 		building_stats = _build_buildings(control, world_seed)
@@ -138,10 +150,10 @@ func _ready() -> void:
 		var street_spec := str(args["sweep"]) if str(args["sweep"]) != "true" else "street:port"
 		_sweep = CameraSweep.build(_world, street_spec, _terrain.surface_height_at,
 				_arg_int(args, "sweep-leg", CameraSweep.DEFAULT_FRAMES_PER_LEG, 2, 100000),
-				_arg_int(args, "sweep-hold", CameraSweep.DEFAULT_HOLD_FRAMES, 0, 100000))
+				_arg_int(args, "sweep-hold", CameraSweep.DEFAULT_HOLD_FRAMES, 0, 100000), _camera.envelope)
 
 	build_stats = {
-		"seed": world_seed, "preset": String(_camera.preset_name), "sweep_frames": _sweep.total_frames() if _sweep else 0,
+		"seed": world_seed, "preset": String(_camera.preset_name), "envelope": String(_camera.envelope.id), "sweep_frames": _sweep.total_frames() if _sweep else 0,
 		"world_samples": _world.width * _world.height, "cell_size_m": _world.cell_size,
 		"control_load_ms": snappedf((t1 - t0) / 1000.0, 0.1),
 		"world_generate_ms": snappedf((t2 - t1) / 1000.0, 0.1),
@@ -164,6 +176,8 @@ func _process(_delta: float) -> void:
 		_frames_alive += 1
 		var warming := _frames_alive <= SHADOW_WARMUP_FRAMES
 		_sun.shadow_enabled = _shadows_wanted and (warming or _camera.distance() < SHADOW_MAX_CAMERA_DISTANCE_M)
+	if _edge_fog != null and _camera != null:
+		_edge_fog.set_strength(_camera.envelope.fog_strength(_camera.distance()))
 	if _camera != null:
 		var far := FarLod.next_state(_camera.distance(), _far_lod)
 		if far != _far_lod:
@@ -179,10 +193,11 @@ func _apply_far_lod(far: bool) -> void:
 		_terrain.set_far_mode(far)
 
 
-## perf_probe etiketi: tarama sırasında ölçek aşaması (metro/district/local/street), değilse preset adı.
+## perf_probe etiketi: tarama sırasında ölçek aşaması (oyuncu zarfı: bant adı; legacy: metro/district/local/street),
+## değilse preset adı.
 func perf_tag() -> String:
 	if _sweep != null and _camera != null:
-		return String(CameraSweep.phase_of(_camera.distance()))
+		return String(_sweep.phase_label(_camera.distance()))
 	return String(_camera.preset_name) if _camera != null else ""
 
 
@@ -197,7 +212,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if digit >= 0 and digit < CameraPresets.KEY_ORDER.size() and _camera != null:
 		_camera.apply_preset(String(CameraPresets.KEY_ORDER[digit]))
 	elif key.physical_keycode == KEY_M and _camera != null:
-		_camera.apply_preset("metro")
+		_camera.apply_preset("core")
 	elif key.physical_keycode == KEY_T and _camera != null:
 		var f := _camera.focus_xz()
 		_camera.apply_preset("street:%d,%d" % [int(f.x), int(f.y)])
@@ -259,9 +274,30 @@ func _apply_camera_overrides(args: Dictionary) -> void:
 		return
 	var s := _camera.target_state()
 	s.heading_deg = _arg_float(args, "heading", s.heading_deg, 0.0, 360.0)
-	s.pitch_deg = _arg_float(args, "pitch", s.pitch_deg, CameraMath.MIN_PITCH_DEG, CameraMath.MAX_PITCH_DEG)
-	s.distance = _arg_float(args, "distance", s.distance, CameraMath.MIN_DISTANCE_M, CameraMath.MAX_DISTANCE_M)
-	_camera.apply_state(s, true)
+	s.pitch_deg = _arg_float(args, "pitch", s.pitch_deg, CameraMath.SAFETY_MIN_PITCH_DEG, CameraMath.SAFETY_MAX_PITCH_DEG)
+	s.distance = _arg_float(args, "distance", s.distance, CameraMath.SAFETY_MIN_DISTANCE_M,
+			CameraMath.SAFETY_MAX_DISTANCE_M)
+	_camera.apply_state(s, true)  # zarf sınırları/K1 burada uygulanır (kenetlenen değer `target_state()`te görünür)
+
+
+## `--envelope=` değeri: yalnız `legacy` (geliştirici derlemesinde) eski zarfı verir; dışa aktarılan sürümde yok sayılır.
+func _envelope_from_arg(value: String) -> CameraEnvelope:
+	if value.to_lower() != "legacy":
+		push_error("world_preview: --envelope='%s' bilinmiyor (yalnız legacy); oyuncu zarfı kullanılıyor" % value)
+	elif not OS.is_debug_build():
+		push_error("world_preview: --envelope=legacy dışa aktarılan sürümde yok sayıldı; oyuncu zarfı kullanılıyor")
+	return CameraEnvelope.from_flag(value, OS.is_debug_build())
+
+
+## Kenar pusu (yalnız oyuncu zarfında; K1 kutu kenarını K1 bandında zaten kadrajdan uzak tutar).
+func _setup_edge_fog() -> void:
+	if not _camera.envelope.fog_enabled:
+		return
+	_edge_fog = EdgeFog.new()
+	add_child(_edge_fog)
+	_edge_fog.setup(_world.bounds(), _camera.envelope.edge_margin_m)
+	_edge_fog.set_origin(_camera.rebase_origin)
+	_camera.rebased.connect(_edge_fog.set_origin)
 
 
 ## T0 yapı kaynağı (WorldNetwork -> T0Settlement, onaylı hero tablosu) + BuildingView (WorldView altında: rebasing otomatik).

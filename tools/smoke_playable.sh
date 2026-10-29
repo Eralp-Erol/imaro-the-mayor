@@ -52,18 +52,23 @@ capture="$(cat "$out/capture.path")"
 echo "smoke: WINDOW_CAPTURED $capture"
 
 # Pencereli perf probu gerçek playable sahnesini (render + TickDriver/facade) ölçer.
-# Üç preset ayrı tutulur; kabul sayısı bunların en kötüsüdür, ortalaması değil.
+# Üç oyuncu görünümü ayrı tutulur; kabul sayısı bunların en kötüsüdür, ortalaması değil (T-064, ADR-0007 §Karar 7):
+# core (oyuncunun en uzak ortalı görünümü), district:D1, street:port. Eski `metro` serisi `metro_legacy_bench` +
+# `--envelope=legacy` olarak BİLGİ amaçlı sürer (seri kırılmasın); kabule girmez.
 run_perf() {
-  local name="$1" preset="$2" result
+  local name="$1" preset="$2" extra="${3:-}" result
+  local args=(--demo "--preset=$preset")
+  [ -n "$extra" ] && args+=("$extra")
   result="$("$root/tools/perf.sh" "$name" --frames 180 --warmup 120 --resolution 1600x900 \
-    --scene res://scenes/game/playable.tscn -- --demo "--preset=$preset")"
+    --scene res://scenes/game/playable.tscn -- "${args[@]}")"
   printf '%s\n' "$result" | sed -n '1p'
 }
-echo "smoke: combined window telemetry (metro/district/street)"
-metro_json="$(run_perf playable-smoke-metro metro)"
+echo "smoke: combined window telemetry (core/district/street + legacy bench info)"
+core_json="$(run_perf playable-smoke-core core)"
 district_json="$(run_perf playable-smoke-district district:D1)"
 street_json="$(run_perf playable-smoke-street street:port)"
-for f in "$metro_json" "$district_json" "$street_json"; do
+legacy_json="$(run_perf playable-smoke-metro-legacy-bench metro_legacy_bench --envelope=legacy)"
+for f in "$core_json" "$district_json" "$street_json" "$legacy_json"; do
   [ -s "$f" ] || { echo "smoke: FAIL perf JSON missing: $f" >&2; exit 1; }
 done
 
@@ -90,17 +95,18 @@ if [ -z "$hash_ms" ] || [ "$hash_ms" = "null" ]; then
   hash_ms="$(jq -r '.samples[] | select(.parcels == 10000) | .state_hash_ms' "$root/artifacts/verify/t029-perf.json")"
   save_ms="$(jq -r '.samples[] | select(.parcels == 10000) | .save_load_ms' "$root/artifacts/verify/t029-perf.json")"
 fi
-jq -n --slurpfile metro "$metro_json" --slurpfile district "$district_json" --slurpfile street "$street_json" \
+jq -n --slurpfile core "$core_json" --slurpfile district "$district_json" --slurpfile street "$street_json" \
+  --slurpfile legacy "$legacy_json" \
   --argjson k8 "$k8_pct" --argjson hash "$hash_ms" --argjson save "$save_ms" \
   --arg capture "$capture" --arg lod0 "$lod0" --arg lod1 "$lod1" \
-  '{frame_avg_ms: ([$metro[0].frame_ms.mean, $district[0].frame_ms.mean, $street[0].frame_ms.mean] | max),
-    frame_p95_ms: ([$metro[0].frame_ms.p95, $district[0].frame_ms.p95, $street[0].frame_ms.p95] | max),
-    draw_calls_max: ([$metro[0].draw_calls.max, $district[0].draw_calls.max, $street[0].draw_calls.max] | max),
-    local_phase_triangles_max: ([$metro[0].primitives.max, $district[0].primitives.max, $street[0].primitives.max] | max),
+  '{frame_avg_ms: ([$core[0].frame_ms.mean, $district[0].frame_ms.mean, $street[0].frame_ms.mean] | max),
+    frame_p95_ms: ([$core[0].frame_ms.p95, $district[0].frame_ms.p95, $street[0].frame_ms.p95] | max),
+    draw_calls_max: ([$core[0].draw_calls.max, $district[0].draw_calls.max, $street[0].draw_calls.max] | max),
+    local_phase_triangles_max: ([$core[0].primitives.max, $district[0].primitives.max, $street[0].primitives.max] | max),
     k8_lod0_lod1_diff_pct: $k8, state_hash_ms_10k_parcels: $hash,
     save_load_ms_10k_parcels: $save,
     evidence: {playable_capture: $capture, k8_lod0: $lod0, k8_lod1: $lod1,
-      metro: $metro[0], district: $district[0], street: $street[0]}}' >"$perf_file"
+      core: $core[0], district: $district[0], street: $street[0], metro_legacy_bench_info: $legacy[0]}}' >"$perf_file"
 
 if ! jq -e '
   .frame_avg_ms <= 8 and .frame_p95_ms <= 16.6 and .draw_calls_max <= 600 and

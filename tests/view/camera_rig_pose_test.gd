@@ -45,18 +45,18 @@ func test_camera_node_looks_at_the_focus_through_the_real_camera_pipeline() -> v
 
 
 func test_near_and_far_follow_the_distance_and_cover_the_horizon_from_street_level() -> void:
-	var metro := _rig("metro")
-	var nf_metro := CameraMath.near_far(metro.distance())
-	assert_float(metro.camera.near).is_equal_approx(nf_metro.x, 0.001)
+	var core := _rig("core")
+	var nf_core := CameraMath.near_far(core.distance())
+	assert_float(core.camera.near).is_equal_approx(nf_core.x, 0.001)
 	var street := _rig("street:port")
 	assert_float(street.camera.near).is_less(2.0)
 	assert_float(street.camera.far).is_greater(55000.0)  # sokaktan metro ufku görünür kalır
 
 
-func test_camera_stays_above_the_terrain_while_flying_metro_to_street_and_back() -> void:
-	var rig := _rig("metro")
+func test_camera_stays_above_the_terrain_while_flying_ceiling_to_street_and_back() -> void:
+	var rig := _rig("core")
 	var g := _ground()
-	var px := Vector2(900.0, 380.0)
+	var px := rig.get_viewport().get_visible_rect().size * Vector2(0.56, 0.42)  # görünüm içinde, merkeze yakın
 	var lowest := INF
 	for i in 160:
 		rig.on_zoom(1.1, px)
@@ -65,19 +65,20 @@ func test_camera_stays_above_the_terrain_while_flying_metro_to_street_and_back()
 		var world_x := local.x + rig.rebase_origin.x
 		var world_z := local.z + rig.rebase_origin.y
 		lowest = minf(lowest, local.y - float(g.call(world_x, world_z)))
-	assert_float(rig.distance()).is_less(40.0)
+	assert_float(rig.distance()).is_equal_approx(rig.envelope.d_min_m, 0.01)  # zarfın en yakın bakışı
 	assert_float(lowest).is_greater(CameraMath.CLEARANCE_MIN_M - 0.05)
 	for i in 160:
 		rig.on_zoom(1.0 / 1.1, px)
 		rig.snap_to_target()
-	assert_float(rig.distance()).is_greater(50000.0)
+	assert_float(rig.distance()).is_greater(rig.envelope.d_max_m * 0.5)
+	assert_float(rig.distance()).is_less_equal(rig.envelope.d_max_m + 0.001)  # tavan aşılmaz
 
 
 func test_street_scale_hillside_camera_is_lifted_when_the_raw_orbit_eye_would_be_underground() -> void:
 	var rig := _rig("street:D5")  # D5: yamaçlar
 	var s := rig.current_state()
-	s.pitch_deg = CameraMath.MIN_PITCH_DEG
-	s.distance = CameraMath.MIN_DISTANCE_M
+	s.distance = rig.envelope.d_min_m
+	s.pitch_deg = rig.envelope.pitch_min_deg(s.distance)
 	for h in range(0, 360, 20):
 		s.heading_deg = float(h)
 		rig.apply_state(s, true)
@@ -173,8 +174,8 @@ func test_rebasing_triggers_only_after_the_focus_travels_and_never_moves_the_pic
 	assert_float(px_near.x).is_not_equal(INF)
 
 
-func test_zoom_flight_from_metro_to_street_keeps_the_cursor_point_fixed_across_every_rebase() -> void:
-	var rig := _rig("metro")
+func test_zoom_flight_from_the_ceiling_to_street_keeps_the_cursor_point_fixed_across_every_rebase() -> void:
+	var rig := _rig("core")
 	var size := rig.get_viewport().get_visible_rect().size
 	var px := size * Vector2(0.78, 0.33)  # merkezden uzak bir imleç noktası
 	var anchor := rig.screen_to_ground(px)
@@ -192,7 +193,7 @@ func test_zoom_flight_from_metro_to_street_keeps_the_cursor_point_fixed_across_e
 
 
 func test_without_a_view_root_rebasing_stays_off_and_origin_is_zero() -> void:
-	var rig := _rig("metro", false)
+	var rig := _rig("core", false)
 	var s := rig.current_state()
 	s.focus_x += 9000.0
 	rig.apply_state(s, true)
@@ -202,8 +203,8 @@ func test_without_a_view_root_rebasing_stays_off_and_origin_is_zero() -> void:
 
 # --- Preset'ler ---
 
-func test_presets_apply_to_the_rig_and_bad_ones_fall_back_to_metro_with_an_error() -> void:
-	var rig := _rig("metro")
+func test_presets_apply_to_the_rig_and_bad_ones_fall_back_to_core_with_an_error() -> void:
+	var rig := _rig("core")
 	assert_bool(rig.apply_preset("district:D2")).is_true()
 	assert_str(String(rig.preset_name)).is_equal("district")
 	var d2 := _world.region_by_code(&"D2")
@@ -211,27 +212,30 @@ func test_presets_apply_to_the_rig_and_bad_ones_fall_back_to_metro_with_an_error
 	assert_bool(rig.apply_preset("street:port")).is_true()
 	assert_float(rig.distance()).is_less(200.0)
 	assert_bool(rig.apply_preset("district:D99")).is_false()  # push_error beklenir; çökme yok
-	assert_str(String(rig.preset_name)).is_equal("metro")
-	assert_float(rig.distance()).is_greater(50000.0)
+	assert_str(String(rig.preset_name)).is_equal("core")
+	assert_float(rig.distance()).is_equal_approx(rig.envelope.d_max_m, 0.01)
+	assert_bool(rig.apply_preset("metro")).is_false()  # emekli ad: açık hata, takma ad yok (push_error beklenir)
+	assert_str(String(rig.preset_name)).is_equal("core")
 
 
 # --- Kapılı zoom ayarı (UX Q-011 AÇIK) ---
 
 func test_continuous_zoom_is_the_default_and_gated_zoom_lands_on_the_gates() -> void:
-	var rig := _rig("metro")
+	var rig := _rig("core")
 	assert_bool(rig.continuous_zoom).is_true()
 	var d0 := rig.distance()
-	rig.on_zoom(1.1, Vector2(800.0, 450.0))
+	var center_px := rig.get_viewport().get_visible_rect().size * 0.5
+	rig.on_zoom(1.1, center_px)
 	assert_float(rig.target_state().distance).is_equal_approx(d0 / 1.1, 100.0)  # sürekli adım: kapıya oturmaz
-	var gated := _rig("metro")
+	var gated := _rig("core")
 	gated.continuous_zoom = false
 	var seen: Array[float] = []
 	for i in 6:
-		gated.on_zoom(1.1, Vector2(800.0, 450.0))
+		gated.on_zoom(1.1, center_px)
 		seen.append(gated.target_state().distance)
 	for d in seen:
 		var on_gate := false
-		for g in CameraRig.ZOOM_GATES_M:
+		for g in gated.envelope.zoom_gates_m:
 			on_gate = on_gate or absf(d - g) < g * 0.1  # anchor korunur: kapıya ±%10 (arazi, merkez ışın isabeti)
 		assert_bool(on_gate).override_failure_message("mesafe %s bir kapıda değil" % d).is_true()
 	assert_float(seen[0]).is_greater(seen[seen.size() - 1])

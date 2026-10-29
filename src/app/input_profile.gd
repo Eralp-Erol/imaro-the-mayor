@@ -26,6 +26,7 @@ extends RefCounted
 ##   speed_step_requested(direction)    +1 / -1 (= ve - tuşları, nümerik +/-);
 ##                                      üst sınır `PlatformProfile.max_game_speed`
 ##   cancel_requested                   Esc
+##   camera_home_requested              Home (başlangıç görünümü; dokunmatikte HUD düğmesi aynı sinyali sürer)
 ## SÜREKLİ (her karede yoklanır): held_pan_axis() (WASD/oklar, ekran yönü, y aşağı, uzunluk <= 1),
 ##   held_rotate_axis() (Q = -1, E = +1; saat yönü +), held_zoom_axis() (PageUp = +1 yakınlaş, PageDown = -1).
 ## Eğim (pitch) fiili tanımlı DEĞİL; T-003 gerekirse sözleşmeye ekletir (iki profile birden eklenir).
@@ -42,6 +43,8 @@ signal rotate_requested(radians: float, anchor: Vector2)
 signal pause_toggle_requested
 signal speed_step_requested(direction: int)
 signal cancel_requested
+## Kamera Home / başlangıç görünümü (masaüstü: Home tuşu; dokunmatikte HUD düğmesi aynı sinyali sürer). T-064.
+signal camera_home_requested
 
 const PROFILE_DESKTOP := &"desktop"
 const PROFILE_TOUCH := &"touch"
@@ -147,6 +150,8 @@ func _one_shot(code: Key) -> bool:
 			pause_toggle_requested.emit()
 		KEY_ESCAPE:
 			cancel_requested.emit()
+		KEY_HOME:
+			camera_home_requested.emit()
 		KEY_EQUAL, KEY_PLUS, KEY_KP_ADD:
 			speed_step_requested.emit(1)
 		KEY_MINUS, KEY_KP_SUBTRACT:

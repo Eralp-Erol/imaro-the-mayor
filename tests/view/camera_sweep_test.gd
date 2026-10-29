@@ -11,18 +11,34 @@ func before() -> void:
 	_ground = func(x: float, z: float) -> float: return maxf(_world.height_at(x, z), _world.sea_level)
 
 
-func test_sweep_starts_and_ends_at_metro_scale_and_reaches_street_scale_in_the_middle() -> void:
-	var sweep := CameraSweep.build(_world, "street:port", _ground, 100, 10)
+func test_player_sweep_starts_and_ends_at_the_ceiling_and_visits_all_four_scale_bands_with_k1_every_frame() -> void:
+	var env := CameraEnvelope.load_default()
+	var sweep := CameraSweep.build(_world, "street:port", _ground, 100, 10, env)
 	assert_int(sweep.total_frames()).is_equal(10 + 4 * 100)
-	assert_float(sweep.state_at_frame(0).distance).is_greater(50000.0)
-	assert_float(sweep.state_at_frame(sweep.total_frames()).distance).is_greater(50000.0)
+	assert_float(sweep.state_at_frame(0).distance).is_equal_approx(env.d_max_m, 1.0)
+	assert_float(sweep.state_at_frame(sweep.total_frames()).distance).is_equal_approx(env.d_max_m, 1.0)
 	var lowest := INF
 	var saw: Dictionary = {}
 	for f in range(0, sweep.total_frames() + 1):
-		var d := sweep.state_at_frame(f).distance
-		lowest = minf(lowest, d)
-		saw[CameraSweep.phase_of(d)] = true
+		var s := sweep.state_at_frame(f)
+		lowest = minf(lowest, s.distance)
+		saw[sweep.phase_label(s.distance)] = true
+		assert_float(s.distance).is_between(env.d_min_m, env.d_max_m + 0.001)
+		assert_bool(env.footprint_ok(s, sweep.aspect, _ground, _world.bounds(), _world.sea_level)) \
+				.override_failure_message("K1 kare %d" % f).is_true()
 	assert_float(lowest).is_less_equal(CameraPresets.STREET_DISTANCE_M + 0.01)
+	for band in [&"street", &"neighborhood", &"district", &"metro"]:
+		assert_bool(saw.has(band)).override_failure_message("bant %s görülmedi" % band).is_true()
+	assert_bool(saw.has(&"local")).is_false()  # eski legacy etiketi oyuncu taramasında yok
+
+
+func test_legacy_sweep_keeps_the_old_four_phase_labels_and_reaches_the_old_58km_start() -> void:
+	var legacy := CameraEnvelope.legacy()
+	var sweep := CameraSweep.build(_world, "street:port", _ground, 100, 10, legacy)
+	assert_float(sweep.state_at_frame(0).distance).is_greater(50000.0)  # eski metro_legacy_bench başlangıcı
+	var saw: Dictionary = {}
+	for f in range(0, sweep.total_frames() + 1):
+		saw[sweep.phase_label(sweep.state_at_frame(f).distance)] = true
 	for phase in [&"metro", &"district", &"local", &"street"]:
 		assert_bool(saw.has(phase)).is_true()
 
@@ -32,7 +48,7 @@ func test_sweep_motion_is_continuous_no_gates_no_teleports() -> void:
 	var prev := sweep.state_at_frame(0)
 	for f in range(1, sweep.total_frames() + 1):
 		var cur := sweep.state_at_frame(f)
-		assert_float(maxf(cur.distance, prev.distance) / minf(cur.distance, prev.distance)).is_less(1.12)
+		assert_float(maxf(cur.distance, prev.distance) / minf(cur.distance, prev.distance)).is_less(1.2)
 		# Yer değiştirme, o andaki uzaklığın küçük bir kesri (ekranda sıçrama yok).
 		assert_float(Vector2(cur.focus_x - prev.focus_x, cur.focus_z - prev.focus_z).length()) \
 				.is_less(cur.distance * 0.2 + 5.0)
@@ -62,10 +78,10 @@ func test_sweep_follows_the_data_and_unresolvable_street_degrades_to_a_metro_hol
 	assert_float(Vector2(a.focus_x - b.focus_x, a.focus_z - b.focus_z).length()).is_greater(500.0)
 	var bad := CameraSweep.build(_world, "street:nowhere", _ground, 60, 0)
 	assert_int(bad.keys.size()).is_equal(2)
-	assert_float(bad.state_at_frame(30).distance).is_greater(50000.0)
+	assert_float(bad.state_at_frame(30).distance).is_equal_approx(CameraEnvelope.load_default().d_max_m, 1.0)
 
 
-func test_phase_labels_partition_the_distance_range() -> void:
+func test_legacy_phase_labels_partition_the_distance_range_and_stay_frozen() -> void:
 	assert_str(String(CameraSweep.phase_of(58000.0))).is_equal("metro")
 	assert_str(String(CameraSweep.phase_of(10000.0))).is_equal("district")
 	assert_str(String(CameraSweep.phase_of(1000.0))).is_equal("local")

@@ -1,7 +1,10 @@
 class_name CameraRig
 extends Node3D
-## Çok ölçekli kamera rig'i (T-003; WLD-01, TEK-03, TEK-04, PLT-02, VIS-03): metro (~50 km) -> ilçe -> sokak (~25 m)
-## TEK dünyada KESİNTİSİZ gezinti. Yörünge/odak modeli: odak = zemine oturan dünya noktası + uzaklık + yön + eğim.
+## Çok ölçekli kamera rig'i (T-003; WLD-01, TEK-03, TEK-04, PLT-02, VIS-03): uzak uçtan (`CameraEnvelope.d_max_m`,
+## ~18 km) sokağa (`d_min_m`, ~50 m) TEK dünyada KESİNTİSİZ gezinti. Yörünge/odak modeli: odak = zemine oturan dünya
+## noktası + uzaklık + yön + eğim. Sınırlar ve K1 kadraj kuralı `CameraEnvelope`'tan (veri:
+## `data/view/camera_envelope.json`, T-064): hem hedef hem yumuşatılmış ara poz zarftan geçer (iki geçerli durumun
+## aradeğeri geçerli olmayabilir). Pan uzaklığı değiştirmez (pan çözüm sırası: eğim -> odak).
 ##
 ## GİRDİ YALNIZ `InputProfile` SİNYALLERİYLE (ADR-0004; masaüstü ve dokunmatik AYNI fiiller): pan_requested,
 ## zoom_requested, rotate_requested + held_*_axis. Ham olaydan yalnız işaretçinin EKRAN KONUMU okunur (pan sinyalinde
@@ -22,9 +25,9 @@ extends Node3D
 
 signal rebased(new_origin: Vector2)
 signal preset_applied(preset_name: StringName)
+## Ölçek bandı (street/neighborhood/district/metro) ±%10 histerezisle değişti. HUD metni yalnız bundan (`zoom.<band>`).
+signal scale_band_changed(band: StringName)
 
-## Kapılı zoom (`continuous_zoom = false`) basamakları, metre (YER TUTUCU; ayar, tasarım kararı değil).
-const ZOOM_GATES_M: Array[float] = [30.0, 150.0, 800.0, 4000.0, 20000.0, 58000.0]
 const SMOOTH_RATE_PER_S := 14.0
 const HELD_PAN_SPEED_PER_DISTANCE := 0.55
 const HELD_ROTATE_DEG_PER_S := 60.0
@@ -45,7 +48,13 @@ var ground_height: Callable = Callable()
 var view_root: Node3D = null
 var input_profile: InputProfile = null
 var world: WorldData = null
-var preset_name: StringName = &"metro"
+var preset_name: StringName = CameraPresets.FALLBACK
+## Kamera zarfı (oyuncu zarfı; `--envelope=legacy` yalnız geliştirici sahnesi/araçları verir). Kapılı zoom da buradan.
+var envelope: CameraEnvelope = null
+## Ölçek bandı (son sinyal).
+var scale_band: StringName = &""
+## Home hedefi: başlangıç ilçe kodu (oturum/veri; boşsa `core`). Kodda ilçe kimliği yoktur.
+var home_district: StringName = &""
 var rebase_origin: Vector2 = Vector2.ZERO
 var rebase_count: int = 0
 ## Testler/başsız çalıştırma için sabit görünüm boyutu (0 = gerçek viewport).
@@ -57,6 +66,10 @@ var _pointer_px: Vector2 = Vector2(NAN, NAN)
 var _tilt_up: bool = false
 var _tilt_down: bool = false
 var _ready_done: bool = false
+
+
+func _init() -> void:
+	envelope = CameraEnvelope.load_default()
 
 
 func _ready() -> void:
@@ -105,21 +118,23 @@ func set_world(new_world: WorldData, ground: Callable) -> void:
 	ground_height = ground
 
 
-## Preset metni (bkz `CameraPresets`). Geçersizse net hata + metro yedek; dönüş: preset geçerli miydi.
+## Preset metni (bkz `CameraPresets`). Geçersizse net hata + `core` yedek; dönüş: preset geçerli miydi.
 func apply_preset(spec: String) -> bool:
 	if world == null:
 		push_error("CameraRig.apply_preset: önce set_world()")
 		return false
-	var r := CameraPresets.resolve(spec, world, ground_height)
-	if not r["ok"]:
-		push_error("CameraRig: %s; metro kullanılıyor" % r["error"])
-	preset_name = r["name"]
-	apply_state(r["state"], true)
-	preset_applied.emit(preset_name)
-	return r["ok"]
+	return _apply_resolved(CameraPresets.resolve(spec, world, _ground(), envelope, _aspect()))
 
 
-## Durumu hedef yapar; `snap` ise yumuşatmadan anında. Değerler sınırlara kenetlenir.
+## Home / açılış (`start_view`): `home_district` yoksa `core`.
+func go_home() -> bool:
+	if world == null:
+		push_error("CameraRig.go_home: önce set_world()")
+		return false
+	return _apply_resolved(CameraPresets.start_view(world, home_district, _ground(), envelope, _aspect()))
+
+
+## Durumu hedef yapar; `snap` ise yumuşatmadan anında. Değerler zarfa (sınırlar + K1) çözülür.
 func apply_state(state: CameraState, snap: bool = true) -> void:
 	if not state.is_valid():
 		push_error("CameraRig.apply_state: geçersiz durum (NaN/sıfır uzaklık) yok sayıldı")
@@ -192,25 +207,29 @@ func reset_input() -> void:
 func on_pan(screen_delta: Vector2) -> void:
 	var size := _viewport_size()
 	var to_px := _pointer_px if _pointer_px.is_finite() else size * 0.5 + screen_delta
-	_target = CameraMath.pan_grab(_target, to_px - screen_delta, to_px, size, _ground(), world_bounds())
+	_target = _enforce(CameraMath.pan_grab(_target, to_px - screen_delta, to_px, size, _ground(), world_bounds()),
+			CameraEnvelope.MODE_PAN)
 	_settle_if_unsmoothed()
 
 
 func on_zoom(factor: float, anchor: Vector2) -> void:
 	var f := factor if continuous_zoom else _gated_factor(factor)
-	_target = CameraMath.zoom_at(_target, f, anchor, _viewport_size(), _ground(), world_bounds())
+	var limits := Vector2(envelope.d_min_m, envelope.d_max_m)
+	_target = _enforce(CameraMath.zoom_at(_target, f, anchor, _viewport_size(), _ground(), world_bounds(), limits))
 	_settle_if_unsmoothed()
 
 
 func on_rotate(radians: float, anchor: Vector2) -> void:
-	_target = CameraMath.rotate_about(_target, radians, anchor, _viewport_size(), _ground(), world_bounds())
+	_target = _enforce(CameraMath.rotate_about(_target, radians, anchor, _viewport_size(), _ground(), world_bounds()))
 	_settle_if_unsmoothed()
 
 
 ## GEÇİCİ: eğim (derece, + = daha dik).
 func tilt(delta_deg: float) -> void:
 	if is_finite(delta_deg):
-		_target.pitch_deg = CameraMath.clamp_pitch_deg(_target.pitch_deg + delta_deg)
+		var tilted := _target.copy()
+		tilted.pitch_deg += delta_deg
+		_target = _enforce(tilted)
 		_settle_if_unsmoothed()
 
 
@@ -220,6 +239,7 @@ func _connect_input_profile() -> void:
 	input_profile.pan_requested.connect(on_pan)
 	input_profile.zoom_requested.connect(on_zoom)
 	input_profile.rotate_requested.connect(on_rotate)
+	input_profile.camera_home_requested.connect(go_home)
 
 
 func _apply_held(delta: float) -> void:
@@ -227,7 +247,8 @@ func _apply_held(delta: float) -> void:
 	var pan := input_profile.held_pan_axis()
 	if pan != Vector2.ZERO:
 		var step := _target.distance * HELD_PAN_SPEED_PER_DISTANCE * delta
-		_target = CameraMath.move_focus(_target, pan.x * step, -pan.y * step, _ground(), world_bounds())
+		_target = _enforce(CameraMath.move_focus(_target, pan.x * step, -pan.y * step, _ground(), world_bounds()),
+				CameraEnvelope.MODE_PAN)
 	var rot := input_profile.held_rotate_axis()
 	if rot != 0.0:
 		on_rotate(rot * deg_to_rad(HELD_ROTATE_DEG_PER_S) * delta, center)
@@ -253,11 +274,15 @@ func _smooth(delta: float) -> void:
 	_current.approach(_target, 1.0 - exp(-smoothing_rate * maxf(delta, 0.0)))
 	if _current.is_close_to(_target, SNAP_EPS_M, 0.001):
 		_current = _target.copy()
+	else:
+		# İki geçerli durumun aradeğeri geçerli olmayabilir: yumuşatılmış poz da zarftan geçer (K1).
+		_current = _enforce(_current)
 
 
 func _apply_pose() -> void:
 	if not _ready_done:
 		return
+	_update_band()
 	if view_root != null:
 		var dx := absf(_current.focus_x - rebase_origin.x)
 		var dz := absf(_current.focus_z - rebase_origin.y)
@@ -279,16 +304,37 @@ func _place_camera() -> void:
 	camera.fov = s.fov_deg
 
 
+func _apply_resolved(r: Dictionary) -> bool:
+	if not r["ok"]:
+		push_error("CameraRig: %s; %s kullanılıyor" % [r["error"], CameraPresets.FALLBACK])
+	preset_name = r["name"]
+	apply_state(r["state"], true)
+	preset_applied.emit(preset_name)
+	return r["ok"]
+
+
 func _sanitized(state: CameraState) -> CameraState:
 	var s := state.copy()
-	s.distance = CameraMath.clamp_distance(s.distance)
-	s.pitch_deg = CameraMath.clamp_pitch_deg(s.pitch_deg)
 	s.heading_deg = wrapf(s.heading_deg, 0.0, 360.0)
-	var b := world_bounds()
-	if b.has_area():
-		s.focus_x = clampf(s.focus_x, b.position.x, b.end.x)
-		s.focus_z = clampf(s.focus_z, b.position.y, b.end.y)
-	return CameraMath.reseat(s, _ground())
+	return _enforce(s)
+
+
+## Zarf + K1 (saf `CameraEnvelope.resolve`); dünya yoksa yalnız uzaklık/eğim sınırları.
+func _enforce(s: CameraState, mode: StringName = CameraEnvelope.MODE_DEFAULT) -> CameraState:
+	var sea := world.sea_level if world != null else 0.0
+	return envelope.resolve(s, _aspect(), _ground(), world_bounds(), mode, sea)
+
+
+func _aspect() -> float:
+	var size := _viewport_size()
+	return size.x / size.y
+
+
+func _update_band() -> void:
+	var band := envelope.next_band(_current.distance, scale_band)
+	if band != scale_band:
+		scale_band = band
+		scale_band_changed.emit(band)
 
 
 ## Zemin işlevi; verilmemişse düz sıfır zemin (başsız/boş sahne).
@@ -311,22 +357,23 @@ func _viewport_size() -> Vector2:
 func _gated_factor(factor: float) -> float:
 	if not is_finite(factor) or factor <= 0.0 or is_equal_approx(factor, 1.0):
 		return 1.0
+	var gates := envelope.zoom_gates_m
 	var d := _target.distance
 	var goal := d
 	if factor > 1.0:
-		for i in range(ZOOM_GATES_M.size() - 1, -1, -1):
-			if ZOOM_GATES_M[i] < d * 0.98:
-				goal = ZOOM_GATES_M[i]
+		for i in range(gates.size() - 1, -1, -1):
+			if gates[i] < d * 0.98:
+				goal = gates[i]
 				break
 		if goal == d:
-			goal = ZOOM_GATES_M[0]
+			goal = gates[0]
 	else:
-		for gate in ZOOM_GATES_M:
+		for gate in gates:
 			if gate > d * 1.02:
 				goal = gate
 				break
 		if goal == d:
-			goal = ZOOM_GATES_M[ZOOM_GATES_M.size() - 1]
+			goal = gates[gates.size() - 1]
 	return d / goal
 
 

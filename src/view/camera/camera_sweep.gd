@@ -1,11 +1,14 @@
 class_name CameraSweep
 extends RefCounted
-## Otomatik kamera taraması (T-003 ölçüt 7): metro -> ilçe -> sokak -> ilçe -> metro, yörünge (yön değişir) + sürekli
-## zoom. Hareket halinde kare süresi / draw call ölçümü için. KARE SAYACINA bağlıdır (duvar saati değil): kare hızından
-## bağımsız, tekrarlanabilir yol. Anahtar durumlar `CameraPresets`'ten (WorldData türevli); koordinat gömülü değil.
+## Otomatik kamera taraması (T-003 ölçüt 7; T-064): uzak uç -> ilçe -> sokak -> ilçe -> uzak uç, yörünge (yön değişir) +
+## sürekli zoom. Uzak uç oyuncu zarfında `core` (d_max), legacy zarfta `metro_legacy_bench` (eski 58 km; perf serisi).
+## Her ara durum zarf + K1'den geçer (`_seat`). Hareket halinde kare süresi / draw call ölçümü için. KARE SAYACINA
+## bağlıdır (duvar saati değil): kare hızından bağımsız, tekrarlanabilir yol. Anahtar durumlar `CameraPresets`'ten
+## (WorldData türevli); koordinat gömülü değil.
 ## Ara değerler: uzaklık logaritmik (sabit görsel zoom hızı), odak doğrusal, yön en kısa yoldan, eğim doğrusal.
 
-## Ölçüm etiketi eşikleri (m): perf_probe kare süresini bu aşamalara göre ayırır.
+## ESKİ (legacy) ölçüm etiketi eşikleri (m): yalnız `--envelope=legacy` taramasının etiketi; DONDURULDU (eski serilerle
+## karşılaştırma). Oyuncu taramasının etiketi zarf bant adlarıdır (`phase_label`).
 const PHASE_METRO_MIN_M := 20000.0
 const PHASE_DISTRICT_MIN_M := 3000.0
 const PHASE_LOCAL_MIN_M := 300.0
@@ -17,20 +20,30 @@ const ORBIT_DEG := 90.0
 var keys: Array[CameraState] = []
 var frames_per_leg: int = DEFAULT_FRAMES_PER_LEG
 var hold_frames: int = DEFAULT_HOLD_FRAMES
+var envelope: CameraEnvelope = null
+var aspect: float = CameraEnvelope.DEFAULT_ASPECT
+var bounds: Rect2 = Rect2()
+var sea_level: float = 0.0
 var _ground: Callable = Callable()
 
 
 ## `street_spec`: `CameraPresets` sokak metni (örn. `street:port`). Çözülemezse `ok` false, yol yalnız metro.
 static func build(world: WorldData, street_spec: String, ground: Callable, legs_frames: int = DEFAULT_FRAMES_PER_LEG,
-		hold: int = DEFAULT_HOLD_FRAMES) -> CameraSweep:
+		hold: int = DEFAULT_HOLD_FRAMES, env: CameraEnvelope = null,
+		view_aspect: float = CameraEnvelope.DEFAULT_ASPECT) -> CameraSweep:
 	var sweep := CameraSweep.new()
+	sweep.envelope = env if env != null else CameraEnvelope.load_default()
+	sweep.aspect = view_aspect
+	sweep.bounds = world.bounds()
+	sweep.sea_level = world.sea_level
 	sweep.frames_per_leg = maxi(2, legs_frames)
 	sweep.hold_frames = maxi(0, hold)
 	sweep._ground = ground
-	var metro: CameraState = CameraPresets.resolve("metro", world, ground)["state"]
-	var street_r := CameraPresets.resolve(street_spec, world, ground)
+	var far_spec := "metro_legacy_bench" if sweep.envelope.is_legacy() else "core"
+	var metro: CameraState = CameraPresets.resolve(far_spec, world, ground, sweep.envelope, view_aspect)["state"]
+	var street_r := CameraPresets.resolve(street_spec, world, ground, sweep.envelope, view_aspect)
 	var street: CameraState = street_r["state"]
-	var district := _district_near(world, Vector2(street.focus_x, street.focus_z), ground)
+	var district := _district_near(world, Vector2(street.focus_x, street.focus_z), ground, sweep.envelope)
 	if not street_r["ok"] or district == null:
 		sweep.keys = [metro, metro.copy()]
 		return sweep
@@ -74,7 +87,14 @@ static func blend(a: CameraState, b: CameraState, u: float) -> CameraState:
 	return out
 
 
-## Ölçüm aşaması etiketi (kamera uzaklığına göre).
+## Ölçüm aşaması etiketi: legacy zarfta eski dört aşama, oyuncu zarfında bant adı (street/neighborhood/district/metro).
+func phase_label(distance: float) -> StringName:
+	if envelope == null or envelope.is_legacy():
+		return phase_of(distance)
+	return envelope.band_of(distance)
+
+
+## ESKİ ölçüm aşaması etiketi (kamera uzaklığına göre; legacy).
 static func phase_of(distance: float) -> StringName:
 	if distance >= PHASE_METRO_MIN_M:
 		return &"metro"
@@ -86,11 +106,12 @@ static func phase_of(distance: float) -> StringName:
 
 
 func _seat(s: CameraState) -> CameraState:
-	return CameraMath.reseat(s, _ground)
+	CameraMath.reseat(s, _ground)
+	return envelope.resolve(s, aspect, _ground, bounds, CameraEnvelope.MODE_DEFAULT, sea_level)
 
 
 ## Noktaya en yakın bölgenin `district` durumu (nokta bir bölgedeyse o bölge); bölge yoksa null.
-static func _district_near(world: WorldData, p: Vector2, ground: Callable) -> CameraState:
+static func _district_near(world: WorldData, p: Vector2, ground: Callable, env: CameraEnvelope) -> CameraState:
 	var best: WorldRegion = null
 	var best_d := INF
 	for region in world.regions:
@@ -101,4 +122,7 @@ static func _district_near(world: WorldData, p: Vector2, ground: Callable) -> Ca
 	if best == null:
 		return null
 	var s := CameraPresets.district(world, best.code)
-	return CameraMath.reseat(s, ground) if s != null and ground.is_valid() else s
+	if s == null:
+		return null
+	s = env.resolve(s, CameraEnvelope.DEFAULT_ASPECT, ground, world.bounds(), CameraEnvelope.MODE_DEFAULT, world.sea_level)
+	return s

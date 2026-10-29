@@ -13,7 +13,9 @@ func before() -> void:
 	_world = WorldTestSupport.coarse(WorldTestSupport.control())
 
 
-func _rig(profile: InputProfile, spec: String = "district:D4") -> CameraRig:
+## Varsayılan görünüm K1'den etkilenmeyen bir ilçe (D1, dünya merkezine yakın): jest testleri saf pan/zoom'u ölçer;
+## K1 etkileşimleri tests/view/camera_k1_test.gd'de.
+func _rig(profile: InputProfile, spec: String = "district:D1") -> CameraRig:
 	var rig: CameraRig = auto_free(CameraRig.new())
 	rig.input_profile = profile
 	rig.viewport_size_override = VIEWPORT
@@ -117,7 +119,7 @@ func test_desktop_middle_drag_rotates_clockwise_for_positive_motion() -> void:
 
 
 func test_held_keys_pan_rotate_and_zoom_through_the_profile_axes() -> void:
-	var rig := _rig(DesktopInputProfile.new(), "metro")
+	var rig := _rig(DesktopInputProfile.new(), "core")
 	var s0 := rig.current_state()
 	rig._unhandled_input(_key(KEY_W, true))
 	rig._process(0.1)
@@ -140,15 +142,26 @@ func test_held_keys_pan_rotate_and_zoom_through_the_profile_axes() -> void:
 	assert_bool(rig.current_state().is_close_to(steady, 0.001)).is_true()
 
 
-func test_temporary_tilt_keys_clamp_the_pitch() -> void:
-	var rig := _rig(DesktopInputProfile.new())
+func test_temporary_tilt_keys_clamp_the_pitch_to_the_envelope() -> void:
+	# Sokak bandı (K1 yok): tavan pitch_max_deg, taban uzaklığa bağlı pitch_min(d) (zarf, güvenlik tabanı değil).
+	var rig := _rig(DesktopInputProfile.new(), "street:port")
 	rig._unhandled_input(_key(KEY_R, true))
 	rig._process(10.0)
-	assert_float(rig.current_state().pitch_deg).is_equal(CameraMath.MAX_PITCH_DEG)
+	assert_float(rig.current_state().pitch_deg).is_equal(rig.envelope.pitch_max_deg)
 	rig._unhandled_input(_key(KEY_R, false))
 	rig._unhandled_input(_key(KEY_F, true))
 	rig._process(10.0)
-	assert_float(rig.current_state().pitch_deg).is_equal(CameraMath.MIN_PITCH_DEG)
+	assert_float(rig.current_state().pitch_deg).is_equal(rig.envelope.pitch_min_deg(rig.distance()))
+
+
+func test_tilting_down_at_the_k1_band_stops_at_the_k1_pitch_not_the_curve_floor() -> void:
+	var rig := _rig(DesktopInputProfile.new(), "core")
+	rig._unhandled_input(_key(KEY_F, true))
+	rig._process(10.0)
+	var s := rig.current_state()
+	assert_float(s.pitch_deg).is_greater(rig.envelope.pitch_min_deg(s.distance) + 1.0)  # K1 daha dik ister
+	assert_bool(rig.envelope.footprint_ok(s, VIEWPORT.x / VIEWPORT.y, rig.ground_height, _world.bounds(),
+			_world.sea_level)).is_true()
 
 
 func test_rig_does_not_consume_input_before_the_ui() -> void:
@@ -201,7 +214,7 @@ func test_each_profile_ignores_the_other_devices_events() -> void:
 
 
 func test_focus_loss_resets_held_keys_so_the_camera_does_not_run_away() -> void:
-	var rig := _rig(DesktopInputProfile.new(), "metro")
+	var rig := _rig(DesktopInputProfile.new(), "core")
 	rig._unhandled_input(_key(KEY_D, true))
 	rig._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 	var s0 := rig.current_state()

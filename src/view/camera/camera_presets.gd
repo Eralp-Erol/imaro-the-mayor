@@ -1,20 +1,25 @@
 class_name CameraPresets
 extends RefCounted
-## Kamera preset'leri (T-003 ölçüt 4): `metro`, `district(<bölge kodu>)`, `street(<dünya noktası>)` + T-001 dev
-## preset'leri (bay_west, plain_east, harbor, d5_slopes; sayılar T-001'den değişmeden taşındı).
+## Kamera preset'leri (T-003 ölçüt 4; T-064 ADR-0007): `core`, `district(<bölge kodu>)`, `street(<dünya noktası>)`,
+## `start_view(<ilçe kodu>)` + T-001 dev preset'leri (bay_west, plain_east, harbor, d5_slopes; sayılar değişmedi).
 ## HER ŞEY `WorldData`'dan türer (bölge çapası/yarıçapı, saha konumu, dünya boyutu); koordinat, bölge kodu veya
 ## kıyı çizgisi gömülü değildir (LANES kural 8). Saf: sahne ağacı yok; yalnız `WorldData` OKUR.
+## Her preset `CameraEnvelope.resolve` (zarf + K1) ile çözülür; legacy zarf dışında ham eski görüntü verilmez.
 ##
-## Metin biçimi (komut satırı `--preset=...` ve kod): `metro` · `district:D4` veya `district(D4)` ·
+## Metin biçimi (komut satırı `--preset=...` ve kod): `core` · `district:D4` veya `district(D4)` ·
 ## `street:12500,8300` / `street(12500,8300)` (dünya x,z metre) · `street:D4` (bölge çapası) · `street:port`
-## (T0 saha kimliği veya türü) · `bay_west|plain_east|harbor|d5_slopes`.
+## (T0 saha kimliği veya türü) · `bay_west|plain_east|harbor|d5_slopes` · `metro_legacy_bench` (YALNIZ legacy zarf).
+## `metro` EMEKLİ: açık hata (anlamı sessizce değişip perf serisini yalan söyletmesin; ADR-0007 §Karar 6).
 
-## 1-5 tuşları sırası (T-001 ile aynı).
-const KEY_ORDER: Array[StringName] = [&"metro", &"bay_west", &"plain_east", &"harbor", &"d5_slopes"]
+## 1-5 tuşları sırası.
+const KEY_ORDER: Array[StringName] = [&"core", &"bay_west", &"plain_east", &"harbor", &"d5_slopes"]
+## Yedek (geçersiz/bilinmeyen/emekli preset) ve değer yokken açılış.
+const FALLBACK: StringName = &"core"
+const RETIRED_METRO_MESSAGE := "metro kaldırıldı: core | metro_legacy_bench"
 
 const FOV_DEG := 40.0
 
-# metro (T-001)
+# metro_legacy_bench (T-001'in eski `metro`'su; yalnız legacy zarf)
 const METRO_FOCUS_SOUTH_SHARE := 0.06
 const METRO_DISTANCE_PER_WORLD_WIDTH := 1.45
 const METRO_PITCH_DEG := 50.0
@@ -22,7 +27,7 @@ const METRO_PITCH_DEG := 50.0
 const DISTRICT_DISTANCE_PER_RADIUS := 2.2
 const DISTRICT_MIN_DISTANCE_M := 3000.0
 const DISTRICT_PITCH_DEG := 40.0
-## Bölge çapası metro merkezine bundan yakınsa yön 0 (kuzey) kalır; belirsiz yönü uydurmayız.
+## Bölge çapası dünya merkezine bundan yakınsa yön 0 (kuzey) kalır; belirsiz yönü uydurmayız.
 const DISTRICT_MIN_HEADING_OFFSET_M := 1500.0
 # street
 const STREET_DISTANCE_M := 60.0
@@ -35,9 +40,13 @@ const D5_SLOPES_DISTANCE_M := 7000.0
 const D5_SLOPES_PITCH_DEG := 35.0
 
 
-## Metin -> {"ok": bool, "state": CameraState, "name": StringName, "clamped": bool, "error": String}.
-## Geçersiz/bilinmeyen preset: ok = false, `error` dolu, `state` metro (güvenli yedek).
-static func resolve(spec: String, world: WorldData, ground: Callable = Callable()) -> Dictionary:
+## Metin -> {"ok": bool, "state": CameraState, "name": StringName, "clamped": bool, "adjusted": bool, "error": String}.
+## Geçersiz/bilinmeyen/emekli preset: ok = false, `error` dolu, `state` `core` (güvenli yedek).
+## `envelope` boşsa oyuncu zarfı.
+## `adjusted`: zarf/K1 durumu ham preset'ten farklı çözdü (kenar ilçe kadrajları için tanı).
+static func resolve(spec: String, world: WorldData, ground: Callable = Callable(), envelope: CameraEnvelope = null,
+		aspect: float = CameraEnvelope.DEFAULT_ASPECT) -> Dictionary:
+	var env := envelope if envelope != null else CameraEnvelope.load_default()
 	var text := spec.strip_edges()
 	var kind := text
 	var arg := ""
@@ -55,8 +64,16 @@ static func resolve(spec: String, world: WorldData, ground: Callable = Callable(
 	var clamped := false
 	var error := ""
 	match kind:
-		"", "metro":
-			state = metro(world)
+		"", "core":
+			state = core(world, env)
+			kind = "core"
+		"metro":
+			error = RETIRED_METRO_MESSAGE
+		"metro_legacy_bench":
+			if env.is_legacy():
+				state = metro_legacy_bench(world)
+			else:
+				error = "metro_legacy_bench yalnız --envelope=legacy ile çalışır"
 		"district":
 			state = district(world, StringName(arg.to_upper()))
 			if state == null:
@@ -75,30 +92,48 @@ static func resolve(spec: String, world: WorldData, ground: Callable = Callable(
 			error = "bilinmeyen preset '%s'" % spec
 	var ok := state != null
 	if not ok:
-		state = metro(world)
-		kind = "metro"
-	if ground.is_valid():
-		CameraMath.reseat(state, ground)
-	return {"ok": ok, "state": state, "name": StringName(kind), "clamped": clamped, "error": error}
+		state = core(world, env)
+		kind = String(FALLBACK)
+	var raw := state.copy()
+	state = env.resolve(state, aspect, ground, world.bounds(), CameraEnvelope.MODE_DEFAULT, world.sea_level)
+	var adjusted := not state.is_close_to(raw, 0.01, 0.01)
+	return {"ok": ok, "state": state, "name": StringName(kind), "clamped": clamped, "adjusted": adjusted, "error": error}
 
 
-## `metro`: tüm metro, merkezin biraz güneyine odaklı (T-001 ile aynı biçim), boyut dünyadan.
-static func metro(world: WorldData) -> CameraState:
+## Açılış/Home (ADR-0007 §Karar 5): `district(kod)` + zarf çözümü. Kod boş/bilinmiyorsa `core` (kodda ilçe kimliği
+## yok; değer oturumdan/veriden gelir, T-043). Dönüş `resolve` ile aynı biçim.
+static func start_view(world: WorldData, district_code: StringName, ground: Callable = Callable(),
+		envelope: CameraEnvelope = null, aspect: float = CameraEnvelope.DEFAULT_ASPECT) -> Dictionary:
+	var code := String(district_code).strip_edges()
+	if code.is_empty() or world.region_by_code(StringName(code.to_upper())) == null:
+		return resolve(String(FALLBACK), world, ground, envelope, aspect)
+	return resolve("district:%s" % code, world, ground, envelope, aspect)
+
+
+## `core`: dünya merkezi, `d_max`, K1'in çözdüğü eğim (oyuncunun görebileceği en uzak, ortalı görünüm).
+static func core(world: WorldData, envelope: CameraEnvelope) -> CameraState:
+	var f := world.origin + world.size * 0.5
+	return _state(f, 0.0, envelope.pitch_min_deg(envelope.d_max_m), envelope.d_max_m, false)
+
+
+## `metro_legacy_bench`: ESKİ `metro` durumu birebir (dünya genişliği x 1,45 / 50 derece); perf serisi sürekliliği için.
+static func metro_legacy_bench(world: WorldData) -> CameraState:
 	var f := world.origin + world.size * 0.5 + Vector2(0.0, world.size.y * METRO_FOCUS_SOUTH_SHARE)
 	return _state(f, 0.0, METRO_PITCH_DEG, world.size.x * METRO_DISTANCE_PER_WORLD_WIDTH)
 
 
-## `district(kod)`: odak = bölge çapası, uzaklık = bölge yarıçapından, bakış metro merkezinden bölgeye (körfezden
-## kıyıya). Bilinmeyen kod: null.
+## `district(kod)`: odak = bölge çapası, uzaklık = bölge yarıçapından, bakış İÇE (çapa -> dünya merkezi). Dışa bakış
+## K1 altında kenar ilçelerinde dik eğim ister; içe bakış dengelidir (ADR-0007 §Karar 5, kompozisyon design-director
+## incelemesinde). Bilinmeyen kod: null.
 static func district(world: WorldData, code: StringName) -> CameraState:
 	var region := world.region_by_code(code)
 	if region == null:
 		return null
 	var center := world.origin + world.size * 0.5
-	var away := region.anchor - center
+	var inward := center - region.anchor
 	var heading := 0.0
-	if away.length() >= DISTRICT_MIN_HEADING_OFFSET_M:
-		heading = rad_to_deg(atan2(away.x, -away.y))
+	if inward.length() >= DISTRICT_MIN_HEADING_OFFSET_M:
+		heading = rad_to_deg(atan2(inward.x, -inward.y))
 	var distance := maxf(maxf(region.radius.x, region.radius.y) * DISTRICT_DISTANCE_PER_RADIUS, DISTRICT_MIN_DISTANCE_M)
 	return _state(region.anchor, heading, DISTRICT_PITCH_DEG, distance)
 
@@ -151,7 +186,7 @@ static func legacy(world: WorldData, preset: StringName) -> CameraState:
 		&"harbor":
 			var port := world.port_site.position if world.port_site != null else center
 			return _state(port, 235.0, 42.0, 8500.0)
-	return metro(world)
+	return metro_legacy_bench(world)
 
 
 static func _d5_slopes(world: WorldData, center: Vector2) -> CameraState:
@@ -178,12 +213,14 @@ static func _downhill_heading(world: WorldData, p: Vector2) -> float:
 	return wrapf(rad_to_deg(atan2(down.x, -down.y)), 0.0, 360.0)
 
 
-static func _state(focus_xz: Vector2, heading_deg: float, pitch_deg: float, distance: float) -> CameraState:
+## Ham durum; zarf sınırlarını `CameraEnvelope.resolve` uygular (güvenlik tabanı yalnız NaN/sonsuza karşı).
+static func _state(focus_xz: Vector2, heading_deg: float, pitch_deg: float, distance: float,
+		safety_clamp: bool = true) -> CameraState:
 	var s := CameraState.new()
 	s.focus_x = focus_xz.x
 	s.focus_z = focus_xz.y
 	s.heading_deg = wrapf(heading_deg, 0.0, 360.0)
-	s.pitch_deg = CameraMath.clamp_pitch_deg(pitch_deg)
-	s.distance = CameraMath.clamp_distance(distance)
+	s.pitch_deg = CameraMath.clamp_pitch_deg(pitch_deg) if safety_clamp else pitch_deg
+	s.distance = CameraMath.clamp_distance(distance) if safety_clamp else distance
 	s.fov_deg = FOV_DEG
 	return s

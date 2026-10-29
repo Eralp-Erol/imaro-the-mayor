@@ -35,12 +35,30 @@ func test_eye_sits_behind_the_focus_on_the_view_axis_at_the_given_distance() -> 
 	assert_float(off.y).is_equal_approx(500.0, 0.01)  # sin(30) * 1000
 
 
-func test_distance_and_pitch_clamps_and_non_finite_input_is_rejected() -> void:
-	assert_float(CameraMath.clamp_distance(1.0)).is_equal(CameraMath.MIN_DISTANCE_M)
-	assert_float(CameraMath.clamp_distance(1.0e9)).is_equal(CameraMath.MAX_DISTANCE_M)
-	assert_float(CameraMath.clamp_pitch_deg(0.0)).is_equal(CameraMath.MIN_PITCH_DEG)
-	assert_float(CameraMath.clamp_pitch_deg(100.0)).is_equal(CameraMath.MAX_PITCH_DEG)
-	assert_float(CameraMath.clamp_distance(NAN)).is_equal(CameraMath.MIN_DISTANCE_M)
+func test_safety_floor_clamps_and_rejects_non_finite_input_but_is_not_the_game_envelope() -> void:
+	# T-064: CameraMath sabitleri yalnız NaN/sonsuz güvenlik tabanıdır; oyun sınırı CameraEnvelope'tadır.
+	assert_float(CameraMath.clamp_distance(1.0)).is_equal(CameraMath.SAFETY_MIN_DISTANCE_M)
+	assert_float(CameraMath.clamp_distance(1.0e9)).is_equal(CameraMath.SAFETY_MAX_DISTANCE_M)
+	assert_float(CameraMath.clamp_pitch_deg(0.0)).is_equal(CameraMath.SAFETY_MIN_PITCH_DEG)
+	assert_float(CameraMath.clamp_pitch_deg(100.0)).is_equal(CameraMath.SAFETY_MAX_PITCH_DEG)
+	assert_float(CameraMath.clamp_distance(NAN)).is_equal(CameraMath.SAFETY_MIN_DISTANCE_M)
+	assert_float(CameraMath.clamp_pitch_deg(INF)).is_equal(CameraMath.SAFETY_MIN_PITCH_DEG)
+	# Güvenlik tabanı her zarfı kapsar: oyuncu zarfının sınırları tabanın İÇİNDEdir (taban oyun sınırını gizlemez).
+	var env := CameraEnvelope.load_default()
+	assert_float(env.d_min_m).is_greater_equal(CameraMath.SAFETY_MIN_DISTANCE_M)
+	assert_float(env.d_max_m).is_less_equal(CameraMath.SAFETY_MAX_DISTANCE_M)
+	assert_float(env.pitch_min_deg(env.d_min_m)).is_greater_equal(CameraMath.SAFETY_MIN_PITCH_DEG)
+
+
+func test_envelope_clamps_distance_and_pitch_by_data_not_by_the_safety_floor() -> void:
+	var env := CameraEnvelope.load_default()
+	assert_float(env.clamp_distance(1.0)).is_equal(env.d_min_m)
+	assert_float(env.clamp_distance(1.0e9)).is_equal(env.d_max_m)
+	assert_float(env.clamp_distance(NAN)).is_equal(env.d_min_m)
+	for d in [env.d_min_m, 120.0, 900.0, 5000.0, env.d_max_m]:
+		assert_float(env.clamp_pitch_deg(0.0, d)).is_equal(env.pitch_min_deg(d))
+		assert_float(env.clamp_pitch_deg(100.0, d)).is_equal(env.pitch_max_deg)
+	assert_float(env.clamp_pitch_deg(NAN, 500.0)).is_equal(env.pitch_min_deg(500.0))
 
 
 func test_state_validity_rejects_nan_and_non_positive_distance() -> void:
