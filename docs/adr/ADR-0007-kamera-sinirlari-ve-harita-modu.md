@@ -47,6 +47,12 @@ Sonuç [hesap]: 18 km tavan yalnız merkez çevresinde erişilir; kenar bölgele
 - **Tercihi değiştirenler:** yalnız oyuncunun eğim fiili (dikleştirme görünen eğimden, alçaltma tercihten başlar; fiili aralık `pitch_min(d)..pitch_max`; tercih tabanı eğrinin en düşüğü), preset/Home (ham başlangıç eğimi, `raw_pitch_deg`) ve `apply_state` ile açıkça verilen eğim.
 - **Girdi sözleşmesi (iki profile birden, ADR-0004):** `camera_tilt_requested(delta_deg)` (+ = dik) ve `held_tilt_axis()`. Masaüstü: R/F; Option(Alt)+sol sürükle ve orta tuş sürükle = yörünge (dikey eğ, yatay döndür; aşağı = dikleş); trackpad Option + iki parmak kaydırma aynı yörünge. Dokunmatik: üç parmakla dikey sürükle (iki parmak jesti pan/zoom/döndür kalır, çakışmaz). Gerekçe: Option+sürükle orta tuşsuz trackpad'de de çalışır ve mevcut sol-sürükle pan'ı ile çakışmaz; üç parmak iki parmaklı jestlerle karışmaz. Gerçek trackpad/iPad hissi DOĞRULANMADI.
 
+## Ek (2026-10-29, b): eğim tabanı sokak ve komşulukta neredeyse yatay (sahip geri bildirimi: F ile inilen sınır ~sıfır derece)
+- **Karar (ÇD, veri):** `pitch_min_curve` = [[50,3],[600,3],[1500,25],[18000,40]]; `k1_min_distance_m` 300 → **1500**; kenar pusu `full_below_m` 1500 / `gone_above_m` 2250. Taban 600 m'ye kadar 3° (ufuk görünür), 600→1500 m log-doğrusal 3°→25° (sıçrama yok), K1 girişinde 25° ≥ FOV/2 + ε = 21° (doğrulama kuralı aynı, yeni veriyle sağlanır). `CameraMath.SAFETY_MIN_PITCH_DEG` 8 → 1 (yalnız NaN tabanı; oyuncu tabanını gizlemesin).
+- **Gerekçe [hesap]:** K1 ufku kadraja almaz (üst ışın zemini kesmeli, eğim > FOV/2); yani ufuk/kenar görünür olan her uzaklık K1 DIŞINDA olmalı. Yatay serbest bölge = K1 dışı bölge. 1500 m = komşuluk bandının üst sınırı = kenar payı (1500 m): odak payın içinde kaldığı için kutu kenarı odaktan ≥ 1500 m uzaktadır ve pus yalnız bu payı kaplar; sokak (<300) + komşuluk (300-1500) birlikte serbest, 600 m'den sonra taban yükselir. 1500 m'nin ötesinde K1 aynen sürer (dört kenar testi yeni eşikle).
+- **Bedel:** K1'in uzaklık adımı artık en az 1500 m'ye iner (eskiden 300): kenar payına 550 m yaklaşan odaklar zoom-out'ta (eskiden ~110 m) odağı içeri kaydırır. Kenar pusu 1500 m'ye kadar çizilir (tam ekran dörtgen, maliyeti ölçülmedi).
+- **Değişmeyenler:** tercih/fiili eğim ayrımı, R/F ve diğer girdiler; `street` preset eğimi 12° (perf tabanı `street:port`) kalır. iPad ve gerçek elle his DOĞRULANMADI.
+
 ## Yeniden tabanlanacak testler (T-064 içinde; gerekçe raporda)
 | Dosya:satır | Bugün | Yeni taban |
 |---|---|---|

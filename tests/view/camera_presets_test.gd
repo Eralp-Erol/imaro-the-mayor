@@ -132,7 +132,14 @@ func test_district_uses_the_fixtures_own_region_codes_not_hardcoded_d_codes() ->
 	var ok := CameraPresets.resolve("district:F2", _fixture)
 	assert_bool(ok["ok"]).is_true()
 	var anchor := _fixture.region_by_code(&"F2").anchor
-	assert_float(Vector2(ok["state"].focus_x, ok["state"].focus_z).distance_to(anchor)).is_less(0.01)
+	# Ham preset odağı çapadır; çözülmüş odak yalnız K1 (küçük fixture'da kenar payı yakın) kaydırabilir: en çok
+	# K1 girişindeki (k1_min) ayak izi yarıçapı kadar, ve sonuç K1'li.
+	var raw := CameraPresets.district(_fixture, &"F2")
+	assert_float(Vector2(raw.focus_x, raw.focus_z).distance_to(anchor)).is_less(0.01)
+	var env := CameraEnvelope.load_default()
+	assert_float(Vector2(ok["state"].focus_x, ok["state"].focus_z).distance_to(anchor)).is_less(
+			env.k1_min_distance_m * 0.7)
+	assert_bool(env.footprint_ok(ok["state"], CameraEnvelope.DEFAULT_ASPECT, Callable(), _fixture.bounds())).is_true()
 	# Fixture'da D4 yok: sessiz uydurma yok, net hata + güvenli yedek (core).
 	var bad := CameraPresets.resolve("district:D4", _fixture)
 	assert_bool(bad["ok"]).is_false()
@@ -171,8 +178,10 @@ func test_street_focus_is_the_given_world_point_at_human_scale_on_the_ground() -
 	assert_float(s.focus_y).is_equal_approx(maxf(_world.height_at(p.x, p.y), _world.sea_level), 0.01)
 	assert_float(s.distance).is_less(200.0)
 	assert_float(s.pitch_deg).is_less(30.0)
-	# Sokak preset'i zarfın en küçük eğimine çekilir (60 m'de ~13 derece), uzaklık 60 m'de kalır.
-	assert_float(s.pitch_deg).is_equal_approx(CameraEnvelope.load_default().pitch_min_deg(s.distance), 0.001)
+	# Sokak preset'i kendi eğimini (12 derece, perf tabanı `street:port`) korur; zarf tabanı (~3 derece) onu YUKARI
+	# çekmez ve altına inmez. Uzaklık 60 m'de kalır.
+	assert_float(s.pitch_deg).is_equal_approx(CameraPresets.STREET_PITCH_DEG, 0.001)
+	assert_float(s.pitch_deg).is_greater_equal(CameraEnvelope.load_default().pitch_min_deg(s.distance))
 
 
 func test_street_accepts_region_code_and_site_kind_and_parenthesis_point() -> void:

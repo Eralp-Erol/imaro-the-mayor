@@ -229,6 +229,55 @@ func test_tilt_never_exceeds_the_envelope_pitch_range_or_the_distance_ceiling() 
 	assert_bool(_k1_ok(rig, s)).is_true()
 
 
+# --- (3b) yataya yakın taban (sahip geri bildirimi 2026-10-29: F ile neredeyse yatay inebilmeli) ---
+
+func test_f_reaches_the_near_horizontal_floor_in_street_and_neighborhood_and_the_floor_rises_with_distance() -> void:
+	var rig := _rig(DesktopInputProfile.new(), "street:port")
+	rig.tilt(-10000.0)
+	assert_float(rig.target_state().pitch_deg).is_less_equal(3.5)  # sokak: ~3 derece
+	assert_float(rig.target_state().pitch_deg).is_equal(rig.envelope.pitch_min_deg(rig.target_state().distance))
+	_zoom_steps(rig, 0.9, 10)  # uzaklaş: komşuluk, hâlâ düz parça (600 m'ye kadar)
+	var d := rig.target_state().distance
+	assert_float(d).is_between(100.0, rig.envelope.k1_min_distance_m)
+	assert_float(rig.target_state().pitch_deg).is_equal_approx(rig.envelope.pitch_min_deg(d), 0.001)
+	# Olumsuz: tabanın altına inilemez (0 derece değil).
+	rig.tilt(-10000.0)
+	assert_float(rig.target_state().pitch_deg).is_greater_equal(rig.envelope.pitch_min_deg(rig.envelope.d_min_m) - 0.001)
+	assert_float(rig.target_state().pitch_deg).is_greater(0.5)
+	# Uzaklaştıkça taban sıçramadan yükselir (K1 girişi dahil): 3 km'ye kadar kare kare komşu adımlar arasında eğim farkı
+	# sınırlı (3% zoom adımında eğri ~0,75 derece verir). Sınır kadraj geometrisi (kenara yakın K1) bunun ötesinde.
+	var prev := rig.target_state().pitch_deg
+	var max_jump := 0.0
+	var steps := 0
+	while rig.target_state().distance < 3000.0 and steps < 400:
+		rig.on_zoom(0.97, CENTER)
+		var now := rig.target_state().pitch_deg
+		max_jump = maxf(max_jump, absf(now - prev))
+		prev = now
+		steps += 1
+		assert_bool(_k1_ok(rig, rig.target_state())).is_true()
+	assert_float(rig.target_state().distance).is_greater_equal(3000.0)
+	assert_float(rig.target_state().pitch_deg).is_greater(20.0)  # yataya yakın tercih K1 girişinden sonra yükseldi
+	assert_float(max_jump).override_failure_message("zoom-out adımında eğim sıçradı").is_less(1.2)
+
+
+func test_the_low_preference_survives_zoom_out_through_k1_and_comes_back_on_zoom_in() -> void:
+	var rig := _rig(DesktopInputProfile.new(), "street:port")
+	rig.tilt(-10000.0)
+	var low := rig.envelope.pitch_min_deg(rig.envelope.d_min_m)
+	assert_float(rig.desired_pitch_deg()).is_equal(low)
+	_zoom_steps(rig, 0.9, 70)  # tavana kadar
+	assert_float(rig.target_state().distance).is_greater(rig.envelope.k1_min_distance_m)
+	assert_float(rig.target_state().pitch_deg).is_greater(low + 15.0)
+	assert_float(rig.desired_pitch_deg()).is_equal(low)  # K1 tercihe dokunmaz
+	_zoom_steps(rig, 1.1, 120)  # sokak ölçeğine dön
+	assert_float(rig.target_state().distance).is_less(rig.envelope.k1_min_distance_m)
+	var floor_now := rig.envelope.pitch_min_deg(rig.target_state().distance)
+	assert_float(rig.target_state().pitch_deg).is_equal_approx(floor_now, 0.01)
+	_zoom_steps(rig, 1.1, 120)
+	assert_float(rig.target_state().pitch_deg).is_equal_approx(low, 0.01)  # tercih geri geldi
+
+
 # --- (5) Home ---
 
 func test_home_resets_the_preference_to_the_starting_pitch() -> void:

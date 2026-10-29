@@ -162,7 +162,7 @@ func test_the_four_world_edges_never_enter_the_frame_from_any_edge_focus_and_hea
 				2: f = Vector2(inner.position.x + inner.size.x * t, inner.position.y)
 				_: f = Vector2(inner.position.x + inner.size.x * t, inner.end.y)
 			for heading in range(0, 360, 45):
-				for d in [300.0, 900.0, 4000.0, 18000.0]:
+				for d in [_env.k1_min_distance_m, 2500.0, 4000.0, 18000.0]:
 					for aspect in ASPECTS:
 						var out := _env.resolve(_state(f.x, f.y, d, 25.0, float(heading)), aspect, Callable(), _bounds)
 						for p in _env.footprint_points(out, aspect, Callable()):
@@ -189,6 +189,29 @@ func test_the_street_band_clamps_only_the_focus_and_leaves_pitch_and_distance_al
 	assert_float(out.pitch_deg).is_equal(21.0)
 	assert_float(out.focus_x).is_equal(inner.position.x)
 	assert_float(out.focus_z).is_equal(inner.end.y)
+
+
+func test_street_and_neighborhood_allow_a_near_horizontal_pitch_at_the_edge_but_k1_takes_over_at_its_entry() -> void:
+	var inner := _env.inner_rect(_bounds)
+	var floor_deg := _env.pitch_min_deg(_env.d_min_m)
+	assert_float(floor_deg).is_less_equal(3.5)  # ~3 derece erişilebilir
+	for d in [60.0, 300.0, 600.0]:
+		for aspect in ASPECTS:
+			# Doğu kenar payı sınırında odak, doğuya bakış, en alçak eğim: K1 DEVREDE DEĞİL (ufuk görünür, kenar pusu).
+			var s := _state(inner.end.x, inner.get_center().y, d, 0.0, 90.0)
+			var out := _env.resolve(s, aspect, Callable(), _bounds)
+			assert_float(out.pitch_deg).is_equal_approx(floor_deg, 0.0001)
+			assert_float(out.distance).is_equal(d)
+			assert_float(out.focus_x).is_equal(inner.end.x)
+	# Olumsuz (duyarlılık): K1 girişinde ve üstünde aynı kadraj ufku/dünya kenarını kadraja sokamaz.
+	for d in [_env.k1_min_distance_m, 3000.0, 9000.0]:
+		for aspect in ASPECTS:
+			var s := _state(inner.end.x, inner.get_center().y, d, 0.0, 90.0)
+			var out := _env.resolve(s, aspect, Callable(), _bounds)
+			assert_bool(_env.footprint_ok(out, aspect, Callable(), _bounds)).is_true()
+			assert_float(out.pitch_deg).is_greater(_env.pitch_min_deg(_env.d_min_m) + 15.0)
+			for p in _env.footprint_points(out, aspect, Callable()):
+				assert_bool(inner.has_point(p)).is_true()
 
 
 # --- Ölçüt 3: pan, zoom-out, rotate, üç girdi yolu ---

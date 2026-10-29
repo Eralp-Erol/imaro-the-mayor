@@ -11,10 +11,11 @@ extends RefCounted
 ## Tüm fonksiyonlar saf ve salt okunurdur; durum değiştirenler yeni `CameraState` döndürür.
 
 ## Yalnız NaN/sonsuz GÜVENLİK tabanı (T-064, ADR-0007): oyun sınırı değildir. Oyun sınırları `CameraEnvelope`
-## (`data/view/camera_envelope.json`) üzerindendir; bu sayılar eski (legacy) zarfla aynıdır, hiçbir zarfı dışlamaz.
+## (`data/view/camera_envelope.json`) üzerindendir; mesafe sayıları eski (legacy) zarfla aynıdır; en alçak
+## eğim tabanı (1°) yataya yakın oyuncu tabanını (ADR-0007 Ek 2026-10-29 b) dışlamaz.
 const SAFETY_MIN_DISTANCE_M := 25.0
 const SAFETY_MAX_DISTANCE_M := 90000.0
-const SAFETY_MIN_PITCH_DEG := 8.0
+const SAFETY_MIN_PITCH_DEG := 1.0
 const SAFETY_MAX_PITCH_DEG := 88.0
 ## Tek zoom olayının çarpan sınırı (aşırı tekerlek/kıstırma sıçraması tek adımda dünyayı aşmasın).
 const MIN_ZOOM_FACTOR := 0.2

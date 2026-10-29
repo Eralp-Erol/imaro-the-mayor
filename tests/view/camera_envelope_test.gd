@@ -55,8 +55,12 @@ func test_the_pitch_floor_is_a_log_distance_piecewise_linear_curve_from_the_data
 
 func test_validator_rejects_a_non_monotonic_pitch_curve() -> void:
 	var d := _player()
-	d["pitch_min_curve"] = [[50.0, 12.0], [300.0, 30.0], [1500.0, 25.0], [18000.0, 40.0]]
+	d["pitch_min_curve"] = [[50.0, 3.0], [600.0, 30.0], [1500.0, 25.0], [18000.0, 40.0]]
 	assert_str(", ".join(CameraEnvelope.validate(d))).contains("monoton")
+	# Yataya yakın düz parçadan SONRA düşen eğri de reddedilir (monoton olmayan taban, yeni düğümlerle).
+	var dip := _player()
+	dip["pitch_min_curve"] = [[50.0, 3.0], [600.0, 3.0], [900.0, 20.0], [1500.0, 5.0], [18000.0, 40.0]]
+	assert_str(", ".join(CameraEnvelope.validate(dip))).contains("monoton")
 	var env := CameraEnvelope.from_dict(d, &"bad")
 	assert_array(Array(env.errors)).is_not_empty()
 
@@ -72,9 +76,13 @@ func test_validator_rejects_a_curve_whose_distances_do_not_increase_or_do_not_co
 
 func test_validator_rejects_a_k1_entry_pitch_below_half_fov_plus_epsilon() -> void:
 	var d := _player()
-	d["pitch_min_curve"] = [[50.0, 12.0], [300.0, 18.9], [1500.0, 25.0], [18000.0, 40.0]]  # spec'in eski 300 m -> 18,9
+	d["pitch_min_curve"] = [[50.0, 3.0], [600.0, 3.0], [1500.0, 18.9], [18000.0, 40.0]]  # K1 girişi (1500 m) 18,9 < 21
 	var errors := CameraEnvelope.validate(d)
 	assert_str(", ".join(errors)).contains("K1'e girişte eğim sıçrar")
+	# Yatay taban K1 girişine kadar uzatılırsa (yatay serbest bölge K1 bandına taşar) doğrulayıcı reddeder.
+	var flat := _player()
+	flat["pitch_min_curve"] = [[50.0, 3.0], [1500.0, 3.0], [18000.0, 40.0]]
+	assert_str(", ".join(CameraEnvelope.validate(flat))).contains("K1'e girişte eğim sıçrar")
 	# K1 kapalıysa bu kural geçerli değil (legacy).
 	d["k1_enabled"] = false
 	assert_array(Array(CameraEnvelope.validate(d))).is_empty()
