@@ -18,6 +18,9 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --demo-zone=Z    demo imar anahtarı (varsayılan zone.mixed).
 ##   --no-smoke-save-load  --demo'nun kare 60'taki kayıt/yükleme smoke'unu atlar (ölçüm: yükleme sonrası tek
 ##                    seferlik tam eşitleme sürekli-rejim kare maliyetinden ayrı raporlanabilsin).
+##   --no-view-warmup açılış ısınmasını (ViewWarmup: kamera dar bantları örtü altında gezer) kapatır. Dev/yakalama
+##                    argümanları (--shot, --quit-after, --preset, --sweep, --heading/--pitch/--distance, --hide,
+##                    --m2-advance, --m2-focus-new, --t47-flow) ve başsız çalışma ısınmayı zaten atlar.
 ##   --no-vegetation  bitki görünümü kapalı (T-062 B1; varsayılan AÇIK: B0 yerleşimi, `VegetationView`). Perf A/B ve
 ##                    karşılaştırma içindir.  --veg-block: yerleşimi/önbelleği ana iş parçacığında BEKLER
 ## (yakalama/ölçüm:
@@ -53,6 +56,14 @@ const M2_ADVANCE_STEP_DAYS := 1
 const DEV_NOTE := "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kademesi dahil) ikinci BuildingView'da " \
 		+ "yalnız sim aşamasından çizilir; oyuncu yapı koymaz."
 
+## Bekleyen bitki yerleşimi üst sınırı (sn): ısınma bitki hücrelerini de çizmek ister; soğuk önbellekte (~14 sn)
+## beklemeyiz, o durumda bitki ilk göründüğünde ısınır (VegetationView.warm_up gölgelendirici hattını zaten kurar).
+const WARMUP_VEG_WAIT_S := 4.0
+## Isınma bu dev argümanlarından biri varsa atlanır (yakalama/ölçüm kareleri örtü görmesin, kamera oynamasın).
+const WARMUP_SKIP_ARGS: Array[String] = ["no-view-warmup", "shot", "quit-after", "preset", "sweep", "heading",
+		"pitch", "distance", "hide", "m2-advance", "m2-focus-new", "t47-flow"]
+
+
 var sim_stats: Dictionary = {}
 
 var _roads: RoadView
@@ -83,6 +94,24 @@ var _max_ms: float = 0.0
 var _smoke_save_load_checked: bool = false
 var _vegetation: VegetationView = null
 var _veg_loader: VegetationLoader = null
+var _warmup: ViewWarmup = null
+var _warmup_started: bool = false
+var _warmup_wait_start_us: int = 0
+
+
+## Isınma (örtü altında kamera gezisi) sürerken true: ölçüm/yakalama betikleri bunu bekler.
+func is_warming_up() -> bool:
+	return _warmup != null and is_instance_valid(_warmup) and _warmup.is_active()
+
+
+## Isınma çalışacak mı (saf karar; pencereli oyuncu yolu).
+static func warmup_enabled(args: Dictionary, headless: bool) -> bool:
+	if headless:
+		return false
+	for key in WARMUP_SKIP_ARGS:
+		if args.has(key):
+			return false
+	return true
 
 
 ## perf_probe: kare başına sim günü (tick'li karelerin ayrı raporlanması için); sim yoksa -1.
@@ -598,12 +627,17 @@ func _process(delta: float) -> void:
 	if _facade == null:
 		return
 	_frames += 1
+	_maybe_start_warmup()
 	_acc_ms += delta * 1000.0
 	_acc_n += 1
 	_max_ms = maxf(_max_ms, delta * 1000.0)
 	var tick_before := _facade.current_tick()
 	var t_drive := Time.get_ticks_usec()
-	_facade.drive_usec(int(delta * 1000000.0))
+	# Isınma örtüsü altında sim yalnız İLK tick'e kadar sürer (ilk tick ekonomi durumunu kurar, ~120 ms): oyuncu onu
+	# görmez; sonra sim bekler, böylece oyuncu örtü kalktığında "gün 1"de başlar (örtüsüz akıştaki 1. saniye gibi).
+	# Sim durumuna dokunulmaz: yalnız zaten yapılacak olan tick'ler sürülür (tick sayısına göre deterministik).
+	if not is_warming_up() or tick_before < 1:
+		_facade.drive_usec(int(delta * 1000000.0))
 	var drive_us := Time.get_ticks_usec() - t_drive
 	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır (SimBuildingPump kuralı); kuyruk çok
 	# derinleşirse (yavaş kareler) tick'li karede de iş yürür (sonsuz birikme yok).
@@ -645,6 +679,42 @@ func _process(delta: float) -> void:
 					_projector.unplaced_count(), JSON.stringify(_projector.unplaced_reason_counts())])
 		print("PLAYABLE_QUIT frames=%d tick=%d" % [_frames, _facade.current_tick()])
 		get_tree().quit()
+
+
+## Isınmayı (tek sefer) başlatır: pencereli oyuncu yolunda, bitki yerleşimi hazır olunca ya da bekleme sınırı dolunca.
+func _maybe_start_warmup() -> void:
+	if _warmup_started or _camera == null:
+		return
+	if not warmup_enabled(_args, DisplayServer.get_name() == "headless"):
+		_warmup_started = true
+		return
+	if _warmup_wait_start_us == 0:
+		_warmup_wait_start_us = Time.get_ticks_usec()
+	var waited_s := (Time.get_ticks_usec() - _warmup_wait_start_us) / 1000000.0
+	if _veg_loader != null and waited_s < WARMUP_VEG_WAIT_S:
+		return
+	_warmup_started = true
+	_warmup = ViewWarmup.new()
+	_warmup.name = "ViewWarmup"
+	add_child(_warmup)
+	_warmup.finished.connect(_on_warmup_finished)
+	_warmup.begin(_camera, _view_work_pending)
+	print("PLAYABLE_WARMUP begin veg_ready=%s waited_s=%.1f" % [str(_veg_loader == null), waited_s])
+
+
+## Isınma bekleme koşulu: ilk sim tick'i henüz olmadı (örtü altında olsun) ya da bitki hücre kuyruğu dolu.
+func _view_work_pending() -> bool:
+	if _facade != null and _facade.current_tick() < 1:
+		return true
+	return _vegetation != null and int(_vegetation.stats.get("queued", 0)) > 0
+
+
+func _on_warmup_finished() -> void:
+	var w := _warmup
+	sim_stats["warmup_ms"] = w.duration_ms
+	sim_stats["warmup_frames"] = w.frames_held_total
+	print("PLAYABLE_WARMUP done ms=%.1f frames=%d poses=%d tick=%d" % [w.duration_ms, w.frames_held_total,
+			w.poses_done, _facade.current_tick() if _facade != null else -1])
 
 
 ## Tick'li karenin sim ve HUD payı (perf_probe `scene_build_stats.tick_cost`): sim tick'i ile `hud.poll` ayrı

@@ -62,3 +62,9 @@ Sürekli rejimde (ilk 2 sn sonrası) bu probelarda tek kare max 35-56 ms; 100+ m
 | Ayarlara VSync/kare sınırı seçeneği; harici ekran için kullanıcıya not | düşük | kullanıcı donanımına uyum |
 
 Kullanıcıya sorulacak tek şey: demo penceresi hangi ekranda (yerleşik mi, harici 4K mı)? Harici ekran 60 Hz'e alınırsa/yerleşike taşınırsa ortalama beklenen ~9 ms.
+
+## Sonuç: ısınma düzeltmesi (2026-10-30)
+- `ViewWarmup` (yeni): yükleme sırasında opak örtü altında kamera dar bantları gezer, sonra başlangıç pozuna birebir döner. İlk core->street 60 m çizim aşaması 850-925 ms -> 31-46 ms (aynı makine/yük). Yükleme +1,7-1,9 sn (yüklü makinede; hedef <=1,5 sn, hafif aşım).
+- Sim'e dokunulmadı (determinizm); ilk tick (economy.on_daily 121 ms) ayrı oyuncu-görünür takılma değil, ısıtılmadı.
+- Demo komutu: `--demo --no-smoke-save-load` (kare-60 kayıt/yükleme smoke'u 1,7 sn dondurur).
+- Doğrulama: bağımsız `verify quick` PASS (1864 test, 0 hata). Ölçüm olmayan: sessiz makinede ısınma süresi, soğuk bitki önbelleği, iPad, harici 30 Hz ekran + VSync (ısınma bunu çözmez).

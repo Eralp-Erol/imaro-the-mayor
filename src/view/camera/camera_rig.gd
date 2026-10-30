@@ -171,6 +171,24 @@ func apply_state(state: CameraState, snap: bool = true) -> void:
 	_apply_pose()
 
 
+## Poz anlık görüntüsü ve geri yükleme (ısınma gibi geçici kamera gezileri için): hedef, görünen durum, oyuncunun
+## istediği eğim ve göz açıklığı birlikte döner; `preset_name` ve sinyaller etkilenmez (bant sinyali yine ateşlenir).
+func pose_snapshot() -> Dictionary:
+	return {"target": _target.copy(), "current": _current.copy(), "desired_pitch": _desired_pitch,
+			"eye_lift": _eye_lift}
+
+
+func restore_pose(snapshot: Dictionary) -> void:
+	if not (snapshot.get("target") is CameraState and snapshot.get("current") is CameraState):
+		push_error("CameraRig.restore_pose: geçersiz anlık görüntü yok sayıldı")
+		return
+	_target = (snapshot["target"] as CameraState).copy()
+	_current = (snapshot["current"] as CameraState).copy()
+	_desired_pitch = float(snapshot.get("desired_pitch", _desired_pitch))
+	_eye_lift = float(snapshot.get("eye_lift", 0.0))
+	_apply_pose()
+
+
 ## Yumuşatmayı bitirip hedefe oturur (capture/test).
 func snap_to_target() -> void:
 	_current = _target.copy()
