@@ -90,6 +90,7 @@ var _m2_targets: PackedInt64Array = PackedInt64Array()
 var _decisions: DecisionPanels = null
 var _m2_results: M2Results = null
 var _inspector: InspectorHost = null
+var _selection_ring: ParcelSelectionRing = null
 var _selected_parcel_id: int = -1
 var _acc_ms: float = 0.0
 var _acc_n: int = 0
@@ -185,6 +186,8 @@ func _apply_perf_flags() -> void:
 		_hud.visible = false
 	if "markers" in hidden and _markers != null:
 		_markers.visible = false
+	if "ring" in hidden and _selection_ring != null:
+		_selection_ring.visible = false
 	if "veg" in hidden and _vegetation != null:
 		_vegetation.visible = false
 
@@ -462,6 +465,30 @@ func _on_hud_ready() -> void:
 	_inspector = InspectorHost.attach(_hud, _facade, _m2_results.open_reason, _open_zoning_for)
 	_inspector.set_band(_camera.scale_band)
 	_camera.scale_band_changed.connect(_inspector.set_band)
+	_start_selection_ring()
+	_hud.panel_closed.connect(_on_hud_panel_closed)
+
+
+## Seçili parselin dünya içi halkası (T-041): `view_root` altında tek küçük mesh; yalnız dünya verisini okur.
+func _start_selection_ring() -> void:
+	_selection_ring = ParcelSelectionRing.new()
+	_view_root.add_child(_selection_ring)
+	_selection_ring.bind(_camera, _terrain.surface_height_at)
+	_selection_ring.set_band(_camera.scale_band)
+	_camera.scale_band_changed.connect(_selection_ring.set_band)
+
+
+## Denetçi "Kapat" ile kapandı: seçim kalkar (halka da). Başka panele geçişte (imar akışı) panel_closed gelmez.
+func _on_hud_panel_closed(panel_id: StringName) -> void:
+	if panel_id == InspectorHost.PANEL_ID:
+		_set_selection(-1)
+
+
+## Tek seçim yolu: seçili kimlik + dünya halkası. Olmayan kimlik/-1 işareti kaldırır.
+func _set_selection(parcel_id: int) -> void:
+	_selected_parcel_id = parcel_id
+	if _selection_ring != null:
+		_selection_ring.select(_net.parcels.get(parcel_id) if parcel_id > 0 and _net != null else null)
 
 
 ## Dev argümanları (üst nota bakın). Yalnız komut satırında verilirse çalışır.
@@ -764,11 +791,11 @@ func _on_select_requested(screen_pos: Vector2) -> void:
 		return
 	var pid := _net.parcel_id_at(float(ground["x"]), float(ground["z"]))
 	if pid <= 0:
-		_selected_parcel_id = -1
+		_set_selection(-1)
 		if _inspector != null:
 			_inspector.select_parcel(-1)
 		return
-	_selected_parcel_id = pid
+	_set_selection(pid)
 	if _inspector != null:
 		_inspector.select_parcel(pid)
 	print("PLAYABLE_SELECT parcel=%d" % pid)
@@ -776,7 +803,7 @@ func _on_select_requested(screen_pos: Vector2) -> void:
 
 ## Denetçideki "İmar önerisi ver" fiili: imar akışı seçili parselle açılır (öneri yine onay adımıyla gönderilir).
 func _open_zoning_for(parcel_id: int) -> void:
-	_selected_parcel_id = parcel_id
+	_set_selection(parcel_id)
 	_decisions.open_zoning(PackedInt64Array([parcel_id]))
 
 
@@ -790,7 +817,7 @@ func _dev_inspect(parcel_id: int) -> void:
 		st.focus_z = wp.centroid.y
 		_camera.apply_state(st, true)
 		_apply_camera_overrides(_args)
-	_selected_parcel_id = parcel_id
+	_set_selection(parcel_id)
 	_inspector.select_parcel(parcel_id)
 	print("PLAYABLE_INSPECT parcel=%d" % parcel_id)
 
