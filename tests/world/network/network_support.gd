@@ -14,6 +14,8 @@ const TEST_TEMPLATES := {
 			"min_frontage_m": 30.0},
 }
 
+## T-042 v0 kuralı: oyuncu yolu parsel kümesini değiştirmez (Ismeral `network.json` `player_roads` ile aynı bayrak).
+const KEEP_PARCELS := {"player_roads": {"keep_parcels": true}}
 static var _network_control_cache: Dictionary = {}
 static var _default_network: WorldNetwork = null
 static var _light_network: WorldNetwork = null
@@ -54,7 +56,8 @@ static func flat_world(size_m: float = 3000.0, cell: float = 100.0, water: Rect2
 	return w
 
 
-static func test_rules(world: WorldData) -> NetworkRules:
+## `extra_control`: kontrol sözlüğüne eklenen/ezen bölümler (örn. `KEEP_PARCELS`, `block_rules`).
+static func test_rules(world: WorldData, extra_control: Dictionary = {}) -> NetworkRules:
 	var control := {
 		"classes": {"arterial": {"width_m": 20.0}, "collector": {"width_m": 14.0}, "local": {"width_m": 10.0},
 				"field": {"width_m": 6.0}, "rail": {"width_m": 12.0}, "ferry": {"width_m": 0.0}},
@@ -62,17 +65,19 @@ static func test_rules(world: WorldData) -> NetworkRules:
 		"parcel_templates": TEST_TEMPLATES.duplicate(true),
 		"fabrics": [{"id": "U", "region": "D1", "template": "urban", "radius_norm": 10.0}],
 	}
+	for key: String in extra_control:
+		control[key] = extra_control[key]
 	return NetworkRules.from_control(world, control)
 
 
-static func empty_network(world: WorldData, net_seed: int = 7) -> WorldNetwork:
-	return WorldNetwork.create(world, test_rules(world), net_seed)
+static func empty_network(world: WorldData, net_seed: int = 7, extra_control: Dictionary = {}) -> WorldNetwork:
+	return WorldNetwork.create(world, test_rules(world, extra_control), net_seed)
 
 
 ## (cols x rows) bloklu yerel yol ızgarası: (cols+1) x (rows+1) düğüm. Planarizer ile çizilir; mühürlüdür.
 static func grid_network(world: WorldData, cols: int, rows: int, dx: float, dz: float, origin: Vector2,
-		net_seed: int = 7) -> WorldNetwork:
-	var net := empty_network(world, net_seed)
+		net_seed: int = 7, extra_control: Dictionary = {}) -> WorldNetwork:
+	var net := empty_network(world, net_seed, extra_control)
 	for j in rows + 1:
 		net.author_polyline(PackedVector2Array([origin + Vector2(0, j * dz), origin + Vector2(cols * dx, j * dz)]),
 				WorldRoadEdge.CLASS_LOCAL)

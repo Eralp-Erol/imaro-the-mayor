@@ -43,28 +43,65 @@ static func extract(net: WorldNetwork) -> Array[Dictionary]:
 static func _rotation_order(net: WorldNetwork) -> Dictionary:
 	var order := {}
 	for nid: int in net.nodes.keys():
-		var node: WorldRoadNode = net.nodes[nid]
-		var ids := PackedInt32Array()
-		var angles := PackedFloat64Array()
-		for eid in net.adjacency[nid]:
-			var e: WorldRoadEdge = net.edges[eid]
-			if e.mode() == &"ferry":
-				continue
-			var other: WorldRoadNode = net.nodes[e.other(nid)]
-			var d := other.pos - node.pos
-			var angle := atan2(d.y, d.x)
-			var at := ids.size()
-			ids.append(eid)
-			angles.append(angle)
-			# Ekleme sıralaması (küçük listeler).
-			while at > 0 and (angles[at - 1] > angle or (angles[at - 1] == angle and ids[at - 1] > eid)):
-				angles[at] = angles[at - 1]
-				ids[at] = ids[at - 1]
-				at -= 1
-			angles[at] = angle
-			ids[at] = eid
-		order[nid] = ids
+		order[nid] = _rotation_of(net, nid)
 	return order
+
+
+static func _rotation_of(net: WorldNetwork, nid: int) -> PackedInt32Array:
+	var node: WorldRoadNode = net.nodes[nid]
+	var ids := PackedInt32Array()
+	var angles := PackedFloat64Array()
+	for eid in net.adjacency[nid]:
+		var e: WorldRoadEdge = net.edges[eid]
+		if e.mode() == &"ferry":
+			continue
+		var other: WorldRoadNode = net.nodes[e.other(nid)]
+		var d := other.pos - node.pos
+		var angle := atan2(d.y, d.x)
+		var at := ids.size()
+		ids.append(eid)
+		angles.append(angle)
+		# Ekleme sıralaması (küçük listeler).
+		while at > 0 and (angles[at - 1] > angle or (angles[at - 1] == angle and ids[at - 1] > eid)):
+			angles[at] = angles[at - 1]
+			ids[at] = ids[at - 1]
+			at -= 1
+		angles[at] = angle
+		ids[at] = eid
+	return ids
+
+
+## YEREL yüz çıkarımı (T-042): yalnız tohum kenarların iki yarım kenarından yürür; dönüş `extract` ile aynı yüz
+## sözlükleri (yalnız pozitif alanlı). Bağlantılı tek bileşende (çağıran garanti eder) deliksiz; `holed` hep false.
+## Düğüm dönüş sıraları tembel hesaplanır.
+static func extract_local(net: WorldNetwork, seed_edges: PackedInt32Array) -> Array[Dictionary]:
+	var order := {}
+	var visited := {}
+	var faces: Array[Dictionary] = []
+	for eid in seed_edges:
+		if not net.edges.has(eid):
+			continue
+		if (net.edges[eid] as WorldRoadEdge).mode() == &"ferry":
+			continue
+		for dir in 2:
+			var start: int = eid * 2 + dir
+			if visited.has(start):
+				continue
+			var face := _face_from_cycle(net, _walk(net, order, start, visited))
+			if face.is_empty() or float(face["area"]) <= 0.0:
+				continue
+			face["signature"] = _signature(net, face)
+			faces.append(face)
+	return faces
+
+
+## Ferry dışı kenarlarla bağlı bileşen sayısı (yüz çıkarımındaki `holed` tanımıyla aynı komşuluk).
+static func component_count(net: WorldNetwork) -> int:
+	var comp := _components(net)
+	var top := -1
+	for nid: int in comp:
+		top = maxi(top, int(comp[nid]))
+	return top + 1
 
 
 static func _walk(net: WorldNetwork, order: Dictionary, start: int, visited: Dictionary) -> PackedInt32Array:
@@ -78,6 +115,8 @@ static func _walk(net: WorldNetwork, order: Dictionary, start: int, visited: Dic
 		var eid := cur >> 1
 		var edge: WorldRoadEdge = net.edges[eid]
 		var to_id := edge.b if (cur & 1) == 0 else edge.a
+		if not order.has(to_id):
+			order[to_id] = _rotation_of(net, to_id)
 		var around: PackedInt32Array = order[to_id]
 		var k := around.find(eid)
 		var next_eid := around[(k - 1 + around.size()) % around.size()]

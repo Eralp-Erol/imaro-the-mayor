@@ -16,6 +16,11 @@ var snap_m: float = 3.0
 var min_edge_m: float = 4.0
 var max_segment_m: float = 350.0
 var max_block_area_m2: float = 4.0e6
+## true: oyuncu yolu (LAYER_DELTA) PARSEL KÜMESİNİ DEĞİŞTİRMEZ (T-042 v0, D-009 aşama 1): delta kenarının çevirdiği
+## yeni yüzler parsellenmez (`KIND_OPEN`), delta mevcut kenarın sınıfını/genişliğini yükseltmez, kenar bölünmesinden
+## kayan imzalı parselli bloklar köşe anahtarıyla korunur. Varsayılan false = eski davranış (sentetik testler); Ismeral
+## verisi `player_roads.keep_parcels` ile true yapar. Aşama 2 (kamulaştırma/değişken parsel kümesi) bunu kapatır.
+var keep_parcels_on_delta: bool = false
 var min_block_area_m2: float = 400.0
 ## Şablon adı -> parametre sözlüğü (lot_width_m, lot_width_jitter, max_depth_m, min_area_m2, min_frontage_m).
 var templates: Dictionary = {}
@@ -38,6 +43,7 @@ static func from_control(world: WorldData, net_control: Dictionary) -> NetworkRu
 	var block_rules: Dictionary = net_control.get("block_rules", {})
 	rules.max_block_area_m2 = float(block_rules.get("max_block_area_m2", 4.0e6))
 	rules.min_block_area_m2 = float(block_rules.get("min_block_area_m2", 400.0))
+	rules.keep_parcels_on_delta = bool((net_control.get("player_roads", {}) as Dictionary).get("keep_parcels", false))
 	rules.templates = (net_control.get("parcel_templates", {}) as Dictionary).duplicate(true)
 	for entry: Dictionary in net_control.get("fabrics", []):
 		var fp := _footprint_from_entry(world, entry)

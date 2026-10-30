@@ -30,6 +30,8 @@ const BLOCK_REGION_MAX_M := 400.0
 const PARALLEL_CLEARANCE_M := 4.0
 ## Ofseti geçersiz bir yüz bu alandan büyükse sliver değil parselsiz açık arazi (kama) sayılır.
 const OPEN_WEDGE_MIN_AREA_M2 := 20000.0
+## Bellekte tutulan değişim kaydı sayısı üst sınırı.
+const CHANGE_LOG_MAX := 64
 
 var world: WorldData = null
 var rules: NetworkRules = null
@@ -46,7 +48,15 @@ var delta: NetworkDelta = NetworkDelta.new()
 var base_hash: String = ""
 var sealed: bool = false
 var graph_version: int = 0
+## true: delta işleminden sonra bloklar YEREL yenilenir (`NetworkLocalRefresh`); false: her zaman tam `refresh_blocks`
+## (denetim/karşılaştırma). Sonuç aynıdır; yalnız süre farklıdır.
+var local_refresh_enabled: bool = true
+## Son delta değişim kayıtları (en yeni sonda; `CHANGE_LOG_MAX` ile sınırlı). Durum DEĞİLDİR, hash'e girmez.
+var change_log: Array[NetworkChange] = []
 
+var _journal: NetworkOpJournal = null
+var _undo_stack: Array[NetworkOpJournal] = []
+var _blocks_single_comp: bool = false
 var _node_grid: NetworkSpatialHash = NetworkSpatialHash.new(NODE_CELL_M)
 var _edge_grid: NetworkSpatialHash = NetworkSpatialHash.new(EDGE_CELL_M)
 var _block_grid: NetworkSpatialHash = NetworkSpatialHash.new(BLOCK_CELL_M)
@@ -79,6 +89,8 @@ func add_node_raw(pos: Vector2, kind: StringName = &"") -> int:
 	nodes[node.id] = node
 	adjacency[node.id] = PackedInt32Array()
 	_node_grid.insert(node.id, Rect2(node.pos, Vector2.ZERO))
+	if _journal != null:
+		_journal.on_node_added(node.id, node.pos)
 	_touch()
 	return node.id
 
@@ -91,7 +103,12 @@ func add_edge_raw(a: int, b: int, road_class: StringName, width: float, layer: i
 		var e: WorldRoadEdge = edges[existing]
 		if e.mode() != WorldRoadEdge.mode_of(road_class):
 			return _add_parallel_track(a, b, e, road_class, width, layer, is_open)
+		if layer == WorldRoadEdge.LAYER_DELTA and rules.keep_parcels_on_delta:
+			# v0: oyuncu yolu mevcut kenarın sınıfını/genişliğini DEĞİŞTİRMEZ (komşu parseller yeniden türemesin).
+			return existing
 		if WorldRoadEdge.rank(road_class) > WorldRoadEdge.rank(e.road_class):
+			if _journal != null:
+				_journal.on_edge_set(self, e)
 			e.road_class = road_class
 			e.width = maxf(e.width, width)
 			_touch()
@@ -107,6 +124,8 @@ func add_edge_raw(a: int, b: int, road_class: StringName, width: float, layer: i
 	edge.layer = layer
 	edge.length = node_pos(a).distance_to(node_pos(b))
 	edges[edge.id] = edge
+	if _journal != null:
+		_journal.on_edge_added(edge.id)
 	_adjacency_add(a, edge.id)
 	_adjacency_add(b, edge.id)
 	_edge_grid.insert(edge.id, _edge_rect(edge))
@@ -145,6 +164,8 @@ func remove_edge_raw(edge_id: int) -> void:
 	if not edges.has(edge_id):
 		return
 	var e: WorldRoadEdge = edges[edge_id]
+	if _journal != null:
+		_journal.on_edge_removed(self, e)
 	_adjacency_remove(e.a, edge_id)
 	_adjacency_remove(e.b, edge_id)
 	edges.erase(edge_id)
@@ -153,6 +174,8 @@ func remove_edge_raw(edge_id: int) -> void:
 
 
 func remove_node_raw(node_id: int) -> void:
+	if _journal != null and nodes.has(node_id):
+		_journal.on_node_removed(node_id, node_pos(node_id), (nodes[node_id] as WorldRoadNode).kind)
 	nodes.erase(node_id)
 	adjacency.erase(node_id)
 	_node_grid.remove(node_id)
@@ -162,6 +185,8 @@ func remove_node_raw(node_id: int) -> void:
 ## Kenarı `node_id` düğümünde böler: eski kenar (a -> node) olur, yeni kenar (node -> b) eklenir. Dönüş: yeni kenar.
 func split_edge_raw(edge_id: int, node_id: int) -> int:
 	var e: WorldRoadEdge = edges[edge_id]
+	if _journal != null:
+		_journal.on_edge_set(self, e)
 	var old_b := e.b
 	_adjacency_remove(old_b, edge_id)
 	e.b = node_id
@@ -217,6 +242,8 @@ func seal_base() -> void:
 	base_hash = graph_hash()
 	delta = NetworkDelta.new()
 	delta.base_hash = base_hash
+	_undo_stack.clear()
+	change_log.clear()
 	sealed = true
 
 
@@ -260,6 +287,8 @@ func _apply_op(op: Dictionary, record: bool) -> Dictionary:
 		report["ok"] = false
 		report["error"] = "taban mühürlü değil"
 		return report
+	var journal: NetworkOpJournal = NetworkOpJournal.begin(self, op) if record else null
+	_journal = journal
 	match str(op.get("op", "")):
 		"add_road":
 			_op_add_road(op, report)
@@ -271,13 +300,94 @@ func _apply_op(op: Dictionary, record: bool) -> Dictionary:
 			report["ok"] = false
 			report["error"] = "bilinmeyen op"
 	if not bool(report["ok"]):
+		_journal = null
 		return report
-	if record:
-		delta.ops.append(op)
-	var refreshed := refresh_blocks()
+	var refreshed := _refresh_after_op(journal)
+	_journal = null
 	for key in ["added_blocks", "removed_blocks", "added_parcels", "removed_parcels"]:
 		report[key] = refreshed[key]
+	if record:
+		delta.ops.append(op)
+		var change := NetworkChange.from_journal(self, journal, NetworkChange.KIND_APPLY, refreshed)
+		change.op_index = delta.ops.size() - 1
+		change.version_before = journal.version_before
+		journal.change = change
+		_undo_stack.append(journal)
+		_log_change(change)
+		report["change"] = change
 	return report
+
+
+## Delta işleminden sonra blokları yeniler: koşullar uygunsa YEREL (yalnız komşuluğu değişen yüzler), değilse tam.
+func _refresh_after_op(journal: NetworkOpJournal) -> Dictionary:
+	if journal != null and local_refresh_enabled and _blocks_single_comp and _stays_single(journal):
+		return NetworkLocalRefresh.refresh(self, journal)
+	return refresh_blocks()  # tam yenileme `_blocks_single_comp` değerini de günceller
+
+
+## İşlem sonrası ağ hâlâ TEK bileşen mi (yerel yenilemenin koşulu)? Ucuz yoldan; kesin bilinemezse tam sayım yapılır.
+func _stays_single(journal: NetworkOpJournal) -> bool:
+	if journal == null:
+		return false
+	var name := str(journal.op.get("op", ""))
+	if name == "set_open":
+		return true
+	if name == "add_road" and journal.extends_existing_graph(self):
+		return true
+	return NetworkBlocks.component_count(self) == 1
+
+
+func _log_change(change: NetworkChange) -> void:
+	change_log.append(change)
+	if change_log.size() > CHANGE_LOG_MAX:
+		change_log.remove_at(0)
+
+
+# ---------------------------------------------------------------- geri alma (LIFO) ve değişim günlüğü (T-042)
+
+## Geri alınabilecek delta işlemi var mı?
+func can_undo() -> bool:
+	return not _undo_stack.is_empty()
+
+
+## Son delta işlemi (JSON güvenli sözlük kopyası); yoksa boş.
+func peek_last_op() -> Dictionary:
+	return {} if delta.ops.is_empty() else delta.ops[delta.ops.size() - 1].duplicate(true)
+
+
+## Son delta işlemini GERİ ALIR (LIFO). Ağ grafı (düğüm/kenar kimlikleri, sütunlar) ve `graph_hash` işlemden önceki ile
+## BİREBİR aynıdır. Bloklar/parseller yeniden ÜRETİLMEZ: işlemin yarattıkları silinir, silinenler KENDİ nesneleri (aynı
+## kimlik, aynı `owner_id`) geri konur; kimlik sayaçları geri sarılır: aynı yol yeniden çizilirse aynı kimlikleri alır.
+## Dönüş: {ok, error: "nothing_to_undo" | "", op, change: NetworkChange}.
+func undo_last_op() -> Dictionary:
+	if _undo_stack.is_empty() or delta.ops.size() != _undo_stack.size():
+		return {"ok": false, "error": "nothing_to_undo", "op": {}, "change": null}
+	var journal: NetworkOpJournal = _undo_stack.pop_back()
+	var op: Dictionary = delta.ops.pop_back()
+	var version_before := graph_version
+	var refreshed := journal.undo(self)
+	_touch()
+	_blocks_single_comp = journal.single_before
+	var change := NetworkChange.from_journal(self, journal, NetworkChange.KIND_UNDO, refreshed, journal.change)
+	change.op_index = delta.ops.size()
+	change.version_before = version_before
+	_log_change(change)
+	return {"ok": true, "error": "", "op": op, "change": change}
+
+
+## `graph_version` değerinden SONRA yazılan değişim kayıtları (eski -> yeni). Günlük sınırlıdır (`CHANGE_LOG_MAX`);
+## `since` günlüğün başından eskiyse çağıran tüm yolları yeniden kurmalıdır (`change_log_covers` false).
+func changes_since(since_version: int) -> Array[NetworkChange]:
+	var out: Array[NetworkChange] = []
+	for c in change_log:
+		if c.graph_version > since_version:
+			out.append(c)
+	return out
+
+
+## `changes_since(since_version)` EKSİKSİZ mi (araya giren her değişim günlükte mi)? false: tüm yolları yeniden kurun.
+func change_log_covers(since_version: int) -> bool:
+	return since_version >= graph_version or (not change_log.is_empty() and since_version >= change_log[0].version_before)
 
 
 func _op_add_road(op: Dictionary, report: Dictionary) -> void:
@@ -332,6 +442,8 @@ func _op_set_open(op: Dictionary, report: Dictionary) -> void:
 		report["ok"] = false
 		report["error"] = "kenar yok"
 		return
+	if _journal != null:
+		_journal.on_edge_set(self, edges[edge_id])
 	(edges[edge_id] as WorldRoadEdge).open = bool(op.get("open", true))
 	_touch()
 
@@ -362,6 +474,8 @@ func _cleanup_node(node_id: int, report: Dictionary) -> void:
 	if cross > 1.0e-3 * d1.length() * d2.length() or float(d1.dot(d2)) >= 0.0:
 		return
 	var far_end := e2.other(node_id)
+	if _journal != null:
+		_journal.on_edge_set(self, e1)
 	remove_edge_raw(e2.id)
 	if e1.b == node_id:
 		e1.b = far_end
@@ -404,13 +518,10 @@ func _new_report() -> Dictionary:
 func refresh_blocks() -> Dictionary:
 	var report := {"added_blocks": [], "removed_blocks": [], "added_parcels": [], "removed_parcels": []}
 	var matched := {}
-	for face in NetworkBlocks.extract(self):
-		var sig: String = face["signature"]
-		var old_id := int(_block_by_sig.get(sig, -1))
-		if old_id >= 0 and not matched.has(old_id) and blocks.has(old_id):
-			matched[old_id] = true
-			_update_matched_block(blocks[old_id], face)
-			continue
+	var candidates := {}
+	for old_id: int in blocks:
+		candidates[old_id] = true
+	for face in NetworkBlockMatch.match_faces(self, NetworkBlocks.extract(self), matched, candidates):
 		var block := _build_block(face, report)
 		matched[block.id] = true
 		WorldNetwork.report_add(report, "added_blocks", block.id)
@@ -418,17 +529,32 @@ func refresh_blocks() -> Dictionary:
 		if not matched.has(old_id):
 			_remove_block(old_id, report)
 			WorldNetwork.report_add(report, "removed_blocks", old_id)
+	_blocks_single_comp = NetworkBlocks.component_count(self) == 1
 	return report
 
 
 func _update_matched_block(block: WorldBlock, face: Dictionary) -> void:
-	block.outline = face["points"]
 	var new_edges: PackedInt32Array = face["edge_ids"]
+	var new_sig: String = face["signature"]
+	if _journal != null and (new_edges != block.edge_ids or block.outline != face["points"] or new_sig != block.signature):
+		var front := {}
+		for pid in block.parcel_ids:
+			front[pid] = (parcels[pid] as WorldParcel).frontage_edge
+		_journal.on_block_updated(block, front)
+	block.outline = face["points"]
+	if new_sig != block.signature:
+		# Köşe anahtarıyla eşleşme (kenar bölünmesi imzayı kaydırdı): blok ve parselleri korunur, imza yenisine bağlanır.
+		if int(_block_by_sig.get(block.signature, -1)) == block.id:
+			_block_by_sig.erase(block.signature)
+		block.signature = new_sig
+		_block_by_sig[new_sig] = block.id
 	if new_edges == block.edge_ids:
 		return
 	block.edge_ids = new_edges
 	for pid in block.parcel_ids:
 		var parcel: WorldParcel = parcels[pid]
+		if new_edges.has(parcel.frontage_edge) and NetworkBlockMatch.frontage_holds(self, parcel):
+			continue  # Cephe kenarı hâlâ blok sınırında ve parsele bakıyor: parselin kendi cephesi korunur.
 		var best := -1
 		var best_d := INF
 		for eid in new_edges:
@@ -460,9 +586,14 @@ func _build_block(face: Dictionary, report: Dictionary) -> WorldBlock:
 		block.kind = WorldBlock.KIND_OPEN
 	elif world.is_water(center.x, center.y):
 		block.kind = WorldBlock.KIND_UNBUILDABLE
+	elif rules.keep_parcels_on_delta and NetworkBlockMatch.has_delta_edge(self, block.edge_ids):
+		# T-042 v0: oyuncu yolunun çevirdiği yeni yüz PARSELLENMEZ (sim parsel kümesi sabit; D-009 aşama 1).
+		block.kind = WorldBlock.KIND_OPEN
 	else:
 		_parcelize_block(block, face, report)
 	blocks[block.id] = block
+	if _journal != null:
+		_journal.on_block_added(block.id)
 	_block_by_sig[block.signature] = block.id
 	_block_grid.insert(block.id, NetworkGeometry.bounds(block.outline))
 	return block
@@ -534,6 +665,10 @@ func _make_parcel(block: WorldBlock, block_rect: Rect2, lot: Dictionary, rng: Ra
 
 
 func _set_frontage(parcel: WorldParcel, edge_id: int) -> void:
+	if _journal != null:
+		if parcel.frontage_edge >= 0:
+			_journal.on_edge_parcels(parcel.frontage_edge, _edge_parcels.get(parcel.frontage_edge))
+		_journal.on_edge_parcels(edge_id, _edge_parcels.get(edge_id))
 	if parcel.frontage_edge >= 0 and _edge_parcels.has(parcel.frontage_edge):
 		var old: PackedInt32Array = _edge_parcels[parcel.frontage_edge]
 		var at := old.find(parcel.id)
@@ -548,6 +683,13 @@ func _set_frontage(parcel: WorldParcel, edge_id: int) -> void:
 
 func _remove_block(block_id: int, report: Dictionary) -> void:
 	var block: WorldBlock = blocks[block_id]
+	if _journal != null:
+		var gone: Array[WorldParcel] = []
+		for pid in block.parcel_ids:
+			var p: WorldParcel = parcels[pid]
+			gone.append(p)
+			_journal.on_edge_parcels(p.frontage_edge, _edge_parcels.get(p.frontage_edge))
+		_journal.on_block_removed(block, gone)
 	for pid in block.parcel_ids:
 		var parcel: WorldParcel = parcels[pid]
 		if _edge_parcels.has(parcel.frontage_edge):
@@ -594,12 +736,16 @@ func _touches_spur(outline: PackedVector2Array, spurs: PackedInt32Array) -> bool
 
 func _adjacency_add(node_id: int, edge_id: int) -> void:
 	var list: PackedInt32Array = adjacency[node_id]
+	if _journal != null:
+		_journal.on_adjacency(self, node_id, list)
 	list.append(edge_id)
 	adjacency[node_id] = list
 
 
 func _adjacency_remove(node_id: int, edge_id: int) -> void:
 	var list: PackedInt32Array = adjacency[node_id]
+	if _journal != null:
+		_journal.on_adjacency(self, node_id, list)
 	var at := list.find(edge_id)
 	if at >= 0:
 		list.remove_at(at)
@@ -806,9 +952,10 @@ func counts() -> Dictionary:
 ## Kanonik durum sözlüğü. Büyük sütunlar ham bayt SHA-256 ile özetlenir. `include_owner = false` mülkiyet yuvasını
 ## dışarıda bırakır (sim'in alanı; geometri özeti değişmesin).
 func state_dict(include_owner: bool = true) -> Dictionary:
-	var out := {"schema": SCHEMA_VERSION, "seed": net_seed, "nodes_sha": _sha(_node_columns()),
-			"edges_sha": _sha(_edge_columns()), "blocks_sha": _sha(_block_columns()),
-			"parcels_sha": _sha(_parcel_columns(include_owner)), "hubs": _hubs_dict()}
+	var out := {"schema": SCHEMA_VERSION, "seed": net_seed, "nodes_sha": NetworkColumns.sha(NetworkColumns.nodes(self)),
+			"edges_sha": NetworkColumns.sha(NetworkColumns.edges(self)),
+			"blocks_sha": NetworkColumns.sha(NetworkColumns.blocks(self)),
+			"parcels_sha": NetworkColumns.sha(NetworkColumns.parcels(self, include_owner)), "hubs": _hubs_dict()}
 	return out
 
 
@@ -819,37 +966,21 @@ func state_hash(include_owner: bool = true) -> String:
 ## Taban özeti: yalnız graf (düğüm + kenar sütunları, hub'lar, tohum). Bloklar/parseller graftan ve tohumdan TÜRETİLİR;
 ## delta bu grafın üstüne uygulanır (parsel üretim kodu değişse delta yine uygulanır, parseller yeniden türer).
 func graph_hash() -> String:
-	return StateHash.of({"schema": SCHEMA_VERSION, "seed": net_seed, "nodes_sha": _sha(_node_columns()),
-			"edges_sha": _sha(_edge_columns()), "hubs": _hubs_dict()})
+	return StateHash.of({"schema": SCHEMA_VERSION, "seed": net_seed,
+			"nodes_sha": NetworkColumns.sha(NetworkColumns.nodes(self)),
+			"edges_sha": NetworkColumns.sha(NetworkColumns.edges(self)), "hubs": _hubs_dict()})
 
 
 ## Yalnız topoloji: düğüm/kenar çiftleri, sınıf, açıklık, bloğun kenar çevrimleri (koordinat ve parsel ayrıntısı YOK).
 func topology_hash() -> String:
-	var ids: Array = nodes.keys()
-	ids.sort()
-	var parts := PackedStringArray()
-	for nid: int in ids:
-		parts.append("n%d:%s" % [nid, String((nodes[nid] as WorldRoadNode).kind)])
-	var eids: Array = edges.keys()
-	eids.sort()
-	for eid: int in eids:
-		var e: WorldRoadEdge = edges[eid]
-		parts.append("e%d:%d-%d:%s:%d" % [eid, e.a, e.b, String(e.road_class), 1 if e.open else 0])
-	var bids: Array = blocks.keys()
-	bids.sort()
-	for bid: int in bids:
-		var b: WorldBlock = blocks[bid]
-		var cycle := PackedStringArray()
-		for eid in b.edge_ids:
-			cycle.append(str(eid))
-		parts.append("b%d:%s" % [bid, ",".join(cycle)])
-	return StateHash.of({"topology": "\n".join(parts), "hubs": _hubs_dict()})
+	return NetworkColumns.topology_hash(self)
 
 
 ## Yalnız ayrıntı: düğüm koordinatları + parsel geometrisi/ayrıntı değerleri (tohum bunu değiştirir, topolojiyi
 ## değil).
 func detail_hash() -> String:
-	return StateHash.of({"nodes": _sha(_node_columns()), "parcels": _sha(_parcel_columns(false))})
+	return StateHash.of({"nodes": NetworkColumns.sha(NetworkColumns.nodes(self)),
+			"parcels": NetworkColumns.sha(NetworkColumns.parcels(self, false))})
 
 
 func _hubs_dict() -> Dictionary:
@@ -857,61 +988,3 @@ func _hubs_dict() -> Dictionary:
 	for key in hubs:
 		out[String(key)] = int(hubs[key])
 	return out
-
-
-func _node_columns() -> PackedByteArray:
-	var ids: Array = nodes.keys()
-	ids.sort()
-	var nums := PackedFloat64Array()
-	var text := PackedStringArray()
-	for nid: int in ids:
-		var n: WorldRoadNode = nodes[nid]
-		nums.append_array(PackedFloat64Array([nid, n.pos.x, n.pos.y]))
-		text.append(String(n.kind))
-	return nums.to_byte_array() + ",".join(text).to_utf8_buffer()
-
-
-func _edge_columns() -> PackedByteArray:
-	var ids: Array = edges.keys()
-	ids.sort()
-	var nums := PackedFloat64Array()
-	var text := PackedStringArray()
-	for eid: int in ids:
-		var e: WorldRoadEdge = edges[eid]
-		nums.append_array(PackedFloat64Array([eid, e.a, e.b, e.width, 1.0 if e.open else 0.0, e.layer]))
-		text.append(String(e.road_class))
-	return nums.to_byte_array() + ",".join(text).to_utf8_buffer()
-
-
-func _block_columns() -> PackedByteArray:
-	var ids: Array = blocks.keys()
-	ids.sort()
-	var nums := PackedFloat64Array()
-	var text := PackedStringArray()
-	for bid: int in ids:
-		var b: WorldBlock = blocks[bid]
-		nums.append_array(PackedFloat64Array([bid, b.area, b.parcel_ids.size()]))
-		text.append("%s|%s|%s|%s" % [String(b.kind), String(b.region_code), String(b.fabric), b.signature])
-	return nums.to_byte_array() + ",".join(text).to_utf8_buffer()
-
-
-func _parcel_columns(include_owner: bool) -> PackedByteArray:
-	var ids: Array = parcels.keys()
-	ids.sort()
-	var nums := PackedFloat64Array()
-	var text := PackedStringArray()
-	for pid: int in ids:
-		var p: WorldParcel = parcels[pid]
-		nums.append_array(PackedFloat64Array([pid, p.block_id, p.frontage_edge, p.area, p.front_length, p.detail,
-				p.owner_id if include_owner else 0]))
-		for v in p.outline:
-			nums.append_array(PackedFloat64Array([v.x, v.y]))
-		text.append("%s|%s" % [String(p.region_code), String(p.fabric)])
-	return nums.to_byte_array() + ",".join(text).to_utf8_buffer()
-
-
-static func _sha(bytes: PackedByteArray) -> String:
-	var ctx := HashingContext.new()
-	ctx.start(HashingContext.HASH_SHA256)
-	ctx.update(bytes if not bytes.is_empty() else PackedByteArray([0]))
-	return ctx.finish().hex_encode()
