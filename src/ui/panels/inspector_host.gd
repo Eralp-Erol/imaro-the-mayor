@@ -7,6 +7,8 @@ extends RefCounted
 ## `select_parcel(id)` (id <= 0: boş seçim), kamera bandı `set_band(band)`.
 ## - `reason_opener(initial: Callable)`: nedensellik panelini açar (M2Results.open_reason).
 ## - `zoning_opener(parcel_id: int)`: imar akışını bu parselle açar (DecisionPanels.open_zoning).
+## - `zoning_adder(parcel_id) -> bool`: İMAR akışı açıkken haritada seçilen parsel denetçiyi AÇMAZ, teklifin
+##   alanına eklenir (T-043A: birden çok parsel; `DecisionPanels.add_zoning_parcel`).
 ## - Başka panel açıkken boş tıklama o paneli ÇALMAZ; denetçi açıkken boş tıklama açıklayıcı boş durumu gösterir.
 
 const PANEL_ID := &"inspector"
@@ -20,18 +22,20 @@ var band: StringName = &""
 
 var _reason_opener: Callable = Callable()
 var _zoning_opener: Callable = Callable()
+var _zoning_adder: Callable = Callable()
 var _panel: InspectorPanel = null
 var _last_refresh_msec: int = -1000000
 var _flush_pending: bool = false
 
 
 static func attach(hud_in: HudRoot, facade_in: SimFacade, reason_opener: Callable = Callable(),
-		zoning_opener: Callable = Callable()) -> InspectorHost:
+		zoning_opener: Callable = Callable(), zoning_adder: Callable = Callable()) -> InspectorHost:
 	var h := InspectorHost.new()
 	h.hud = hud_in
 	h.facade = facade_in
 	h._reason_opener = reason_opener
 	h._zoning_opener = zoning_opener
+	h._zoning_adder = zoning_adder
 	hud_in.refreshed.connect(h._on_refreshed)
 	hud_in.panel_closed.connect(h._on_panel_closed)
 	return h
@@ -45,6 +49,9 @@ func rebind(facade_in: SimFacade) -> void:
 ## Haritadan seçim. `id <= 0` boş seçimdir: denetçi açıksa boş durumu gösterir, değilse bir şey yapmaz.
 func select_parcel(id: int) -> void:
 	parcel_id = id if id > 0 else SimContract.NO_ID
+	if parcel_id > 0 and hud.panel_id() == DecisionPanels.PANEL_ZONING and _zoning_adder.is_valid():
+		_zoning_adder.call(parcel_id)  # imar akışı açık: seçim teklifin alanına eklenir, denetçi panelin yerini almaz
+		return
 	if parcel_id > 0:
 		open()
 	elif is_open():

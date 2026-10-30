@@ -20,6 +20,8 @@ const ZONING_APPLIED_KEY := &"event.zoning.applied"
 
 var parcel_ids: PackedInt64Array = PackedInt64Array()
 var land_use: StringName = &""
+## Plan yoğunluğu (‰, imar varsayılanına göre); -1 = imar varsayılanı (komuta yazılmaz).
+var density_pm: int = -1
 var last_validation: CommandResult = null
 var last_submit: CommandResult = null
 ## Tick sınırında ret: sim olayı; anında ret: komut sonucu (ikisinden biri dolu).
@@ -34,6 +36,9 @@ var reason_ids: PackedInt64Array = PackedInt64Array()
 ## parselleri sim'de `vacant` görünür; sahne (playable) dünya yapı verisinden bunu enjekte eder. Boş = yalnız sim.
 var structure_probe: Callable = Callable()
 
+## Gönderim anında yapılı olan parseller: gönderimden SONRA yatırımcının bu plan yüzünden diktiği yapı "mevcut yapı"
+## sayılmaz (uyarı yanlış olurdu). Gönderimden önce canlı okunur.
+var _structures_at_send: PackedInt64Array = PackedInt64Array()
 var _facade: SimFacade = null
 var _phase: Phase = Phase.PICK_AREA
 var _effective_ticks: Dictionary = {}  # parsel referansı (String) -> tick
@@ -83,9 +88,17 @@ func is_finished() -> bool:
 func add_parcel(parcel_id: int) -> bool:
 	if is_locked() or parcel_id <= SimContract.NO_ID or parcel_ids.has(parcel_id):
 		return false
+	if at_parcel_limit():
+		return false
 	parcel_ids.append(parcel_id)
 	_revalidate()
 	return true
+
+
+## Alan sim üst sınırına ulaştı mı (yeni parsel eklenemez)?
+func at_parcel_limit() -> bool:
+	var limit := max_parcels()
+	return limit > 0 and parcel_ids.size() >= limit
 
 
 func remove_parcel(parcel_id: int) -> void:
@@ -110,6 +123,58 @@ func choose_use(use: StringName) -> void:
 	_revalidate()
 
 
+## Yoğunluk seçimi (T-043A): -1 = varsayılan. Yalnız yapılandırmadaki seçenekler (`density_options`) kabul edilir.
+func choose_density(pm: int) -> void:
+	if is_locked() or (pm >= 0 and not density_options().has(pm)):
+		return
+	density_pm = pm
+	_revalidate()
+
+
+## Yapılandırmadaki yoğunluk seçenekleri (‰; çalışma verisi, Q-024 AÇIK). Varsayılan seçenek ayrıca (-1) sunulur.
+static func density_options() -> Array[int]:
+	var out: Array[int] = []
+	var raw: Variant = UiConfig.value("zoning.density_options_pm", [])
+	if raw is Array:
+		for item: Variant in raw:
+			if int(item) > 0:
+				out.append(int(item))
+	return out
+
+
+## Plan önizlemesi (`SimFacade.plan_preview`): seçili parseller + kullanım + yoğunluk için sim hesabı. Kullanım ya da
+## alan yoksa null. Sayıları UI üretmez; `ok == false` ise `reason` gösterilir.
+func preview() -> PlanPreviewView:
+	if parcel_ids.is_empty() or land_use == &"":
+		return null
+	return _facade.plan_preview(parcel_ids, land_use, density_pm)
+
+
+## Sim bayrakları (teklif üst sınırı, meclis yolu): alan/kullanım gerektirmez. Kaynak plan kavramı sunmuyorsa (mock)
+## `provenance` sim değildir ve `max_parcels` 0'dır.
+func plan_flags() -> PlanPreviewView:
+	return _facade.plan_preview(PackedInt64Array(), &"")
+
+
+## Meclis yolu açık mı? Gerçek sim bayrağı (`requires_council.zoning.propose`); yalnız kaynak sim değilse (mock/ui_lab)
+## `UiPrefs` yer tutucusuna düşer. "Meclis" sözcüğü yalnız bu true iken görünür.
+func council_required() -> bool:
+	var flags := plan_flags()
+	if flags.provenance == SimContract.PROVENANCE_SIM:
+		return flags.council_required
+	return UiPrefs.zoning_requires_council()
+
+
+## Teklifte en çok parsel (sim `plan_max_parcels_per_proposal`); 0 = sınır bilinmiyor.
+func max_parcels() -> int:
+	return plan_flags().max_parcels
+
+
+## Parselin plan durumu (sim türetmesi); alandaki parsellerden plansız/reddedilmiş olanların sayısı.
+func plan_state_of(parcel_id: int) -> PlanStateView:
+	return _facade.plan_state(parcel_id)
+
+
 ## Hazır ve geçerliyse gönderilebilir (ret edilen öneri GÖNDERİLEMEZ).
 func can_send() -> bool:
 	return _phase == Phase.READY
@@ -132,6 +197,7 @@ func send_block_reason() -> String:
 func send() -> bool:
 	if not can_send():
 		return false
+	_structures_at_send = structure_parcels()
 	var result := _facade.submit_command(_command())
 	last_submit = result
 	if result.is_rejected():
@@ -144,6 +210,7 @@ func send() -> bool:
 
 func reset() -> void:
 	land_use = &""
+	density_pm = -1
 	last_validation = null
 	last_submit = null
 	refusal_event = null
@@ -153,6 +220,7 @@ func reset() -> void:
 	vote_passed = false
 	reason_ids = PackedInt64Array()
 	_effective_ticks = {}
+	_structures_at_send = PackedInt64Array()
 	_phase = Phase.PICK_USE if not parcel_ids.is_empty() else Phase.PICK_AREA
 
 
@@ -194,7 +262,7 @@ func verdict_text() -> String:
 
 
 func path_text() -> String:
-	return UiText.t(&"zoning.path.council" if UiPrefs.zoning_requires_council() else &"zoning.path.direct")
+	return UiText.t(&"zoning.path.council" if council_required() else &"zoning.path.direct")
 
 
 ## Alandaki yapılı parseller: sim aşaması `vacant` değil (planlı/inşaatta/yapılı/durmuş) YA DA enjekte sorgu
@@ -203,6 +271,8 @@ func structure_parcels() -> PackedInt64Array:
 	var out := PackedInt64Array()
 	if parcel_ids.is_empty():
 		return out
+	if _phase >= Phase.SENT and last_submit != null and not last_submit.is_rejected():
+		return _structures_at_send
 	var by_id := {}
 	for v in _facade.parcel_views(parcel_ids):
 		by_id[v.id] = v
@@ -237,7 +307,7 @@ func structure_warning() -> String:
 
 
 func submit_label() -> String:
-	return UiText.t(&"zoning.submit" if UiPrefs.zoning_requires_council() else &"zoning.submit_direct")
+	return UiText.t(&"zoning.submit" if council_required() else &"zoning.submit_direct")
 
 
 ## Şimdiki aşamanın tek cümlelik durumu ("" = gösterilecek durum yok).
@@ -315,6 +385,10 @@ func command() -> SimCommand:
 # --- İç ---
 
 func _command() -> SimCommand:
+	# Yeni komut türü YOK (CAN-03): mevcut `zoning.propose`, yoğunluk isteğe bağlı parametre.
+	if density_pm >= 0:
+		return SimCommand.make(SimCommand.KIND_ZONING_PROPOSE,
+				{"parcel_ids": parcel_ids, "land_use": land_use, "density": density_pm})
 	return SimCommand.zoning_propose(parcel_ids, land_use)
 
 

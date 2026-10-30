@@ -2,6 +2,7 @@ class_name InspectorModel
 extends RefCounted
 ## Parsel/bölge denetçisi görünüm modeli (T-041, CAN-04/SIM-12): SAF okuma, düğüm yok, testlidir. Hiçbir değer
 ## uydurulmaz; her alan `SimFacade` okumasıdır:
+## - İmar planı durumu: `plan_state(parcel_id)` (Plansız / Teklif verildi / Planlı / Reddedildi / Yapılı; T-043A).
 ## - Parsel: `parcel_views` -> `ParcelView.zone/pending_zone/development/use/units/progress_pm/owner/land_value/
 ##   area_m2/region_code/decision*` (M2ResultModel aracılığıyla; sonuç paneliyle AYNI okuma).
 ## - Gerekçe: `reasons_for(parcel.N)` içinden `decision.investor.develop` kayıtları (`ParcelView.reason_ids` yalnız
@@ -31,6 +32,8 @@ var tick: int = 0
 ## Sonuç paneliyle ortak okuma (parsel satırı, bölge ölçümleri, belediye geliri).
 var m2: M2ResultModel = null
 var view: ParcelView = null
+## İmar planı durumu (`SimFacade.plan_state`; T-043A). Kaynak plan kavramı sunmuyorsa `untracked`.
+var plan: PlanStateView = null
 ## Son yatırımcı kararı kaydı (`decision.investor.develop`), yoksa null.
 var record: ReasonRecord = null
 var factors: Array[ReasonModel.Row] = []
@@ -55,6 +58,7 @@ static func build(facade: SimFacade, parcel_id_in: int, band_in: StringName) -> 
 		return m
 	m.state = State.READY
 	m.view = m.m2.primary.view
+	m.plan = facade.plan_state(parcel_id_in)
 	m._read_reason(facade)
 	m._read_reactions(facade)
 	return m
@@ -95,6 +99,7 @@ func signature() -> String:
 	if not is_ready():
 		return "%d|%d" % [state, parcel_id]
 	var parts: Array[String] = [str(state), str(parcel_id), str(detail), m2.signature(), str(reason_pruned),
+			"%s/%d/%d/%s" % [plan.state, plan.due_tick, plan.command_id, plan.vote_ref] if plan != null else "",
 			str(record.id if record != null else 0)]
 	for g in linked_reactions:
 		parts.append("%d/%s/%d/%d" % [g.group.id, g.reaction, g.intensity, g.tick])

@@ -23,6 +23,8 @@ enum Decision { NONE, APPROVED, DECLINED }
 
 ## Ret nedeni kodları (UI sözlüğü): `m2.decline.<kod>`.
 const CAUSE_ZONING := &"zoning"
+## T-043A (D-010): boş parselde yürürlükte imar PLANI yok (plan teklifi gerekir); `zoning` (izin yok) ile ayrıdır.
+const CAUSE_UNPLANNED := &"unplanned"
 const CAUSE_INFRASTRUCTURE := &"infrastructure"
 const CAUSE_FINANCING := &"financing"
 const CAUSE_DEMAND := &"demand"
@@ -30,7 +32,8 @@ const CAUSE_RETURN := &"return"
 const CAUSE_UNKNOWN := &"unknown"
 ## Sim ret kodu (`ParcelView.decision_code`) -> UI neden kodu.
 const CODE_TO_CAUSE := {
-	&"zoning_not_buildable": CAUSE_ZONING, &"infrastructure_exhausted": CAUSE_INFRASTRUCTURE,
+	&"zoning_not_buildable": CAUSE_ZONING, &"zoning_unplanned": CAUSE_UNPLANNED,
+	&"infrastructure_exhausted": CAUSE_INFRASTRUCTURE,
 	&"insufficient_financing": CAUSE_FINANCING, &"demand_too_low": CAUSE_DEMAND, &"return_too_low": CAUSE_RETURN,
 }
 ## Ayrıntılı okunan en çok parsel (gerekçe taraması kopyalar; sınır bilinçli).

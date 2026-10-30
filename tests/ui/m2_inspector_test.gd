@@ -141,7 +141,11 @@ func test_street_band_reads_the_whole_chain_from_the_facade() -> void:
 	var text := panel.joined_text()
 	var v: ParcelView = f.parcel_views(PackedInt64Array([building.id]))[0]
 	# 1 imar + parsel gerçekleri
-	assert_str(text).contains(UiText.t(&"m2.zoning.effective", {"zone": UiText.humanize(String(v.zone))}))
+	var plan_text := PlanStateText.label(f.plan_state(building.id))
+	if plan_text != "":  # plan kavramı açıksa (T-043A) imar adımı sim'in plan durumunu söyler
+		assert_str(text).contains(plan_text)
+	else:
+		assert_str(text).contains(UiText.t(&"m2.zoning.effective", {"zone": UiText.humanize(String(v.zone))}))
 	var land := UiText.money(v.land_value) if v.land_value > 0 else UiText.t(&"inspector.land_value.unset")
 	assert_str(text).contains(land)
 	if v.land_value <= 0:

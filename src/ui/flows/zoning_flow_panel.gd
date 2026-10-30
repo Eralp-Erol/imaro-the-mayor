@@ -4,10 +4,12 @@ extends FlowPanel
 ## (hedefler `UiContext`ten; hover'a bağlı bilgi yok). Panel yeniden kurulsa da (yön/profil değişimi) akış durumu
 ## modeldedir ve kaybolmaz.
 ##
-## Okuduğu sim alanları: `ParcelView.zone/pending_zone` (alan satırları), `CommandResult` (ön doğrulama, gönderim),
-## `SimEvent` (sonuç: applied/rejected/vote/parcel.changed — modelde), `reason_ids` ("Nedenini gör").
-## Etki önizlemesi (`ZoningPreview`) sözleşmede yok (v1.1 isteği): bölüm GİZLİ, UI tahmin üretmez.
-## Yoğunluk/yükseklik alanları da yok: sim birim/aralık vermiyor, değer uydurulmaz (v1.1 `ZoningOptions`).
+## Okuduğu sim alanları: `plan_state` (parsel satırı: Plansız / Teklif verildi / Planlı ...), `ParcelView.zone`,
+## `CommandResult` (ön doğrulama, gönderim), `SimEvent` (sonuç: modelde), `reason_ids` ("Nedenini gör").
+## T-043A (D-010): yoğunluk seçenekleri yapılandırma verisidir (Q-024 AÇIK); ÖNİZLEME yalnız `SimFacade.plan_preview`
+## sayılarıdır (toplam birim, altyapı yükü, bölge kapasite/boş pay/sığıyor mu); yarar/zarar işareti sim'de yok ->
+## "henüz kurulmadı". "Meclis" sözcüğü yalnız gerçek sim bayrağı true iken. Kaynak plan önizlemesi sunmuyorsa (mock)
+## bölüm dürüst "kurulu değil" yazar.
 ## CAN-03: yalnız imar KOŞULU önerilir; metin bunu söyler.
 
 signal submitted(result: CommandResult)
@@ -97,6 +99,8 @@ func _render() -> void:
 		_restore_focus(focus_role)
 		return
 	_add_uses()
+	_add_density()
+	_add_preview()
 	_add_send_and_status()
 	_body.add_child(_muted(UiText.t(&"zoning.no_instant_building")))
 	_restore_focus(focus_role)
@@ -115,6 +119,10 @@ func _add_area() -> void:
 	for id in model.parcel_ids:
 		_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
 	if not model.is_locked():
+		var limit := model.max_parcels()
+		if limit > 0:
+			_body.add_child(_muted(UiText.t(&"zoning.too_many", {"max": limit}) if model.at_parcel_limit()
+				else UiText.t(&"zoning.count_line", {"n": model.parcel_ids.size(), "max": limit})))
 		_body.add_child(_muted(UiText.t(&"zoning.area_add_hint")))
 		if model.parcel_ids.size() > 1:
 			var clear := UiFactory.button(_ctx, UiText.t(&"zoning.clear_area"), false)
@@ -126,11 +134,23 @@ func _add_area() -> void:
 
 
 func _parcel_row(id: int, view: ParcelView) -> Control:
+	# Kompakt satır (çok parselli teklifte önizleme ekranda kalsın): başlık + plan durumu aynı satırda, "Çıkar" sağda.
 	var card_parts := _card()
 	var card: PanelContainer = card_parts[0]
 	var inner: VBoxContainer = card_parts[1]
 	var head := HBoxContainer.new()
-	var title := UiFactory.label(UiText.humanize(SimContract.parcel_ref(id)), UiTheme.V_LABEL_TITLE, true)
+	var plan := model.plan_state_of(id)
+	var plan_text := PlanStateText.label(plan, true)
+	var title_text := UiText.humanize(SimContract.parcel_ref(id))
+	if plan_text != "":
+		title_text += " · " + plan_text
+	elif view != null:
+		title_text += " · %s" % (UiText.humanize(view.zone) if view.zone != &"" else UiText.t(&"common.unknown"))
+		if view.pending_zone != &"":
+			title_text += " · %s: %s" % [UiText.t(&"zoning.pending_zone"), UiText.humanize(view.pending_zone)]
+	var title := UiFactory.label(title_text, UiTheme.V_LABEL_DANGER if PlanStateText.needs_plan(plan) else &"", true)
+	_tag(title, "plan_state_%d" % id)
+	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	if not model.is_locked():
 		var remove := UiFactory.button(_ctx, UiText.t(&"zoning.remove_parcel"), false)
@@ -141,13 +161,6 @@ func _parcel_row(id: int, view: ParcelView) -> Control:
 			_render())
 		head.add_child(remove)
 	inner.add_child(head)
-	if view != null:
-		inner.add_child(_pair(UiText.t(&"zoning.current_zone"), UiText.humanize(view.zone) if view.zone != &""
-			else UiText.t(&"common.unknown")))
-		inner.add_child(_pair(UiText.t(&"zoning.pending_zone"), UiText.humanize(view.pending_zone)
-			if view.pending_zone != &"" else UiText.t(&"inspector.none_pending")))
-	else:
-		inner.add_child(_muted(UiText.t(&"common.unknown")))
 	return card
 
 
@@ -175,6 +188,68 @@ func _add_uses() -> void:
 	if model.last_validation != null and model.last_validation.is_rejected():
 		_verdict.theme_type_variation = UiTheme.V_LABEL_DANGER
 	_body.add_child(_verdict)
+
+
+## Yoğunluk seçenekleri (yalnız hazırlıkta): "Varsayılan" + yapılandırma seçenekleri; seçim komuta `density` gider.
+func _add_density() -> void:
+	if model.is_locked() or model.land_use == &"":
+		return
+	var options := ZoningFlowModel.density_options()
+	if options.is_empty():
+		return
+	_body.add_child(_section(&"zoning.density.title"))
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override(&"h_separation", int(_ctx.spacing()))
+	flow.add_theme_constant_override(&"v_separation", int(_ctx.spacing()))
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_body.add_child(flow)
+	var choices: Array[int] = [-1]
+	choices.append_array(options)
+	for pm in choices:
+		var text := UiText.t(&"zoning.density.default") if pm < 0 else UiText.t(&"zoning.density.value",
+				{"pct": UiText.number(pm / 10)})
+		var b := UiFactory.button(_ctx, text, true, true)
+		_tag(b, "density_%d" % pm)
+		b.set_pressed_no_signal(pm == model.density_pm)
+		b.pressed.connect(choose_density.bind(pm))
+		flow.add_child(b)
+	_body.add_child(_muted(UiText.t(&"zoning.density.note")))
+
+
+func choose_density(pm: int) -> void:
+	model.choose_density(pm)
+	_render()
+
+
+## Önizleme: YALNIZ `plan_preview` sayıları. Sim'den gelmeyen hiçbir sayı yazılmaz.
+func _add_preview() -> void:
+	var pv := model.preview()
+	if pv == null or model.is_locked():
+		return
+	_body.add_child(_section(&"zoning.preview.title"))
+	var parts := _card()
+	var inner: VBoxContainer = parts[1]
+	_tag(parts[0], "plan_preview")
+	if not pv.ok:
+		var reason := UiText.t(pv.reason) if UiText.has(pv.reason) else UiText.humanize(String(pv.reason))
+		inner.add_child(_muted(UiText.t(&"zoning.preview.unavailable", {"reason": reason})))
+	else:
+		inner.add_child(UiFactory.label(UiText.t(&"zoning.preview.units", {"n": UiText.number(pv.total_units)}),
+				UiTheme.V_LABEL_HEADING, true))
+		inner.add_child(UiFactory.label(UiText.t(&"zoning.preview.infra",
+				{"n": UiText.number(pv.total_infra_units)}), &"", true))
+		if pv.total_units == 0:
+			inner.add_child(_muted(UiText.t(&"zoning.preview.no_units")))
+		for r: Dictionary in pv.regions:
+			inner.add_child(_muted(UiText.t(&"zoning.preview.region", {"code": String(r["code"]),
+					"cap": UiText.number(int(r["capacity_units"])), "load": UiText.number(int(r["load_units"])),
+					"head": UiText.number(int(r["headroom_units"]))})))
+			inner.add_child(UiFactory.label(UiText.t(&"zoning.preview.fits" if bool(r["fits"])
+					else &"zoning.preview.exceeds"), UiTheme.V_LABEL_MUTED if bool(r["fits"])
+					else UiTheme.V_LABEL_DANGER, true))
+		inner.add_child(_muted(UiText.t(&"zoning.preview.effect")))
+		inner.add_child(_muted(UiText.t(&"zoning.preview.caveat")))
+	_body.add_child(parts[0])
 
 
 func _add_send_and_status() -> void:

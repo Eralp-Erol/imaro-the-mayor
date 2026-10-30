@@ -14,6 +14,8 @@
 	"zoning._note": "ADR-0005 Ek B anahtarlari + gosterim denemesi icin industrial. Sozlesmede arazi kullanimi sorgusu YOK (v1.1 istegi); sim listede olmayan kullanimi gerekceyle reddeder.",
 	"zoning.no_private_use": ["zone.green"],
 	"zoning._no_private_use_note": "Sim economy_config'te izinli ozel kullanimi olmayan imarlar (zone.green: uses []). UI metni bu listeden turer; sim degisirse burasi guncellenir.",
+	"zoning.density_options_pm": [600, 1400],
+	"zoning._density_note": "Imar plani yogunluk SECENEKLERI (varsayilan imar yogunlugunun binde-orani; ayrica her zaman 'varsayilan' secenegi). ICERIK DUZEYI Q-024 ACIK: bunlar calisma verisidir, kanon degil; sayilarin anlami (birim) sim plan_preview ile hesaplanir.",
 	"hud.notification_rows": 3,
 	"settings.auto_pause_agenda": false,
 	"settings._note": "Gundem ogesinde otomatik duraklatma yalniz AYAR; varsayilani ACIK SORU (Q-011/AS-11) - false yer tutucudur.",

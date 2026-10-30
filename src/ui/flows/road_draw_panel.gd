@@ -10,12 +10,18 @@ extends FlowPanel
 
 const CONFIRM_MIN_HEIGHT := 56.0
 const CONFIRM_MIN_WIDTH := 200.0
+const PLAN_HINT_DAYS := 10
+## İpucu taramasında bölge başına en çok bakılan parsel (sınırlı iş; bulunamazsa ipucu GÖSTERİLMEZ).
+const PLAN_HINT_SCAN := 600
 
 var tool: RoadDrawTool = null
 
 var _confirm_button: Button = null
 var _cancel_button: Button = null
 var _undo_button: Button = null
+## İpucu önbelleği: (son yol komutu, gün/PLAN_HINT_DAYS) -> bölgede plansız parsel var mı (ilk bulunanda durur).
+var _hint_key: String = ""
+var _hint_value: bool = false
 
 
 static func create(ctx: UiContext, facade: SimFacade, draw_tool: RoadDrawTool) -> RoadDrawPanel:
@@ -44,7 +50,8 @@ func refresh() -> void:
 
 
 func _signature_of() -> String:
-	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(tool.is_valid()), str(tool.message),
+	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(_plan_hint_needed()), str(tool.is_valid()),
+			str(tool.message),
 			str(tool.message_args), str(tool.has_undoable_road()), str(_facade.speed() == SimFacade.SPEED_PAUSED),
 			str(_undo_refund())]
 	if tool.verdict != null:
@@ -79,6 +86,13 @@ func _render() -> void:
 	if tool.step == RoadDrawTool.Step.SENDING and _facade.speed() == SimFacade.SPEED_PAUSED:
 		_body.add_child(UiFactory.label(UiText.t(&"road.step.sending_paused"), UiTheme.V_LABEL_DANGER, true))
 	_add_message()
+	if tool.step == RoadDrawTool.Step.PICK_A and _plan_hint_needed():
+		var plan_hint := UiFactory.label(UiText.t(&"plan.hint.after_road"), UiTheme.V_LABEL_HEADING, true)
+		plan_hint.add_theme_color_override("font_color", _ctx.tokens.color("ok"))
+		_tag(plan_hint, "plan_hint")
+		_body.add_child(plan_hint)
+		if _ctx.is_touch():
+			_body.add_child(_muted(UiText.t(&"plan.hint.touch")))
 	if tool.step == RoadDrawTool.Step.PICK_B or tool.step == RoadDrawTool.Step.REVIEW \
 			or tool.step == RoadDrawTool.Step.SENDING:
 		_add_preview_card()
@@ -88,6 +102,27 @@ func _render() -> void:
 	if not _ctx.is_touch():
 		_body.add_child(_muted(UiText.t(&"road.keys_help")))
 	_restore_focus(focus_role)
+
+
+## Yol çizildikten sonra ipucu: YALNIZ son yolun değdiği bölgede sim `plan_state` gerçekten `unplanned`/`plan_rejected`
+## parsel varsa (plan durumu yoksa/mock ise ya da hepsi planlıysa ipucu yok). Sonuç önbelleklenir (yol, 10 gün).
+func _plan_hint_needed() -> bool:
+	var works := _facade.public_works()
+	if works.is_empty():
+		return false
+	var last := works[works.size() - 1]
+	var key := "%d|%d" % [last.command_id, _facade.current_tick() / PLAN_HINT_DAYS]
+	if key == _hint_key:
+		return _hint_value
+	_hint_key = key
+	_hint_value = false
+	for code: String in last.region_units.keys():
+		var ids := _facade.parcel_ids(StringName(code))
+		for i in mini(ids.size(), PLAN_HINT_SCAN):
+			if PlanStateText.needs_plan(_facade.plan_state(ids[i])):
+				_hint_value = true
+				return true
+	return false
 
 
 func _step_number() -> int:

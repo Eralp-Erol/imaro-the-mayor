@@ -107,6 +107,15 @@ func test_undo_row_appears_only_when_a_player_road_exists_and_costs_are_never_in
 		assert_str(panel.joined_text()).not_contains(token)
 
 
+func test_no_plan_hint_when_the_source_has_no_plan_state() -> void:
+	_draft(NORTH)
+	_tool.confirm()
+	_facade.advance(1)
+	_tool.on_events(_facade.events_since(0))
+	# Bu kurulumda ekonomi/plan kavramı yok (`untracked`): "İmar planı yok" ipucu GERÇEK durum olmadan gösterilmez.
+	assert_str(_panel().joined_text()).not_contains(UiText.t(&"plan.hint.after_road"))
+
+
 func test_metro_band_replaces_the_flow_with_the_zoom_in_text() -> void:
 	_tool.set_band(&"metro")
 	var text := _panel().joined_text()

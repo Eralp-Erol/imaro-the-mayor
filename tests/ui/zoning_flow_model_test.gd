@@ -236,12 +236,15 @@ func test_council_flag_changes_expected_path_text_not_outcome() -> void:
 	var f := FlowTestSupport.mock("mock_scenario_investment_declined")
 	var m := _model(f)
 	UiPrefs.set_zoning_requires_council(false)
-	assert_str(m.path_text()).contains("meclis oylaması olmadan")
+	assert_str(m.path_text()).is_equal(UiText.t(&"zoning.path.direct"))
+	assert_bool(m.path_text().to_lower().contains("meclis")).override_failure_message(
+			"meclis sözcüğü yalnız meclis yolu açıkken görünür").is_false()
 	UiPrefs.set_zoning_requires_council(true)
 	assert_str(m.path_text()).contains("meclis oylamasına sunulur")
 	assert_str(m.submit_label()).is_equal("Meclise sun")
 	UiPrefs.set_zoning_requires_council(false)
-	assert_str(m.submit_label()).is_equal("Uygula (meclis onayı gerekmiyor)")
+	assert_str(m.submit_label()).is_equal("Planı sun")
+	assert_bool(m.submit_label().to_lower().contains("meclis")).is_false()
 
 
 func test_council_path_follows_events_voting_then_effective() -> void:

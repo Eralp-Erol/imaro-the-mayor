@@ -17,6 +17,7 @@ const ROW_METRIC := "metric"
 const ROW_REACTION := "reaction"
 const ROW_FACTOR := "factor"
 const ROW_SELECTED := "selected"
+const ROW_PLAN := "plan"
 
 var model: InspectorModel = null
 
@@ -91,7 +92,9 @@ func _add_facts() -> void:
 	var v := model.view
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
-	inner.add_child(_named(_pair(UiText.t(&"inspector.zoning"), UiText.humanize(String(v.zone))), ROW_FACT))
+	var plan_text := PlanStateText.label(model.plan, true)
+	var zoning_text := plan_text if plan_text != "" else UiText.humanize(String(v.zone))
+	inner.add_child(_named(_pair(UiText.t(&"inspector.zoning"), zoning_text), ROW_FACT))
 	inner.add_child(_named(_pair(UiText.t(&"inspector.pending_zone"),
 			UiText.humanize(String(v.pending_zone)) if v.pending_zone != &"" else UiText.t(&"inspector.none_pending")),
 			ROW_FACT))
@@ -112,12 +115,7 @@ func _add_chain(with_factors: bool) -> void:
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
 	inner.add_child(_step(&"m2.step.zoning"))
-	if v.pending_zone != &"":
-		inner.add_child(UiFactory.label(UiText.t(&"m2.zoning.pending",
-				{"zone": UiText.humanize(String(v.pending_zone))}), &"", true))
-	else:
-		inner.add_child(UiFactory.label(UiText.t(&"m2.zoning.effective",
-				{"zone": UiText.humanize(String(v.zone))}), &"", true))
+	_add_plan_lines(inner, v)
 	inner.add_child(_step(&"m2.step.investor"))
 	_add_decision(inner, row, with_factors)
 	inner.add_child(_step(&"m2.step.stage"))
@@ -125,6 +123,23 @@ func _add_chain(with_factors: bool) -> void:
 	inner.add_child(_step(&"inspector.step.reaction"))
 	_add_reactions(inner)
 	_body.add_child(parts[0])
+
+
+## İmar adımı: plan durumu (sim `plan_state`) + bekleyen/yürürlükteki imar. `untracked` ise eski satırlar.
+func _add_plan_lines(inner: VBoxContainer, v: ParcelView) -> void:
+	var plan_text := PlanStateText.label(model.plan)
+	if plan_text != "":
+		var line := UiFactory.label(plan_text, UiTheme.V_LABEL_DANGER if PlanStateText.needs_plan(model.plan) else &"", true)
+		_named(line, ROW_PLAN)
+		inner.add_child(line)
+		if PlanStateText.needs_plan(model.plan):
+			inner.add_child(_muted(UiText.t(&"plan.state.unplanned_why")))
+	if v.pending_zone != &"":
+		inner.add_child(UiFactory.label(UiText.t(&"m2.zoning.pending",
+				{"zone": UiText.humanize(String(v.pending_zone))}), &"", true))
+	elif plan_text == "" or model.plan.state == PlanStateView.STATE_EXISTING:
+		inner.add_child(UiFactory.label(UiText.t(&"m2.zoning.effective",
+				{"zone": UiText.humanize(String(v.zone))}), &"", true))
 
 
 func _step(key: StringName) -> Label:

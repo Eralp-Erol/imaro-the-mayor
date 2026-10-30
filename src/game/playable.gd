@@ -479,8 +479,8 @@ func _on_hud_ready() -> void:
 	_m2_results = M2Results.attach(_hud, _facade, _decisions)
 	if _args.has("m2-open-results"):
 		_m2_results.open()
-	# T-041: haritada seçim parsel/bölge denetçisini açar; imar önerisi denetçideki fiilden (veya Z) açılır.
-	_inspector = InspectorHost.attach(_hud, _facade, _m2_results.open_reason, _open_zoning_for)
+	_inspector = InspectorHost.attach(_hud, _facade, _m2_results.open_reason, _open_zoning_for,
+			_decisions.add_zoning_parcel)  # T-041/T-043A: imar akışı açıkken seçim teklif alanına eklenir
 	_inspector.set_band(_camera.scale_band)
 	_camera.scale_band_changed.connect(_inspector.set_band)
 	_start_selection_ring()
