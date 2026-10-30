@@ -46,8 +46,8 @@ Haiku hiçbir yerde: tüm ajanlarda açık `model:`, yerleşik `claude-code-guid
 | Paralel oturumlar | kullanıcının git-wt akışı (global CLAUDE.md); her worktree kendi dalında |
 
 ## 5. Kalite kapıları
-1. `tools/verify.sh quick` — kanon bütünlüğü (SHA-256), gdlint, Godot import/parse hataları, birim testleri (GdUnit4). Her değişiklikte.
-2. `tools/verify.sh full` — quick + pencereli runtime duman testi (ana sahne varsa). Teslimde.
+1. `tools/verify.sh quick` — kanon bütünlüğü (SHA-256), gdlint, Godot import/parse hataları, eşleme tutarlılığı ve GdUnit4'ün **yalnız koruma çekirdeği + değişen alan** testleri (hedef <= 5 dk). Her değişiklikte. Atlananları sonunda açıkça yazar; PASS'ı tam doğrulama DEĞİLDİR.
+2. `tools/verify.sh full` — GdUnit4'ün tüm testleri + canon-guard + pencereli runtime duman testi (ana sahne varsa); ~20 dk. Milestone/teslimde.
 3. Görsel kapı — gerçek capture'lar, açılıp bakılır, checklist + art-director verdict'i.
 4. Oynanış kabulü — görevdeki gözlemlenebilir ölçütler; QA her birini kanıta bağlar; "build geçti" kanıt sayılmaz.
 5. Director incelemeleri — milestone kapanışında üçü birden.
