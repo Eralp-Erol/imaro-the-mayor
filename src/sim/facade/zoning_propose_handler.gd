@@ -55,6 +55,9 @@ func _problem(state: GameState, params: Dictionary) -> Dictionary:
 	var shape := SimCommand.make(command_type(), params).validate_shape()
 	if not shape.is_empty():
 		return {"code": StringName(String(shape["reason_key"]).trim_prefix(_SHAPE_PREFIX)), "args": shape["args"]}
+	if (params["parcel_ids"] as PackedInt64Array).size() > _config.plan_max_parcels_per_proposal:  # T-043A
+		return {"code": &"invalid_value",
+			"args": {"param": "parcel_ids", "max": _config.plan_max_parcels_per_proposal}}
 	for id in params["parcel_ids"] as PackedInt64Array:
 		if not _parcels.has_parcel(id):
 			return {"code": &"invalid_target", "args": {"ref": String(SimContract.parcel_ref(id))}}

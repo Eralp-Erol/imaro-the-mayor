@@ -369,13 +369,13 @@ func _start_sim() -> void:
 	var patch := {"decision": {"review_enabled": 0}} if _args.has("m2-isolate") else {}
 	var economy_cfg := PlayableEconomy.config_for(_views, stock, patch,
 			_arg_int(_args, "infra-free", -1, -1, 1000000) if _args.has("infra-free") else -1)
-	var handle := PoliticsBootstrap.create(_world.world_seed, source, economy_cfg, stock)
+	var handle := PoliticsBootstrap.create(_world.world_seed, source, economy_cfg, stock, null, PlayablePolitics.config())
 	if handle == null:
 		push_error("playable: ekonomi/aktör/siyaset çekirdeği kurulamadı")
 		return
 	_facade = handle.facade
 	_pr = PlayableRoads.create(_net, _roads, _facade, func() -> bool: return _veg_loader != null)
-	_pr.attach_commands()
+	PlayableBudget.attach(_facade, _pr.attach_commands())
 	_facade.set_speed(3 if _demo else 1)
 	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
 	if _projector == null:

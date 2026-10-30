@@ -13,6 +13,11 @@ extends RefCounted
 ## Çıktı: {factors: [{name, value, weight, is_estimate}], threshold, score, positive, code (EconomyState.CODE_*),
 ## outlay, build_cost}. `score`/`positive` ReasonLog'un hesabıyla BİREBİR aynıdır (test): değişmez
 ## `olumlu <=> score >= threshold` yapıdan gelir.
+## T-043A: isteğe bağlı `unplanned` (bool): yürürlükte plan yok => imar etkeni `F_ZONING_UNPLANNED`
+## adıyla -1000 (VETO) ve
+## sonuç kodu `CODE_UNPLANNED`; kapasite/finansman/talep yine `use`/`units` (başvuru projesi) ile hesaplanır, böylece
+## "plan yok + kapasite yok" iki neden birlikte görünür. İsteğe bağlı `zoning_source` (StringName): imar etkeninin
+## `source_ref`i (plan komutu `command.N`).
 
 const F_DEMAND := &"reason.factor.demand"
 const F_RETURN := &"reason.factor.expected_return"
@@ -20,6 +25,7 @@ const F_COST := &"reason.factor.construction_cost"
 const F_INFRA := &"reason.factor.infrastructure_capacity"
 const F_FINANCING := &"reason.factor.financing"
 const F_ZONING := &"reason.factor.zoning_fit"
+const F_ZONING_UNPLANNED := &"reason.factor.zoning_unplanned"
 const F_SENTIMENT := &"reason.factor.market_sentiment"
 const VETO := -1000
 
@@ -40,7 +46,8 @@ static func decide(cfg: EconomyConfig, inp: Dictionary) -> Dictionary:
 	var capital: int = inp["capital"]
 	var financing_value := VETO if capital < outlay \
 		else mini(cfg.p("financing_bonus_max"), EconomyMath.ratio_pm(capital - outlay, outlay))
-	var zone_ok: bool = inp["zone_ok"] and units > 0
+	var unplanned: bool = inp.get("unplanned", false)
+	var zone_ok: bool = inp["zone_ok"] and units > 0 and not unplanned
 	var zoning_value := 0 if zone_ok else VETO
 	var demand_value := EconomyMath.demand_value(int(inp["demand_after_pm"]))
 	var factors: Array = [
@@ -49,7 +56,8 @@ static func decide(cfg: EconomyConfig, inp: Dictionary) -> Dictionary:
 		_factor(F_COST, cost_value, cfg.p("w_construction_cost"), true),
 		_factor(F_INFRA, infra_value, cfg.p("w_infrastructure"), false, StringName(inp.get("infra_source", &""))),
 		_factor(F_FINANCING, financing_value, cfg.p("w_financing"), false),
-		_factor(F_ZONING, zoning_value, cfg.p("w_zoning"), false),
+		_factor(F_ZONING_UNPLANNED if unplanned else F_ZONING, zoning_value, cfg.p("w_zoning"), false,
+			StringName(inp.get("zoning_source", &""))),
 		_factor(F_SENTIMENT, int(inp["sentiment"]), cfg.p("w_sentiment"), true),
 	]
 	var score := 0
@@ -59,7 +67,7 @@ static func decide(cfg: EconomyConfig, inp: Dictionary) -> Dictionary:
 	var positive := score >= threshold
 	return {
 		"factors": factors, "threshold": threshold, "score": score, "positive": positive,
-		"code": _code(positive, zoning_value, infra_value, financing_value, factors),
+		"code": _code(positive, zoning_value, infra_value, financing_value, factors, unplanned),
 		"outlay": outlay, "build_cost": build_cost,
 	}
 
@@ -75,11 +83,12 @@ static func _factor(name: StringName, value: int, weight: int, is_estimate: bool
 
 ## Olumlu: approved. Olumsuz: önce engel etkenleri (imar > altyapı > finansman); engel yoksa talep/getiri katkısı
 ## düşük olan (eşitlikte talep).
-static func _code(positive: bool, zoning_value: int, infra_value: int, financing_value: int, factors: Array) -> int:
+static func _code(positive: bool, zoning_value: int, infra_value: int, financing_value: int, factors: Array,
+		unplanned: bool = false) -> int:
 	if positive:
 		return EconomyState.CODE_APPROVED
 	if zoning_value == VETO:
-		return EconomyState.CODE_ZONING
+		return EconomyState.CODE_UNPLANNED if unplanned else EconomyState.CODE_ZONING
 	if infra_value == VETO:
 		return EconomyState.CODE_INFRASTRUCTURE
 	if financing_value == VETO:

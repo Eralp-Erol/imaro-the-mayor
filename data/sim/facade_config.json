@@ -6,8 +6,9 @@
 		"parcel_reason_limit": 5
 	},
 	"zoning": {
-		"_notes": "land_uses: kabul edilen arazi kullanimi anahtarlari (sozluk sim yapilandirmasi, sozlesme degil; yer tutucu, kanon degil). apply_delay_days: imar onerisinin yururluge girmesi icin gecen gun (>= 1); T-013 gercek imar surecini getirene kadar calisma modeli.",
+		"_notes": "land_uses: kabul edilen arazi kullanimi anahtarlari (sozluk sim yapilandirmasi, sozlesme degil; yer tutucu, kanon degil). apply_delay_days: imar onerisinin yururluge girmesi icin gecen gun (>= 1); T-013 gercek imar surecini getirene kadar calisma modeli. plan_max_parcels_per_proposal (T-043A, core-loop-v0 s.7): tek zoning.propose komutundaki en cok parsel (toplu plan teklifi = tek komut/tek oylama); yer tutucu, kanon degil.",
 		"land_uses": ["zone.residential", "zone.mixed", "zone.commercial", "zone.green"],
-		"apply_delay_days": 3
+		"apply_delay_days": 3,
+		"plan_max_parcels_per_proposal": 40
 	}
 }

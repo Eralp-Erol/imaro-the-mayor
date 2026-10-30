@@ -32,7 +32,7 @@ const ROUNDING_MARKERS: Array[String] = ["roundi(", "snappedf(", "snappedi(", "f
 ## Dosya düzeyi yetki: yalnızca kurulumda (tick dışında) yapılandırma dosyası okuyan sınıflar. Kayıt yuvası G/Ç'si
 ## src/app/save_slot*'tadır ve ayrı taranır (save_slot_purity_test.gd); sim içinde başka dosya G/Ç'ye izin yoktur.
 const FILE_IO_ALLOWED: Array[String] = ["sim_config.gd", "facade_config.gd", "economy_config.gd",
-	"public_works_config.gd"]
+	"public_works_config.gd", "budget_config.gd"]
 ## Taban sınıfı çözümlemesi için ek kök: `class_name` -> `extends` haritası buradan da kurulur (örn. SimFacade).
 const CLASS_MAP_ROOTS: Array[String] = ["res://src/sim", "res://src/contracts"]
 const FILE_IO := "\\b(FileAccess|DirAccess)\\b"

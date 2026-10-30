@@ -16,6 +16,11 @@ func precheck(_state: GameState, _command_kind: StringName, _params: Dictionary)
 	return {}
 
 
+## T-043A: bu parseli içeren, sürmekte olan imar oylamasının kimliği; yoksa 0 (UI plan durumu sorgusu; salt okunur).
+func pending_vote_for_parcel(_state: GameState, _parcel_id: int) -> int:
+	return 0
+
+
 ## Önerinin yürürlüğe girmesi yerine oylama açılır (`requires_vote` doğruysa). `delay_days`: facade yürürlük gecikmesi.
 func open(_state: GameState, _command_kind: StringName, _params: Dictionary, _command_id: int,
 		_delay_days: int) -> void:

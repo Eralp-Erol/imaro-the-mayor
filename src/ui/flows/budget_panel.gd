@@ -66,12 +66,15 @@ func _render() -> void:
 	state_view.show_normal()
 	model = BudgetModel.build(snap.budget)
 	draft.sync(model)
+	var proposals := _proposals_open()
 	_add_summary()
-	_add_lines(not model.is_locked())
+	_add_lines(proposals and not model.is_locked())
 	if model.is_locked():
 		_add_locked()
-	else:
+	elif proposals:
 		_add_editor(snap.tick())
+	else:
+		_body.add_child(_muted(UiText.t(&"budget.allocation_not_built")))
 	_restore_focus(focus_role)
 
 
@@ -80,16 +83,24 @@ func _add_summary() -> void:
 		UiText.t(StringName("budget.status.%s" % model.status))], UiTheme.V_LABEL_TITLE, true))
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
-	inner.add_child(_pair(UiText.t(&"budget.income"), UiText.money(model.revenue)))
+	# Son kapanan ayın vergi geliri: ilk ay sonuna dek sim 0 verir; bu "gelir yok" değil "henüz kapanan ay yok" demektir.
+	var revenue_text := UiText.money(model.revenue) if model.period > 0 or model.revenue != 0 \
+		else UiText.t(&"budget.revenue_pending")
+	inner.add_child(_pair(UiText.t(&"budget.income"), revenue_text))
 	inner.add_child(_pair(UiText.t(&"budget.expenses_total"), UiText.money(model.expenses)))
 	inner.add_child(_pair(UiText.t(&"budget.balance"), UiText.money(model.balance)))
 	if model.is_debt():
 		inner.add_child(_direction_row(ReasonGlyph.Kind.WARN, "danger", UiTheme.V_LABEL_DANGER,
 			UiText.t(&"budget.debt")))
+		inner.add_child(_muted(UiText.t(&"budget.debt_note")))
+	inner.add_child(_muted(UiText.t(&"budget.indicator_note")))
 	_body.add_child(parts[0])
 	if (model.status == BudgetView.STATUS_APPROVED or model.status == BudgetView.STATUS_REJECTED) \
 			and not model.reason_ids.is_empty():
 		var ids := model.reason_ids
+		if not _any_reason_alive(ids):
+			_body.add_child(_muted(UiText.t(&"budget.reasons_pruned")))
+			return
 		var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), false)
 		_tag(why, "budget_reason")
 		why.pressed.connect(func() -> void: _request_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(ids)))
@@ -105,13 +116,14 @@ func _add_lines(editable: bool) -> void:
 		var inner: VBoxContainer = parts[1]
 		inner.add_child(UiFactory.label(UiText.humanize(String(r.key)), UiTheme.V_LABEL_TITLE, true))
 		inner.add_child(_pair(UiText.t(&"budget.col.current"), UiText.money(r.amount)))
-		inner.add_child(_muted(UiText.t(&"budget.share")))
-		var share := HBoxContainer.new()
-		share.add_child(MeterBar.create(_ctx, r.share_permille))
-		var pct := UiFactory.label(UiText.t(&"format.percent", {"value": roundi(float(r.share_permille) / 10.0)}))
-		pct.autowrap_mode = TextServer.AUTOWRAP_OFF
-		share.add_child(pct)
-		inner.add_child(share)
+		if model.rows.size() > 1:   # tek kalemde pay her zaman %100: bilgi taşımaz
+			inner.add_child(_muted(UiText.t(&"budget.share")))
+			var share := HBoxContainer.new()
+			share.add_child(MeterBar.create(_ctx, r.share_permille))
+			var pct := UiFactory.label(UiText.t(&"format.percent", {"value": roundi(float(r.share_permille) / 10.0)}))
+			pct.autowrap_mode = TextServer.AUTOWRAP_OFF
+			share.add_child(pct)
+			inner.add_child(share)
 		if r.delta() != 0:
 			inner.add_child(_pair(UiText.t(&"budget.col.proposed"), "%s (%s)" % [UiText.money(r.proposed),
 				_signed_money(r.delta())]))
@@ -120,6 +132,24 @@ func _add_lines(editable: bool) -> void:
 		if editable:
 			_add_stepper(inner, r.key)
 		_body.add_child(parts[0])
+
+
+## Gerekçe kimliklerinden en az biri günlükte hâlâ var mı (günlük budanmış olabilir)?
+func _any_reason_alive(ids: PackedInt64Array) -> bool:
+	for id in ids:
+		if _facade.reason(int(id)) != null:
+			return true
+	return false
+
+
+## `budget.propose` sim'de kurulu mu? Kuru koşu "sistem kurulmadı" derse tahsis düzenleyicisi gösterilmez
+## (ölü adımlayıcı/düğme yok). Başka bir ret (ör. oylama sürüyor) düzenleyiciyi kapatmaz.
+func _proposals_open() -> bool:
+	if model.rows.is_empty():
+		return false
+	var key := model.rows[0].key
+	var probe := _facade.validate_command(SimCommand.budget_propose({key: model.rows[0].amount + UiPrefs.budget_step()}))
+	return not (probe.is_rejected() and str(probe.args.get("why", "")) == "system.not_built")
 
 
 func _add_locked() -> void:

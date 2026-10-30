@@ -205,7 +205,10 @@ func test_mock_facade_never_shows_a_decision_or_a_why_button() -> void:
 
 func test_same_tick_decline_is_a_prior_evaluation_not_an_answer_to_the_proposal() -> void:
 	# B-003: öneri tick'inde zaten kayıtlı ret (decision_tick == öneri tick'i) öneriye cevap DEĞİLDİR.
-	var scene := _default_scene({}, 0, 45)
+	# T-043A (D-010): oynanabilir koşulda plansız arazi her boş parseli `zoning_unplanned` ile reddeder ve ret
+	# `negative_repeat_days` boyunca TEKRAR kaydedilmez; yani aynı-tick ret yalnız parselin İLK taramasındadır. Bu yüzden
+	# ısınma yok (eski senaryo 45 gün ısınıp taze ret arıyordu: plansız rejimde ret çoktan kaydedilmiş ve sessizdi).
+	var scene := _default_scene({}, 0, 0)
 	var f: SimFacade = scene["facade"]
 	var pool := M2RenderSupport.free_parcels(M2RenderSupport.projector(f), 40, true)
 	var picked := PackedInt64Array()
@@ -235,16 +238,25 @@ func test_same_tick_decline_is_a_prior_evaluation_not_an_answer_to_the_proposal(
 
 
 func test_a_built_parcel_gets_an_honest_already_invested_line_not_waiting() -> void:
-	var scene := _default_scene({}, 0, 50)
+	# T-043A (D-010): plansız arazide otonom yatırım YOKTUR; "yatırım almış parsel" önce OYUNCU planıyla doğar (eski
+	# senaryo 50 gün otonom büyüme bekliyordu). Aynı parsele ikinci öneri: panel "zaten yatırım almış" der,
+	# "bekliyor" demez.
+	var scene := _default_scene({}, 0, 0)
 	var f: SimFacade = scene["facade"]
 	var pool := M2RenderSupport.free_parcels(M2RenderSupport.projector(f), 40, true)
+	var seeded := pool.slice(0, 8)
+	var first := f.submit_command(SimCommand.zoning_propose(seeded, &"zone.mixed"))
+	assert_bool(first.is_rejected()).override_failure_message("ilk plan teklifi reddedildi").is_false()
 	var picked := PackedInt64Array()
-	for v in f.parcel_views(pool):
-		if v.decision == ParcelView.DECISION_APPROVED and v.development != ParcelView.DEVELOPMENT_VACANT:
-			picked.append(v.id)
+	for day in 150:
+		_step(scene, 1)
+		for v in f.parcel_views(seeded):
+			if v.decision == ParcelView.DECISION_APPROVED and v.development != ParcelView.DEVELOPMENT_VACANT:
+				picked.append(v.id)
+				break
+		if not picked.is_empty():
 			break
-	assert_int(picked.size()).override_failure_message("yatırım almış parsel yok").is_greater(0)
-	_step(scene, 1)
+	assert_int(picked.size()).override_failure_message("plan sonrası yatırım almış parsel yok").is_greater(0)
 	scene["ids"] = picked
 	_propose(scene)
 	var text := _panel(scene).joined_text()

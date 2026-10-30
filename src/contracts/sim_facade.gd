@@ -112,3 +112,23 @@ func parcel_changes_since(_tick: int) -> ParcelChangeFeed:
 ## "Altyapı kapasitesi <- Yol (gün N)" yazar). Varsayılan: kaynak yol sunmuyorsa boş.
 func public_works() -> Array[PublicWorkView]:
 	return []
+
+
+## v1.4 (T-043A, D-010) · Parselin imar PLANI durumu (Plansız / Teklif verildi / Planlı / ...). Salt okunur, değer
+## kopyası. Varsayılan (kaynak plan kavramı sunmuyorsa, mock dahil): `untracked`. Uygulama geçersiz kılar.
+func plan_state(parcel_id: int) -> PlanStateView:
+	var v := PlanStateView.new()
+	v.provenance = provenance()
+	v.parcel_id = parcel_id
+	return v
+
+
+## v1.4 (T-043A, D-010) · İmar planı önizlemesi: seçili parsellere `land_use` teklif edilirse yatırımcının kullanacağı
+## aynı formülle potansiyel birim ve altyapı yükü. `density`/`max_height_m` < 0: imar varsayılanı / sınır yok. Salt
+## okunur. Varsayılan: `ok == false`, `reason == plan.not_built` (uydurma sayı yok).
+func plan_preview(_parcel_ids: PackedInt64Array, land_use: StringName, _density: int = -1,
+		_max_height_m: int = -1) -> PlanPreviewView:
+	var v := PlanPreviewView.new()
+	v.provenance = provenance()
+	v.land_use = land_use
+	return v

@@ -27,12 +27,15 @@ const CODE_INFRASTRUCTURE := 3
 const CODE_FINANCING := 4
 const CODE_DEMAND := 5
 const CODE_RETURN := 6
+## T-043A (D-010): yürürlükte oyuncu planı olmayan boş parsel (`unplanned_land_enabled`). Engel kodu: imar sırasında
+## `CODE_ZONING`un yerine geçer (plan yok ≠ imar yapılanmaya kapalı).
+const CODE_UNPLANNED := 7
 ## Yatırım kararı gerekçesinin karar anahtarı (`EconomySystem._record`); durma/devam gerekçeleri
 ## `decision.investor.continue`.
 const DEVELOP_DECISION := &"decision.investor.develop"
 const CODE_NAMES: Array[StringName] = [
 	&"", &"approved", &"zoning_not_buildable", &"infrastructure_exhausted", &"insufficient_financing",
-	&"demand_too_low", &"return_too_low",
+	&"demand_too_low", &"return_too_low", &"zoning_unplanned",
 ]
 
 const PARCEL_COLUMNS: Array[String] = [
@@ -126,6 +129,11 @@ static func decorate_view(state: GameState, view: ParcelView, cfg: EconomyConfig
 	view.units = units
 	view.developed_by_sim = stage != STAGE_VACANT and (d["last_code"] as PackedByteArray)[i] == CODE_APPROVED
 	view.progress_pm = progress_pm(stage, use, units, (d["days_left"] as PackedInt32Array)[i], cfg)
+	if cfg != null and cfg.p("unplanned_land_enabled") == 1 and stage == STAGE_VACANT:
+		# T-043A (D-010): boş parselde yürürlükte plan yoksa şablondaki placeholder imar "yürürlükteki imar" DEĞİLDİR.
+		var entry: Variant = ParcelZoningSystem.overlay_ref(state).get(view.id, null)
+		if not (entry is Dictionary) or entry.get("zone", &"") == &"":
+			view.zone = &""
 	_decorate_decision(state, d, i, view)
 
 

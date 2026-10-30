@@ -38,7 +38,11 @@ const _DECISION_SPEC := {
 	"attention_delay_days": [0, 3650],
 	"prescreen_demand_pm": [0, 1000], "negative_repeat_days": [1, 36500], "max_starts_per_region_per_day": [1, 10000],
 	"storey_m": [1, 1000], "reference_floors": [1, 1000], "change_window_ticks": [16, 100000],
+	"unplanned_land_enabled": [0, 1],
 }
+## T-043A: veride yoksa varsayılan (eski yapılandırmalar/fixture'lar bit-eşit çalışır). 1 = boş arazinin imarı çevreden
+## TÜRETİLMEZ: oyuncu planı yürürlüğe girmeden yatırımcı inşa etmez (D-010).
+const _DECISION_OPTIONAL := {"unplanned_land_enabled": 0}
 const _COHORT_SPEC := {
 	"initial_occupancy_pm": [0, 1000], "shops_per_household_pm": [0, _NO_MAX], "jobs_per_commercial_unit": [0, _NO_MAX],
 	"jobs_needed_per_household_pm": [0, _NO_MAX], "w_access": [0, 1000], "w_service": [0, 1000], "w_jobs": [0, 1000],
@@ -97,7 +101,11 @@ static func from_dict(data: Dictionary) -> EconomyConfig:
 	if problem.is_empty():
 		problem = cfg._read_uses(data["uses"])
 	if problem.is_empty():
-		problem = _read_ints(data["decision"], _DECISION_SPEC, "decision", cfg.params)
+		var decision_in: Dictionary = (data["decision"] as Dictionary).duplicate()
+		for key: String in _DECISION_OPTIONAL:
+			if not decision_in.has(key):
+				decision_in[key] = _DECISION_OPTIONAL[key]
+		problem = _read_ints(decision_in, _DECISION_SPEC, "decision", cfg.params)
 	if problem.is_empty():
 		problem = _read_ints(data["cohorts"], _COHORT_SPEC, "cohorts", cfg.params)
 	if problem.is_empty():

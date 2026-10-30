@@ -15,8 +15,8 @@ func _road(points: Array) -> SimCommand:
 	return SimCommand.public_work_road(PackedInt64Array(points), &"local")
 
 
-func test_contract_version_is_1_3_and_old_documents_stay_compatible() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.3")
+func test_contract_version_has_the_public_work_surface_and_old_documents_stay_compatible() -> void:
+	assert_bool(SimContract.VERSION_MINOR >= 3).is_true()  # 1.3 (T-042) yol; 1.4 (T-043A) plan sorguları eklenir
 	assert_bool(SimContract.is_compatible("1.2")).is_true()
 	assert_bool(SimContract.is_compatible("1.0")).is_true()
 

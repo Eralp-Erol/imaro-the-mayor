@@ -164,6 +164,8 @@ static func _resolve(state: GameState, ctx: PoliticsContext, vote: Dictionary) -
 	vote["status"] = PASSED if passed else FAILED
 	if passed and vote["kind"] == "zoning":
 		_apply_zoning(state, ctx, vote)
+	elif vote["kind"] == "zoning" and ctx.economy.p("unplanned_land_enabled") == 1:
+		_reject_plan(state, ctx, vote)
 	SimEventLog.emit(state, SimEvent.KIND_COUNCIL_VOTE_RESOLVED,
 		&"event.council.vote_passed" if passed else &"event.council.vote_failed", subjects,
 		{"yes": yes, "no": no, "abstain": abstain, "kind": vote["kind"]}, PackedInt64Array(reason_ids), _command_of(vote),
@@ -183,6 +185,22 @@ static func _apply_zoning(state: GameState, ctx: PoliticsContext, vote: Dictiona
 		ParcelZoningSystem.set_pending(state, id, StringName(proposal["land_use"]), due, int(proposal["command_id"]),
 			int(proposal["density"]), int(proposal["max_height_m"]))
 	vote["applied"] = true
+
+
+## T-043A (D-010, Q-014): meclis yolu açıkken plan oylaması geçmedi => parseller plansız KALIR (koşul değişmez),
+## ret izi yazılır (`plan_rejected` durumu) ve tek bir `event.zoning.plan_rejected` olayı yayımlanır; oyuncu yeniden
+## teklif edebilir. Yalnız `unplanned_land_enabled` iken çağrılır (bayrak kapalıyken hiçbir şey yazılmaz).
+static func _reject_plan(state: GameState, ctx: PoliticsContext, vote: Dictionary) -> void:
+	var proposal: Dictionary = vote["proposal"]
+	var command_id := int(proposal["command_id"])
+	var subjects := PackedStringArray()
+	for id: int in proposal["parcel_ids"]:
+		ParcelZoningSystem.set_rejected(state, id, command_id)
+		subjects.append(String(SimContract.parcel_ref(id)))
+	SimEventLog.emit(state, SimEvent.KIND_PARCEL_CHANGED, &"event.zoning.plan_rejected", subjects,
+		{"parcels": subjects.size(), "zone": String(proposal["land_use"])}, PackedInt64Array(vote["reason_ids"]),
+		command_id, StringName(ctx.politics.council["body"]))
+	PoliticsState.count(state, "events_emitted")
 
 
 @warning_ignore("integer_division")

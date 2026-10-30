@@ -4,5 +4,6 @@
 	"infra_headroom_pm": 300,
 	"latent_demand_pm": 250,
 	"_decision_note": "GEÇİCİ TEMPO (kare bütçesi gerekçesi; denge kararı DEĞİL, kullanıcıya açık: Q-016). decision.max_reviews_per_tick: tick başına tam yatırımcı değerlendirmesi. Sim varsayılanı 60 (günde ~57 karar, çoğu ret; sim tick ort ~17 ms, 60 ms+ tepe) 16,6 ms kare bütçesini aşar; 8 ile günde ~8 karar, sim tick ort 4,3 ms (erken günler, smoke penceresi; 15 ile 6,9 ms, 60 ile 15+ ms). 180 günde onay 105 -> 69, ret 9181 -> 1297 (kararların %95-98'i ret). Oyuncunun imar önerisi sonrası gelişme zamanı DEĞİŞMEZ (8 parsel: gün 40 inşaat, gün 100 7/8 yapıldı; 60/15/8 aynı).",
-	"decision": {"max_reviews_per_tick": 8}
+	"_unplanned_note": "T-043A (D-010, core-loop-v0 s.2/s.7; CALISMA MODELI, kanon DEGIL): decision.unplanned_land_enabled=1 -> bos arazinin imari cevreden/placeholder'dan turemez; yatirimci oyuncu plani yururluge girmeden insa etmez (zoning_unplanned). Varsayilan sim yapilandirmasinda 0 (altin hash'ler degismez). infra_headroom_pm 300 KORUNDU: pm olcegiyle daraltmak kucuk fixture dunyalarini kiriyor (tests/game m2_* sahneleri 1 birim pay alir); yolun etkisini gizleyen yuzde 30 payin bolgeye bagli mutlak birim olarak daraltilmasi PlayableEconomy degisikligi ister (src/game), acik is.",
+	"decision": {"max_reviews_per_tick": 8, "unplanned_land_enabled": 1}
 }

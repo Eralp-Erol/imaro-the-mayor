@@ -1,0 +1,5 @@
+{
+	"_header": "T-043A (D-010; CALISMA MODELI, kanon DEGIL): oynanabilir kurulumun siyaset yamasi. requires_council.zoning.propose=false -> oyuncunun imar plani teklifi MECLIS OYLAMASINA GITMEZ, apply_delay_days sonra dogrudan yururluge girer ('meclis yok'). Q-014 (meclis usulu gercek hali) ACIK kalir: ayni sim iki yolu da calistirir (tests/sim/politics/plan_council_test.gd), bu dosya yalniz oynanabilir varsayilani secer. Sim varsayilani (data/politics/council.json: true) DEGISMEZ; altin A/B onu kullanir. budget.propose yamasi YOK (butce onerisi T-043C'de gosterge).",
+	"schema_version": 1,
+	"requires_council": {"zoning.propose": false}
+}

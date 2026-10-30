@@ -12,8 +12,9 @@ extends SimFacade
 ## - CAN-03: katalog beyaz listedir (`zoning.propose`, `budget.propose`; v1.3: `public_work.road`,
 ##   `public_work.undo_last`); özel bina fiili yoktur ve eklenemez. Yol komutları `attach_public_works` ile takılır
 ##   (ağ + sim yol listesi + kayıt).
-## - Kurulmamış sistemler (bütçe, meclis, grup tepkileri) `snapshot().extensions["x.sim.available.<bölüm>"] = false`
-##   ve varsayılan boş DTO ile görünür; UI bölümü gizler / `*.not_built` yazar. Komutları gerekçeli reddedilir.
+## - Kurulmamış sistemler (bütçe [T-043C: `attach_budget` ile kurulur], meclis, grup tepkileri)
+##   `snapshot().extensions["x.sim.available.<bölüm>"] = false` ve varsayılan boş DTO ile görünür; UI bölümü gizler /
+##   `*.not_built` yazar. Komutları gerekçeli reddedilir.
 ## - Hız sim durumu DEĞİLDİR (TickDriver'dadır, hash'e girmez).
 ## Entegrasyon: yeni sistem/işleyici `create(..., extra_systems, extra_handlers)` ile takılır (T-013/T-014/T-016);
 ## T-017: `proposal_gate` (öneri meclis oylamasına gider mi) ve `snapshot_provider` (grup/meclis bölümleri) isteğe
@@ -37,6 +38,7 @@ var _sim: Simulation
 var _driver: TickDriver
 var _parcels: ParcelSource
 var _facade_config: FacadeConfig
+var _proposal_gate: ProposalGate  # T-043A: plan sorguları için (meclis bayrağı, bekleyen oylama); yoksa meclis yok
 var _max_speed_level: int = SPEED_FASTEST
 var _driver_speeds: Dictionary = {}  # hız adı (String) -> tick/sn (core_config.json driver.speeds)
 var _retained_cache: Dictionary = {}  # {"key": [last_seq, first_reason_id], "start": int}
@@ -45,6 +47,8 @@ var _economy: EconomySystem  # T-040: ekonomi kuruluysa salt okunur sorgular (il
 ## T-040: sim-geliştirmeli bitmiş birim önbelleği {"completions": int, "units": Array[PackedInt64Array]}. Türetilmiştir
 ## (durum/hash dışı); yalnız tamamlanma sayacı değişince yeniden hesaplanır, kayıt yüklenince silinir.
 var _sim_units_cache: Dictionary = {}
+## T-043C: gösterge bütçe sistemi (`attach_budget` ile takılır); yoksa bölüm kurulmamıştır, durum/hash değişmez.
+var _budget: BudgetSystem
 ## T-042: oyuncu yolu bağlamı (ağ + kurallar + sim verisi); `attach_public_works` ile takılır, yoksa yol komutları
 ## kayıtsızdır.
 var _public_works: PublicWorksContext
@@ -70,6 +74,7 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
 	impl._sim = Simulation.new()
 	impl._sim.add_system(ParcelZoningSystem.new())
 	impl._snapshot_provider = snapshot_provider
+	impl._proposal_gate = proposal_gate
 	impl._sim.add_handler(ZoningProposeHandler.new(parcels, fc, proposal_gate))
 	impl._sim.add_handler(UnbuiltCommandHandler.new(SimCommand.KIND_BUDGET_PROPOSE, SECTION_BUDGET))
 	for system in extra_systems:
@@ -100,6 +105,21 @@ func attach_public_works(ctx: PublicWorksContext) -> bool:
 		if not _sim.add_handler(handler):
 			return false
 	_public_works = ctx
+	return true
+
+
+## T-043C · Gösterge bütçeyi (vergi geliri + yol gideri; kasa YALNIZ gösterge, hiçbir komutu reddetmez) bu facade'a
+## takar. Ekonomi kurulu olmalı (kira ve birim maliyeti oradan okunur) ve tick ilerlememiş olmalı.
+## `budget.propose` kurulmaz (UnbuiltCommandHandler kalır). Takılmazsa hiçbir şey değişmez (t0/altın hash'ler
+## aynı). Başarısızsa false.
+func attach_budget(cfg: BudgetConfig) -> bool:
+	if _budget != null or _economy == null or _state.tick != 0:
+		push_error("SimFacadeImpl: bütçe takılamadı (zaten takılı, ekonomi yok ya da tick ilerlemiş)")
+		return false
+	var system := BudgetSystem.create(cfg, _economy.config())
+	if system == null or not _sim.add_system(system):
+		return false
+	_budget = system
 	return true
 
 
@@ -208,13 +228,15 @@ func snapshot() -> SimSnapshot:
 	s.parcel_count = _parcels.parcel_count()
 	s.extensions = {
 		AVAILABLE_PREFIX + String(SECTION_PARCELS): true,
-		AVAILABLE_PREFIX + String(SECTION_BUDGET): false,
+		AVAILABLE_PREFIX + String(SECTION_BUDGET): _budget != null,
 		AVAILABLE_PREFIX + String(SECTION_COUNCIL): false,
 		AVAILABLE_PREFIX + String(SECTION_GROUPS): false,
 		AVAILABLE_PREFIX + String(SECTION_ECONOMY): _economy != null,
 	}
 	if _snapshot_provider != null:
 		_snapshot_provider.fill(_state, s)
+	if _budget != null:
+		s.budget = _budget.view(_state)  # T-043C: gerçek vergi/yol verisi; yoksa varsayılan boş DTO ("kurulmadı")
 	return s
 
 
@@ -288,6 +310,49 @@ func economy_outcome() -> EconomyOutcomeView:
 		region.infra_from_public_works_units = int(row["infra_bonus"])
 		o.regions.append(region)
 	return o
+
+
+## T-043A (sözleşme 1.4) · Parselin imar PLANI durumu. SALT OKUNUR; durum `parcels.overlay` kaydından türer
+## (`EconomySystem.plan_state`). Bekleyen meclis oylamasını burada çözer (UI siyaset bilmez). Ekonomi kurulu değilse
+## ya da bayrak (`decision.unplanned_land_enabled`) kapalıysa `untracked`.
+func plan_state(parcel_id: int) -> PlanStateView:
+	var view := PlanStateView.new()
+	view.provenance = provenance()
+	view.parcel_id = parcel_id
+	if _economy == null or _parcels.template(parcel_id) == null:
+		return view  # kurulu ekonomi yok ya da bilinmeyen parsel: plan kavramı yok (`untracked`)
+	var vote_id := _proposal_gate.pending_vote_for_parcel(_state, parcel_id) if _proposal_gate != null else 0
+	var raw := _economy.plan_state(_state, parcel_id, vote_id)
+	view.state = raw["state"]
+	view.zone = raw["zone"]
+	view.pending_zone = raw["pending_zone"]
+	view.due_tick = raw["due_tick"]
+	view.command_id = raw["command_id"]
+	view.source_ref = raw["source_ref"]
+	view.density = raw["density"]
+	view.max_height_m = raw["max_height_m"]
+	view.rejected_command_id = raw["rejected_command_id"]
+	view.rejected_tick = raw["rejected_tick"]
+	view.vote_ref = raw["vote_ref"]
+	return view
+
+
+## T-043A (sözleşme 1.4) · İmar planı önizlemesi: sayılar `EconomySystem.plan_preview` çıktısıdır (yatırımcının
+## kullandığı formül; ayrı hesap yok). `max_parcels` = teklif üst sınırı (sim yapılandırması), `council_required` =
+## GERÇEK `requires_council.zoning.propose` bayrağı (kapı yoksa false). SALT OKUNUR.
+func plan_preview(parcel_ids: PackedInt64Array, land_use: StringName, density: int = -1,
+		max_height_m: int = -1) -> PlanPreviewView:
+	var council := _proposal_gate != null and _proposal_gate.requires_vote(_state, SimCommand.KIND_ZONING_PROPOSE)
+	var limit := _facade_config.plan_max_parcels_per_proposal
+	if _economy == null:
+		var none := PlanPreviewView.new()
+		none.provenance = provenance()
+		none.land_use = land_use
+		none.max_parcels = limit
+		none.council_required = council
+		return none
+	return PlanPreviewView.from_economy(_economy.plan_preview(_state, parcel_ids, land_use, density, max_height_m),
+		provenance(), land_use, limit, council)
 
 
 ## T-045 · `tick`ten sonra (tick, şimdi] değişen parseller; O(değişen), olay/gerekçe ufkundan BAĞIMSIZ (halka:
@@ -380,6 +445,12 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 		corrupt.error_code = &"corrupt"
 		corrupt.message = "Kayıt bozuk: %s." % economy_problem
 		return corrupt
+	var budget_problem := BudgetState.validate_data(result.state.systems.get(BudgetState.KEY, null))
+	if not budget_problem.is_empty():  # T-043C: bütçe bölümü varsa biçimi/tutarlılığı denetlenir (yoksa "" döner)
+		var broken := SimSave.LoadResult.new()
+		broken.error_code = &"corrupt"
+		broken.message = "Kayıt bozuk: %s." % budget_problem
+		return broken
 	var network_problem := _sync_network(result.state)
 	if not network_problem.is_empty():
 		var mismatch := SimSave.LoadResult.new()
@@ -427,6 +498,8 @@ func _accepted(command: SimCommand, status: StringName, id: int) -> CommandResul
 	var handler := _sim.handler_for(command.kind)
 	if handler != null:
 		result.args = SimContract.to_args(handler.preview_args(_state, command.params))
+		if _budget != null:
+			_budget.decorate_preview(_state, command.kind, result.args)  # T-043C: maliyet/iade sim'in kendi hesabı
 	return result
 
 

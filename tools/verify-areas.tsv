@@ -38,6 +38,7 @@ map	src/game	tests/game tests/ui/hud_root_test.gd
 map	src/sim/core	tests/sim tests/contracts
 map	src/sim/facade	tests/sim tests/contracts tests/game
 map	src/sim/actors	tests/sim/actors tests/sim/politics
+map	src/sim/budget	tests/sim/budget tests/sim/m2_query_test.gd tests/sim/sim_facade_impl_test.gd tests/sim/sim_purity_test.gd
 map	src/sim/economy	tests/sim/economy tests/sim/public_works tests/sim/politics tests/sim/sim_facade_impl_test.gd tests/sim/sim_facade_parity_test.gd
 map	src/sim/politics	tests/sim/politics tests/game/m2_causal_loop_test.gd tests/ui/decision_panels_test.gd
 map	src/sim/public_works	tests/sim/public_works tests/game/road_draw_flow_test.gd tests/game/road_draw_tool_test.gd tests/view/roads
@@ -87,6 +88,7 @@ map	tests/unit	tests/unit
 map	tests/view	tests/view
 map	tests/world	tests/world
 map	tests/sim/actors	tests/sim/actors
+map	tests/sim/budget	tests/sim/budget
 map	tests/sim/economy	tests/sim/economy
 map	tests/sim/politics	tests/sim/politics
 map	tests/sim/public_works	tests/sim/public_works

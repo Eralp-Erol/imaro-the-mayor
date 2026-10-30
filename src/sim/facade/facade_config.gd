@@ -7,13 +7,18 @@ extends RefCounted
 ##   facade.parcel_reason_limit  ParcelView.reason_ids için parsel başına en fazla kaç güncel gerekçe.
 ##   zoning.land_uses            kabul edilen arazi kullanımı anahtarları (sözlük sim yapılandırmasıdır).
 ##   zoning.apply_delay_days     imar önerisi kaç gün sonra yürürlüğe girer (>= 1; T-013 gerçek süreci getirene dek).
+##   zoning.plan_max_parcels_per_proposal  tek `zoning.propose` komutundaki en çok parsel (>= 1; T-043A: toplu plan
+##                               teklifi = tek komut/tek oylama; yoksa DEFAULT_PLAN_MAX_PARCELS).
 
 const DEFAULT_PATH := "res://data/sim/facade_config.json"
+## `plan_max_parcels_per_proposal` veride yoksa (eski dosyalar) kullanılan değer; çalışma modeli (core-loop-v0 §7).
+const DEFAULT_PLAN_MAX_PARCELS := 40
 
 var speed_levels: Array[StringName] = []
 var parcel_reason_limit: int = 5
 var land_uses: Array[StringName] = []
 var apply_delay_days: int = 3
+var plan_max_parcels_per_proposal: int = DEFAULT_PLAN_MAX_PARCELS
 ## Geçersizse insan-okur hata metni, geçerliyse "".
 var error: String = ""
 
@@ -62,6 +67,11 @@ static func from_dict(data: Dictionary) -> FacadeConfig:
 	if delay == null:
 		return _invalid("zoning.apply_delay_days eksik veya pozitif tam sayı değil (apply_delay_days)")
 	cfg.apply_delay_days = delay
+	if zoning_in.has("plan_max_parcels_per_proposal"):
+		var max_parcels: Variant = _positive_int(zoning_in["plan_max_parcels_per_proposal"])
+		if max_parcels == null:
+			return _invalid("zoning.plan_max_parcels_per_proposal pozitif tam sayı değil (plan_max_parcels_per_proposal)")
+		cfg.plan_max_parcels_per_proposal = max_parcels
 	return cfg
 
 

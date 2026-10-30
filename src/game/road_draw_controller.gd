@@ -370,8 +370,10 @@ func _show_tip() -> void:
 	var step_line := _step_line(3) if tool.step == RoadDrawTool.Step.REVIEW and tool.is_valid() else _step_line(2)
 	if tool.is_valid():
 		var args := tool.preview_args()
-		tip.show_text(UiText.t(&"road.tip_valid", {"length": int(args.get("length_m", 0)),
-				"units": int(args.get("units_total", 0))}), true, step_line)
+		var tip_key := &"road.tip_valid_cost" if bool(args.get("cost_available", false)) else &"road.tip_valid"
+		tip.show_text(UiText.t(tip_key, {"length": int(args.get("length_m", 0)),
+				"units": int(args.get("units_total", 0)), "cost": UiText.number(int(args.get("cost", 0)))}),
+				true, step_line)
 	else:
 		tip.show_text(UiText.reject_reason(tool.verdict.reason_key, tool.verdict.args), false, step_line)
 	_place_tip()

@@ -11,6 +11,11 @@ extends SimSystem
 const SYSTEM := &"economy"
 ## Ön eleme önbelleğinde "bu imarda kullanım yok" işareti (talep değeri hiçbir zaman bu kadar küçük değildir).
 const PRESCREEN_NO_USE := -2147483648
+## T-043A: `unplanned_land_enabled` iken yürürlükte oyuncu planı olmayan boş parselin "imarı" (gerçek bir imar anahtarı
+## değildir; profil yoktur). `_run_reviews` ön elemesi ve `_evaluate` bunu ayrı ele alır.
+const UNPLANNED_ZONE := &"#unplanned"
+## Plansız parselin başvuru projesi için bakılan kullanımlar (hangi pazarın canlı olduğu): konut, ticaret.
+const REFERENCE_USES: Array[int] = [EconomyConfig.USE_RESIDENTIAL, EconomyConfig.USE_COMMERCIAL]
 
 var _cfg: EconomyConfig
 var _stock: ExistingStockSource
@@ -22,6 +27,10 @@ var _base_land: PackedInt64Array = PackedInt64Array()  # kaynak şablonundaki ba
 var _region_codes: PackedStringArray = PackedStringArray()  # bölge indeksi -> kod (sıralı)
 ## T-045: değişen parsel halkası. DURUM DEĞİL (kayda/hash'e girmez); sınırlı, türetilmiş, yüklemede boşalır.
 var _changes: ParcelChangeLog
+## T-043A: `decision.unplanned_land_enabled` (kurulumda bir kez; yapılandırma değişmez). Kapalıyken
+## bütün yollar eskisiyle
+## bit-eşittir.
+var _unplanned_on: bool = false
 
 
 ## Kurulum sorunu (Türkçe metin) ya da "". Kaynak, yapılandırma ve stok tutarlılığı.
@@ -53,6 +62,7 @@ static func create(parcels: ParcelSource, cfg: EconomyConfig, stock: ExistingSto
 	var system := EconomySystem.new()
 	system._cfg = cfg
 	system._changes = ParcelChangeLog.new(cfg.p("change_window_ticks"))
+	system._unplanned_on = cfg.p("unplanned_land_enabled") == 1
 	system._stock = stock if stock != null else EmptyStockSource.new()
 	system._cache_static(parcels)
 	return system
@@ -101,6 +111,69 @@ func sim_built_units(state: GameState) -> Array[PackedInt64Array]:
 	return [res, com]
 
 
+## T-043A · Parselin PLAN DURUMU (UI sorgusu; SALT OKUNUR). Bayrak kapalıysa `untracked`. `pending_vote_id`: parsel için
+## sürmekte olan meclis oylaması (yoksa 0; çağıran siyasetten bulur). Düzen: `ParcelPlanning.describe`.
+func plan_state(state: GameState, parcel_id: int, pending_vote_id: int = 0) -> Dictionary:
+	return ParcelPlanning.describe(ParcelZoningSystem.overlay_of(state, parcel_id), _is_vacant(state, parcel_id),
+		_unplanned_on, pending_vote_id)
+
+
+## T-043A · İmar planı ÖNİZLEMESİ: oyuncu seçili parsellere `land_use` (+ isteğe bağlı yoğunluk/yükseklik) teklif ederse
+## yatırımcı karar fonksiyonunun kullanacağı AYNI formülle (`EconomyMath.project_units`, `_best_use`)
+## potansiyel birim ve
+## altyapı yükü. Sonucu ZORLAMAZ: yatırımcı yine getiri/talep/kapasiteye göre karar verir. SALT OKUNUR,
+## uydurma sayı yok.
+## `density` < 0: imar varsayılanı; `max_height_m` < 0: sınır yok (komut parametreleriyle aynı anlam).
+## Dönüş: {ok, reason, parcels: [{id, region, use, units, infra_units}], total_units, total_infra_units,
+## regions: [{code, added_units, added_infra_units, capacity_units, load_units, headroom_units, fits}]}.
+## `ok` false: reason `economy.not_started` | `plan.unknown_land_use` | `plan.unknown_parcel`.
+func plan_preview(state: GameState, parcel_ids: PackedInt64Array, land_use: StringName, density: int = -1,
+		max_height_m: int = -1) -> Dictionary:
+	var out := {"ok": false, "reason": &"", "parcels": [], "total_units": 0, "total_infra_units": 0, "regions": []}
+	var d := EconomyState.data(state)
+	if d.is_empty():
+		out["reason"] = &"economy.not_started"
+		return out
+	var profile := _cfg.zone_profile(land_use)
+	if profile.is_empty():
+		out["reason"] = &"plan.unknown_land_use"
+		return out
+	var density_pm := density if density >= 0 else int(profile["density_pm"])
+	var allowed: Array = profile["uses"]
+	var regions: Dictionary = d["regions"]
+	var added_units := {}
+	var added_infra := {}
+	for id in parcel_ids:
+		var i := EconomyState.index_of(d, id)
+		if i < 0:
+			out["reason"] = &"plan.unknown_parcel"
+			(out["parcels"] as Array).clear()
+			return out
+		var r := _region_of[i]
+		var use := _best_use(regions, r, allowed)
+		var units := 0
+		if not allowed.is_empty():
+			units = EconomyMath.project_units(_area[i], _cfg.use_param(use, "units_per_1000m2"), density_pm,
+				max_height_m, _cfg.p("storey_m"), _cfg.p("reference_floors"))
+		var infra_units := units * (_cfg.use_param(use, "infra_per_unit") if units > 0 else 0)
+		(out["parcels"] as Array).append({"id": id, "region": StringName(_region_codes[r]),
+			"use": EconomyState.use_name(use) if units > 0 else &"", "units": units, "infra_units": infra_units})
+		added_units[r] = int(added_units.get(r, 0)) + units
+		added_infra[r] = int(added_infra.get(r, 0)) + infra_units
+		out["total_units"] += units
+		out["total_infra_units"] += infra_units
+	var touched: Array = added_units.keys()
+	touched.sort()
+	for r: int in touched:
+		var capacity := _effective_cap(state, regions, r)
+		var load := EconomyMath.infra_load(_cfg, regions, r)
+		(out["regions"] as Array).append({"code": StringName(_region_codes[r]), "added_units": added_units[r],
+			"added_infra_units": added_infra[r], "capacity_units": capacity, "load_units": load,
+			"headroom_units": capacity - load, "fits": capacity - load - int(added_infra[r]) >= 0})
+	out["ok"] = true
+	return out
+
+
 func on_daily(state: GameState) -> void:
 	_changes.begin_tick(state.tick)
 	var d := _ensure_state(state)
@@ -118,6 +191,15 @@ func on_monthly(state: GameState) -> void:
 	_update_land_values(d)
 	_collect_rents(d)
 	_inject_capital(d)
+
+
+## Parsel boş mu? Ekonomi durumu kuruluysa aşamaya, kurulmadıysa T0 stoğuna bakar.
+func _is_vacant(state: GameState, parcel_id: int) -> bool:
+	var d := EconomyState.data(state)
+	if d.is_empty():
+		return _stock.units_of(parcel_id) < 1
+	var i := EconomyState.index_of(d, parcel_id)
+	return i >= 0 and (d["stage"] as PackedByteArray)[i] == EconomyState.STAGE_VACANT
 
 
 # --- Kurulum ---
@@ -307,7 +389,7 @@ func _scan_zone_changes(state: GameState, d: Dictionary) -> void:
 		var i := EconomyState.index_of(d, id)
 		if i < 0:
 			continue
-		if StringName(zone_seen.get(i, _base_zone[i])) == zone:
+		if _seen_zone(zone_seen, i) == zone:
 			continue
 		zone_seen[i] = String(zone)
 		if stage[i] == EconomyState.STAGE_VACANT:
@@ -381,7 +463,7 @@ func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Arra
 			demand_cache[r] = by_zone
 		var best: int = by_zone.get(zone, PRESCREEN_NO_USE)
 		if best == PRESCREEN_NO_USE and not by_zone.has(zone):
-			var uses: Array = _cfg.zone_profile(zone).get("uses", [])
+			var uses: Array = REFERENCE_USES if zone == UNPLANNED_ZONE else _cfg.zone_profile(zone).get("uses", [])
 			if not uses.is_empty():
 				best = 0
 				for use: int in uses:
@@ -399,7 +481,15 @@ func _effective_zone(overlay: Dictionary, i: int) -> StringName:
 	var entry: Variant = overlay.get(_ids[i], null)
 	if entry is Dictionary and entry.get("zone", &"") != &"":
 		return entry["zone"]
+	if _unplanned_on:  # D-010: boş arazinin imarı kaynak şablondaki placeholder'dan TÜREMEZ
+		return UNPLANNED_ZONE
 	return StringName(_base_zone[i])
+
+
+## Parselin görülen imarı (`zone_seen`; yoksa başlangıç): plansız modda başlangıç "imar yok" (&""), böylece plan ne
+## olursa olsun (placeholder ile aynı olsa bile) ilk yürürlük yatırımcı dikkatini tetikler.
+func _seen_zone(zone_seen: Dictionary, i: int) -> StringName:
+	return StringName(zone_seen.get(i, "" if _unplanned_on else _base_zone[i]))
 
 
 # --- Yatırımcı kararı (SIM-02) ---
@@ -409,15 +499,21 @@ func _evaluate(state: GameState, d: Dictionary, i: int, command_id: int, starts_
 	var r := _region_of[i]
 	var overlay_entry: Variant = ParcelZoningSystem.overlay_ref(state).get(_ids[i], null)
 	var zone := _effective_zone(ParcelZoningSystem.overlay_ref(state), i)
-	var profile := _cfg.zone_profile(zone)
-	var allowed: Array = profile.get("uses", [])
+	var unplanned := zone == UNPLANNED_ZONE
+	# Plansız parsel: başvuru projesi (konut/ticaretten talebi yüksek olan, taban yoğunluk, yükseklik sınırı yok);
+	# böylece kapasite/talep etkenleri de dürüstçe gösterilir ve engel yalnız imar (plan) olur.
+	var profile := {} if unplanned else _cfg.zone_profile(zone)
+	var allowed: Array = REFERENCE_USES if unplanned else profile.get("uses", [])
 	var use := _best_use(regions, r, allowed)
-	var density: int = profile.get("density_pm", 0)
+	var density: int = EconomyMath.SCALE if unplanned else profile.get("density_pm", 0)
 	var max_height := -1
-	if overlay_entry is Dictionary:
+	var zoning_source := &""
+	if overlay_entry is Dictionary and not unplanned:
 		if int(overlay_entry.get("density", -1)) >= 0:
 			density = int(overlay_entry["density"])
 		max_height = int(overlay_entry.get("max_height_m", -1))
+		if _unplanned_on and int(overlay_entry.get("command_id", 0)) > 0:  # gerekçede plan komutu (SIM-12)
+			zoning_source = SimContract.ref(SimContract.REF_COMMAND, int(overlay_entry["command_id"]))
 	var units := EconomyMath.project_units(_area[i], _cfg.use_param(use, "units_per_1000m2"), density, max_height,
 		_cfg.p("storey_m"), _cfg.p("reference_floors"))
 	var rng := state.rng.stream(SYSTEM)
@@ -435,6 +531,7 @@ func _evaluate(state: GameState, d: Dictionary, i: int, command_id: int, starts_
 		"demand_after_pm": EconomyMath.region_demand_pm(_cfg, regions, r, use, units),
 		"rent_mult_pm": EconomyMath.rent_mult_pm(current_demand, _cfg.p("rent_floor_pm"), _cfg.p("rent_cap_pm")),
 		"sentiment": sentiment, "threshold_shift": (investors["threshold_shift"] as PackedInt32Array)[investor],
+		"unplanned": unplanned, "zoning_source": zoning_source,
 	})
 	var totals: Dictionary = d["totals"]
 	totals["evaluations"] += 1
@@ -685,7 +782,7 @@ func _update_land_values(d: Dictionary) -> void:
 	for i in _ids.size():
 		if stage[i] != EconomyState.STAGE_VACANT:
 			continue
-		var zone: String = zone_seen.get(i, _base_zone[i])
+		var zone: String = String(_seen_zone(zone_seen, i))
 		if not zone_demand.has(zone):
 			zone_demand[zone] = _zone_demand_by_region(zone, demand_by_use, rn)
 		var demand: int = (zone_demand[zone] as PackedInt32Array)[_region_of[i]]

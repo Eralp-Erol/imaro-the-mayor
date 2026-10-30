@@ -3,7 +3,8 @@ extends FlowPanel
 ## "Yol çiz" paneli (T-042 adım 3; CAN-04, D-008): `RoadDrawTool` durumunun görünümü. Masaüstü ve dokunmatik AYNI
 ## bileşenler (hedefler `UiContext`ten, hover'a bağlı bilgi yok). Sayılar (uzunluk, bölge, kapasite birimi) sim'in kuru
 ## koşusundan gelir (`CommandResult.args`); ret nedeni sim'in anahtarıdır (`public_work.reject.*`). Maliyet:
-## "henüz kurulmadı" (T-014 yok, Q-003 AÇIK; para uydurulmaz). Metro/çok uzak bantta çizim kilitlidir: "Yakınlaşın".
+## bütçe kuruluysa "N birim" (sim), değilse "henüz kurulmadı" (Q-003 AÇIK; para simgesi yok).
+## Metro/çok uzak bantta çizim kilitlidir: "Yakınlaşın".
 ## Bu panel komut göndermez; düğmeler araç fiillerini çağırır (`RoadDrawTool.confirm/undo_last/cancel`), araç yalnız
 ## `SimFacade.submit_command` kullanır.
 
@@ -44,7 +45,8 @@ func refresh() -> void:
 
 func _signature_of() -> String:
 	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(tool.is_valid()), str(tool.message),
-			str(tool.message_args), str(tool.has_undoable_road()), str(_facade.speed() == SimFacade.SPEED_PAUSED)]
+			str(tool.message_args), str(tool.has_undoable_road()), str(_facade.speed() == SimFacade.SPEED_PAUSED),
+			str(_undo_refund())]
 	if tool.verdict != null:
 		parts.append(String(tool.verdict.reason_key))
 		parts.append(str(tool.verdict.args))
@@ -148,8 +150,7 @@ func _add_preview_card() -> void:
 			for code: String in codes:
 				inner.add_child(_muted(UiText.t(&"road.capacity_region", {"region": code, "units": int(regions[code])})))
 		inner.add_child(_muted(UiText.t(&"road.class_line", {"class": UiText.t(&"road.class.local")})))
-		inner.add_child(_muted(UiText.t(&"road.cost_line", {"cost": UiText.t(StringName(
-				args.get("cost_reason_key", "public_work.cost.not_built")))})))
+		inner.add_child(_muted(cost_line(args)))
 	else:
 		var reason := UiText.reject_reason(tool.verdict.reason_key, tool.verdict.args)
 		inner.add_child(UiFactory.label(UiText.t(&"road.invalid", {"reason": reason}), UiTheme.V_LABEL_DANGER, true))
@@ -180,6 +181,25 @@ func _add_buttons() -> void:
 	_add_undo_row()
 
 
+## "Maliyet: N birim" (bütçe kuruluysa, sim `cost_available`); yoksa sim'in verdiği gerekçe ("henüz kurulmadı").
+## Birim para birimi değildir (Q-003 AÇIK): simge yok.
+static func cost_line(args: Dictionary) -> String:
+	if bool(args.get("cost_available", false)):
+		return UiText.t(&"road.cost_units", {"units": UiText.number(int(args.get("cost", 0)))})
+	return UiText.t(&"road.cost_line", {"cost": UiText.t(StringName(
+			args.get("cost_reason_key", "public_work.cost.not_built")))})
+
+
+## Son yolu geri almanın iadesi (sim kuru koşusu); bütçe yoksa ya da geri alınacak yol yoksa -1.
+func _undo_refund() -> int:
+	if tool == null or not tool.has_undoable_road():
+		return -1
+	var probe := _facade.validate_command(SimCommand.public_work_undo_last())
+	if probe.is_rejected() or not bool(probe.args.get("refund_available", false)):
+		return -1
+	return int(probe.args.get("refund", 0))
+
+
 func _add_undo_row() -> void:
 	# Ölü düğme yok: geri alınacak yol yoksa düğme hiç görünmez.
 	if not tool.has_undoable_road():
@@ -191,3 +211,6 @@ func _add_undo_row() -> void:
 		tool.undo_last()
 		refresh())
 	_body.add_child(_undo_button)
+	var refund := _undo_refund()
+	if refund >= 0:
+		_body.add_child(_muted(UiText.t(&"road.refund_line", {"units": UiText.number(refund)})))

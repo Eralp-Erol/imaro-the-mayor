@@ -27,9 +27,15 @@ const MAX_LAG_AFTER_LOAD_DAYS := 10
 var _plan_cache: Dictionary = {}
 
 
+## T-043A: tek komutta en çok `plan_max_parcels_per_proposal` (40) parsel kabul edilir; büyük kümeler aynı tick'te
+## 40'lık parçalar halinde önerilir (her parça ayrı komut; sim kuralı değişmez, test yükü aynı).
 func _propose(f: SimFacade, ids: PackedInt64Array) -> void:
-	var r := f.submit_command(SimCommand.zoning_propose(ids, &"zone.mixed"))
-	assert_bool(r.is_rejected()).override_failure_message("imar önerisi reddedildi").is_false()
+	var limit := FacadeConfig.load_default().plan_max_parcels_per_proposal
+	var from := 0
+	while from < ids.size():
+		var r := f.submit_command(SimCommand.zoning_propose(ids.slice(from, mini(from + limit, ids.size())), &"zone.mixed"))
+		assert_bool(r.is_rejected()).override_failure_message("imar önerisi reddedildi").is_false()
+		from += limit
 
 
 ## `wave_size` 0: tüm parseller tek komutta (patlama). Aksi halde her gün `wave_size` parsel önerilir (yayılı yük:

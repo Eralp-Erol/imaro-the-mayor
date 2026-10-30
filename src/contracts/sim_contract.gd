@@ -7,15 +7,17 @@ extends RefCounted
 ##   Sürüm notları: 1.1 (M2/T-040) ParcelView proje alanları + EconomyOutcomeView; 1.2 (T-045) ParcelView.decision*
 ##   kalıcı karar özeti + SimFacade.parcel_changes_since/ParcelChangeFeed (ADR-0005 Ek D); 1.3 (T-042) oyuncu yolu:
 ##   `public_work.road/undo_last` komutları, `public_work.built/removed` olayları, `SimFacade.public_works()`/
-##   `PublicWorkView`, `EconomyRegionOutcome.infra_*` (ADR-0005 Ek E).
+##   `PublicWorkView`, `EconomyRegionOutcome.infra_*` (ADR-0005 Ek E);
+##   1.4 (T-043A) imar planı sorguları: `SimFacade.plan_state()`/`PlanStateView`, `plan_preview()`/`PlanPreviewView`
+##   (ADR-0005 Ek G).
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 3
-const VERSION := "1.3"
+const VERSION_MINOR := 4
+const VERSION := "1.4"
 
 const FIXED_SCALE := 1000
 

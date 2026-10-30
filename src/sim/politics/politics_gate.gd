@@ -15,6 +15,10 @@ func requires_vote(_state: GameState, command_kind: StringName) -> bool:
 	return _ctx.politics.requires_council(String(command_kind))
 
 
+func pending_vote_for_parcel(state: GameState, parcel_id: int) -> int:
+	return CouncilEngine.pending_vote_for_parcel(state, parcel_id)
+
+
 ## Aynı parsel için bekleyen oylama varken yeni imar önerisi reddedilir (`precondition`, vote.pending).
 func precheck(state: GameState, command_kind: StringName, params: Dictionary) -> Dictionary:
 	if not requires_vote(state, command_kind) or not params.get("parcel_ids", null) is PackedInt64Array:

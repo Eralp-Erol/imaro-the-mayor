@@ -8,6 +8,11 @@ extends SimSystem
 ## Durum (`state.systems["parcels"]`): {"overlay": {parsel_id (int) -> {zone, pending_zone, due_tick, command_id,
 ## pending_density, pending_max_height_m, density, max_height_m (yürürlüğe girince pending_*'dan)}}}. Yalnız dokunulan
 ## parseller girer; kalanı `ParcelSource` şablonudur.
+## T-043A: meclis yolu açıkken (`requires_council`) plan oylaması geçmezse (ve `unplanned_land_enabled` iken) kayda
+## `rejected_command` / `rejected_tick` eklenir (`set_rejected`): parsel plansız kalır, yeniden teklif
+## yeni `set_pending`
+## ile bu izi siler. Plan durumu (Plansız/Teklif verildi/Planlı/Plan reddedildi) bu kayıtlardan TÜRER
+## (`ParcelPlanning`); yeni sütun/anahtar yoktur.
 ## Statik gelişme/sahiplik/talep T-013'ün işidir; bu sistem onların yerini TUTMAZ.
 
 const SYSTEM := &"parcels"
@@ -34,6 +39,8 @@ func on_daily(state: GameState) -> void:
 		# yürürlükteki yoğunluk/yükseklik (NO_VALUE = imar varsayılanı); T-013 ekonomi okur
 		entry["density"] = entry["pending_density"]
 		entry["max_height_m"] = entry["pending_max_height_m"]
+		entry.erase("rejected_command")  # T-043A: yürürlüğe giren plan eski ret izini siler (yoksa etkisiz)
+		entry.erase("rejected_tick")
 		SimEventLog.emit(state, &"parcel.changed", &"event.zoning.applied",
 			PackedStringArray([String(SimContract.parcel_ref(id))]), {"zone": String(entry["zone"])},
 			PackedInt64Array(), int(entry["command_id"]))
@@ -67,6 +74,20 @@ static func set_pending(state: GameState, parcel_id: int, land_use: StringName, 
 	entry["command_id"] = command_id
 	entry["pending_density"] = density
 	entry["pending_max_height_m"] = max_height_m
+	entry.erase("rejected_command")  # T-043A: yeniden teklif eski ret izini siler (yoksa etkisiz)
+	entry.erase("rejected_tick")
+	overlay[parcel_id] = entry
+
+
+## T-043A · Meclis planı reddetti: parselin yürürlükteki/bekleyen durumuna DOKUNMAZ (yoksa boş kayıt açar: imar yok,
+## bekleyen yok); yalnız ret izini yazar. Yalnız `unplanned_land_enabled` iken çağrılır (bayrak kapalıyken kayıt
+## yazılmaz: eski davranış bit-eşit).
+static func set_rejected(state: GameState, parcel_id: int, command_id: int) -> void:
+	var overlay := _overlay(state)
+	var entry: Dictionary = overlay.get(parcel_id, {"zone": &"", "pending_zone": &"", "due_tick": 0, "command_id": 0,
+		"pending_density": NO_VALUE, "pending_max_height_m": NO_VALUE})
+	entry["rejected_command"] = command_id
+	entry["rejected_tick"] = state.tick
 	overlay[parcel_id] = entry
 
 

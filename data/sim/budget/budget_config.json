@@ -1,0 +1,19 @@
+{
+	"_header": "T-043C gosterge butce v0 CALISMA MODELI sayilari (F05-C: ayarlanabilir, kanon DEGIL). Butce yalniz GOSTERGEDIR (D-010 karar 3): kasa hicbir komutu reddetmez, kisit degildir (kisit ayri denge karari, T-014). Para birimi adi/simgesi YOKTUR (Q-003 ACIK): tutarlar birimsiz tamsayi; '_pm' son ekli degerler 1000 olcekli (per-mille) tamsayidir. Butce sistemi yalniz oyun katmani 'attach_budget' cagirinca kurulur; kurulmayan yapilandirmada durum/hash degismez. Tum sayilar yer tutucudur (core-loop-v0.md s.4, s.7).",
+	"initial_balance": 50000,
+	"tax": {
+		"_notes": "Aylik vergi geliri = (bitmis konut birimi x konut rent_per_unit_month + bitmis ticaret birimi x ticaret rent_per_unit_month) x tax_rate_pm / 1000, ay sonunda toplanir, sifira dogru kesme. Kira/birim sayilari economy_config.json'dan OKUNUR (cogaltilmaz).",
+		"tax_rate_pm": 100
+	},
+	"road": {
+		"_notes": "Yol gideri (is basina, yol onaylaninca) = yolun eklediği altyapi birimi x economy_config.json uses.<cost_use>.cost_per_unit x public_cost_share_pm / 1000; yol geri alinirsa ayni tutar iade edilir. cost_use: hangi kullanimin birim maliyeti tabandir (Q-022 AÇIK: kamulastirma bedeli bu degil).",
+		"public_cost_share_pm": 100,
+		"cost_use": "residential"
+	},
+	"ledger": {
+		"_notes": "max_entries: durumda tutulan kalem defteri uzunlugu (en eski budanir). view_reason_limit: BudgetView.reason_ids icin en yeni kac kalem gerekcesi. reason_parcel_limit: bir vergi gerekcesinin baglanacagi en cok tamamlanan parsel.",
+		"max_entries": 64,
+		"view_reason_limit": 8,
+		"reason_parcel_limit": 6
+	}
+}
