@@ -58,7 +58,7 @@ static func _build_cell(layout: VegetationLayout, look: VegetationLook, config: 
 	var trees := 0
 	for i in range(cols.cell_start[k], cols.cell_start[k + 1]):
 		var sp := cols.species[i]
-		if look.blob_on[sp] != 1:
+		if look.blob_on[sp] != 1 or layout.is_hidden(i):
 			continue
 		var sc := cols.scale[i]
 		var crown_r := look.reach_m[sp] * look.radius_frac[sp] * sc

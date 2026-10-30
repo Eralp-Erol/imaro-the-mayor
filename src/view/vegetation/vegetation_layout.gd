@@ -15,6 +15,11 @@ var cell_ymax: PackedFloat32Array = PackedFloat32Array()
 var cell_proxy_count: PackedInt32Array = PackedInt32Array()
 var global_ymin: float = 0.0
 var global_ymax: float = 0.0
+## T-042 yol koridoru maskesi (GÖRÜNÜM katmanı; sütunlara ve sim'e dokunmaz): `cols` satırıyla aynı sıra, 1 = bu örnek
+## gizli (yeni yolun koridorunda). BOŞ dizi = hiçbir örnek gizli değil (varsayılan; hızlı yol). Yazma YALNIZ
+## `set_hidden`; iş parçacığı okuyan görünümler (leke işçileri) yazmadan önce BEKLETİLİR (`VegetationView`).
+var hidden: PackedByteArray = PackedByteArray()
+var hidden_count: int = 0
 
 var _chunk_boxes: Dictionary = {}
 
@@ -51,6 +56,50 @@ static func build(columns: VegetationColumns, world: WorldData, height_m: Packed
 	lay.global_ymin = gmin if n > 0 else 0.0
 	lay.global_ymax = gmax if n > 0 else 0.0
 	return lay
+
+
+## Satır `i` gizli mi (koridor maskesi). Maske boşsa her zaman false.
+func is_hidden(i: int) -> bool:
+	return not hidden.is_empty() and hidden[i] == 1
+
+
+## Satır `i`nin hücre dizini k (`cell_start[k] <= i < cell_start[k + 1]`).
+func cell_of_row(i: int) -> int:
+	return cols.cell_start.bsearch(i, false) - 1
+
+
+## Gizli satır kümesini (sıralı/sırasız, tekil olmayabilir) KÖKTEN kurar.
+## Dönüş: maskesi değişen hücre dizinleri k (artan).
+## Deterministik: aynı satır kümesi -> aynı maske; boş küme maskeyi tamamen kaldırır (hepsi geri gelir).
+func set_hidden(rows: PackedInt32Array) -> PackedInt32Array:
+	if rows.is_empty() and hidden.is_empty():
+		return PackedInt32Array()
+	var fresh := PackedByteArray()
+	var count := 0
+	if not rows.is_empty():
+		fresh.resize(cols.count)
+		for i in rows:
+			if i >= 0 and i < cols.count and fresh[i] == 0:
+				fresh[i] = 1
+				count += 1
+	var changed := {}
+	if hidden.is_empty():
+		for i in rows:
+			if i >= 0 and i < cols.count:
+				changed[cell_of_row(i)] = true
+	elif fresh.is_empty():
+		for i in cols.count:
+			if hidden[i] == 1:
+				changed[cell_of_row(i)] = true
+	else:
+		for i in cols.count:
+			if hidden[i] != fresh[i]:
+				changed[cell_of_row(i)] = true
+	hidden = fresh
+	hidden_count = count
+	var out := PackedInt32Array(changed.keys())
+	out.sort()
+	return out
 
 
 func cell_count() -> int:

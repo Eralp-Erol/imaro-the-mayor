@@ -6,7 +6,8 @@ extends RefCounted
 ## (`CommandResult.args`), burada uydurulmaz. Ret anahtarı sim'in verdiğidir (`public_work.reject.*`).
 ##
 ## Akış (iki dokunuş + onay): OFF -> PICK_A (yola/yol ucuna dokun) -> PICK_B (imleç önizlemesi; dokunuşla bitiş) ->
-## REVIEW (önizleme sabit; yeniden dokunuş bitişi değiştirir; Onayla) -> SENDING (komut kuyrukta; `public_work.built`
+## REVIEW (önizleme sabit; başka yere dokunuş bitişi değiştirir, AYNI noktaya yeniden dokunuş onaylar; Onayla/Enter)
+## -> SENDING (komut kuyrukta; `public_work.built`
 ## ya da `command.rejected` olayı gelince PICK_A). v0 ölçüm bulgusu (production/log/2026-10-30-T-042-yol-olcum.md):
 ## yoldan başlamayan serbest dokunuşun %98-100'ü reddediliyor; bu yüzden A mutlaka mevcut yola/yol ucuna yapışır.
 
@@ -149,7 +150,13 @@ func tap_at(p: Vector2, radius_m: float) -> void:
 			step = Step.PICK_B
 			changed.emit()
 		Step.PICK_B, Step.REVIEW:
-			end = _end_target(p, radius_m)
+			var target := _end_target(p, radius_m)
+			# Aynı noktaya (yapışma yarıçapı içinde) yeniden tıklamak/dokunmak yolu onaylar; başka bir yere tıklamak bitişi
+			# değiştirir. Yalnız yapılabilir taslakta (ret varken yeniden tıklama hiçbir şey göndermez).
+			if step == Step.REVIEW and can_confirm() and target.distance_to(end) <= radius_m:
+				confirm()
+				return
+			end = target
 			_revalidate()
 			step = Step.REVIEW
 			changed.emit()

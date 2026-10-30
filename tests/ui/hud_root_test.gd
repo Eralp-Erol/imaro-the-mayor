@@ -153,7 +153,7 @@ func test_events_reach_strip_with_reason_button() -> void:
 	assert_bool(hud.strip.visible).is_true()
 	assert_int(hud.strip.row_count()).is_less_equal(3)
 	var texts := Array(hud.strip.row_texts())
-	assert_bool(texts.has("Yatırımcı vazgeçti")).is_true()
+	assert_bool(texts.any(func(t: String) -> bool: return t.begins_with("Yatırımcı vazgeçti"))).is_true()
 	var reasons := []
 	hud.reason_requested.connect(func(e: SimEvent) -> void: reasons.append(e))
 	for b in UiTestSupport.visible_buttons(hud.strip):

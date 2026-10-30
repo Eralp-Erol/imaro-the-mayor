@@ -63,7 +63,8 @@ func test_valid_proposal_runs_end_to_end_to_the_investor_reason() -> void:
 	lab.facade.advance(6)
 	lab.hud.poll()
 	assert_bool(lab.hud.strip.visible).is_true()
-	assert_bool(Array(lab.hud.strip.row_texts()).has("Yatırımcı vazgeçti")).is_true()
+	assert_bool(Array(lab.hud.strip.row_texts()).any(
+			func(t: String) -> bool: return t.begins_with("Yatırımcı vazgeçti"))).is_true()
 	for b in UiTestSupport.visible_buttons(lab.hud.strip):
 		if b.text == UiText.t(&"alert.open_reason"):
 			b.pressed.emit()

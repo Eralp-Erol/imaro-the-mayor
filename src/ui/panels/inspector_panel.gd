@@ -282,7 +282,7 @@ func _metric_value(r: M2ResultModel.MetricRow) -> String:
 	if r.key == &"housed_households":
 		return UiText.t(&"m2.row.housed_value", {"housed": UiText.number(r.value), "total": UiText.number(r.total)})
 	if r.key == &"rent_income":
-		return M2ResultPanel.delta_money(r.delta) if r.delta_valid else UiText.money(r.value)
+		return M2ResultPanel.rent_text(r)
 	return M2ResultPanel.delta_text(r.delta) if r.delta_valid else UiText.number(r.value)
 
 

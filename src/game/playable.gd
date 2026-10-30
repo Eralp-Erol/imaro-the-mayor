@@ -27,6 +27,7 @@ extends "res://scenes/dev/world_preview.gd"
 ##                    ilk karede bitki hazır; oyunda varsayılan değil, arka thread).  --veg-no-cache: disk önbelleği
 ## kapalı.
 ##                    --veg-force: başsız çalışmada da kur (varsayılan: başsızda atlanır, yerleşim ~14 sn).
+##   --veg-no-corridor  (A/B, yakalama) oyuncu yolu koridorundaki bitki gizlemeyi kapatır (düzeltmeden ÖNCEKİ görünüm).
 ##   --m2-log         her sim yapı senkronunu (süre, hücre) yazdırır.
 ##   --no-roads  yol görünümü kapalı (karşılaştırmalı ölçüm).
 ##   --no-sim-buildings  projector kapalı (ölçüm tabanı).
@@ -330,6 +331,7 @@ func _adopt_vegetation() -> void:
 	var loader := _veg_loader
 	_veg_loader = null
 	_vegetation.set_layout(loader.layout)
+	_refresh_vegetation_corridors()
 	var cam := _vegetation_camera_position()
 	_vegetation.track_camera(cam)
 	if _args.has("veg-block"):
@@ -466,6 +468,9 @@ func _place_status() -> void:
 			var c := row as Control
 			if c != null and c.visible and r.intersects(c.get_global_rect()):
 				_status.visible = false
+	# Yol çiz modunda ipucu sağ panelde ve imleç etiketinde: alt-sol yardım kutusu gizlenir (etiketin üstüne binmesin).
+	if _pr != null and _pr.ctrl != null and _pr.ctrl.is_active():
+		_status.visible = false
 
 
 ## T-040 UI KANCASI: HUD kurulduktan sonra çağrılır. "Döngü sonucu" paneli + gerekçe paneli bağı (UI payı; render/
@@ -547,7 +552,23 @@ func _m2_dev_setup() -> void:
 ## gönderilir (1 gün ilerler, 3B yenilenir); varsa `_m2_dev_setup` içinde `--draw-road-at` gününde gönderilir.
 func _sync_roads() -> void:
 	if _pr != null:
-		_pr.note_report(_pr.sync_now(), sim_stats, _facade.current_tick())
+		var rep := _pr.sync_now()
+		_pr.note_report(rep, sim_stats, _facade.current_tick())
+		if not rep.is_empty():
+			_refresh_vegetation_corridors()
+
+
+## T-042 sanat düzeltmesi: oyuncu yolunun koridorundaki bitkiler gizlenir (geri almada geri gelir). Yol görünümü
+## düğümleri kurulduğu anda çağrılır; bitki henüz yüklenmediyse `_adopt_vegetation` aynı çağrıyı yapar.
+func _refresh_vegetation_corridors() -> void:
+	if _vegetation == null or _vegetation.layout == null or _net == null or _roads == null \
+			or _args.has("veg-no-corridor"):
+		return
+	var t0 := Time.get_ticks_usec()
+	var n := _vegetation.set_corridors(VegetationCorridor.from_network(_net, _roads.style))
+	if n > 0:
+		sim_stats["veg_corridor_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
+		sim_stats["veg_hidden"] = int(_vegetation.stats.get("hidden_instances", 0))
 
 
 func _road_dev_setup() -> void:
@@ -710,7 +731,10 @@ func _process(delta: float) -> void:
 		return
 	_frames += 1
 	if _pr != null:
-		_pr.note_report(_pr.pump(), sim_stats, _facade.current_tick())
+		var road_rep := _pr.pump()
+		_pr.note_report(road_rep, sim_stats, _facade.current_tick())
+		if not road_rep.is_empty():
+			_refresh_vegetation_corridors()
 	_maybe_start_warmup()
 	_acc_ms += delta * 1000.0
 	_acc_n += 1

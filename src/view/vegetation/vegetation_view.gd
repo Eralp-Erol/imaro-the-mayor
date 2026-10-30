@@ -41,6 +41,12 @@ var _open_queue: PackedInt32Array = PackedInt32Array()
 var _blob_active: Dictionary = {}   # Vector2i -> MeshInstance3D
 var _blob_jobs: Dictionary = {}   # Vector2i -> _BlobJob
 var _blob_queue: Array[Vector2i] = []
+## Koridor maskesi değişen ve YENİ lekesi hazır olana dek eskisi görünür kalan parçalar (Vector2i -> true).
+var _blob_replace: Dictionary = {}
+## true: sonraki `track_camera` kamera hareket etmese de pencereyi yeniden hesaplar (maske değişti).
+var _force_window: bool = false
+## Son uygulanan gizli satır kümesi (aynı küme tekrar gelirse iş yapılmaz: işçileri bekletmeyiz).
+var _mask_rows: PackedInt32Array = PackedInt32Array()
 var _blob_mat: ShaderMaterial = null
 var _cam: Vector3 = Vector3.ZERO
 var _last_cam: Vector3 = Vector3.ZERO
@@ -122,6 +128,9 @@ func clear() -> void:
 	_dirty.clear()
 	_open_queue = PackedInt32Array()
 	_blob_active.clear()
+	_blob_replace.clear()
+	_force_window = false
+	_mask_rows = PackedInt32Array()
 	_has_cam = false
 	layout = null
 	stats = {}
@@ -149,6 +158,47 @@ func set_layout(p_layout: VegetationLayout) -> void:
 	stats["cells_total"] = p_layout.cell_count()
 
 
+## T-042 · Yeni (oyuncu) yol koridorlarındaki bitkileri gizler/geri getirir (`VegetationCorridor.from_network`).
+## Maske her çağrıda BAŞTAN kurulur (geri alınan yolun bitkisi geri gelir). Etkilenen açık hücreler ve leke
+## parçaları yerelde yenilenir; sütunlara ve sim'e yazılmaz. Dönüş: maskesi değişen hücre sayısı.
+func set_corridors(corridors: Array) -> int:
+	if layout == null:
+		return 0
+	return set_hidden_rows(VegetationCorridor.rows_inside(layout, corridors))
+
+
+func set_hidden_rows(rows: PackedInt32Array) -> int:
+	if layout == null or rows == _mask_rows:
+		return 0
+	_mask_rows = rows
+	# Leke işçileri `layout.hidden`i okur: yazmadan önce hepsi biter (yarış yok).
+	# Değişmeyen parçaların sonuçları geçerli kalır.
+	_join_blob_jobs()
+	var changed := layout.set_hidden(rows)
+	stats["hidden_instances"] = layout.hidden_count
+	if changed.is_empty():
+		return 0
+	var cc := config.blob_chunk_cells
+	for k in changed:
+		var cell: _Cell = _cells.get(k)
+		if cell != null:
+			for run in cell.runs:
+				run.tier = -2
+				run.canonical = PackedByteArray([0, 0, 0])
+				for t in 3:
+					run.last[t] = PackedFloat32Array()
+			_dirty[k] = true
+		var key := layout.cols.cell_keys[k]
+		var chunk := Vector2i(floori(float(layout.cell_cx(key)) / float(cc)), floori(float(layout.cell_cz(key)) / float(cc)))
+		var job: _BlobJob = _blob_jobs.get(chunk)
+		if job != null:
+			job.stale = true   # eski maskeyle kuruldu: atılır, pencere yeniden hesabı yeniden kuyruğa alır
+		if _blob_active.has(chunk):
+			_blob_replace[chunk] = true
+	_force_window = true
+	return changed.size()
+
+
 ## Kameranın DÜNYA konumu (view_root yerel; rebasing'den bağımsız). Her karede çağrılır; iş yalnız kamera `step_m`
 ## hareket edince ya da bekleyen kuyruk varken yapılır.
 func track_camera(cam: Vector3) -> void:
@@ -158,7 +208,8 @@ func track_camera(cam: Vector3) -> void:
 	_cam = cam
 	var worked := _poll_blobs()
 	var t1 := Time.get_ticks_usec()
-	if not _has_cam or cam.distance_to(_last_cam) >= config.step_m:
+	if not _has_cam or _force_window or cam.distance_to(_last_cam) >= config.step_m:
+		_force_window = false
 		_recompute_window(cam)
 		worked = true
 	var t2 := Time.get_ticks_usec()
@@ -241,7 +292,7 @@ func settle(max_rounds: int = 400) -> void:
 	_unlimited = true
 	for round_n in max_rounds:
 		var pending := not _open_queue.is_empty() or not _dirty.is_empty() or not _blob_queue.is_empty() \
-				or not _blob_jobs.is_empty()
+				or not _blob_jobs.is_empty() or _force_window
 		if not pending:
 			break
 		_join_blob_jobs()
@@ -345,6 +396,9 @@ func _recompute_blob_window(cam: Vector3) -> void:
 	fresh.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
 		return _chunk_distance(a, cam) < _chunk_distance(b, cam) \
 				or (_chunk_distance(a, cam) == _chunk_distance(b, cam) and (a.y < b.y or (a.y == b.y and a.x < b.x))))
+	for key: Vector2i in _blob_replace:
+		if not _blob_jobs.has(key) and not fresh.has(key):
+			fresh.append(key)
 	_blob_queue = fresh
 	# kuyruktaki ama artık gerekmeyen işler (kamera uzaklaştı) düşer; çalışanlar tamamlanınca atılır
 	for key: Vector2i in _blob_jobs:
@@ -457,7 +511,8 @@ func _show_uniform(cell: _Cell, run: _Run, tier: int) -> void:
 				continue
 			if run.canonical[t] != 1:
 				var buf := VegetationCellBuilder.canonical_buffer(layout, run.lo, run.hi, cell.origin, config.sink_m)
-				mmi.multimesh.instance_count = run.hi - run.lo
+				# koridor maskesi: örnek sayısı hi - lo'dan az olabilir (tampon boyutundan)
+				mmi.multimesh.instance_count = floori(float(buf.size()) / float(VegetationCellBuilder.FLOATS_PER_INSTANCE))
 				mmi.multimesh.buffer = buf
 				run.canonical[t] = 1
 			mmi.visible = true
@@ -531,7 +586,7 @@ func _start_blob_jobs() -> void:
 	while not _blob_queue.is_empty() and started < max_new:
 		var key: Vector2i = _blob_queue[0]
 		_blob_queue.remove_at(0)
-		if _blob_active.has(key) or _blob_jobs.has(key):
+		if (_blob_active.has(key) and not _blob_replace.has(key)) or _blob_jobs.has(key):
 			continue
 		var job := _BlobJob.new()
 		job.key = key
@@ -555,6 +610,10 @@ func _poll_blobs() -> bool:
 				and VegetationWindow.chunk_needed(layout, key.x, key.y, _cam, config.lod1_end_m, config.blob_end_m,
 				config.blob_unload_margin_m, config.blob_chunk_cells):
 			_install_blob(key, job.result)
+		elif not job.stale and _blob_replace.has(key):
+			_close_blob(key)   # yeni maskeyle parçada çizilecek bitki kalmadı (ya da parça artık gerekmiyor)
+		if not job.stale:
+			_blob_replace.erase(key)
 	return not done.is_empty()
 
 
@@ -576,6 +635,7 @@ func _install_blob(key: Vector2i, built: Dictionary) -> void:
 	mi.set_meta(&"trees", int(built["trees"]))
 	var o := layout.chunk_origin(key.x, key.y, config.blob_chunk_cells)
 	mi.position = Vector3(o.x, 0.0, o.y)
+	_close_blob(key)   # maske yenilemesi: eskisini değiştirir
 	add_child(mi)
 	_blob_active[key] = mi
 

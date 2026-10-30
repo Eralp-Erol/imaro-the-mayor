@@ -35,6 +35,19 @@ func push_events(events: Array[SimEvent]) -> void:
 	_rebuild()
 
 
+## Şerit metni: olay metni + (varsa) parsel adı/numarası. Üç özdeş "Yatırımcı yatırım yaptı" satırı hangi parsellerde
+## olduğunu söylesin (T-042 sanat düzeltmesi). Parsel yoksa metin `UiText.event_text` ile aynıdır.
+static func strip_text(event: SimEvent) -> String:
+	var text := UiText.event_text(event)
+	for subject in event.subjects:
+		if str(subject).begins_with("parcel."):
+			var label := UiText.humanize(subject)
+			if not text.contains(label):
+				text += " · " + label
+			break
+	return text
+
+
 func clear() -> void:
 	_events.clear()
 	_rebuild()
@@ -47,7 +60,7 @@ func row_count() -> int:
 func row_texts() -> PackedStringArray:
 	var out := PackedStringArray()
 	for e in _events:
-		out.append(UiText.event_text(e))
+		out.append(strip_text(e))
 	return out
 
 
@@ -83,7 +96,7 @@ func _make_row() -> PanelContainer:
 
 func _fill_row(row: PanelContainer, event: SimEvent) -> void:
 	var box := row.get_child(0) as HBoxContainer
-	(box.get_child(0) as Label).text = UiText.event_text(event)
+	(box.get_child(0) as Label).text = strip_text(event)
 	# Gerekçe kaydı olan olay, reddedilen komut ("neden kabul edilmedi", SIM-12) ya da yapılan oyuncu yolu (ayrıntı).
 	var is_work := event.kind == SimEvent.KIND_PUBLIC_WORK_BUILT
 	var why := box.get_child(1) as Button

@@ -165,7 +165,10 @@ func test_positive_path_shows_approval_progress_and_exact_deltas() -> void:
 			.is_equal(M2ResultPanel.delta_text(city["investments_approved"]))
 	assert_str(_metric_text(panel, &"m2.metric.sim_residential_units")) \
 			.is_equal(M2ResultPanel.delta_text(region["sim_residential_units"]))
-	assert_str(_metric_text(panel, &"m2.metric.rent_income")).is_equal(M2ResultPanel.delta_money(city["rent_income"]))
+	# kira 0 ise yer tutucu "0 ¤" yazılmaz ("Henüz yok"); sıfırdan büyükse sim farkı para olarak yazılır
+	var rent_expected := M2ResultPanel.delta_money(city["rent_income"]) if int(city["rent_income"]) != 0 \
+			else UiText.t(&"m2.row.none_yet")
+	assert_str(_metric_text(panel, &"m2.metric.rent_income")).is_equal(rent_expected)
 	var base_text := UiText.t(&"m2.baseline.at", {"date": UiText.tick_date(results.baseline_tick)})
 	assert_str(panel.joined_text()).contains(base_text)
 	assert_array(Array(UiText.missing_keys())).is_empty()

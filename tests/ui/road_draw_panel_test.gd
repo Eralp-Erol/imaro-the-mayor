@@ -146,3 +146,42 @@ func test_panel_buttons_stay_inside_the_frame_and_never_overlap_at_every_panel_w
 				assert_bool(r.intersects(buttons[j].get_global_rect())) \
 						.override_failure_message("çakışma %d px: %s ~ %s" % [width, buttons[i].text, buttons[j].text]) \
 						.is_false()
+
+
+func test_review_step_puts_a_one_line_hint_and_a_big_primary_confirm_button_first() -> void:
+	var panel := _panel()
+	_draft(NORTH)
+	panel.refresh()
+	assert_int(_tool.step).is_equal(RoadDrawTool.Step.REVIEW)
+	assert_bool(_tool.can_confirm()).is_true()
+	var text := panel.joined_text()
+	assert_str(text).contains("Yolu onaylamak için Enter'a bas ya da Onayla'ya tıkla.")
+	var confirm := panel.confirm_button()
+	assert_float(confirm.custom_minimum_size.y).override_failure_message("Onayla büyük olmalı").is_greater_equal(56.0)
+	# Yönerge ve Onayla, ön izleme kartından ÖNCE gelir (ilk bakışta görünür).
+	assert_int(text.find("Yolu onaylamak")).is_less(text.find("Maliyet"))
+	assert_object(panel.buttons()[0]).override_failure_message("Onayla ilk düğme olmalı").is_same(confirm)
+	assert_object(confirm.get_theme_stylebox("normal")) \
+		.override_failure_message("birincil vurgu stili") \
+		.is_instanceof(StyleBoxFlat)
+
+
+func test_confirm_hint_is_absent_before_review_and_when_the_draft_is_rejected() -> void:
+	var panel := _panel()
+	assert_str(panel.joined_text()).not_contains("Yolu onaylamak için")
+	_tool.tap_at(P.GRID_ORIGIN, 5.0)
+	_tool.tap_at(Vector2(1100.0, 400.0), 1.0)   # çok uzun: yapılamaz
+	panel.refresh()
+	assert_bool(_tool.can_confirm()).is_false()
+	assert_str(panel.joined_text()).not_contains("Yolu onaylamak için")
+
+
+func test_touch_confirm_button_and_hint_are_at_least_44_pt_and_name_no_keyboard() -> void:
+	var panel := _panel(&"touch", Vector2(480.0, 900.0))
+	_draft(NORTH)
+	panel.refresh()
+	var confirm := panel.confirm_button()
+	assert_float(UiFactory.hit_size(confirm).y).is_greater_equal(44.0)
+	assert_float(UiFactory.hit_size(confirm).x).is_greater_equal(44.0)
+	assert_str(panel.joined_text()).contains("Yolu onaylamak için Onayla'ya dokun.")
+	assert_str(panel.joined_text()).not_contains("Enter")

@@ -162,3 +162,17 @@ func test_band_change_updates_width_and_metro_hides_mark() -> void:
 func test_uses_existing_focus_token_color() -> void:
 	var ring := _ring()
 	assert_bool(ring.color.is_equal_approx(UiTokens.load_default().color("focus"))).is_true()
+
+
+func test_district_marker_is_at_least_60_px_across_and_has_a_dark_halo_surface() -> void:
+	var tiny := ParcelSelectionRing.plan(&"district", 5.0, 25.0)
+	assert_bool(tiny["marker"]).is_true()
+	assert_float(tiny["radius_m"] / 5.0 * 2.0).is_greater_equal(60.0)   # dış çap (px) >= 60
+	assert_float(tiny["halo_m"]).is_greater(0.0)
+	# açık halka koyu halenin ÜSTÜNDE ve halenin içinde kalır: hale halkadan geniş
+	assert_float(tiny["width_m"] + 2.0 * tiny["halo_m"]).is_greater(tiny["width_m"])
+	# koyu hale rengi token'dan ve odak renginden farklı
+	var ring := ParcelSelectionRing.new()
+	auto_free(ring)
+	assert_bool(ring.halo_color.is_equal_approx(ring.color)).is_false()
+	assert_float(ring.halo_color.get_luminance()).is_less(ring.color.get_luminance())

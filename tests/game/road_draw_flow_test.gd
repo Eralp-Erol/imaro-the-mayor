@@ -119,6 +119,12 @@ func _screen(world_xz: Vector2) -> Vector2:
 	return rig.camera.unproject_position(Vector3(world_xz.x - o.x, 0.0, world_xz.y - o.y))
 
 
+## Ekran noktasının araca giden zemin karşılığı (kamera ışını); `_screen`in tersi yaklaşıktır, bu tam eşleşir.
+func _ground(screen_pos: Vector2) -> Vector2:
+	var g: Dictionary = (_scene["rig"] as CameraRig).screen_to_ground(screen_pos)
+	return Vector2(float(g["x"]), float(g["z"]))
+
+
 func _click(pos: Vector2, button: MouseButton = MOUSE_BUTTON_LEFT) -> void:
 	for pressed in [true, false]:
 		var e := InputEventMouseButton.new()
@@ -355,3 +361,177 @@ func test_attaching_while_the_camera_is_in_the_metro_band_is_safe_and_starts_loc
 	await _open_tool()
 	assert_str(ctrl.panel().joined_text()).contains(UiText.t(&"road.zoom_in"))
 	assert_bool(ctrl.preview.has_mark()).is_false()
+
+
+## Kullanıcı denemesi: araç açıkken kare süresi 28 -> 69 ms. Ölçüm (tools/godot/road_ux_probe.gd): imleç adımı başına
+## ~12 ms (sim kuru koşusu + panel yeniden çizimi). Hareketler en çok HOVER_INTERVAL_MSEC'te bir uygulanır;
+## son konum kazanır.
+func test_rapid_mouse_motion_is_coalesced_and_the_last_position_wins() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _open_tool()
+	_click(_screen(A))
+	assert_int(ctrl.tool.step).is_equal(RoadDrawTool.Step.PICK_B)
+	var changes := [0]
+	ctrl.tool.changed.connect(func() -> void: changes[0] += 1)
+	var last_screen := _screen(Vector2(1100.0, 1090.0 - 2.0 * 29.0))
+	var last := _ground(last_screen)
+	for i in 30:
+		_move(_screen(Vector2(1100.0, 1090.0 - 2.0 * float(i))))
+	assert_int(changes[0]).override_failure_message("30 hareket bir karede en çok 1 denetim yapmalı").is_less_equal(1)
+	await get_tree().create_timer(float(RoadDrawController.HOVER_INTERVAL_MSEC + 30) / 1000.0).timeout
+	ctrl.process()
+	assert_int(changes[0]).is_less_equal(2)
+	assert_float(ctrl.tool.end.distance_to(last)) \
+		.override_failure_message("son imleç konumu uygulanmalı: %s" % [ctrl.tool.end]) \
+		.is_less(1.5)
+	# Tıklama bekleyen eski hareketi ezmez: tıklanan nokta bitiş olur.
+	_move(_screen(Vector2(1100.0, 1050.0)))
+	_click(_screen(B_OK))
+	assert_float(ctrl.tool.end.distance_to(_ground(_screen(B_OK)))).is_less(1.5)
+	ctrl.process()
+	assert_float(ctrl.tool.end.distance_to(_ground(_screen(B_OK)))) \
+		.override_failure_message("bekleyen hareket tıklamayı ezmemeli") \
+		.is_less(1.5)
+
+
+# --- Onay görünürlüğü (kullanıcı denemesi: "Onayla yalnız sağ paneldeki küçük kutuda, çok zor anladım") ---
+
+func test_enter_confirms_the_reviewed_road_but_space_does_not() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _draw_to_review(B_OK)
+	assert_int(ctrl.tool.step).is_equal(RoadDrawTool.Step.REVIEW)
+	_key(KEY_SPACE)
+	assert_int(ctrl.tool.step) \
+		.override_failure_message("Boşluk onaylamamalı (duraklatır)") \
+		.is_equal(RoadDrawTool.Step.REVIEW)
+	_key(KEY_ENTER)
+	assert_int(ctrl.tool.step).override_failure_message("Enter onaylamalı").is_equal(RoadDrawTool.Step.SENDING)
+	_tick_and_deliver()
+	assert_int(ctrl.tool.step).is_equal(RoadDrawTool.Step.PICK_A)
+
+
+func test_enter_does_nothing_when_the_draft_is_rejected_or_before_the_second_tap() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	var edges := (_scene["net"] as WorldNetwork).edges.size()
+	await _open_tool()
+	_key(KEY_ENTER)
+	assert_int(ctrl.tool.step).is_equal(RoadDrawTool.Step.PICK_A)
+	_click(_screen(A))
+	_key(KEY_ENTER)
+	assert_int(ctrl.tool.step) \
+		.override_failure_message("bitiş seçilmeden Enter onaylamaz") \
+		.is_equal(RoadDrawTool.Step.PICK_B)
+	_focus(1100.0, 850.0, _band_distance(_scene["rig"], &"neighborhood", 0.5))
+	_move(_screen(B_LONG))
+	_click(_screen(B_LONG))
+	assert_bool(ctrl.tool.is_valid()).is_false()
+	_key(KEY_ENTER)
+	_tick_and_deliver()
+	assert_int(ctrl.tool.step).is_equal(RoadDrawTool.Step.REVIEW)
+	assert_int((_scene["net"] as WorldNetwork).edges.size()).is_equal(edges)
+
+
+func test_clicking_the_same_end_point_again_confirms_and_a_new_point_moves_the_end() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _draw_to_review(B_OK)
+	var other := Vector2(1100.0, 1030.0)
+	_click(_screen(other))
+	assert_int(ctrl.tool.step) \
+		.override_failure_message("başka yere tıklamak bitişi değiştirir, onaylamaz") \
+		.is_equal(RoadDrawTool.Step.REVIEW)
+	assert_float(ctrl.tool.end.distance_to(_ground(_screen(other)))).is_less(1.5)
+	_click(_screen(other))
+	assert_int(ctrl.tool.step) \
+		.override_failure_message("aynı noktaya yeniden tıklamak onaylar") \
+		.is_equal(RoadDrawTool.Step.SENDING)
+
+
+func test_a_big_confirm_chip_sits_at_the_road_end_with_the_enter_hint_and_clicking_it_confirms() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	var hud: HudRoot = _scene["hud"]
+	await _open_tool()
+	_click(_screen(A))
+	_move(_screen(B_OK))
+	assert_bool(ctrl.chip.visible).override_failure_message("bitiş seçilmeden işaret görünmemeli").is_false()
+	_click(_screen(B_OK))
+	await _settle()
+	assert_bool(ctrl.chip.visible).override_failure_message("Adım 3/3'te bitiş ucunda onay işareti görünmeli").is_true()
+	assert_str(ctrl.chip.text).is_equal("Onaylamak için Enter ya da buraya tıkla · Esc iptal")
+	assert_float(ctrl.chip.size.y).is_greater_equal(44.0)
+	var rect := ctrl.chip.get_global_rect()
+	assert_bool(hud.free_map_rect().encloses(rect)) \
+		.override_failure_message("işaret harita boşluğunda olmalı: %s / %s" % [rect, hud.free_map_rect()]) \
+		.is_true()
+	assert_float(rect.get_center().distance_to(_screen(B_OK))) \
+		.override_failure_message("işaret bitiş ucuna yakın olmalı") \
+		.is_less(400.0)
+	_click(_center(ctrl.chip))
+	assert_int(ctrl.tool.step).is_equal(RoadDrawTool.Step.SENDING)
+	assert_bool(ctrl.chip.visible).is_false()
+	assert_int(_fallthrough_selects).override_failure_message("işarete tıklamak parsel seçtirmemeli").is_equal(0)
+
+
+func test_confirm_chip_hides_for_rejected_drafts_cancel_and_tool_off() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _open_tool()
+	_focus(1100.0, 850.0, _band_distance(_scene["rig"], &"neighborhood", 0.5))
+	_click(_screen(A))
+	_click(_screen(B_LONG))
+	assert_bool(ctrl.tool.is_valid()).is_false()
+	await _settle()
+	assert_bool(ctrl.chip.visible).override_failure_message("yapılamaz taslakta onay işareti yok").is_false()
+	_focus(1100.0, 1050.0, _street_distance(_scene["rig"]))
+	_click(_screen(B_OK))
+	await _settle()
+	assert_bool(ctrl.chip.visible).is_true()
+	_key(KEY_ESCAPE)
+	await _settle()
+	assert_bool(ctrl.chip.visible).override_failure_message("Esc taslağı iptal edince işaret kaybolur").is_false()
+	_click(_screen(B_OK))
+	ctrl.deactivate()
+	assert_bool(ctrl.chip.visible).is_false()
+
+
+func test_cursor_label_names_the_step_at_every_step() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _open_tool()
+	_move(_screen(Vector2(1100.0, 1090.0)))
+	assert_bool(ctrl.tip.visible).is_true()
+	assert_str(ctrl.tip.step_text()).is_equal("1/3 · Yola ya da yol ucuna tıkla")
+	_click(_screen(A))
+	await get_tree().create_timer(float(RoadDrawController.HOVER_INTERVAL_MSEC + 30) / 1000.0).timeout
+	_move(_screen(B_OK))
+	assert_str(ctrl.tip.step_text()).is_equal("2/3 · Bitişi tıkla")
+	assert_str(ctrl.tip.text()).contains("+")
+	_click(_screen(B_OK))
+	assert_str(ctrl.tip.step_text()).is_equal("3/3 · Onayla: Enter ya da işarete tıkla")
+
+
+## Panel imleç önizlemesinde her adımda yeniden kurulmaz (ölçüm: ~6,6 ms/adım); en çok PANEL_HOVER_INTERVAL_MSEC'te bir.
+func test_side_panel_is_not_rebuilt_on_every_hover_step_but_catches_up() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _open_tool()
+	_click(_screen(A))
+	var before := ctrl.panel().confirm_button()
+	var builds := {before.get_instance_id(): true}
+	for i in 20:
+		await get_tree().create_timer(float(RoadDrawController.HOVER_INTERVAL_MSEC + 5) / 1000.0).timeout
+		_move(_screen(Vector2(1100.0, 1090.0 - 3.0 * float(i))))
+		builds[ctrl.panel().confirm_button().get_instance_id()] = true
+	assert_bool(ctrl.tool.is_valid()).is_true()
+	# 20 hareket ~1,1 sn sürdü: her biri panel kursaydı 21 çizim olurdu; 250 ms aralıkla en çok ~6.
+	assert_int(builds.size()) \
+			.override_failure_message("panel hareket başına kuruluyor: %d çizim" % builds.size()) \
+			.is_less_equal(8)
+	await get_tree().create_timer(float(RoadDrawController.PANEL_HOVER_INTERVAL_MSEC + 30) / 1000.0).timeout
+	ctrl.process()
+	assert_object(ctrl.panel().confirm_button()).override_failure_message("bekleyen çizim yetişmeli").is_not_same(before)
+	assert_str(ctrl.panel().joined_text()).contains(UiText.t(&"road.valid"))

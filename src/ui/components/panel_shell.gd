@@ -23,6 +23,8 @@ var _pin: Button = null
 var _close: Button = null
 var _expand: Button = null
 var _scroll: ScrollContainer = null
+var _root: VBoxContainer = null
+var _header: HBoxContainer = null
 
 
 static func create(ctx: UiContext) -> PanelShell:
@@ -30,8 +32,10 @@ static func create(ctx: UiContext) -> PanelShell:
 	p._ctx = ctx
 	p.theme_type_variation = UiTheme.V_PANEL_CARD
 	var root := VBoxContainer.new()
+	p._root = root
 	p.add_child(root)
 	var header := HBoxContainer.new()
+	p._header = header
 	root.add_child(header)
 	p._title = UiFactory.label("", UiTheme.V_LABEL_TITLE)
 	p._title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -57,6 +61,15 @@ static func create(ctx: UiContext) -> PanelShell:
 	p.state_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	p._scroll.add_child(p.state_view)
 	return p
+
+
+## İçeriğe sığan yükseklik (başlık + içerik + kabuk dolgusu). Yan panel yüksekliği buna uyar (boş alt yarı yok);
+## tavan çağıranda (ekran yüksekliği), taşarsa içerik kaydırılır.
+func content_height() -> float:
+	var style := get_theme_stylebox("panel")
+	var pad := style.get_minimum_size().y if style != null else 0.0
+	var sep := float(_root.get_theme_constant("separation"))
+	return pad + _header.get_combined_minimum_size().y + sep + state_view.get_combined_minimum_size().y + 4.0
 
 
 func set_title(text: String) -> void:

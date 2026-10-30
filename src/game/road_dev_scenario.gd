@@ -34,6 +34,8 @@ static func preview(ctrl: RoadDrawController, text: String) -> void:
 	if v.is_empty() or ctrl == null:
 		return
 	ctrl.activate()
+	# Önce sokak bandı: çizim yalnız yakın bantta açık.
+	ctrl.dev_focus_draft(Vector2(v[0], v[1]), Vector2(v[2], v[3]), 140.0)
 	ctrl.dev_tip_world = Vector2(v[2], v[3])
 	ctrl.tool.tap_at(Vector2(v[0], v[1]), 30.0)
 	ctrl.tool.tap_at(Vector2(v[2], v[3]), 0.5)

@@ -16,10 +16,19 @@ const SNAP_PX_DESKTOP := 26.0
 const SNAP_PX_TOUCH := 44.0
 const SNAP_MIN_M := 3.0
 const SNAP_MAX_M := 150.0
+## İmleç önizlemesinin en sık çalışma aralığı (ms). Her denetim sim kuru koşusu + panel yeniden çizimi + önizleme
+## ağı kurar (ölçüm: tools/godot/road_ux_probe.gd, ~12 ms/adım); fare olayı başına değil ~20 Hz'de çalışır, aradaki
+## hareketler birleştirilir (son konum `process`te uygulanır).
+const HOVER_INTERVAL_MSEC := 50
+## İmleç önizlemesinde yan panelin en sık yeniden çizilme aralığı (ms): panel düğüm kurar (~6,6 ms/çizim); imleçle aynı
+## hızda gerekmez.
+const PANEL_HOVER_INTERVAL_MSEC := 250
 
 var tool: RoadDrawTool = null
 var preview: RoadDraftPreview = null
 var tip: RoadCursorTip = null
+## Yolun bitiş ucuna bağlı büyük onay işareti (Adım 3/3, yol yapılabilirse).
+var chip: RoadConfirmChip = null
 ## Dev/yakalama: imleç etiketi bu dünya noktasının ekran karşılığına oturur (fare konumu yerine).
 var dev_tip_world: Variant = null
 
@@ -29,6 +38,12 @@ var _net: WorldNetwork = null
 var _panel: RoadDrawPanel = null
 var _cursor: Vector2 = Vector2.ZERO
 var _touch: bool = false
+var _last_hover_msec: int = -HOVER_INTERVAL_MSEC
+var _hover_pending: bool = false
+var _have_cursor: bool = false
+var _last_panel_msec: int = -PANEL_HOVER_INTERVAL_MSEC
+var _panel_pending: bool = false
+var _click_in_progress: bool = false
 
 
 ## Yol komutları bağlı değilse (facade gerçek sim değil / `attach_public_works` yapılmadı) null: araç hiç görünmez.
@@ -48,6 +63,12 @@ static func attach(hud: HudRoot, camera: CameraRig, net: WorldNetwork, facade: S
 	view_root.add_child(c.preview)
 	c.tip = RoadCursorTip.create()
 	overlay.add_child(c.tip)
+	c.chip = RoadConfirmChip.create(hud.ctx)
+	overlay.add_child(c.chip)
+	c.chip.confirm_requested.connect(c.confirm)
+	var keys := RoadDrawKeys.new()
+	keys.ctrl = c
+	overlay.add_child(keys)
 	# Görsel parçalar kurulduktan SONRA bağlanır (metro bandında açılış `changed` yayar).
 	c.tool.changed.connect(c._on_tool_changed)
 	c.tool.set_band(camera.scale_band)
@@ -111,10 +132,14 @@ func handle_select(screen_pos: Vector2) -> bool:
 	if tool.step == RoadDrawTool.Step.SENDING:
 		return true
 	_cursor = screen_pos
+	_have_cursor = true
+	_hover_pending = false   # tıklama kendi konumunu uygular; eski bekleyen hareket onu ezmesin
 	var world := _ground_xz(screen_pos)
 	if world.is_empty():
 		return true
+	_click_in_progress = true
 	tool.tap_at(world["p"], _snap_radius_m(screen_pos))
+	_click_in_progress = false
 	return true
 
 
@@ -122,6 +147,11 @@ func handle_select(screen_pos: Vector2) -> bool:
 func process() -> void:
 	if tool.is_active():
 		tool.refresh_if_graph_changed()
+		_place_chip()
+		if _hover_pending and Time.get_ticks_msec() - _last_hover_msec >= HOVER_INTERVAL_MSEC:
+			_apply_hover()
+		if _panel_pending and Time.get_ticks_msec() - _last_panel_msec >= PANEL_HOVER_INTERVAL_MSEC:
+			_refresh_panel()
 
 
 ## Masaüstü imleç önizlemesi: yalnız UI'nin tüketmediği fare hareketi (`_unhandled_input`) gelir, yani imleç panel/araç
@@ -133,10 +163,27 @@ func handle_motion(event: InputEventMouseMotion) -> void:
 	if tool.step != RoadDrawTool.Step.PICK_A and tool.step != RoadDrawTool.Step.PICK_B:
 		return
 	_cursor = event.position
+	_have_cursor = true
+	if Time.get_ticks_msec() - _last_hover_msec < HOVER_INTERVAL_MSEC:
+		_hover_pending = true   # son konum bir sonraki `process`te uygulanır
+		return
+	_apply_hover()
+
+
+## Bekleyen/yeni imleç konumunu araca uygular (en çok `HOVER_INTERVAL_MSEC`te bir).
+func _apply_hover() -> void:
+	_hover_pending = false
+	_last_hover_msec = Time.get_ticks_msec()
+	if _touch or not tool.is_active() or not tool.band_active:
+		return
+	if tool.step != RoadDrawTool.Step.PICK_A and tool.step != RoadDrawTool.Step.PICK_B:
+		return
 	var world := _ground_xz(_cursor)
 	if world.is_empty():
 		return
 	tool.hover_at(world["p"], _snap_radius_m(_cursor))
+	if not tip.visible:
+		_sync_visuals()   # ilk imleç hareketi: adım yönergesi görünür
 	_place_tip()
 
 
@@ -183,6 +230,20 @@ func _on_refreshed() -> void:
 
 func _on_tool_changed() -> void:
 	_sync_visuals()
+	if panel() == null:
+		return
+	# İmleç önizlemesinde panel her adımda yeniden kurulmaz (ölçüm: ~6,6 ms/adım); en çok PANEL_HOVER_INTERVAL_MSEC'te bir.
+	# Dokunuş/onay/iptal adımlarında (PICK_B dışı ya da tıklama) hemen çizilir.
+	if tool.step == RoadDrawTool.Step.PICK_B and not _click_in_progress \
+			and Time.get_ticks_msec() - _last_panel_msec < PANEL_HOVER_INTERVAL_MSEC:
+		_panel_pending = true
+		return
+	_refresh_panel()
+
+
+func _refresh_panel() -> void:
+	_panel_pending = false
+	_last_panel_msec = Time.get_ticks_msec()
 	if panel() != null:
 		panel().refresh()
 
@@ -192,7 +253,7 @@ func _build_panel(ctx: UiContext) -> Control:
 	return _panel
 
 
-## Aracın durumundan dünya içi önizleme + imleç etiketi.
+## Aracın durumundan dünya içi önizleme + imleç etiketi + bitiş ucu onay işareti.
 func _sync_visuals() -> void:
 	match tool.step:
 		RoadDrawTool.Step.PICK_A:
@@ -200,29 +261,119 @@ func _sync_visuals() -> void:
 				preview.show_snap(tool.hover["pos"])
 			else:
 				preview.clear()
-			tip.hide_tip()
+			# Adım 1/3 yönergesi imleç yanında (imleç henüz hareket etmediyse yer belli değil: görünmez).
+			if tool.band_active and (_have_cursor or _touch or dev_tip_world is Vector2):
+				tip.show_text("", true, _step_line(1))
+				_place_tip()
+			else:
+				tip.hide_tip()
 		RoadDrawTool.Step.PICK_B, RoadDrawTool.Step.REVIEW, RoadDrawTool.Step.SENDING:
 			if tool.verdict == null:
 				preview.show_snap(tool.start)
-				tip.hide_tip()
+				if tool.step == RoadDrawTool.Step.PICK_B and tool.band_active and _have_cursor:
+					tip.show_text("", true, _step_line(2))
+					_place_tip()
+				else:
+					tip.hide_tip()
 			else:
-				preview.show_draft(tool.start, tool.end, _net.rules.width_of(RoadDrawTool.ROAD_CLASS), tool.is_valid())
+				preview.show_draft(tool.start, tool.end, _net.rules.width_of(RoadDrawTool.ROAD_CLASS), tool.is_valid(),
+						conflict_outline())
 				_show_tip()
 		_:
 			preview.clear()
 			tip.hide_tip()
+	_place_chip()
+
+
+## Adım yönergesi (imleç etiketi): 1/3 başlangıç, 2/3 bitiş, 3/3 onay. Dokunmatikte "dokun", masaüstünde "tıkla".
+func _step_line(n: int) -> String:
+	return UiText.t(StringName("road.tip.step%d%s" % [n, "_touch" if _touch else ""]))
+
+
+## Yol yapılabilirse (Adım 3/3) bitiş ucuna bağlı büyük onay işareti görünür; her karede kamerayla birlikte taşınır.
+func _place_chip() -> void:
+	if chip == null:
+		return
+	var show := tool.is_active() and tool.band_active and tool.step == RoadDrawTool.Step.REVIEW and tool.can_confirm()
+	if not show:
+		chip.visible = false
+		return
+	chip.theme = _hud.theme
+	var o := _camera.rebase_origin
+	var screen := _camera.camera.unproject_position(Vector3(tool.end.x - o.x, 0.0, tool.end.y - o.y))
+	chip.visible = true
+	chip.place_at(screen, _hud.free_map_rect())
+
+
+## Dev/yakalama (`--road-preview`): kamerayı taslağın ortasına alır (oyun akışında kullanılmaz).
+func dev_focus_draft(a: Vector2, b: Vector2, distance_m: float) -> void:
+	var st := _camera.target_state()
+	var mid := (a + b) * 0.5
+	st.focus_x = mid.x
+	st.focus_z = mid.y
+	st.distance = distance_m
+	_camera.apply_state(st, true)
+
+
+## Onay (işarete tıklama / Enter / aynı noktaya yeniden tıklama): komut yalnız araçtan gider.
+func confirm() -> void:
+	if not tool.is_active() or not tool.can_confirm():
+		return
+	tool.confirm()
+	if panel() != null:
+		panel().refresh()
+
+
+## Enter ile onay (Boşluk DEĞİL: Boşluk duraklatır). true = tüketildi. Odak bir düğmedeyse Godot kendi `ui_accept`ini
+## işler ve bu çağrıya gelmez; yani çift onay olmaz.
+func handle_key(event: InputEventKey) -> bool:
+	if not event.pressed or event.echo or not tool.is_active():
+		return false
+	if event.keycode != KEY_ENTER and event.keycode != KEY_KP_ENTER:
+		return false
+	if not tool.can_confirm():
+		return false
+	confirm()
+	return true
+
+
+## Ret noktası bir parsele düşüyorsa o parselin sınırı (haritada "neden reddedildi"); yoksa boş. Yalnız OKUR.
+func conflict_outline() -> PackedVector2Array:
+	if tool.verdict == null or not tool.verdict.is_rejected():
+		return PackedVector2Array()
+	var args := tool.verdict.args
+	if not (args.has("at_x_cm") and args.has("at_z_cm")):
+		return PackedVector2Array()
+	var at := Vector2(float(args["at_x_cm"]), float(args["at_z_cm"])) * 0.01
+	var block := _net.block_at(at.x, at.y)
+	if block == null:
+		return PackedVector2Array()
+	var best: WorldParcel = null
+	var best_d := INF
+	for pid in block.parcel_ids:
+		var parcel := _net.parcel(pid)
+		if parcel == null or parcel.outline.size() < 3:
+			continue
+		if Geometry2D.is_point_in_polygon(at, parcel.outline):
+			return parcel.outline
+		var d := parcel.centroid.distance_squared_to(at)
+		if d < best_d:
+			best_d = d
+			best = parcel
+	return best.outline if best != null else PackedVector2Array()
 
 
 func _show_tip() -> void:
 	if tool.step == RoadDrawTool.Step.SENDING or not tool.band_active:
 		tip.hide_tip()
 		return
+	var step_line := _step_line(3) if tool.step == RoadDrawTool.Step.REVIEW and tool.is_valid() else _step_line(2)
 	if tool.is_valid():
 		var args := tool.preview_args()
 		tip.show_text(UiText.t(&"road.tip_valid", {"length": int(args.get("length_m", 0)),
-				"units": int(args.get("units_total", 0))}), true)
+				"units": int(args.get("units_total", 0))}), true, step_line)
 	else:
-		tip.show_text(UiText.reject_reason(tool.verdict.reason_key, tool.verdict.args), false)
+		tip.show_text(UiText.reject_reason(tool.verdict.reason_key, tool.verdict.args), false, step_line)
 	_place_tip()
 
 
@@ -234,11 +385,11 @@ func _place_tip() -> void:
 		var w: Vector2 = dev_tip_world
 		var o := _camera.rebase_origin
 		var screen := _camera.camera.unproject_position(Vector3(w.x - o.x, 0.0, w.y - o.y))
-		tip.place_near(screen, _hud.get_viewport().get_visible_rect().size)
+		tip.place_near(screen, _hud.get_viewport().get_visible_rect().size, _hud.free_map_rect())
 	elif _touch:
 		tip.place_at_top(_hud.free_map_rect())
 	else:
-		tip.place_near(_cursor, _hud.get_viewport().get_visible_rect().size)
+		tip.place_near(_cursor, _hud.get_viewport().get_visible_rect().size, _hud.free_map_rect())
 
 
 func _ground_xz(screen_pos: Vector2) -> Dictionary:

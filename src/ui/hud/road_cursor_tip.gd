@@ -12,6 +12,7 @@ const MAX_WIDTH := 340.0
 const SHORT_CHARS := 36
 
 var _label: Label = null
+var _step_label: Label = null
 var _valid: bool = true
 
 
@@ -21,10 +22,19 @@ static func create() -> RoadCursorTip:
 	tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	tip.visible = false
 	tip.z_index = 20
+	var box := VBoxContainer.new()
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tip.add_child(box)
+	# Adım yönergesi her adımda imleç yanında ("1/3 ...", "2/3 ...", "3/3 ..."); altında karar/ret metni.
+	tip._step_label = UiFactory.label("", UiTheme.V_LABEL_TITLE, true)
+	tip._step_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tip._step_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	tip._step_label.visible = false
+	box.add_child(tip._step_label)
 	tip._label = UiFactory.label("", UiTheme.V_LABEL_OK, true)
 	tip._label.custom_minimum_size = Vector2(MAX_WIDTH, 0.0)
 	tip._label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	tip.add_child(tip._label)
+	box.add_child(tip._label)
 	return tip
 
 
@@ -32,19 +42,27 @@ func text() -> String:
 	return _label.text if _label != null else ""
 
 
+## Adım yönergesi satırı ("1/3 · ...", "2/3 · ...", "3/3 · ..."); yoksa boş.
+func step_text() -> String:
+	return _step_label.text if _step_label != null else ""
+
+
 func is_valid_state() -> bool:
 	return _valid
 
 
-func show_text(message: String, valid: bool) -> void:
+func show_text(message: String, valid: bool, step_line: String = "") -> void:
 	_valid = valid
 	_label.text = message
+	_label.visible = not message.is_empty()
+	_step_label.text = step_line
+	_step_label.visible = not step_line.is_empty()
 	# Kısa metin kutuyu doldurmaz (sarma kapalı, içeriğe göre genişlik); uzun ret nedeni MAX_WIDTH'te sarılır.
 	var short := message.length() <= SHORT_CHARS
 	_label.autowrap_mode = TextServer.AUTOWRAP_OFF if short else TextServer.AUTOWRAP_WORD_SMART
 	_label.custom_minimum_size = Vector2(0.0 if short else MAX_WIDTH, 0.0)
 	_label.theme_type_variation = UiTheme.V_LABEL_OK if valid else UiTheme.V_LABEL_DANGER
-	visible = not message.is_empty()
+	visible = not message.is_empty() or not step_line.is_empty()
 	reset_size()
 
 
@@ -52,13 +70,17 @@ func hide_tip() -> void:
 	visible = false
 
 
-## İmleç yanı: ekran dışına taşarsa içeri kaydırılır.
-func place_near(cursor: Vector2, bounds: Vector2) -> void:
+## İmleç yanı: ekran dışına taşarsa içeri kaydırılır. `area` (boş değilse): HUD'un boş harita dikdörtgeni; etiket
+## araç çubuğu/panel/yardım alanlarına binmesin diye bu dikdörtgenin içinde tutulur.
+func place_near(cursor: Vector2, bounds: Vector2, area: Rect2 = Rect2()) -> void:
 	var sz := get_combined_minimum_size()
 	var pos := cursor + CURSOR_OFFSET
 	pos.x = clampf(pos.x, 0.0, maxf(0.0, bounds.x - sz.x))
 	if pos.y + sz.y > bounds.y:
 		pos.y = cursor.y - CURSOR_OFFSET.y - sz.y
+	if area.has_area():
+		pos.x = clampf(pos.x, area.position.x, maxf(area.position.x, area.end.x - sz.x))
+		pos.y = clampf(pos.y, area.position.y, maxf(area.position.y, area.end.y - sz.y))
 	position = pos
 	size = sz
 

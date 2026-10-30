@@ -256,7 +256,7 @@ func _metric_value(r: M2ResultModel.MetricRow) -> String:
 			value += " (%s)" % delta_text(r.delta)
 		return value
 	if r.key == &"rent_income":
-		return delta_money(r.delta) if r.delta_valid else UiText.money(r.value)
+		return rent_text(r)
 	return delta_text(r.delta) if r.delta_valid else UiText.number(r.value)
 
 
@@ -265,6 +265,13 @@ static func delta_text(value: int) -> String:
 	if value > 0:
 		return UiText.t(&"format.delta_plus", {"value": UiText.number(value)})
 	return UiText.number(value)
+
+
+## Kira geliri satırı: sim henüz kira üretmediyse ("0 ¤") yer tutucu para simgesi yazılmaz (para birimi AÇIK, Q-003).
+static func rent_text(r: M2ResultModel.MetricRow) -> String:
+	if r.value == 0 and (not r.delta_valid or r.delta == 0):
+		return UiText.t(&"m2.row.none_yet")
+	return delta_money(r.delta) if r.delta_valid else UiText.money(r.value)
 
 
 static func delta_money(value: int) -> String:

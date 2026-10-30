@@ -170,7 +170,8 @@ func _rebuild_tools() -> void:
 
 func _sync() -> void:
 	for mode_id: StringName in _mode_buttons:
-		(_mode_buttons[mode_id] as Button).set_pressed_no_signal(mode_id == current_mode)
+		# Etkin araç varken YALNIZ araç vurgulu (mod + araç birlikte vurgulu olunca hangisinin etkin olduğu belirsizdi).
+		(_mode_buttons[mode_id] as Button).set_pressed_no_signal(mode_id == current_mode and current_tool == &"")
 	for tool_id: StringName in _tool_buttons:
 		(_tool_buttons[tool_id] as Button).set_pressed_no_signal(tool_id == current_tool)
 

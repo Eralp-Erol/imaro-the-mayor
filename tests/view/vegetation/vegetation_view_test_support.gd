@@ -36,6 +36,19 @@ static func layout() -> VegetationLayout:
 	return _layout
 
 
+## YAZILABİLİR yeni düzen (maske testleri; paylaşılan `layout()` salt okunurdur).
+static func fresh_layout() -> VegetationLayout:
+	return VegetationLayout.build(VegetationTestSupport.light(), world(), species().height_m, has_proxy())
+
+
+## Tepe hücresinin ortasından doğu-batı geçen, `radius` yarıçaplı koridor ([a, b, r]).
+static func peak_corridor(radius: float = 10.0) -> Array:
+	var lay := layout()
+	var o := lay.cell_origin(lay.cols.peak_cell().y)
+	var c := lay.cols.cell_m
+	return [Vector2(o.x, o.y + c * 0.5), Vector2(o.x + c, o.y + c * 0.5), radius]
+
+
 static func look_numbers() -> VegetationLook:
 	if _look_numbers == null:
 		_look_numbers = VegetationLook.numbers_only(species(), config())

@@ -27,7 +27,12 @@ const MIN_WIDTH_M := 0.3
 const MAX_WIDTH_FRACTION := 0.2
 ## Parsel ekranda bundan küçükse (px) sınır yerine merkez halkası.
 const MARKER_BELOW_PX := 14.0
-const MARKER_RADIUS_PX := 10.0
+## Merkez halkası (ilçe/uzak bant): dış çapı en az ~60 px (sanat düzeltmesi: 40 px halka ilk bakışta seçilmiyordu).
+const MARKER_RADIUS_PX := 30.0
+## Halka kalınlığı ve koyu dış hale payı (ekran pikseli; krem/turuncu çatılar üstünde okunurluk).
+const MARKER_THICK_PX := 4.0
+const HALO_PX := 2.5
+const HALO_COLOR_TOKEN := "hud_bg"
 const MARKER_SEGMENTS := 20
 ## Zemin üstü kaldırma: tabanı + ekran pikseli başına (z-çakışması ve seyrek uzak arazi için).
 const LIFT_BASE_M := 0.12
@@ -41,12 +46,14 @@ const REBUILD_RATIO := 0.08
 var camera_rig: CameraRig = null
 var ground_height: Callable = Callable()
 var color: Color = Color.WHITE
+var halo_color: Color = Color.BLACK
 var band: StringName = &""
 
 var _parcel: WorldParcel = null
 var _mesh_node: MeshInstance3D = null
 var _mesh: ArrayMesh = null
 var _material: StandardMaterial3D = null
+var _halo_material: StandardMaterial3D = null
 var _plan: Dictionary = {}
 var _built_width_m: float = -1.0
 var _built_marker: bool = false
@@ -55,7 +62,9 @@ var _rebuilds: int = 0
 
 func _init() -> void:
 	name = "ParcelSelectionRing"
-	color = UiTokens.load_default().color(COLOR_TOKEN)
+	var tokens := UiTokens.load_default()
+	color = tokens.color(COLOR_TOKEN)
+	halo_color = Color(tokens.color(HALO_COLOR_TOKEN), 1.0)
 	set_process(false)
 
 
@@ -128,8 +137,8 @@ static func plan(band_in: StringName, mpp: float, parcel_size_m: float) -> Dicti
 	var line_px: float = float(BAND_LINE_PX.get(band_in, DEFAULT_LINE_PX))
 	var lift := LIFT_BASE_M + LIFT_PER_MPP * m
 	if parcel_size_m / m < MARKER_BELOW_PX:
-		return {"visible": true, "marker": true, "width_m": line_px * m, "lift_m": lift,
-				"radius_m": MARKER_RADIUS_PX * m}
+		return {"visible": true, "marker": true, "width_m": maxf(line_px, MARKER_THICK_PX) * m, "lift_m": lift,
+				"radius_m": MARKER_RADIUS_PX * m, "halo_m": HALO_PX * m}
 	var width := minf(maxf(MIN_WIDTH_M, line_px * m), MAX_WIDTH_FRACTION * parcel_size_m)
 	return {"visible": true, "marker": false, "width_m": width, "lift_m": lift, "radius_m": 0.0}
 
@@ -183,35 +192,59 @@ func _ground(x: float, z: float) -> float:
 
 
 func _build(p: Dictionary) -> void:
-	var arrays: Array = []
-	arrays.resize(Mesh.ARRAY_MAX)
 	var verts := PackedVector3Array()
 	var indices := PackedInt32Array()
+	var halo_v := PackedVector3Array()
+	var halo_i := PackedInt32Array()
 	if bool(p["marker"]):
-		_marker_geometry(float(p["radius_m"]), float(p["width_m"]), float(p["lift_m"]), verts, indices)
+		var halo := float(p.get("halo_m", 0.0))
+		# Koyu dış hale ÖNCE (altta), açık halka üstte; ikisi de derinliksiz (binaların ardında kaybolmaz).
+		_marker_geometry(float(p["radius_m"]) + halo, float(p["width_m"]) + 2.0 * halo, float(p["lift_m"]), halo_v,
+				halo_i)
+		_marker_geometry(float(p["radius_m"]), float(p["width_m"]), float(p["lift_m"]) + 0.02, verts, indices)
 	else:
 		_outline_geometry(float(p["width_m"]) * 0.5, float(p["lift_m"]), verts, indices)
 	if verts.is_empty():
 		clear()
 		return
-	arrays[Mesh.ARRAY_VERTEX] = verts
-	arrays[Mesh.ARRAY_INDEX] = indices
 	if _mesh_node == null:
 		_mesh = ArrayMesh.new()
 		_mesh_node = MeshInstance3D.new()
 		_mesh_node.name = "Ring"
 		_mesh_node.mesh = _mesh
-		_mesh_node.material_override = _make_material()
 		_mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(_mesh_node)
 	# Merkez halkası bir GÖSTERGEDİR: binaların ardında kalmasın (derinlik testi kapalı). Sınır şeridi zemine oturur.
-	_make_material().no_depth_test = bool(p["marker"])
+	var marker := bool(p["marker"])
+	_make_material().no_depth_test = marker
+	_make_halo_material().no_depth_test = marker
 	_mesh.clear_surfaces()
-	_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if not halo_v.is_empty():
+		_add_surface(halo_v, halo_i, _make_halo_material())
+	_add_surface(verts, indices, _make_material())
 	_mesh_node.visible = true
 	_built_width_m = float(p["width_m"])
-	_built_marker = bool(p["marker"])
+	_built_marker = marker
 	_rebuilds += 1
+
+
+func _add_surface(verts: PackedVector3Array, indices: PackedInt32Array, material: Material) -> void:
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_INDEX] = indices
+	_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	_mesh.surface_set_material(_mesh.get_surface_count() - 1, material)
+
+
+func _make_halo_material() -> StandardMaterial3D:
+	if _halo_material == null:
+		_halo_material = StandardMaterial3D.new()
+		_halo_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		_halo_material.cull_mode = BaseMaterial3D.CULL_DISABLED
+		_halo_material.albedo_color = halo_color
+		_halo_material.render_priority = -1
+	return _halo_material
 
 
 func _make_material() -> StandardMaterial3D:
@@ -220,6 +253,7 @@ func _make_material() -> StandardMaterial3D:
 		_material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		_material.cull_mode = BaseMaterial3D.CULL_DISABLED
 		_material.albedo_color = color
+		_material.render_priority = 1
 	return _material
 
 

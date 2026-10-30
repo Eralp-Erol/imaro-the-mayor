@@ -19,6 +19,8 @@ var _ctx: UiContext = null
 var _facade: SimFacade = null
 var _body: VBoxContainer = null
 var _signature: String = ""
+## Ertelenmiş odak isteğinin rolü (aynı karede ikinci kez çizilirse rol kaybolmasın).
+var _pending_focus_role: String = ""
 
 
 func refresh() -> void:
@@ -93,6 +95,8 @@ func _begin_render() -> String:
 	var role := ""
 	if focused != null and is_ancestor_of(focused):
 		role = String(focused.get_meta(META_ROLE, ""))
+	if role.is_empty():
+		role = _pending_focus_role   # önceki çizimin odağı henüz verilmedi (aynı kare)
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
@@ -102,10 +106,30 @@ func _begin_render() -> String:
 func _restore_focus(role: String) -> void:
 	if role.is_empty() or not is_inside_tree():
 		return
+	# Odak çizimden sonra ertelenir (düğmeler yerleşsin); düğmenin kendisi değil ROL saklanır, böylece aynı karede
+	# yeniden çizim olursa ertelenmiş çağrı ağaçtan çıkmış eski düğmeye değil yenisine düşer.
+	_pending_focus_role = role
+	_apply_pending_focus.call_deferred()
+
+
+func _apply_pending_focus() -> void:
+	var role := _pending_focus_role
+	_pending_focus_role = ""
+	if role.is_empty() or not is_inside_tree():
+		return
 	for b in buttons():
-		if String(b.get_meta(META_ROLE, "")) == role and not b.disabled:
-			b.grab_focus.call_deferred()
+		if String(b.get_meta(META_ROLE, "")) == role and focus_button_if_alive(b):
 			return
+
+
+## Odağı yalnız hâlâ ağaçta, görünür ve etkin bir düğmeye verir (ertelenmiş çağrıdan önce panel yeniden çizilip düğme
+## ağaçtan çıkmış olabilir: `grab_focus` ağaçta olmayan düğmede motor hatası verir). Verildiyse true.
+func focus_button_if_alive(b: Button) -> bool:
+	if b == null or not is_instance_valid(b) or not b.is_inside_tree() or b.is_queued_for_deletion() or b.disabled \
+			or not b.is_visible_in_tree():
+		return false
+	b.grab_focus()
+	return true
 
 
 func _render() -> void:

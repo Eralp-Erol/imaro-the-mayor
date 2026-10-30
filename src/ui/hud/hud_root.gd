@@ -255,6 +255,7 @@ func _reopen_panel() -> void:
 	panel.closed.connect(_close_panel)
 	panel.expand_toggled.connect(_on_expand_toggled)
 	panel.minimum_size_changed.connect(_queue_relayout)
+	panel.state_view.minimum_size_changed.connect(_queue_relayout)
 	panel.set_title(UiText.t(_panel_title_key))
 	panel.set_content(_panel_builder.call(ctx))
 	_frame.add_child(panel)
@@ -305,6 +306,9 @@ func _relayout() -> void:
 	if is_panel_open():
 		panel.set_expand_available(layout.panel_mode == HudLayout.MODE_SHEET, sheet_expanded)
 		_place(panel, layout.panel)
+		if layout.panel_mode == HudLayout.MODE_SIDE:
+			# Yan panel içeriğe uyar (boş alt yarı kalkar); taşarsa içerik kaydırılır.
+			panel.size.y = clampf(panel.content_height(), 0.0, layout.panel.size.y)
 	layout_changed.emit()
 
 

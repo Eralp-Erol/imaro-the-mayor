@@ -1,6 +1,7 @@
 {
- "note": "T-048 geçici görünüm; sanat yönetmeni kabulü bekliyor. width_scale ağdaki gerçek genişliği korur. T-062 A4: yüzey onaylı zemin katmanlarından (LibraryGate): sınıf başına taban/eskimiş katman ve eskimiş payı; seçim kenar kimliği hash'iyle (deterministik). brightness = köşe rengi G kanalı (x2 çarpan). sidewalk_m: yol kenarı kaldırım bandı (m, kesit içi; sidewalk_cobble); 0 = yok. Ek geometri yok: köşe UV'si (eksene yanal ofset, yarım genişlik) + köşe rengi B = sidewalk_m / 8.",
+ "note": "T-048 geçici görünüm; sanat yönetmeni kabulü bekliyor. width_scale ağdaki gerçek genişliği korur. T-062 A4: yüzey onaylı zemin katmanlarından (LibraryGate): sınıf başına taban/eskimiş katman ve eskimiş payı; seçim kenar kimliği hash'iyle (deterministik). brightness = köşe rengi G kanalı (x2 çarpan). vegetation_clear_margin_m: oyuncu yolu koridorundan bitki gizleme payı (m; koridor = yarı genişlik + bordür curb_m + bu pay; T-042 sanat düzeltmesi, ÇM). sidewalk_m: yol kenarı kaldırım bandı (m, kesit içi; sidewalk_cobble); 0 = yok. Ek geometri yok: köşe UV'si (eksene yanal ofset, yarım genişlik) + köşe rengi B = sidewalk_m / 8.",
  "chunk_m": 2000.0,
+ "vegetation_clear_margin_m": 1.0,
  "surface_offset_m": 0.12,
  "metro_begin_m": 14000.0,
  "near_step_m": 40.0,

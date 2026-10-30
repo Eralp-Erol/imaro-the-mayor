@@ -27,6 +27,8 @@ const MODE_REJECTION := &"rejection"
 ## Oyuncu yolu ayrıntısı (T-042 adım 3): `public_work.built` kartından ve kapasite etkeninin yol kaynağından.
 const MODE_WORK := &"work"
 const MAX_STACK := 32
+## Altyapı kapasitesi etkeninin ad anahtarı (sim kaydındaki kimlik; veto kapısı notu için).
+const INFRA_FACTOR_KEY := &"reason.factor.infrastructure_capacity"
 const META_ROLE := &"role"
 const NAME_FACTOR := "FactorRow"
 const NAME_PARENT := "ChainParent"
@@ -531,6 +533,10 @@ func _factor_row(row: ReasonModel.Row, index: int, current_id: int) -> Control:
 		"contribution": UiText.fixed(row.contribution, true)})
 	box.add_child(UiFactory.label(calc, UiTheme.V_LABEL_MUTED, true))
 	box.tooltip_text = calc
+	if row.name_key == INFRA_FACTOR_KEY and row.direction != ReasonModel.DIR_AGAINST:
+		# Bulgu (T-042 sanat düzeltmesi): bu etken veto kapısıdır (yetersiz kapasite = ret); değeri "yolun etkisi" değil,
+		# karar anındaki boş pay oranıdır (en çok 0,15). 0,00 "yol işe yaramadı" demek değildir.
+		box.add_child(UiFactory.label(UiText.t(&"reason.infra_gate_note"), UiTheme.V_LABEL_MUTED, true))
 	if row.has_trend:
 		var trend_key := &"a11y.trend_flat"
 		if row.trend > 0:

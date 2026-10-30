@@ -7,6 +7,9 @@ extends FlowPanel
 ## Bu panel komut göndermez; düğmeler araç fiillerini çağırır (`RoadDrawTool.confirm/undo_last/cancel`), araç yalnız
 ## `SimFacade.submit_command` kullanır.
 
+const CONFIRM_MIN_HEIGHT := 56.0
+const CONFIRM_MIN_WIDTH := 200.0
+
 var tool: RoadDrawTool = null
 
 var _confirm_button: Button = null
@@ -61,6 +64,15 @@ func _render() -> void:
 		_restore_focus(focus_role)
 		return
 	_body.add_child(_muted(UiText.t(&"road.step_line", {"n": _step_number(), "total": 3})))
+	# Adım 3/3 (yol yapılabilir): tek satır yönerge + büyük Onayla EN ÜSTTE (kullanıcı denemesi: onayı bulamadı).
+	var review_confirmable := tool.step == RoadDrawTool.Step.REVIEW and tool.can_confirm()
+	if review_confirmable:
+		var hint := UiFactory.label(UiText.t(&"road.confirm_hint_touch" if _ctx.is_touch() else &"road.confirm_hint"),
+				UiTheme.V_LABEL_HEADING, true)
+		hint.add_theme_color_override("font_color", _ctx.tokens.color("ok"))
+		_tag(hint, "road_confirm_hint")
+		_body.add_child(hint)
+		_add_buttons()
 	_body.add_child(UiFactory.label(UiText.t(_step_key()), &"", true))
 	if tool.step == RoadDrawTool.Step.SENDING and _facade.speed() == SimFacade.SPEED_PAUSED:
 		_body.add_child(UiFactory.label(UiText.t(&"road.step.sending_paused"), UiTheme.V_LABEL_DANGER, true))
@@ -68,7 +80,8 @@ func _render() -> void:
 	if tool.step == RoadDrawTool.Step.PICK_B or tool.step == RoadDrawTool.Step.REVIEW \
 			or tool.step == RoadDrawTool.Step.SENDING:
 		_add_preview_card()
-	_add_buttons()
+	if not review_confirmable:
+		_add_buttons()
 	_body.add_child(_muted(UiText.t(&"road.no_building")))
 	if not _ctx.is_touch():
 		_body.add_child(_muted(UiText.t(&"road.keys_help")))
@@ -120,18 +133,21 @@ func _add_preview_card() -> void:
 		return
 	if tool.is_valid():
 		var args := tool.preview_args()
-		inner.add_child(UiFactory.label(UiText.t(&"road.valid"), UiTheme.V_LABEL_OK, true))
+		# Ana vurgu: karar (başlık boyunda, ok rengi); sayılar ikincil (T-042 sanat düzeltmesi).
+		var verdict_label := UiFactory.label(UiText.t(&"road.valid"), UiTheme.V_LABEL_HEADING, true)
+		verdict_label.add_theme_color_override("font_color", _ctx.tokens.color("ok"))
+		inner.add_child(verdict_label)
 		inner.add_child(UiFactory.label(UiText.t(&"road.length", {"length": UiText.number(int(args.get("length_m", 0)))}),
 				&"", true))
-		inner.add_child(UiFactory.label(UiText.t(&"road.class_line", {"class": UiText.t(&"road.class.local")}),
-				&"", true))
 		inner.add_child(UiFactory.label(UiText.t(&"road.capacity", {"units": int(args.get("units_total", 0))}),
-				UiTheme.V_LABEL_TITLE, true))
+				&"", true))
 		var regions: Dictionary = args.get("regions", {})
 		var codes: Array = regions.keys()
 		codes.sort()
-		for code: String in codes:
-			inner.add_child(_muted(UiText.t(&"road.capacity_region", {"region": code, "units": int(regions[code])})))
+		if codes.size() > 1:   # tek bölgede satır toplamı tekrarlar
+			for code: String in codes:
+				inner.add_child(_muted(UiText.t(&"road.capacity_region", {"region": code, "units": int(regions[code])})))
+		inner.add_child(_muted(UiText.t(&"road.class_line", {"class": UiText.t(&"road.class.local")})))
 		inner.add_child(_muted(UiText.t(&"road.cost_line", {"cost": UiText.t(StringName(
 				args.get("cost_reason_key", "public_work.cost.not_built")))})))
 	else:
@@ -144,6 +160,9 @@ func _add_buttons() -> void:
 	var row := HFlowContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_confirm_button = UiFactory.button(_ctx, UiText.t(&"road.confirm"), true)
+	# Birincil vurgu + büyük hedef (dokunmatikte >= 44 pt zaten target_primary tabanından gelir).
+	UiFactory.emphasize(_ctx, _confirm_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
+	_confirm_button.custom_minimum_size.x = maxf(_confirm_button.custom_minimum_size.x, _ctx.px(CONFIRM_MIN_WIDTH))
 	_tag(_confirm_button, "road_confirm")
 	_confirm_button.disabled = not tool.can_confirm()
 	_confirm_button.pressed.connect(func() -> void:
