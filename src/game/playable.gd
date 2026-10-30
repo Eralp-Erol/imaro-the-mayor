@@ -43,6 +43,13 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --inspect-parcel=ID|m2  (yakalama; m2 = --m2-advance demo parseli) parseli seçip denetçiyi açar (T-041);
 ##                    kamera o parsele odaklanır, bant --distance ile seçilir (sokak/mahalle/ilçe).
 ##   --m2-open-results  "Döngü sonucu" panelini (HUD) başlangıçta açar (yakalama için).
+## T-042 adım 3 (oyuncu yolu): "Yol çiz" aracı (HUD düğmesi ya da Y), `PlayableRoads`; çizilen yol AYNI ağ verisinden
+## yalnız etkilenen yol chunk'larında yeniden kurulur. Dev/yakalama bayrakları (oynanışı değiştirmez):
+##   --road-preview=ax,az,bx,bz  aracı açar, A'ya (yola yapışır) ve B'ye dokunmuş gibi bekler (önizleme karesi).
+##   --draw-road=ax,az,bx,bz     başlangıçta yolu ÇİZER (komut gönderir, 1 gün ilerletir); --m2-advance ile birlikte
+##                    `--draw-road-at=K` (varsayılan 1): K. günden sonra gönderilir (önce ret, sonra yol, sonra onay).
+##   --road-reason               (yakalama) yola en yakın onaylı parselin yatırımcı gerekçesini açar.
+##   --infra-free=N              (senaryo) her bölgenin boş altyapı kapasitesi N birime iner (yatırımcı reddi için).
 
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
 const NETWORK_PATH := "res://data/world/ismeral/network.json"
@@ -63,7 +70,8 @@ const DEV_NOTE := "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kad
 const WARMUP_VEG_WAIT_S := 4.0
 ## Isınma bu dev argümanlarından biri varsa atlanır (yakalama/ölçüm kareleri örtü görmesin, kamera oynamasın).
 const WARMUP_SKIP_ARGS: Array[String] = ["no-view-warmup", "shot", "quit-after", "preset", "sweep", "heading",
-		"pitch", "distance", "hide", "m2-advance", "m2-focus-new", "t47-flow", "inspect-parcel"]
+		"pitch", "distance", "hide", "m2-advance", "m2-focus-new", "t47-flow", "inspect-parcel", "road-preview",
+		"draw-road", "road-reason"]
 
 
 var sim_stats: Dictionary = {}
@@ -101,6 +109,7 @@ var _veg_loader: VegetationLoader = null
 var _warmup: ViewWarmup = null
 var _warmup_started: bool = false
 var _warmup_wait_start_us: int = 0
+var _pr: PlayableRoads = null
 
 
 ## Isınma (örtü altında kamera gezisi) sürerken true: ölçüm/yakalama betikleri bunu bekler.
@@ -141,6 +150,7 @@ func _ready() -> void:
 	_start_hud()
 	_on_hud_ready()
 	_m2_dev_setup()
+	_road_dev_setup()
 	_t47_dev_setup()
 	if _args.has("inspect-parcel") and _inspector != null:
 		var want := str(_args["inspect-parcel"])
@@ -355,12 +365,15 @@ func _start_sim() -> void:
 	# exposed to the HUD; EconomyBootstrap would silently omit the latter two.
 	# --m2-isolate (dev): periyodik otonom tarama kapalı; yatırımcı yalnız oyuncunun imar kararından sonra değerlendirir.
 	var patch := {"decision": {"review_enabled": 0}} if _args.has("m2-isolate") else {}
-	var economy_cfg := PlayableEconomy.config_for(_views, stock, patch)
+	var economy_cfg := PlayableEconomy.config_for(_views, stock, patch,
+			_arg_int(_args, "infra-free", -1, -1, 1000000) if _args.has("infra-free") else -1)
 	var handle := PoliticsBootstrap.create(_world.world_seed, source, economy_cfg, stock)
 	if handle == null:
 		push_error("playable: ekonomi/aktör/siyaset çekirdeği kurulamadı")
 		return
 	_facade = handle.facade
+	_pr = PlayableRoads.create(_net, _roads, _facade, func() -> bool: return _veg_loader != null)
+	_pr.attach_commands()
 	_facade.set_speed(3 if _demo else 1)
 	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
 	if _projector == null:
@@ -467,6 +480,8 @@ func _on_hud_ready() -> void:
 	_camera.scale_band_changed.connect(_inspector.set_band)
 	_start_selection_ring()
 	_hud.panel_closed.connect(_on_hud_panel_closed)
+	if _pr != null and _terrain != null:
+		_pr.start_tool(_hud, _camera, _view_root, _terrain.surface_height_at)
 
 
 ## Seçili parselin dünya içi halkası (T-041): `view_root` altında tek küçük mesh; yalnız dünya verisini okur.
@@ -512,16 +527,46 @@ func _m2_dev_setup() -> void:
 		var t0 := Time.get_ticks_usec()
 		# Küçük adımlarla ilerlet + senkronla: olay günlüğü (1000 kayıt) tek seferde 100 gün taşıyamaz.
 		var left := days
+		var road_at := _arg_int(_args, "draw-road-at", 1, 0, 3650)
 		while left > 0:
+			if _args.has("draw-road") and days - left == road_at:
+				RoadDevScenario.submit_road(_facade, str(_args["draw-road"]))
 			var step := mini(left, M2_ADVANCE_STEP_DAYS)
 			_facade.advance(step)
 			_sync_sim_buildings(true)
+			_sync_roads()
 			left -= step
 		sim_stats["m2_advance_days"] = days
 		sim_stats["m2_advance_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
 		if _args.has("m2-pause"):
 			_facade.set_speed(SimFacade.SPEED_PAUSED)
 		print(_m2_target_report(days))
+
+
+## `--road-preview` / `--draw-road` (dev, yakalama): `RoadDevScenario`. `--draw-road` `--m2-advance` yoksa burada
+## gönderilir (1 gün ilerler, 3B yenilenir); varsa `_m2_dev_setup` içinde `--draw-road-at` gününde gönderilir.
+func _sync_roads() -> void:
+	if _pr != null:
+		_pr.note_report(_pr.sync_now(), sim_stats, _facade.current_tick())
+
+
+func _road_dev_setup() -> void:
+	if _facade == null:
+		return
+	if _args.has("draw-road") and not _args.has("m2-advance"):
+		RoadDevScenario.submit_road(_facade, str(_args["draw-road"]))
+		_facade.advance(1)
+		_sync_roads()
+	if _args.has("draw-road"):
+		var v := RoadDevScenario.parse_vec4(str(_args["draw-road"]))
+		if not v.is_empty():
+			var region := _net.rules.region_code_at(_world, Vector2(v[0], v[1]))
+			RoadDevScenario.report(_facade, region, Vector2(v[2], v[3]))
+			if _args.has("road-reason"):
+				print("PLAYABLE_ROAD_REASON parcel=%d" % RoadDevScenario.open_reason(_facade, _m2_results, region,
+						Vector2(v[2], v[3])))
+	if _args.has("road-preview"):
+		RoadDevScenario.preview(_pr.ctrl if _pr != null else null, str(_args["road-preview"]))
 
 
 ## `--t47-flow` / `--t47-send` (dev, yakalama): oyuncunun tıklama yolunu taklit eder (parsel seç -> imar akışı).
@@ -664,6 +709,8 @@ func _process(delta: float) -> void:
 	if _facade == null:
 		return
 	_frames += 1
+	if _pr != null:
+		_pr.note_report(_pr.pump(), sim_stats, _facade.current_tick())
 	_maybe_start_warmup()
 	_acc_ms += delta * 1000.0
 	_acc_n += 1
@@ -676,6 +723,10 @@ func _process(delta: float) -> void:
 	if not is_warming_up() or tick_before < 1:
 		_facade.drive_usec(int(delta * 1000000.0))
 	var drive_us := Time.get_ticks_usec() - t_drive
+	# Yol ağı bu tick'te değiştiyse (oyuncu yolu / geri alma) 3B yenilemesi SONRAKİ kareye bırakılır: tick'li kare sim'le
+	# zaten ağırdır (SimBuildingPump ile aynı ilke).
+	if _pr != null:
+		_pr.note_tick()
 	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır (SimBuildingPump kuralı); kuyruk çok
 	# derinleşirse (yavaş kareler) tick'li karede de iş yürür (sonsuz birikme yok).
 	_sync_sim_buildings(false, _facade.current_tick() != tick_before)
@@ -771,8 +822,13 @@ func _note_tick_cost(drive_us: int, poll_us: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseMotion and _pr != null and _pr.ctrl != null:
+		_pr.ctrl.handle_motion(event as InputEventMouseMotion)  # yol önizlemesi (UI üstünde gelmez)
 	if event is InputEventKey and event.pressed and not event.echo and _facade != null:
 		var key := (event as InputEventKey).keycode
+		if key == KEY_Y and _pr != null and _pr.ctrl != null:
+			_pr.ctrl.toggle()  # Y: yol çiz aç/kapat (araç çubuğundaki "Yol çiz" ile aynı fiil)
+			return
 		if key == KEY_Z:
 			# Z: imar akışını açar (seçili parselle); öneri onay adımıyla gönderilir, sessizce gönderilmez.
 			if _decisions != null:
@@ -785,6 +841,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_select_requested(screen_pos: Vector2) -> void:
 	if _camera == null or _net == null or _decisions == null:
+		return
+	# Yol çizimi açıksa dünya tıklaması çizime aittir (parsel seçilmez); UI'nin tükettiği girdi buraya hiç gelmez.
+	if _pr != null and _pr.ctrl != null and _pr.ctrl.handle_select(screen_pos):
 		return
 	var ground := _camera.screen_to_ground(screen_pos)
 	if not bool(ground.get("ok", false)):

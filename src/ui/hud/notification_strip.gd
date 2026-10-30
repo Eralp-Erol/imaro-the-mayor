@@ -84,7 +84,9 @@ func _make_row() -> PanelContainer:
 func _fill_row(row: PanelContainer, event: SimEvent) -> void:
 	var box := row.get_child(0) as HBoxContainer
 	(box.get_child(0) as Label).text = UiText.event_text(event)
-	# Gerekçe kaydı olan olay ya da reddedilen komut ("neden kabul edilmedi", SIM-12).
-	(box.get_child(1) as Button).visible = not event.reason_ids.is_empty() \
-			or event.kind == SimEvent.KIND_COMMAND_REJECTED
+	# Gerekçe kaydı olan olay, reddedilen komut ("neden kabul edilmedi", SIM-12) ya da yapılan oyuncu yolu (ayrıntı).
+	var is_work := event.kind == SimEvent.KIND_PUBLIC_WORK_BUILT
+	var why := box.get_child(1) as Button
+	why.visible = not event.reason_ids.is_empty() or event.kind == SimEvent.KIND_COMMAND_REJECTED or is_work
+	why.text = UiText.t(&"alert.open_work" if is_work else &"alert.open_reason")
 	row.set_meta(_EVENT_META, event)

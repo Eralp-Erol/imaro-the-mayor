@@ -9,7 +9,10 @@ const PATH := "res://data/game/playable_economy.json"
 
 ## `views`: sim'e verilen parsel görünümleri (id -> bölge kodu). `stock`: T0 başlangıç stoğu. `patch`: türetilmiş
 ## yapılandırma üstüne derin birleştirilen yama (yalnız testler/deneyler; oynanabilir sahne vermez).
-static func config_for(views: Array[ParcelView], stock: ExistingStockSource, patch: Dictionary = {}) -> EconomyConfig:
+## `infra_free_units` >= 0: (YALNIZ dev senaryosu, `--infra-free`) her bölgenin boş altyapı kapasitesi bu birime iner
+## (kapasite = T0 yükü + N); -1 = oynanabilir varsayılan (yük + pay).
+static func config_for(views: Array[ParcelView], stock: ExistingStockSource, patch: Dictionary = {},
+		infra_free_units: int = -1) -> EconomyConfig:
 	var raw: Variant = JSON.parse_string(FileAccess.get_file_as_string(EconomyConfig.DEFAULT_PATH))
 	var tune: Variant = JSON.parse_string(FileAccess.get_file_as_string(PATH))
 	if not (raw is Dictionary and tune is Dictionary):
@@ -42,7 +45,8 @@ static func config_for(views: Array[ParcelView], stock: ExistingStockSource, pat
 		var com := int(com_units.get(code, 0))
 		var load := res * infra_res + com * infra_com
 		var entry: Dictionary = overrides.get(String(code), {})
-		entry["infra_capacity_units"] = load + load * headroom / 1000 + 1
+		entry["infra_capacity_units"] = load + load * headroom / 1000 + 1 if infra_free_units < 0 \
+				else load + infra_free_units
 		entry["initial_households"] = base_households + res * latent / 1000
 		overrides[String(code)] = entry
 	(raw["regions"] as Dictionary)["overrides"] = overrides

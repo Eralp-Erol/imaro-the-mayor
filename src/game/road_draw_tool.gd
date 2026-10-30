@@ -1,0 +1,288 @@
+class_name RoadDrawTool
+extends RefCounted
+## Yol çizim aracının DURUM MAKİNESİ (T-042 adım 3; CAN-04, D-008/D-009). Düğüm/ekran yok: dünya koordinatı (m) alır,
+## sim'e YALNIZ `SimFacade` ile konuşur (`validate_command` önizleme, `submit_command` onay). UI/render sim'e yazmaz;
+## ağ burada yalnız OKUNUR (yapışma için). Önizleme sayıları (uzunluk, bölge, kapasite birimi) sim'in kendi hesabıdır
+## (`CommandResult.args`), burada uydurulmaz. Ret anahtarı sim'in verdiğidir (`public_work.reject.*`).
+##
+## Akış (iki dokunuş + onay): OFF -> PICK_A (yola/yol ucuna dokun) -> PICK_B (imleç önizlemesi; dokunuşla bitiş) ->
+## REVIEW (önizleme sabit; yeniden dokunuş bitişi değiştirir; Onayla) -> SENDING (komut kuyrukta; `public_work.built`
+## ya da `command.rejected` olayı gelince PICK_A). v0 ölçüm bulgusu (production/log/2026-10-30-T-042-yol-olcum.md):
+## yoldan başlamayan serbest dokunuşun %98-100'ü reddediliyor; bu yüzden A mutlaka mevcut yola/yol ucuna yapışır.
+
+signal changed
+
+enum Step { OFF, PICK_A, PICK_B, REVIEW, SENDING }
+
+const ROAD_CLASS := &"local"
+## Çizim yalnız bu ölçek bantlarında açık; metro/çok uzak bantta "yakınlaşın".
+const ACTIVE_BANDS: Array[StringName] = [&"street", &"neighborhood", &"district"]
+## Önizleme yeniden doğrulaması için asgari imleç hareketi (m): ~1 ms'lik denetim her piksel değişiminde çağrılmaz.
+const HOVER_EPSILON_M := 0.5
+
+const MSG_NONE := &""
+const MSG_START_NOT_ON_ROAD := &"road.start_not_on_road"
+const MSG_DONE := &"road.step.done"
+const MSG_FAILED := &"road.step.failed"
+const MSG_UNDONE := &"road.undo_done"
+
+var step: Step = Step.OFF
+var band_active: bool = true
+## Yapışmış başlangıç (m). PICK_A dışında geçerli.
+var start: Vector2 = Vector2.ZERO
+## Bitiş (m): PICK_B'de imleç, REVIEW'da sabit.
+var end: Vector2 = Vector2.ZERO
+## PICK_A'da imlecin yapışma durumu: {snapped, pos, kind}.
+var hover: Dictionary = {"snapped": false, "pos": Vector2.ZERO, "kind": &""}
+## Güncel taslağın kuru koşu sonucu (sim); PICK_B/REVIEW'da dolu.
+var verdict: CommandResult = null
+## Son durum mesajı anahtarı + argümanları (panel gösterir); başarı/başarısızlık/ret.
+var message: StringName = MSG_NONE
+var message_args: Dictionary = {}
+var sending_command_id: int = SimContract.NO_ID
+
+var _net: WorldNetwork = null
+var _facade: SimFacade = null
+var _verdict_key: String = ""
+var _verdict_version: int = -1
+
+
+static func create(net: WorldNetwork, facade: SimFacade) -> RoadDrawTool:
+	var tool := RoadDrawTool.new()
+	tool._net = net
+	tool._facade = facade
+	return tool
+
+
+func is_active() -> bool:
+	return step != Step.OFF
+
+
+## Çizim bu bantta açık mı (metro: hayır).
+static func band_allows(band: StringName) -> bool:
+	return ACTIVE_BANDS.has(band) or band == &""
+
+
+func activate() -> void:
+	if step != Step.OFF:
+		return
+	_reset_draft()
+	step = Step.PICK_A
+	message = MSG_NONE
+	changed.emit()
+
+
+func deactivate() -> void:
+	if step == Step.OFF:
+		return
+	_reset_draft()
+	step = Step.OFF
+	message = MSG_NONE
+	changed.emit()
+
+
+func set_band(band: StringName) -> void:
+	var ok := band_allows(band)
+	if ok != band_active:
+		band_active = ok
+		changed.emit()
+
+
+## Dünya konumu (m) için yol yapışması: en yakın açık yol kenarı; uçlardan biri yarıçap içindeyse DÜĞÜME, değilse
+## kenar üstündeki en yakın noktaya. Dönüş: {snapped: bool, pos: Vector2, kind: &"node"|&"edge"|&""}.
+func snap_to_road(p: Vector2, radius_m: float) -> Dictionary:
+	var best: WorldRoadEdge = null
+	var best_d := INF
+	for e in _net.edges_near(p.x, p.y, radius_m):
+		if e.mode() != WorldNetwork.MODE_ROAD or not e.open:
+			continue
+		var d := NetworkGeometry.distance_point_segment(p, _net.node_pos(e.a), _net.node_pos(e.b))
+		if d < best_d:
+			best_d = d
+			best = e
+	if best == null:
+		return {"snapped": false, "pos": p, "kind": &""}
+	var a := _net.node_pos(best.a)
+	var b := _net.node_pos(best.b)
+	var da := p.distance_to(a)
+	var db := p.distance_to(b)
+	if minf(da, db) <= radius_m:
+		return {"snapped": true, "pos": a if da <= db else b, "kind": &"node"}
+	var t := NetworkGeometry.project_param(p, a, b)
+	return {"snapped": true, "pos": a + (b - a) * t, "kind": &"edge"}
+
+
+## İmleç hareketi (masaüstü). PICK_A: yapışma göstergesi; PICK_B: bitişi izler ve önizlemeyi sim'e doğrulatır.
+func hover_at(p: Vector2, radius_m: float) -> void:
+	if not band_active:
+		return
+	match step:
+		Step.PICK_A:
+			var snap := snap_to_road(p, radius_m)
+			if snap["snapped"] != hover["snapped"] or (snap["pos"] as Vector2).distance_to(hover["pos"]) > 0.05:
+				hover = snap
+				changed.emit()
+		Step.PICK_B:
+			var target := _end_target(p, radius_m)
+			if target.distance_to(end) >= HOVER_EPSILON_M or verdict == null:
+				end = target
+				_revalidate()
+				changed.emit()
+
+
+## Birincil eylem (tıklama / dokunma-bırakma) dünya konumunda.
+func tap_at(p: Vector2, radius_m: float) -> void:
+	if not band_active:
+		return
+	match step:
+		Step.PICK_A:
+			var snap := snap_to_road(p, radius_m)
+			if not bool(snap["snapped"]):
+				message = MSG_START_NOT_ON_ROAD
+				message_args = {}
+				changed.emit()
+				return
+			start = snap["pos"]
+			end = start
+			verdict = null
+			message = MSG_NONE
+			step = Step.PICK_B
+			changed.emit()
+		Step.PICK_B, Step.REVIEW:
+			end = _end_target(p, radius_m)
+			_revalidate()
+			step = Step.REVIEW
+			changed.emit()
+
+
+## İptal: taslak varsa PICK_A'ya döner (true = bu çağrı bir şey iptal etti); PICK_A'da false (çağıran aracı kapatır).
+func cancel() -> bool:
+	match step:
+		Step.PICK_B, Step.REVIEW:
+			_reset_draft()
+			step = Step.PICK_A
+			message = MSG_NONE
+			changed.emit()
+			return true
+		Step.SENDING:
+			return true  # kuyruktaki komut geri çekilemez; Esc yutulur
+	return false
+
+
+func can_confirm() -> bool:
+	return step == Step.REVIEW and band_active and verdict != null and not verdict.is_rejected()
+
+
+## Onay: komutu YALNIZ `submit_command` ile gönderir. Dönüş: sim sonucu (ret ise anahtarıyla; durum REVIEW kalır).
+func confirm() -> CommandResult:
+	if not can_confirm():
+		return null
+	var result := _facade.submit_command(_command())
+	if result.is_rejected():
+		message = MSG_FAILED
+		message_args = {"reason_key": result.reason_key, "args": result.args}
+		verdict = result
+		_verdict_key = ""  # sonraki dokunuş taslağı sim'e yeniden sordurur
+		changed.emit()
+		return result
+	sending_command_id = result.command_id
+	step = Step.SENDING
+	message = MSG_NONE
+	changed.emit()
+	return result
+
+
+## Son oyuncu yolunu geri alma komutu (LIFO). Dönüş: sim sonucu.
+func undo_last() -> CommandResult:
+	var result := _facade.submit_command(SimCommand.public_work_undo_last())
+	if result.is_rejected():
+		message = MSG_FAILED
+		message_args = {"reason_key": result.reason_key, "args": result.args}
+	else:
+		message = MSG_UNDONE
+		message_args = {}
+	changed.emit()
+	return result
+
+
+func has_undoable_road() -> bool:
+	return not _facade.public_works().is_empty()
+
+
+## Sim olayları: gönderilen komutun sonucu. `public_work.built` -> yeni yol için PICK_A; `command.rejected` -> REVIEW.
+func on_events(events: Array[SimEvent]) -> void:
+	for e in events:
+		if step == Step.SENDING and e.command_id == sending_command_id:
+			if e.kind == SimEvent.KIND_PUBLIC_WORK_BUILT:
+				_reset_draft()
+				step = Step.PICK_A
+				message = MSG_DONE
+				message_args = {}
+				changed.emit()
+			elif e.kind == SimEvent.KIND_COMMAND_REJECTED:
+				step = Step.REVIEW
+				message = MSG_FAILED
+				message_args = {"reason_key": e.message_key, "args": e.args}
+				sending_command_id = SimContract.NO_ID
+				_revalidate()
+				changed.emit()
+		elif e.kind == SimEvent.KIND_PUBLIC_WORK_REMOVED:
+			changed.emit()  # geri alma: panelin "geri alınabilir yol" durumu değişir
+
+
+## Ağ başka bir yoldan değiştiyse (ya da geri alma) açık taslağı yeniden doğrular.
+func refresh_if_graph_changed() -> void:
+	if (step == Step.PICK_B or step == Step.REVIEW) and _net.graph_version != _verdict_version:
+		_revalidate()
+		changed.emit()
+
+
+func points_cm() -> PackedInt64Array:
+	var out := PackedInt64Array()
+	for p in [start, end]:
+		out.append(roundi((p as Vector2).x * 100.0))
+		out.append(roundi((p as Vector2).y * 100.0))
+	return out
+
+
+func length_m() -> float:
+	return start.distance_to(end)
+
+
+## Taslak geçerli mi (sim kuru koşu)? Taslak yoksa false.
+func is_valid() -> bool:
+	return verdict != null and not verdict.is_rejected()
+
+
+## Sim'in önizleme argümanları (geçerliyse `length_m, regions {kod: birim}, units_total, cost_*`).
+func preview_args() -> Dictionary:
+	return verdict.args if is_valid() else {}
+
+
+func _end_target(p: Vector2, radius_m: float) -> Vector2:
+	var snap := snap_to_road(p, radius_m)
+	return snap["pos"] if bool(snap["snapped"]) else p
+
+
+func _command() -> SimCommand:
+	return SimCommand.public_work_road(points_cm(), ROAD_CLASS)
+
+
+func _revalidate() -> void:
+	var cmd := _command()
+	var key := str(cmd.params["points_cm"])
+	if key == _verdict_key and _net.graph_version == _verdict_version and verdict != null:
+		return
+	verdict = _facade.validate_command(cmd)
+	_verdict_key = key
+	_verdict_version = _net.graph_version
+
+
+func _reset_draft() -> void:
+	start = Vector2.ZERO
+	end = Vector2.ZERO
+	verdict = null
+	_verdict_key = ""
+	_verdict_version = -1
+	sending_command_id = SimContract.NO_ID
+	hover = {"snapped": false, "pos": Vector2.ZERO, "kind": &""}

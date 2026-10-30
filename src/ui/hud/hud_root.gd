@@ -45,6 +45,9 @@ var layout: HudLayout = null
 var simulated_safe: Vector4 = Vector4.ZERO
 ## Alt sayfa (dikey dokunmatik) genişletildi mi: oyuncu seçimidir, paneller arası ve yeniden kurmalarda kalır.
 var sheet_expanded: bool = false
+## İptal (Esc) fiilini panel kapatmadan ÖNCE sorulan sahip kancası (`Callable() -> bool`): true dönerse iptali sahip
+## tüketmiştir (örn. yol taslağı iptali); HUD paneli kapatmaz. Yoksa Esc paneli kapatır.
+var cancel_guard: Callable = Callable()
 
 var _platform: PlatformProfile = null
 var _safe: UiSafeArea = null
@@ -353,6 +356,8 @@ func _on_speed_step(direction: int) -> void:
 
 
 func _on_cancel() -> void:
+	if cancel_guard.is_valid() and bool(cancel_guard.call()):
+		return
 	close_panel_soft()
 
 

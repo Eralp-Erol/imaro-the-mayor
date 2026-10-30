@@ -10,7 +10,8 @@ extends VBoxContainer
 ##   hatası" kutusu + satır işaretiyle verilir, sessizce kabul edilmez.
 ## - MOCK: `facade.is_mock()` ya da kaydın kaynağı `sim` değilse MOCK rozeti.
 ## - Girişler: `show_subject(ref)` (parsel denetçisi/aktör/oylama), `show_reason_ids(ids)` / `show_event(event)`
-##   (olay şeridi), `show_command_result(result)` (reddedilen komut), `show_record(id)`.
+##   (olay şeridi), `show_command_result(result)` (reddedilen komut), `show_record(id)`, `show_work(command_id)`
+##   (oyuncu yolu: `SimFacade.public_works()` kaydı; uydurma yok, yol artık yoksa söyler).
 ## - Gezinti: yığın (liste -> ayrıntı -> önceki neden ...); "Geri" yığını çözer. Durum `nav_state()` ile saklanır,
 ##   profil değişince panel yeniden kurulurken `restore_nav` ile geri yüklenir.
 ## - Dokunmatik: tüm eylemler etiketli düğme (≥ hedef boyutu); hover'a bağlı bilgi yok (ayrıntı hep görünür).
@@ -23,6 +24,8 @@ const MODE_NONE := &"none"
 const MODE_LIST := &"list"
 const MODE_DETAIL := &"detail"
 const MODE_REJECTION := &"rejection"
+## Oyuncu yolu ayrıntısı (T-042 adım 3): `public_work.built` kartından ve kapasite etkeninin yol kaynağından.
+const MODE_WORK := &"work"
 const MAX_STACK := 32
 const META_ROLE := &"role"
 const NAME_FACTOR := "FactorRow"
@@ -99,7 +102,9 @@ func show_record(reason_id: int) -> void:
 
 ## Olay şeridinden: gerekçe kimlikleri varsa kayıtlar, reddedilen komut ise ret görünümü.
 func show_event(event: SimEvent) -> void:
-	if not event.reason_ids.is_empty() and event.kind != SimEvent.KIND_COMMAND_REJECTED:
+	if event.kind == SimEvent.KIND_PUBLIC_WORK_BUILT:
+		show_work(event.command_id)
+	elif not event.reason_ids.is_empty() and event.kind != SimEvent.KIND_COMMAND_REJECTED:
 		show_reason_ids(event.reason_ids)
 	elif event.kind == SimEvent.KIND_COMMAND_REJECTED:
 		_last_request = show_event.bind(event)
@@ -119,6 +124,13 @@ func show_command_result(result: CommandResult) -> void:
 	_stack = [{"mode": MODE_REJECTION, "kind": String(result.kind), "reason_key": String(result.reason_key),
 		"args": result.args.duplicate(), "command_id": result.command_id, "tick": result.tick,
 		"reason_ids": _ints(result.reason_ids)}]
+	_changed()
+
+
+## Oyuncu yolu ayrıntısı: yolu çizen komutun kimliği (`command.N` = kapasite etkeninin `source_ref`i).
+func show_work(command_id: int) -> void:
+	_last_request = show_work.bind(command_id)
+	_stack = [{"mode": MODE_WORK, "command_id": command_id}]
 	_changed()
 
 
@@ -251,6 +263,8 @@ func _render() -> void:
 			_render_detail(int(entry["id"]))
 		MODE_REJECTION:
 			_render_rejection(entry)
+		MODE_WORK:
+			_render_work(int(entry["command_id"]))
 		_:
 			state_view.show_empty(&"state.empty.no_reasons")
 	if _shown_non_sim:
@@ -343,6 +357,63 @@ func _render_rejection(entry: Dictionary) -> void:
 		else:
 			_note_provenance(rec)
 			_body.add_child(_list_row(rec, NAME_ROW))
+
+
+## Oyuncu yolu: sim'in kendi kaydı (`public_works()`); maliyet "henüz kurulmadı" (para uydurulmaz).
+func _render_work(command_id: int) -> void:
+	state_view.show_normal()
+	_body.add_child(UiFactory.label(UiText.t(&"reason.work_title"), UiTheme.V_LABEL_HEADING, true))
+	var work := _work_of(command_id)
+	if work == null:
+		_body.add_child(UiFactory.label(UiText.t(&"reason.work_gone"), UiTheme.V_LABEL_MUTED, true))
+		return
+	_note_provenance_of(work.provenance)
+	_body.add_child(_pair(UiText.t(&"reason.work_command"), UiText.humanize(work.ref())))
+	_body.add_child(_pair(UiText.t(&"reason.work_when"), UiText.tick_date(work.tick)))
+	_body.add_child(UiFactory.label(UiText.t(&"road.class_line", {"class": _road_class_text(work.road_class)}), &"",
+			true))
+	_body.add_child(UiFactory.label(UiText.t(&"road.length", {"length": _work_length_m(work)}), &"", true))
+	var total := 0
+	for units: Variant in work.region_units.values():
+		total += int(units)
+	_body.add_child(UiFactory.label(UiText.t(&"road.capacity", {"units": total}), UiTheme.V_LABEL_TITLE, true))
+	var codes: Array = work.region_units.keys()
+	codes.sort()
+	for code: String in codes:
+		_body.add_child(UiFactory.label(UiText.t(&"road.capacity_region",
+				{"region": code, "units": int(work.region_units[code])}), UiTheme.V_LABEL_MUTED, true))
+	_body.add_child(UiFactory.label(UiText.t(&"road.cost_line", {"cost": UiText.t(&"public_work.cost.not_built")}),
+			UiTheme.V_LABEL_MUTED, true))
+	_body.add_child(UiFactory.label(UiText.t(&"reason.work_effect"), UiTheme.V_LABEL_MUTED, true))
+
+
+func _work_of(command_id: int) -> PublicWorkView:
+	for w in _facade.public_works():
+		if w.command_id == command_id:
+			return w
+	return null
+
+
+## `command.N` kaynağı bir oyuncu yoluna çözülüyorsa o kayıt, değilse null.
+func _work_for_ref(ref: StringName) -> PublicWorkView:
+	var parsed := SimContract.parse_ref(ref)
+	if str(parsed["kind"]) != String(SimContract.REF_COMMAND) or int(parsed["id"]) == SimContract.NO_ID:
+		return null
+	return _work_of(int(parsed["id"]))
+
+
+func _road_class_text(road_class: StringName) -> String:
+	var key := StringName("road.class.%s" % road_class)
+	return UiText.t(key) if UiText.has(key) else String(road_class)
+
+
+func _work_length_m(work: PublicWorkView) -> int:
+	return int(roundf(float(work.length_cm) / 100.0))
+
+
+func _note_provenance_of(provenance: StringName) -> void:
+	if provenance != SimContract.PROVENANCE_SIM:
+		_shown_non_sim = true
 
 
 # --- Parçalar ---
@@ -467,7 +538,15 @@ func _factor_row(row: ReasonModel.Row, index: int, current_id: int) -> Control:
 		elif row.trend < 0:
 			trend_key = &"a11y.trend_down"
 		box.add_child(UiFactory.label(UiText.t(trend_key), UiTheme.V_LABEL_MUTED, true))
-	if row.source_ref != &"":
+	var road := _work_for_ref(row.source_ref) if row.source_ref != &"" else null
+	if road != null:
+		# "Altyapı kapasitesi <- Yol (gün N)": etkenin kaynağı oyuncunun çizdiği yol; dokununca yol ayrıntısı açılır.
+		var road_text := UiText.t(&"reason.source_road", {"date": UiText.tick_date(road.tick),
+				"length": _work_length_m(road)})
+		var road_link := _link_button(road_text, NAME_SUBJECT + "_src_" + String(row.source_ref))
+		road_link.pressed.connect(show_work.bind(road.command_id))
+		box.add_child(road_link)
+	elif row.source_ref != &"":
 		var src_text := UiText.t(&"reason.source", {"subject": UiText.humanize(String(row.source_ref))})
 		if _has_other_records(row.source_ref, current_id):
 			var src := _link_button(src_text, NAME_SUBJECT + "_src_" + String(row.source_ref))

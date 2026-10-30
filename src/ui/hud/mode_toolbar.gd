@@ -21,6 +21,8 @@ const TOOL_COUNCIL := &"tool.council"
 const TOOL_AGENDA := &"tool.agenda"
 ## Sonuç paneli (T-040): yalnız bir sahip `add_tool` ile kaydederse görünür (ölü düğme yok).
 const TOOL_RESULTS := &"tool.results"
+## Yol çizimi (T-042 adım 3): yalnız oyun katmanı yol komutunu bağlayınca `add_tool` ile kaydedilir (ölü düğme yok).
+const TOOL_ROAD_DRAW := &"tool.road_draw"
 
 ## Katalog: mod -> {tools: [tool_id]} (kayıtlı olanlar görünür).
 const MODES := {
@@ -171,6 +173,22 @@ func _sync() -> void:
 		(_mode_buttons[mode_id] as Button).set_pressed_no_signal(mode_id == current_mode)
 	for tool_id: StringName in _tool_buttons:
 		(_tool_buttons[tool_id] as Button).set_pressed_no_signal(tool_id == current_tool)
+
+
+## Aracı dışarıdan (kısayol) seçili gösterir: aracın modu görünürse o moda geçer. Sinyal yaymaz.
+func set_active_tool(tool_id: StringName) -> void:
+	for mode_id: StringName in _extra_tools:
+		if (_extra_tools[mode_id] as Array).has(tool_id):
+			if mode_id != current_mode:
+				select_mode(mode_id)
+			current_tool = tool_id
+			_sync()
+			return
+
+
+func clear_active_tool() -> void:
+	current_tool = &""
+	_sync()
 
 
 func _on_mode_pressed(mode_id: StringName) -> void:

@@ -132,23 +132,46 @@ func chunk_node(key: Vector2i) -> Node3D:
 
 
 ## İndeks güncellenir; yalnız istenen chunk meshleri/düğümleri yeniden kurulur.
-## Silinen/taşınan kenar için ESKİ edge_keys de çağıranın elinde kalmalıdır.
-func rebuild_chunks(keys: Array[Vector2i]) -> void:
+## Silinen/taşınan kenar için ESKİ edge_keys de çağıranın elinde kalmalıdır. `new_plan`: çağıran yeni planı zaten
+## çıkardıysa (anahtar birleşimi için) verir; ikinci kez O(ağ) indeks kurulmaz (`RoadEditSync`).
+func rebuild_chunks(keys: Array[Vector2i], new_plan: RoadChunkPlan = null) -> void:
 	if _net == null:
 		return
 	var started := Time.get_ticks_usec()
-	_plan = RoadChunkPlan.build(_net, style)
+	_plan = new_plan if new_plan != null else RoadChunkPlan.build(_net, style)
 	_rebuild_with_plan(keys, started)
 
 
 func _rebuild_with_plan(keys: Array[Vector2i], started: int) -> void:
+	var unique := _unique_keys(keys)
+	_install_chunks(unique, _build_chunk_data(unique, _plan, use_threads), started)
+
+
+## T-042 adım 3 · İKİ AŞAMALI kurulum (kare sıçramasını ana iş parçacığından almak için): `compute_chunk_data` SAF ve
+## iş parçacığı güvenlidir (ağ/plan salt okunur; çağıran ağın değişmediğini sağlar), `install_chunks` düğümleri ANA
+## iş parçacığında kurar. `rebuild_chunks` = ikisi art arda. `new_plan` verilmişse önce indekse alınır.
+func compute_chunk_data(keys: Array[Vector2i], plan_in: RoadChunkPlan) -> Dictionary:
+	return _build_chunk_data(_unique_keys(keys), plan_in, false)
+
+
+func install_chunks(keys: Array[Vector2i], plan_in: RoadChunkPlan, meshes: Dictionary, started: int = -1) -> void:
+	if _net == null:
+		return
+	_plan = plan_in
+	_install_chunks(_unique_keys(keys), meshes, started if started >= 0 else Time.get_ticks_usec())
+
+
+func _unique_keys(keys: Array[Vector2i]) -> Array[Vector2i]:
 	var unique: Array[Vector2i] = []
 	var seen: Dictionary = {}
 	for key in keys:
 		if not seen.has(key):
 			seen[key] = true
 			unique.append(key)
-	var meshes := _build_chunk_data(unique)
+	return unique
+
+
+func _install_chunks(unique: Array[Vector2i], meshes: Dictionary, started: int) -> void:
 	for key in unique:
 		var old := chunk_node(key)
 		if old != null:
@@ -210,19 +233,19 @@ func _rebuild_with_plan(keys: Array[Vector2i], started: int) -> void:
 
 ## Chunk verisi saf fonksiyondur (ağ/plan/dünya salt okunur): çok chunk'ta WorkerThreadPool'a dağıtılır.
 ## Sonuç anahtar sırasından ve iş parçacığı sayısından bağımsızdır; düğümler ana iş parçacığında kurulur.
-func _build_chunk_data(keys: Array[Vector2i]) -> Dictionary:
+func _build_chunk_data(keys: Array[Vector2i], plan_in: RoadChunkPlan, threaded: bool) -> Dictionary:
 	var todo: Array[Vector2i] = []
 	for key in keys:
-		if _plan.cells.has(key):
+		if plan_in.cells.has(key):
 			todo.append(key)
 	var results: Array = []
 	results.resize(todo.size())
 	var job := func(index: int) -> void:
 		var patch_cache: Dictionary = {}
 		results[index] = [
-			RoadMeshBuilder.build(_net, style, _plan, todo[index], false, patch_cache),
-			RoadMeshBuilder.build(_net, style, _plan, todo[index], true, patch_cache)]
-	if use_threads and todo.size() >= MIN_THREADED_CHUNKS:
+			RoadMeshBuilder.build(_net, style, plan_in, todo[index], false, patch_cache),
+			RoadMeshBuilder.build(_net, style, plan_in, todo[index], true, patch_cache)]
+	if threaded and todo.size() >= MIN_THREADED_CHUNKS:
 		var group := WorkerThreadPool.add_group_task(job, todo.size(), -1, true, "RoadView chunks")
 		WorkerThreadPool.wait_for_group_task_completion(group)
 	else:
