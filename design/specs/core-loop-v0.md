@@ -1,76 +1,116 @@
-# Çekirdek döngü v0: yol çiz, bina çıksın, halk tepki versin
+# Çekirdek döngü v0: yol çiz, imar planı sun, yatırımcı inşa etsin, halk tepki versin
 
 Statü: **ÇALIŞMA MODELİ** (her bölüm). Sayılar kanon değil, tümü veridir. Para birimi yok (Q-003): "birim".
-REQ: CAN-03, CAN-04, CAN-05, CAN-06, SIM-02, SIM-04, SIM-05, SIM-07, SIM-08, SIM-09, SIM-10, SIM-12, TEK-01/02 · Kararlar: D-008, D-009 · Bağlı: `economy-core-v0.md`, `political-events.md`, T-042-PLAN, Q-017/020/021/022.
-Etiketler: [okundu] kodda/veride görüldü · [ölçülü] log'dan · [hesap] bu belgede · [tahmin] doğrulanmadı.
+REQ: CAN-03, CAN-04, CAN-05, CAN-06, SIM-02, SIM-04, SIM-05, SIM-07, SIM-08, SIM-09, SIM-10, SIM-12, TEK-01/02 · Kararlar: D-008, D-009, **D-010** · Bağlı: `economy-core-v0.md`, `political-events.md`, T-042-PLAN, T-042b-PLAN, T-043A/B/C · Sorular: Q-014 AÇIK, Q-017 AÇIK, Q-003 AÇIK, Q-023/Q-024 yeni.
+Etiketler: [okundu] kodda/veride görüldü · [ölçülü] log'dan · [hesap] bu belgede · [tahmin] doğrulanmadı · [KARAR] kullanıcı kararı (D-010).
+Revizyon 2026-10-30: D-010 işlendi. Önceki "yol -> bina" akışı kaldırıldı; yol tek başına bina çıkarmaz.
+
+## 0. Akış (D-010 ile bağlayıcı yön; ayrıntılar ÇM)
+```
+yol çiz -> altyapı kapasitesi -> imar planı teklifi (oyuncu) -> (meclis: Q-014 AÇIK) -> yatırımcı değerlendirir -> inşa -> hane/kira/arsa -> kesim tepkisi -> yeni gündem
+```
+- **[KARAR] Boş arazinin imarı çevreden TÜRETİLMEZ.** Oyuncu (belediye başkanı) imar planı teklifi sunar; yatırımcılar bu karardan ve (varsa) meclisten geçtikten sonra inşa eder. Eski Q-021 önerisi A (çevreden türetme) ve "T0 imarı" türetme satırı **iptal**.
+- Yol yalnız **erişim/kapasite** koşuludur; imar yalnız **izin** koşuludur; ikisi birlikte yatırımcı kararının girdisidir (SIM-04). Biri eksikse gerekçe hangisi olduğunu söyler, ikisi de eksikse ikisini de söyler (çoklu neden).
+- Oyuncu özel bina yerleştirmez (CAN-03): plan bir izin/koşuldur, "yatırımcı gelmeyebilir" (SIM-07). Oyuncuya "Konut yap" düğmesi yok; sunulan şey plandır (CAN-05).
+- Mevcut mekanizma [okundu]: `zoning.propose` komutu (CAN-03 beyaz liste) parsele `pending_zone` + `due_tick` yazar (`parcel_zoning_system.gd`); `requires_council` veri bayrağı `data/politics/council.json` (`zoning.propose: true`, yer tutucu) ve `ui_config.json` (`false`); UI'da Z tuşu / `DecisionPanels` / `zoning_flow_*`. Plan teklifi **aynı komutu** kullanır; yeni komut türü gerekmez.
 
 ## 1. İlk 5 dakika (ÇM)
-Hedef: oyuncu **bölgenin neden bina almadığını okur, yol çizer, yatırımcının kararını ve halkın tepkisini kendi eylemine bağlar.** Kaçınılacak: bina anında çıkması, hiçbir şeyin olmaması, anlaşılmaz ret.
-Varsayım: oyun hızı "hızlı" (4 gün/sn); başlangıç Orven kenarı açık arazi (T-043; [ölçülü] D2'de yola ≤150 m açık arazi ≈5 km², ~160 çıkış kenarı).
+Hedef: oyuncu **bölgenin neden bina almadığını okur (iki neden olabilir: altyapı, plan yok), yol çizer, plan sunar, yatırımcının kararını ve halkın tepkisini kendi eylemine bağlar.** Kaçınılacak: bina anında çıkması, hiçbir şeyin olmaması, hangi eksiğin kaldığının anlaşılmaması.
+Varsayım: oyun hızı "hızlı" (4 gün/sn); başlangıç Orven kenarı açık arazi (T-043; [ölçülü] D2'de yola ≤150 m açık arazi ≈5 km²).
 | Dakika | Oyuncu | Görür | Hareket eden sayı |
 |---|---|---|---|
-| 0:00-0:40 | Haritada bölgeyi seçer, denetçiyi açar | "Yatırım yok: altyapı kapasitesi yetersiz" gerekçesi (SIM-12) | bölge kapasitesi/yük, boş parsel sayısı |
-| 0:40-1:30 | İnşa > Yol: mevcut yola dokunur, uzatır | yapışma halkası, yeşil/uyarı önizleme, ret metni; panelde uzunluk, "Altyapı kapasitesi +N", "Maliyet: henüz kurulmadı" | önizlemede +N kapasite |
-| 1:30 | Onaylar | yol 3D'de belirir | kapasite +N (komut referanslı) |
-| 1:30-2:30 | Zamanı izler | yakın parsellerde karar satırı: "Altyapı kapasitesi ← Yol (gün N)"; bazısı onay, bazısı ret (getiri/talep) | onay/ret sayısı, planlı birim |
-| 2:30-4:00 | İskeleli kademe, sonra bina | gerçek 3D yapı (kat kademesi) | konut/dükkân birimi, hane, arsa değeri, kira endeksi |
-| 4:00-5:00 | Gündeme bakar | PE-01/PE-04/PE-07 tipi bir öğe, `cause_refs` zinciri yol -> bina -> tepki; seçenekler | kesim şikâyeti (tek skor değil, SIM-09), hizmet doluluğu |
-Döngü (F03): oyuncu kararı -> kapasite -> yatırımcı kararı (gerekçe) -> bina -> hane/kira/arsa -> kesim tepkisi -> yeni gündem (2. yol, imar, geri alma). Yanlış yolda (bağlantısız, dik, parsel kesen) ret gerekçesi görünür ve **hiçbir şey olmaz**; başarısızlık da oyundur (SIM-07). İki oyuncu farklı yön seçebilir (SIM-10).
-**Önkoşul:** [okundu] oynanabilirde kapasite +%30 payla başlıyor (`playable_economy.json`); pay açıkken yol hiçbir şeyi açmaz, nedensellik görünmez. Yol bölgesinde başlangıç boş kapasite dar olmalı (`--infra-free` dev senaryosu bunu yapıyor [okundu]); değer ÇM, §5 gözlem 1 ile ayarlanır.
+| 0:00-0:40 | Haritada bölgeyi seçer, denetçiyi açar | "Yatırım yok: plan yok" ve/veya "altyapı kapasitesi yetersiz" (SIM-12); parsel "Plansız" etiketi | boş/plansız parsel sayısı, bölge kapasitesi/yük |
+| 0:40-1:30 | İnşa > Yol: mevcut yola dokunur, uzatır | yapışma halkası, önizleme, ret metni; "Altyapı kapasitesi +N"; maliyet (gösterge bütçe, T-043C) | önizlemede +N kapasite, yol maliyeti |
+| 1:30 | Onaylar | yol 3D'de belirir | kapasite +N (komut referanslı); **yatırımcı henüz gelmez** ("plan yok" gerekçesi sürer) |
+| 1:30-2:30 | Plan: Z / imar planı teklifi — parsel(ler)i seçer, kullanım + yoğunluk seçer, önizlemeyi okur ("ne kadar iyi şey olacak": beklenen birim, kapasite yükü, hangi kesim kazanır/kaybeder) | önizleme sim sayısıyla; gönderince "teklif verildi (gün N)"; meclis yolu açıksa oylama kartı | bekleyen plan sayısı |
+| 2:30-3:30 | Zamanı izler | plan yürürlüğe girer; **o andan sonra** ≤40 gün: yakın parsellerde karar satırı "İmar planı ← teklif (gün N)", "Altyapı kapasitesi ← Yol"; bazısı onay, bazısı ret (getiri/talep) | onay/ret sayısı, planlı birim |
+| 3:30-4:30 | İskeleli kademe, sonra bina (≤100 gün) | gerçek 3D yapı | konut/dükkân birimi, hane, arsa değeri, kira endeksi |
+| 4:30-5:00 | Gündeme bakar | PE-01/PE-04/PE-07 tipi öğe, `cause_refs` zinciri yol/plan -> bina -> tepki | kesim şikâyeti (tek skor değil, SIM-09) |
+Not: bu akış eski akıştan **bir oyuncu adımı uzundur**; 5 dakikaya sığması B+C tempo ölçütlerine (§2) ve plan teklifinin 1-2 dokunuşta verilebilmesine bağlıdır [tahmin: his testi §5 gözlem 6 ile doğrulanır].
+Döngü (F03): oyuncu kararı (yol, plan) -> kapasite + izin -> yatırımcı kararı (gerekçe) -> bina -> hane/kira/arsa -> kesim tepkisi -> yeni gündem (2. yol, farklı plan, geri alma). Yanlış yolda ret gerekçesi görünür ve **hiçbir şey olmaz**; yanlış planda (talep/getiri yok) plan geçer ama yatırımcı gelmez (SIM-07); başarısızlık da oyundur. İki oyuncu farklı plan/yol seçebilir (SIM-10).
 
-## 2. Tempo (ÇM)
-Veri [okundu]: `core_config.json`: 1 tick = 1 sim günü; hızlar 1/4/16 tick/sn; demo `set_speed(3)` = en hızlı. Ekonomi: `plan_days` 10, inşaat 45 + 3·birim gün (4 birim: 57), `attention_delay_days` 2, tarama `review_period_days` 10, oynanabilir `max_reviews_per_tick` 8.
-Hesap [hesap]: 330 gün = 5,5 dk (normal) · 82 sn (hızlı) · 20,6 sn (demo 16 gün/sn). Sabit boru hattı ≈ 10+57 = 67 gün; kalan ~260 gün **değerlendirmeyi beklemek** [tahmin: 330 ajan bulgusu, kırılımı doğrulanmadı]. Q-016 [ölçülü]: imar önerisi yolunda (zorunlu dikkat) gün 40 inşaat, gün 100'de 7/8 bitmiş: yani hızlı yol zaten var, yol komutu onu kullanmıyor.
-**Önerilen hedef** [ÇM]: onaydan ilk inşaat ≤40 gün (hızlıda 10 sn), ilk tamamlanan bina ≤100 gün (hızlıda 25 sn; normalde 100 sn). Hepsi onay değil: ret dağılımı kalır.
-| Seçenek | Ne yapar | Determinizm / altın hash | Risk |
+## 2. "Plansız arazi" durumu (ÇM)
+**Bugün [okundu]:** parselin imarı kaynak şablondan (`_base_zone`) gelir; oynanabilir şablonda boş parseller placeholder `zone.residential` ile başlar (`economy_config.json`: izinli kullanım `residential`) ve oynanabilir altyapı kapasitesi +%30 payla (`playable_economy.json`). Sonuç: yatırımcı **plan olmadan da** konut inşa edebilir; "plan yok" gerekçesi hiç görünmez; yol, pay açıkken hiçbir şeyi açmaz. D-010 bu placeholder'ı nedensellik dışı bırakır.
+**Önerilen model (veri bayrağı `unplanned_land.enabled`):**
+| Parsel durumu | Tanım | Yatırımcı davranışı | Görünürlük |
 |---|---|---|---|
-| A. Sıklık artır | `max_reviews_per_tick` 8 -> 15/60, `review_period_days` kısalt | Kod aynı, yalnız veri. GOLDEN_A/B (varsayılan yapılandırma) değişmez; oynanabilir koşu/yakalama hash'leri değişir; eski kayıt/yapılandırma uyumu [doğrulanmadı] | Tick 4,3 -> 6,9 -> 15+ ms [ölçülü, Q-016]: kare bütçesi 16,6 ms; bekleme yine rastgele |
-| B. Yol sonrası öncelikli değerlendirme | Yol kabulünde, yola ≤R m en çok K boş parsel `attention_delay_days` sonra **zorunlu** değerlendirilir (imar yolunun aynısı, ön eleme yok), gerekçe `command.N` taşır | Yeni durum (kuyruk) yalnız ilk yolda yaratılır (T-042 deseni): yolsuz koşuda t0/GOLDEN değişmez; yollu koşu yeni ama tekrar oynatmada bit-eşit; kayıt sürümü artar | K, R yeni sayılar (§6); bol K tek tick'te maliyet: kuyruk `max_reviews_per_tick` ile dağıtılır |
-| C. Zaman hızı | Başlangıç hızı "hızlı", yol sonrası ipucu | Hız durumun parçası değil: hash etkisi yok | Gecikmeyi gizler (SIM-08); normal hızda 5,5 dk kalır |
-Öneri: **B + C**, A yok (kare bütçesi). Q-020.
+| `unplanned` | T0'da gelişmemiş + yürürlükte bir oyuncu planı yok (`parcels.overlay` kaydı yok / yürürlükte imar yok) | **değerlendirmez / `zoning.unplanned` gerekçesiyle reddeder**; placeholder imar yok sayılır | haritada nötr "plansız" doku/etiket (renk kodu ui-engineer), denetçide gerekçe |
+| `proposed` | teklif verildi, `pending_zone` var, `due_tick` gelmedi (veya oylama sürüyor) | inşa etmez ("plan bekleniyor") | "Teklif verildi, yürürlük gün N" |
+| `planned` | plan yürürlükte | normal karar (kapasite, getiri, talep, finansman) | kullanım + yoğunluk |
+| `plan_rejected` | meclis yolu açıkken oylama reddetti | `unplanned` gibi; yeniden teklif edilebilir | oylama sonucu kartı |
+| T0'da yapılı | mevcut yapı | **mevcut imarı korur** (değişmez); Q-017 gereği yıkım yok | bugünkü davranış |
+Kurallar:
+- `unplanned_land.enabled=false` (varsayılan yapılandırma) = bugünkü davranış bit-eşit (GOLDEN_A/B ve t0 hash'i değişmez). Oynanabilir yapılandırma `true` yapar. Yeni durum sütunu/anahtarı **yaratılmaz**: durum mevcut `parcels.overlay` kayıtlarından türer (yalnız dokunulan parsel girer; T-042 deseni). "T0'da gelişmemiş" bilgisi `_cache_static` / T0 stokundan [doğrulanmadı: world/economy-engineer teyit eder].
+- Yatırımcı `zoning` bileşeni mevcut `w_zoning` yolundan geçer; ret nedeni `unplanned` ayrı gerekçe anahtarı olarak kaydedilir (`reason_log`), UI metni `strings.tr.json`'a ui-engineer ekler.
+- Plan hakkı: oyuncu aynı parsel için yeniden teklif verebilir; yürürlükteki planı değiştirme (yapılıysa yıkım yok) Q-017 kapsamıdır, bu belge dışı.
+- Bekleyen plan sayısı ve gündem yükü: toplu teklifte tek oylama/tek komut (komut başına parsel listesi; üst sınır veri `plan_max_parcels_per_proposal`, öneri 40).
+**Sonuçlar (bilinçli):**
+1. Başlangıçta oyuncu hiçbir şey yapmazsa (yol ve plan yok) **hiç bina çıkmaz**; bu bir başarısızlık değil, D-010'un doğrudan sonucudur. T0 yapıları kalır, ekonomi mevcut yapılarla işler.
+2. Yaşayan dünya hissi riski: bütün boş arazi donuk kalır; mevcut mahalleler çalışmaya devam eder (kira, hane). Bu risk his testi §5 gözlem 6 ile izlenir; çare "otomatik plan" olmaz (D-010'a aykırı), sunum/gündem ipuçları olur.
+3. Placeholder +%30 kapasite payı ile birlikte iki ayrı "neden" vardı; plan şartı geldikten sonra pay yol nedenselliğini hâlâ gizler. Payın oynanabilirde bölge bazında daraltılması (`--infra-free` benzeri) T-043A kapsamında **veri** olarak ele alınır, değer §7.
+4. Altın/hash etkisi: yalnız `unplanned_land.enabled=true` koşularda (oynanabilir config, kayıtlı yakalamalar) davranış değişir; kontrollü yeniden tabanlama T-043A içinde (görev dosyasında plan).
+5. T-041 / T-043 demo ve yakalamaları (ör. imar demosu) plan akışına göre yeniden çekilecek; "Konut yap" benzeri kısayol eklenmez.
 
-## 3. Eksik temel veriler: en küçük işe yarar v0 (ÇM)
-| Veri | Bugün | v0 türetme (yeni sayı yok / en az) | Kullanıcı kararı |
+## 3. Tempo (ÇM, [KARAR] B+C seçildi)
+Veri [okundu]: `core_config.json`: 1 tick = 1 sim günü; hızlar 1/4/16 tick/sn; demo `set_speed(3)` = en hızlı. Ekonomi: `plan_days` 10, inşaat 45 + 3·birim gün, `attention_delay_days` 2, tarama `review_period_days` 10, oynanabilir `max_reviews_per_tick` 8. [ölçülü] Q-016: zorunlu dikkat yolunda (imar önerisi) gün 40 inşaat, gün 100'de 7/8 bitmiş.
+**Ölçütler [KARAR yönü, sayılar ÇM]:** *tetikleyici olaydan* (bölgenin hem erişimi hem planı tamamlandığı SON olay: yol onayı veya plan yürürlüğü) ilk inşaat ≤~40 gün, ilk tamamlanan bina ≤~100 gün; "hızlı" hızda ~25 sn (100 gün ÷ 4). Hepsi onay değil: ret dağılımı kalır.
+| Parça | Ne yapar | Katman | Hash/determinizm |
 |---|---|---|---|
-| Başlangıç arsa değeri | 0 [okundu: görev girdisi]. Hipotez [tahmin]: `_update_land_values` çarpansal olduğundan taban 0 iken spekülasyon (SIM-07) hep 0; ayrıca `outlay` yalnız inşaat maliyeti olup getiri şişer | `L = land_share_pm · units_potential · cost_per_unit(kullanım)` / 1000. Mevcut `cost_per_unit`, `units_per_1000m2`, parsel alanından; tek yeni oran `land_share_pm`. Tuzak: "artık değer" (kira/faiz − maliyet) mevcut sayılarla 1400/birim verir, net getiri = faiz olup **hiç bina gelmez** [hesap] | Bölge farkı (merkez pahalı) istenir mi; yol arsa değerini artırsın mı (mevcut `access_pm` yolu ile ayrı adım) |
-| T0 imarı | Boş parselde imar yoksa `zoning` reddi; aktarım [doğrulanmadı] | Çevre yapıların çoğunluk kullanımı (bağlı blokta/komşu parselde), eşitlikte `zone.mixed`; "başlangıç durumu", komut değil (T0 stok gibi) | **Q-021** |
-| Belediye bütçesi | T-014 kurulmadı; `BudgetView` sözleşmesi var [okundu] | Gelir = bina birimi · `rent_per_unit_month` · `tax_rate_pm` aylık (mevcut kira, yeni oran); gider = yol: eklenen altyapı birimi · `cost_per_unit` · `public_cost_share_pm`; kasa yalnız gösterge | **Q-022**; vergi oranı, başlangıç kasası, kısıt olup olmaması |
-| Yolun etkisi | `infra_units_per_km` yok | `= K_proje · medyan_birim / 0,3 km` (K_proje ≈3 bina; medyan parsel birimi world-engineer ölçer) | — |
-Kural: HUD'a yalnız hesaplanan sayı girer; bütçe kurulana kadar "henüz kurulmadı" (sahte sayı yok).
+| **B. Öncelikli değerlendirme** | Tetikleyicide, olayın `R` m yakınındaki en çok `K` uygun boş parsel `attention_delay_days` sonra zorunlu değerlendirilir (ön eleme yok); `max_reviews_per_tick` ile dağıtılır; gerekçe `command.N` taşır. Uygunluk: yürürlükte plan VE bağlı yol; plansız parsel kuyruğa girmez | sim | Kuyruk yalnız ilk tetikte yaratılır (T-042 deseni): yolsuz/plansız koşuda t0/GOLDEN değişmez; kayıt sürümü artar; tekrar oynatma bit-eşit |
+| **C. Zaman hızı** | Başlangıç hızı "hızlı"; yol/plan sonrası ipucu | oyun | Hız durumun parçası değil; hash etkisi yok |
+| A (sıklık artır) | YOK | — | Kare bütçesi (4,3 -> 15+ ms [ölçülü]) |
+Tetikleyicisi iki olay olduğundan: plan yürürlüğe girdiğinde yol zaten varsa B kuyruğu planın komut kimliğiyle açılır; yol sonra gelirse yolun komut kimliğiyle. Gerekçede iki kaynak da görünür.
+Gizleme riski (SIM-08): C yalnız hızı seçer; bekleme süresini saklamaz (gün sayacı görünür).
 
-## 4. Kamulaştırma (T-042b) oyuncu yüzü (ÇM; hepsi seçenek)
-D-009 yönü (kullanıcı): yol binaların içinden de geçebilir. Q-017 kuralı AÇIK: yıkım, yeniden yapılaşma, süre, bedel, tarihî yapı. **Hiçbiri uygulanmaz**; v0 ret metni "kamulaştırma henüz yok" kalır. Sim parsel kümesi statik [okundu]: kamulaştırma kümeyi değiştirecek (ayrı ADR).
+## 4. Eksik temel veriler: en küçük işe yarar v0 (ÇM)
+| Veri | Bugün | v0 | Karar |
+|---|---|---|---|
+| Başlangıç arsa değeri | 0 [okundu: görev girdisi]; çarpansal güncelleme taban 0'da hep 0 [tahmin] | `L = land_share_pm · units_potential · cost_per_unit(kullanım)` / 1000; planlı olmayan parselde kullanım yoktur: arsa değeri **plan yürürlüğe girince** tanımlanır (plan = arsa değerini açar; spekülasyon SIM-07 için doğal kapı) [tahmin, ekonomi-engineer teyit eder]. Tuzak: "artık değer" mevcut sayılarla hiç bina üretmez [hesap] | bölge farkı, yolun arsa etkisi sorulmadı |
+| T0 imarı | ~~çevreden türetme~~ **İPTAL** (D-010) | yapılı parsel: mevcut; boş parsel: `unplanned` | kapandı |
+| Belediye bütçesi | T-014 kurulmadı; `BudgetView` sözleşmesi ve `BudgetPanel` var, sim tarafı `system.not_built` [okundu] | **Gösterge bütçe** (T-043C): gelir = bina birimi · `rent_per_unit_month` · `tax_rate_pm` aylık; gider = yol: eklenen altyapı birimi · `cost_per_unit` · `public_cost_share_pm`; kasa yalnız gösterge, hiçbir komutu reddetmez | [KARAR] önce gösterge; vergi oranı/başlangıç kasası yer tutucu |
+| Yolun etkisi | `infra_units_per_km` yok | `= K_proje · medyan_birim / 0,3 km` | — |
+| Plan önizlemesi ("ne kadar iyi şey olacak") | yok; yalnız `proposal_effects` tabloları (meclis için) [okundu] | önizleme sim sorgusundan: seçili parsellerin potansiyel birimi, kapasite yükü, `proposal_effects` kesim yarar/zarar işareti | içerik düzeyi Q-024 |
+Kural: HUD'a yalnız hesaplanan sayı girer; sim'de hesabı olmayan alan "henüz kurulmadı" (sahte sayı yok).
+
+## 5. Kamulaştırma (T-042b) oyuncu yüzü (ÇM; hepsi seçenek)
+[KARAR] sıra: **önce gösterge bütçe, kamulaştırma sonra** (D-010). D-009 yönü: yol binaların içinden de geçebilir. Q-017 kuralı AÇIK; **hiçbiri uygulanmaz**; v0 ret metni "kamulaştırma henüz yok". Teknik plan: `production/tasks/T-042b-PLAN.md` (A: sabit küme + `STAGE_TAKEN`, ÖNERİLEN, commit'siz ADR Ek F). Plan akışı ile ilişki: kamulaştırılan boş arazi sonra `unplanned` olur ve yeniden plan ister [tahmin].
 | Eksen | Seçenekler (öneri ilk) |
 |---|---|
-| Hangi bina | (1) Eksenin kestiği parsellerin tamamı, boşalıp açık arazi olur · (2) yalnız koridor şeridi, parsel bölünür (karmaşık) · (3) oyuncu parsel parsel seçer |
-| Maliyet | (1) arsa + yapı değeri + `premium_pm` · (2) yalnız arsa · (3) sabit/parsel |
-| Önizleme | Onaydan önce: kaç parsel, kaç hane yerinden olur, bedel, hangi kesim etkilenir (kesim adı veriden, uydurma yok) |
-| Tepki | Yerinden olan hane -> kesim şikâyeti (PE-01), medya (PE-04); direnç aynı yolda tekrarlanırsa artar |
-| Geri alma | Teklif aşamasında serbest · onaydan sonra N günlük itiraz penceresi (geri çekilir) · yıkım başlayınca geri alınamaz (bedelsiz yok) |
-| Yetki | Meclis onayı gerekir mi: Q-014 ile bağlı |
-Q-017 ilişkisi: kamulaştırma = Q-017 seçenek 1(c); D-009 yönü kısmen cevaplıyor, kalan (bedel, süre, tarihî yapı, kim park/yeşil yapar) AÇIK. Sıra: önce §2-3 (açık arazi), sonra bu.
+| Hangi bina | (1) eksenin kestiği parsellerin tamamı · (2) yalnız koridor, parsel bölünür · (3) oyuncu parsel parsel |
+| Maliyet | (1) arsa + yapı + `premium_pm` · (2) yalnız arsa · (3) sabit |
+| Önizleme | kaç parsel, kaç hane, bedel, hangi kesim (veriden) |
+| Tepki | yerinden olan hane -> PE-01, medya PE-04; direnç tekrarlanırsa artar |
+| Geri alma | teklifte serbest · itiraz penceresi · yıkım başlayınca yok |
+| Yetki | meclis gerekir mi: Q-014 |
 
-## 5. Denge ve his test planı (ilk oturum, 3-5 kişi, açıklamasız)
+## 6. Denge ve his test planı (ilk oturum, 3-5 kişi, açıklamasız)
 | # | Gözlem | Geçti | Kaldı |
 |---|---|---|---|
-| 1 | Neden: oyuncu "bölge neden bina almıyor"u söyler | ≥4/5 ilk 90 sn'de kapasiteyi söyler ve yol çizer | ≥2/5 nedene bakmadan rastgele çizer |
-| 2 | Tempo: onaydan ilk inşaat, ilk bina | ≤40 gün / ≤100 gün (hızlıda ≤30 sn, ölçülür) | ilk bina >60 sn (hızlı) |
-| 3 | Sapma/başarısızlık: aynı yol 5 tohum | bina sayısı tohumlar arası farklı; ≥1 görünür ret gerekçesi | hep hepsi onay ya da hiç bina |
-| 4 | Tepki: 5 dk içinde bir gündem öğesi, nedeni yola zincirli | ≥1 öğe, ≤2 kesinti, zincir okunur | hiç tepki ya da ≥3 kesinti (`interrupt_budget`) |
-| 5 | Sayı gerçekliği: kötü yol (bağlantısız) denenir | ret anlaşılır (≥%80), hiçbir sayı oynamaz; iyi yolda ≥3 sayı oynar, oyuncu "ne değişti"yi doğru söyler | sahte hareket, anlaşılmaz ret |
-Otomatik karşılıkları (qa-engineer): 5 tohumlu çift senaryo (T-042-PLAN §4), kayıt/yükleme sonrası N tick hash eşit, GOLDEN değişmez.
-Test senaryoları: **olumlu** dar kapasiteli bölgede bağlı yol -> ≥1 parsel `approved`, etken `source_ref=command.N`. **Olumsuz** aynı bölgede bağlantısız yol -> ret, kapasite ve hash komutsuz koşuyla aynı. **Uç** yol geri alınır -> kapasite düşer, yük aşarsa `stalled`.
+| 1 | Neden: "bölge neden bina almıyor" | ≥4/5 ilk 90 sn'de en az bir nedeni söyler (plan yok / kapasite) | ≥2/5 nedene bakmadan rastgele çizer |
+| 2 | Tempo: tetikleyiciden ilk inşaat, ilk bina | ≤40 gün / ≤100 gün (hızlıda ≤~30 sn) | ilk bina >60 sn |
+| 3 | Sapma/başarısızlık: aynı yol+plan 5 tohum | bina sayısı tohumlar arası farklı; ≥1 görünür ret | hep hepsi onay ya da hiç bina |
+| 4 | Tepki: 5 dk içinde nedeni zincirli gündem öğesi | ≥1 öğe, ≤2 kesinti | hiç ya da ≥3 kesinti |
+| 5 | Sayı gerçekliği: kötü yol (bağlantısız) | ret anlaşılır (≥%80), sayı oynamaz | sahte hareket |
+| 6 | **Plan adımı:** oyuncu yoldan sonra plan vermesi gerektiğini ipucu sormadan bulur ve planı ≤2 dk içinde gönderir | ≥3/5 | ≥3/5 "neden bina çıkmadı"da takılır (ipucu/akış yetersiz) |
+| 7 | **Plansız arazi:** yol çizip plan vermeyen oyuncu | "plan yok" gerekçesini okur (≥%80) | "oyun bozuk/bekliyor" yorumu |
+Otomatik karşılıklar (qa-engineer): 5 tohumlu çift senaryo, kayıt/yükleme sonrası N tick hash eşit, GOLDEN_A/B (`enabled=false`) değişmez, oynanabilirde yeni tabanlı hash tekrar oynatmada eşit.
+Test senaryoları: **olumlu** yol + plan -> tetikleyiciden ≤40 gün içinde ≥1 parsel `approved`, etken `source_ref` plan komutu ve yol komutu. **Olumsuz 1** yol var plan yok -> tüm boş parsellerde `zoning.unplanned` reddi, bina 0, kapasite +N. **Olumsuz 2** plan var yol/kapasite yok -> `infra` reddi, bina yok. **Uç** plan meclis yolunda reddedilir -> `plan_rejected`, yeniden teklif edilebilir; yol geri alınır -> `stalled`.
 
-## 6. Parametre tablosu (hepsi ÇM, test fikri)
+## 7. Parametre tablosu (hepsi ÇM, test fikri)
 | Parametre | Öneri | Gerekçe / test |
 |---|---|---|
-| `road_priority_radius_m` (R) | 150 | Ölçüm tablosundaki "yola bitişik" eşiği; K=0 ve R değişince gözlem 2 |
-| `road_priority_max_parcels` (K) | 12 | Q-016 imar testi 8 parsel; hız/maliyet dengesi; tick maliyeti ölçülür |
-| `infra_units_per_km` | §3 formülü | Gözlem 1: ilk yol ≥1 ama hepsini değil açsın |
-| başlangıç boş kapasite (yol bölgesi) | dar | `infra_headroom_pm` 300 yerine yola bağlı değer |
-| `land_share_pm` | 250 | Net getiri > 0 ama faizi aşmayan aralık; 5 tohumda onay oranı %20-80 |
-| `tax_rate_pm`, `public_cost_share_pm`, `premium_pm` | yer tutucu, kullanıcı kararı | Q-022 |
-| başlangıç oyun hızı | "hızlı" | Gözlem 2; görünüm ayarı |
+| `unplanned_land.enabled` | varsayılan false; oynanabilir true | altın korunumu; iki durumda kontrol testi |
+| `road_priority_radius_m` (R) / `max_parcels` (K) | 150 / 12 | gözlem 2; tick maliyeti ölçülür |
+| `plan_max_parcels_per_proposal` | 40 | UI/oylama yükü; gözlem 6 |
+| `requires_council` (zoning.propose) | oynanabilirde false ("meclis yok"), bayrakla true | Q-014 AÇIK; iki yol da test |
+| `infra_units_per_km` | §4 formülü | gözlem 1 |
+| başlangıç boş kapasite (yol bölgesi) | dar (pay %30 yerine bölgeye bağlı) | `infra_headroom_pm` 300 yerine; gözlem 1 |
+| `land_share_pm` | 250 | 5 tohumda onay %20-80 |
+| `tax_rate_pm`, `public_cost_share_pm`, `premium_pm`, başlangıç kasası | yer tutucu | Q-022 (kısmen D-010), Q-003 |
+| başlangıç oyun hızı | "hızlı" | gözlem 2 |
 
-## 7. Açık sorular
-Q-020 tempo hedefi · Q-021 boş arazi imarı · Q-022 bütçe/kamulaştırma ilk sürümü · Q-017 yıkım kuralı · Q-014 meclis onayı · Q-003 para birimi. Hiçbiri başlangıç noktasını (Orven vs diğer, Q-015/D-002) önceden seçmez.
+## 8. Açık sorular
+- ~~Q-023~~ "Zoomlarda" aslında "zone'larda" (D-010 düzeltmesi): oyuncu imar bölgesi (zone) seçerek parsellerin ne olacağını belirler; zoom ile ilgisi yok.
+- **Q-024** İmar planı teklifinin içeriği ve önizlemesi ("ne kadar iyi şey olacak").
+- Q-014 meclis onayı (AÇIK; "meclis" ifadesi D-010'da geçti ama zorunluluk açıkça söylenmedi) · Q-017 yıkım · Q-003 para birimi · Q-015/D-002 başlangıç noktası.
+- Q-020/Q-021/Q-022 D-010 ile yanıtlandı (kayıtları güncellendi).

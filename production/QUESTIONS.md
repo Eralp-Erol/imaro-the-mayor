@@ -97,20 +97,33 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Recommendation: 1A (itirazı doğrudan karşılar, ada görüntüsünü yapı gereği engeller), 2A (aynı kıyı/yol geometrisini ve sanat gramerini garanti eder, WLD-01/VIS-01), 3C (istem dışı mod değişimi yok), 4A (sokak hayatı okunur kalır; en pahalı yakın kademeler M2'den çıkar; street perf tabanı zaten bütçe sınırında), 5A.
 - Meanwhile: tüm sınırlar veri dosyasında ÇALIŞMA DEĞERİ (öneri değerleri: tavan 18 km, alt sınır 50 m / 12°, kenar payı 1,5 km); "kadraj dünya içinde" kuralı teknik karar olarak (ADR-0007) uygulanır; açılış ve Home başlangıç ilçesine (`start_district_id`, D-002); harita modu yapılırsa aynı WorldData'dan ve nötr görünümle; hiçbir değer kanon gibi yazılmaz. Yanıt yalnız veri değerlerini ve harita görünümünü değiştirir; kullanıcının sözleri `design/decisions/` altına kaydedilir.
 
-### Q-020 · Yoldan sonra ilk bina ne kadar sürede çıksın? (status: open — engellemiyor)
+### Q-020 · Yoldan sonra ilk bina ne kadar sürede çıksın? (status: answered → D-010: A + hızlı zaman; uygulama T-043B)
 - Context: D-008 ilk 5 dakika. Ölçüm: 1 sim tick = 1 gün; hızlar normal 1 / hızlı 4 / en hızlı (demo) 16 gün/sn. Yol sonrası bina ~330 gün = normal hızda 5,5 dk, hızlıda 82 sn, demoda 21 sn. Ayrıntı: `design/specs/core-loop-v0.md` §2.
 - Options: A) Yol sonrası yakındaki boş parseller öncelikli değerlendirilsin; hedef ilk inşaat ≤40 gün, ilk bina ≤100 gün (oyun hızı "hızlı" ile ~25 sn). B) Yalnız tarama sıklığı artsın (kare maliyeti artar, yine rastgele bekleme). C) Yalnız zaman hızı artsın (gecikme gizlenir, SIM-08 etkisi zayıflar).
 - Recommendation: A + oynanabilirde başlangıç hızı "hızlı"; yatırım yine gelmeyebilir (SIM-07), yalnız beklemenin kendisi çıkarılır.
 - Meanwhile: sayılar veri; hiçbir şey uygulanmaz.
 
-### Q-021 · Boş arazinin ilk imarını kim verir? (status: open — engellemiyor)
+### Q-021 · Boş arazinin ilk imarını kim verir? (status: answered → D-010: oyuncu imar planı teklifi sunar, çevreden türetme YOK; uygulama T-043A; ayrıntı Q-023/Q-024)
 - Context: yatırımcı imarsız parselde `zoning` ile reddeder; "yol çiz, bina çıksın" akışında imar adımı yok. T0 boş parsel imarının sim'e aktarımı bugün doğrulanmadı (`core-loop-v0.md` §3).
 - Options: A) T0 başlangıç durumu: boş parselin imarı çevredeki mevcut yapıların çoğunluk kullanımından türetilir (oyuncu adımı yok). B) Oyuncu önce imar verir (akış iki adım: imar + yol; CAN-05 ile tam uyumlu). C) Yol çizilen her yer otomatik karma.
 - Recommendation: A (D-008 akışına uyar; imar değişikliği oyuncu aracı olarak kalır).
 - Meanwhile: türetme kuralı veri olarak önerilir, uygulanmaz.
 
-### Q-022 · Bütçe ve kamulaştırmanın ilk sürümü (status: open — engellemiyor)
+### Q-022 · Bütçe ve kamulaştırmanın ilk sürümü (status: answered → D-010: önce gösterge bütçe, kamulaştırma sonra; kısıt/bedel/yıkım hâlâ AÇIK; uygulama T-043C, T-042b)
 - Context: yol maliyeti "henüz kurulmadı"; D-009 kamulaştırma hedefi; Q-017 (yıkım kuralı) AÇIK; Q-003 para birimi AÇIK.
 - Options: A) Önce gösterge bütçe (vergi geliri + yol maliyeti görünür, kasa kısıt değil), kamulaştırma sonraki adım (T-042b). B) Bütçe kısıt olsun (kasa yetmezse yol reddedilir), kamulaştırma sonra. C) Bütçe + kamulaştırma birlikte.
 - Recommendation: A (ilk 5 dakikayı bozmadan sayıyı görünür kılar; kısıt eklemek ayrı denge kararıdır).
 - Meanwhile: yol maliyeti "henüz kurulmadı" gösterilmeye devam eder; yıkım uygulanmaz.
+
+### Q-023 · "Zoomlarda belirleyebilmeliyim" ne demek? (status: answered → D-010 düzeltmesi: "zoom" değil "zone'lar" demişti; imar bölgesi seçerek belirler)
+- Context: D-010 soru 2, kullanıcının sözü: "…parselleri ne olacağına da karar verebilmeyim yani böyle Zoomlar belirleyebilmeliyim…". Anlamı belirsiz; ajanlar yorumlamadı. İmar planı teklifinin ÇİZİM/SEÇİM biçimini etkiler (`core-loop-v0.md` §2, T-043A).
+- Options: A) Ölçeğe göre ayrıntı: uzaktan bölge/blok seçip tek planla (ör. "bu bölge konut"), yakından tek parsele karar; plan her ölçekte aynı dünya verisinden. B) Yalnız parsel seçimi; zoom sadece neyi gördüğünü değiştirir (bilgi katmanı), seçim biçimi değişmez. C) Zoom düzeyine göre plan ayrıntısı artsın (uzakta yalnız genel yön, yakında yoğunluk/kat/kullanım karışımı).
+- Recommendation: A (kanondaki tek dünya/ölçek sözleşmesine uyar, WLD-01; toplu teklif zaten komut başına parsel listesi).
+- Meanwhile: T-043A mevcut parsel seçimi ile çalışır, toplu seçim üst sınırı veri; hiçbir zoom bağlı seçim kurulmaz.
+
+### Q-024 · İmar planı teklifi ne içersin ve "ne kadar iyi şey olacak" nasıl görünsün? (status: answered → D-010: kullanım + yoğunluk, yalnız hesaplanabilir sayılar)
+- Context: D-010: oyuncu plan sunar, "ne kadar iyi şey olacak vesaire". Plan içeriği ve önizleme derinliği T-043A UI'sını ve sim sorgusunu belirler (CAN-05, SIM-12).
+- Options: A) Plan = kullanım + yoğunluk; önizleme yalnız hesaplanabilir sayılar (potansiyel birim, kapasite yükü, hangi kesim kazanır/kaybeder), "iyi olacak" iddiası yok. B) Yalnız kullanım etiketi, önizleme yok. C) Parsel başına karışım (konut/dükkân oranı, kat sınırı) ve ayrıntılı tahmin.
+- Recommendation: A (mevcut `zoning.propose` alanlarıyla uyumlu, sahte sayı yok; C sonra).
+- Meanwhile: v0 = A; sim'de karşılığı olmayan önizleme alanı "henüz kurulmadı".
+
