@@ -45,7 +45,8 @@ Kullanıcı teknik olmayan sahip/creative director'dır; ajans müşterisi deği
 - **Hafif süreç:** küçük/tek alanlı işte görev dosyası, director incelemesi ve bağımsız QA zorunlu değil (satır log + kısa not yeter). `verify quick` commit öncesi, `full` milestone/teslimde; her ara adımda 11-17 dk beklenmez. Director/QA kapıları büyük teslimde veya kullanıcı isterse.
 - **Korunanlar (pazarlıksız kalır):** kanon koruması, determinizm/simülasyon testleri, CAN-03, sahte HUD sayısı yok, push/geri alınamaz git kullanıcı onayıyla.
 - **Karar kaydı:** kullanıcı soru kartı/sohbetle karar verirse `design/decisions/D-NNN`'e kendi sözleriyle yaz; ajanlar kullanıcı adına karar yazmaz.
-- Açık: hangi kararları sormadan vereceğim ve kullanıcının "ilk 5 dakikada ne yapmak istiyorum" cevabı henüz alınmadı; alınınca bu bölüme eklenecek.
+- İlk 5 dakika (D-008, 2026-10-30): yol çiz -> yatırımcılar bina yapsın -> halk tepki versin.
+- Açık: hangi kararları sormadan vereceğim henüz sorulmadı; alınınca bu bölüme eklenecek.
 
 ## İş akışı
 
