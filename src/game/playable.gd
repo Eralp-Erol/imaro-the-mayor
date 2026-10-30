@@ -40,6 +40,8 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --t47-send=N     (yakalama) yukarıdaki akışta öneriyi gönderir ve N gün ilerletir (sonuç/durum satırı için).
 ##   --dev-notes      alt metne geliştirici notlarını (T0 aktarımı, olay sayacı, son eylem) ekler; yoksa yalnız
 ##                    kısa kontrol yardımı.
+##   --inspect-parcel=ID|m2  (yakalama; m2 = --m2-advance demo parseli) parseli seçip denetçiyi açar (T-041);
+##                    kamera o parsele odaklanır, bant --distance ile seçilir (sokak/mahalle/ilçe).
 ##   --m2-open-results  "Döngü sonucu" panelini (HUD) başlangıçta açar (yakalama için).
 
 const SETTLEMENT_PATH := "res://data/world/ismeral/settlement.json"
@@ -61,7 +63,7 @@ const DEV_NOTE := "T0 stok sim'e aktarıldı. Sim'in yeni gelişimi (inşaat kad
 const WARMUP_VEG_WAIT_S := 4.0
 ## Isınma bu dev argümanlarından biri varsa atlanır (yakalama/ölçüm kareleri örtü görmesin, kamera oynamasın).
 const WARMUP_SKIP_ARGS: Array[String] = ["no-view-warmup", "shot", "quit-after", "preset", "sweep", "heading",
-		"pitch", "distance", "hide", "m2-advance", "m2-focus-new", "t47-flow"]
+		"pitch", "distance", "hide", "m2-advance", "m2-focus-new", "t47-flow", "inspect-parcel"]
 
 
 var sim_stats: Dictionary = {}
@@ -87,6 +89,7 @@ var _m2_target: int = -1
 var _m2_targets: PackedInt64Array = PackedInt64Array()
 var _decisions: DecisionPanels = null
 var _m2_results: M2Results = null
+var _inspector: InspectorHost = null
 var _selected_parcel_id: int = -1
 var _acc_ms: float = 0.0
 var _acc_n: int = 0
@@ -138,6 +141,9 @@ func _ready() -> void:
 	_on_hud_ready()
 	_m2_dev_setup()
 	_t47_dev_setup()
+	if _args.has("inspect-parcel") and _inspector != null:
+		var want := str(_args["inspect-parcel"])
+		_dev_inspect(_m2_target if want == "m2" else int(want))
 	_start_vegetation()
 	_apply_perf_flags()
 	sim_stats["sim_setup_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
@@ -452,6 +458,10 @@ func _on_hud_ready() -> void:
 	_m2_results = M2Results.attach(_hud, _facade, _decisions)
 	if _args.has("m2-open-results"):
 		_m2_results.open()
+	# T-041: haritada seçim parsel/bölge denetçisini açar; imar önerisi denetçideki fiilden (veya Z) açılır.
+	_inspector = InspectorHost.attach(_hud, _facade, _m2_results.open_reason, _open_zoning_for)
+	_inspector.set_band(_camera.scale_band)
+	_camera.scale_band_changed.connect(_inspector.set_band)
 
 
 ## Dev argümanları (üst nota bakın). Yalnız komut satırında verilirse çalışır.
@@ -755,10 +765,34 @@ func _on_select_requested(screen_pos: Vector2) -> void:
 	var pid := _net.parcel_id_at(float(ground["x"]), float(ground["z"]))
 	if pid <= 0:
 		_selected_parcel_id = -1
+		if _inspector != null:
+			_inspector.select_parcel(-1)
 		return
 	_selected_parcel_id = pid
-	_decisions.open_zoning(PackedInt64Array([pid]))
+	if _inspector != null:
+		_inspector.select_parcel(pid)
 	print("PLAYABLE_SELECT parcel=%d" % pid)
+
+
+## Denetçideki "İmar önerisi ver" fiili: imar akışı seçili parselle açılır (öneri yine onay adımıyla gönderilir).
+func _open_zoning_for(parcel_id: int) -> void:
+	_selected_parcel_id = parcel_id
+	_decisions.open_zoning(PackedInt64Array([parcel_id]))
+
+
+## `--inspect-parcel=<id>` (dev, yakalama): oyuncunun tıklama yolunun sonucunu taklit eder (seçim -> denetçi).
+## Kamerayı parsele odaklar; ham yok olan kimlik denetçide "bulunamadı" durumunu gösterir.
+func _dev_inspect(parcel_id: int) -> void:
+	var wp: WorldParcel = _net.parcels.get(parcel_id)
+	if wp != null:
+		var st := _camera.target_state()
+		st.focus_x = wp.centroid.x
+		st.focus_z = wp.centroid.y
+		_camera.apply_state(st, true)
+		_apply_camera_overrides(_args)
+	_selected_parcel_id = parcel_id
+	_inspector.select_parcel(parcel_id)
+	print("PLAYABLE_INSPECT parcel=%d" % parcel_id)
 
 
 ## Demo imar önerisi: tıklamayla seçili parsel, yoksa `targets` (dev yolu), yoksa en yakın boş uygun parsel.

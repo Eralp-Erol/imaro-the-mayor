@@ -607,5 +607,20 @@
 	"m2.political.intensity": "Şiddet {value}",
 	"m2.political.cause": "Konu: {refs}",
 	"m2.political.more": "{n} grup daha tepki veriyor",
-	"m2.council.line": "Meclis: {open} açık oylama, {done} sonuçlanan"
+	"m2.council.line": "Meclis: {open} açık oylama, {done} sonuçlanan",
+	"inspector.empty_hint": "Haritada bir parsele tıklayın. Kararı, gerekçesini, inşaatı ve sonucu burada okursunuz.",
+	"inspector.missing": "Parsel {id} sim verisinde bulunamadı",
+	"inspector.missing_hint": "Başka bir parsel seçin.",
+	"inspector.band.street": "Sokak ölçeği · bölge {code} · parsel ayrıntısı",
+	"inspector.band.neighborhood": "Mahalle ölçeği · bölge {code} · özet",
+	"inspector.band.district": "İlçe ölçeği · bölge {code} · bölge özeti",
+	"inspector.step.reaction": "4 · Grup tepkisi",
+	"inspector.factors": "Kararı belirleyen başlıca etkenler",
+	"inspector.reactions.none": "Bu parsele bağlı grup tepkisi kaydı yok",
+	"inspector.reactions.past": "{date}: {text}",
+	"inspector.since_start": "Simülasyonun başından beri",
+	"inspector.selected": "Seçili parsel",
+	"inspector.zoom_hint": "Parsel ayrıntısı ve etkenler için sokak ölçeğine yakınlaşın.",
+	"inspector.land_value.unset": "Henüz belirlenmedi",
+	"inspector.action.zoning": "İmar önerisi ver"
 }
