@@ -22,6 +22,12 @@ const REJECT_INVALID_TARGET := &"command.reject.invalid_target"
 ## Durum: önkoşul tutmuyor (örn. aynı konuda bekleyen oylama var).
 const REJECT_PRECONDITION := &"command.reject.precondition"
 
+## v1.3 (ADR-0005 Ek E): yol komutuna özgü ret anahtarı ailesi. Bu önekli anahtar ret anahtarının KENDİSİdir
+## (`public_work.reject.{too_short, too_long, water, slope, not_connected, crosses_parcels, duplicate,
+## outside_jurisdiction, busy, nothing_to_undo, bad_class}`; kümeyi world hattı büyütebilir, önek sabittir).
+const REJECT_PUBLIC_WORK_PREFIX := "public_work.reject."
+const REJECT_NOTHING_TO_UNDO := &"public_work.reject.nothing_to_undo"
+
 var command_id: int = SimContract.NO_ID
 var kind: StringName = &""
 var status: StringName = STATUS_REJECTED

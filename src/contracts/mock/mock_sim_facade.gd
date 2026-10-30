@@ -28,6 +28,9 @@ var _reasons: Array[ReasonRecord] = []
 var _queue: Array[Dictionary] = []  # {"id": int, "command": SimCommand}
 var _pending: Array[Dictionary] = []  # {"due": int, "order": int, "effect": Dictionary, "ctx": Dictionary}
 var _next_command_id: int = 1
+## v1.3 · Uygulanmış oyuncu yolları (LIFO): {"work": PublicWorkView}. Mock geometri hesaplamaz; bölge birimleri senaryo
+## kuralının `preview.regions` verisidir.
+var _roads: Array[PublicWorkView] = []
 var _order: int = 0
 var _global_ctx: Dictionary = {"command_id": SimContract.NO_ID, "labels": {}}
 ## v1.2 · Parsel değişim günlüğü (mock: sınırsız, kayıt yüklemesi yok): tick ve kimlik paralel, tick artan.
@@ -96,7 +99,7 @@ func validate_command(command: SimCommand) -> CommandResult:
 	var problem := _precheck(command)
 	if not problem.is_empty():
 		return CommandResult.rejected(command, problem["reason_key"], problem["args"], _tick, provenance())
-	return CommandResult.accepted(command, CommandResult.STATUS_VALID, SimContract.NO_ID, _tick, provenance())
+	return _accepted(command, CommandResult.STATUS_VALID, SimContract.NO_ID)
 
 
 func submit_command(command: SimCommand) -> CommandResult:
@@ -106,7 +109,7 @@ func submit_command(command: SimCommand) -> CommandResult:
 	var id := _next_command_id
 	_next_command_id += 1
 	_queue.append({"id": id, "command": SimCommand.from_dict(command.to_dict())})
-	return CommandResult.accepted(command, CommandResult.STATUS_QUEUED, id, _tick, provenance())
+	return _accepted(command, CommandResult.STATUS_QUEUED, id)
 
 
 func snapshot() -> SimSnapshot:
@@ -158,6 +161,14 @@ func parcel_changes_since(tick: int) -> ParcelChangeFeed:
 	ids.sort()
 	feed.ids = PackedInt64Array(ids)
 	return feed
+
+
+## v1.3 · Uygulanmış yollar (eskiden yeniye).
+func public_works() -> Array[PublicWorkView]:
+	var out: Array[PublicWorkView] = []
+	for w in _roads:
+		out.append(PublicWorkView.from_dict(w.to_dict()))
+	return out
 
 
 func events_since(after_seq: int, max_count: int = 0) -> Array[SimEvent]:
@@ -221,6 +232,8 @@ func _precheck(command: SimCommand) -> Dictionary:
 
 func _state_problem(command: SimCommand) -> Dictionary:
 	match command.kind:
+		SimCommand.KIND_PUBLIC_WORK_ROAD, SimCommand.KIND_PUBLIC_WORK_UNDO_LAST:
+			return _public_work_problem(command)
 		SimCommand.KIND_ZONING_PROPOSE:
 			for id: int in command.params["parcel_ids"]:
 				if not _parcels.has(id):
@@ -235,6 +248,52 @@ func _state_problem(command: SimCommand) -> Dictionary:
 				if _budget.line(key) == null:
 					return _problem(CommandResult.REJECT_INVALID_TARGET, {"ref": key})
 	return {}
+
+
+## v1.3 · Yol komutları: ret senaryo kuralından (`reject.reason_key` `public_work.reject.*`), geri alma durumdan.
+func _public_work_problem(command: SimCommand) -> Dictionary:
+	if command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST:
+		if _roads.is_empty():
+			return _problem(CommandResult.REJECT_NOTHING_TO_UNDO, {})
+		return {}
+	var reject: Variant = _match_rule(command).get("reject")
+	if reject is Dictionary and String(SimContract.to_name(reject.get("reason_key"))).begins_with(
+			CommandResult.REJECT_PUBLIC_WORK_PREFIX):
+		return _problem(SimContract.to_name(reject["reason_key"]), (reject.get("args", {}) as Dictionary).duplicate(true))
+	return {}
+
+
+## `valid`/`queued` sonucu: yol komutunda ön izleme `args` (uzunluk komut noktalarından düz aritmetik; bölge birimleri
+## senaryo verisi); geri almada kaldırılacak yol. Mock geometri hesaplamaz.
+func _accepted(command: SimCommand, status: StringName, id: int) -> CommandResult:
+	var result := CommandResult.accepted(command, status, id, _tick, provenance())
+	if command.kind == SimCommand.KIND_PUBLIC_WORK_ROAD:
+		var regions: Dictionary = (_match_rule(command).get("preview", {}) as Dictionary).get("regions", {})
+		var length_cm := _length_cm(command.params["points_cm"])
+		result.args = {"length_cm": length_cm, "length_m": roundi(length_cm * 0.01),
+			"regions": SimContract.to_args(regions), "units_total": _sum(regions),
+			"cost_available": false, "cost_reason_key": "public_work.cost.not_built"}
+	elif command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and not _roads.is_empty():
+		var last := _roads[_roads.size() - 1]
+		result.args = {"removed_command_id": last.command_id, "length_cm": last.length_cm,
+			"regions": last.region_units.duplicate()}
+	return result
+
+
+static func _length_cm(points_cm: PackedInt64Array) -> int:
+	var total := 0.0
+	var i := 0
+	while i + 3 < points_cm.size():
+		total += Vector2(points_cm[i], points_cm[i + 1]).distance_to(Vector2(points_cm[i + 2], points_cm[i + 3]))
+		i += 2
+	return roundi(total)
+
+
+static func _sum(units: Dictionary) -> int:
+	var total := 0
+	for k: Variant in units:
+		total += SimContract.to_int(units[k])
+	return total
 
 
 static func _problem(key: StringName, args: Dictionary) -> Dictionary:
@@ -255,6 +314,7 @@ func _apply_command(id: int, command: SimCommand) -> void:
 		_emit({"kind": SimEvent.KIND_COMMAND_REJECTED, "message_key": problem["reason_key"],
 			"args": problem["args"], "subjects": [command_ref]}, ctx)
 		return
+	_apply_public_work(id, command, ctx)
 	var subjects := _apply_semantics(command)
 	subjects.append(command_ref)
 	_emit({"kind": SimEvent.KIND_COMMAND_APPLIED, "message_key": &"event.command.applied",
@@ -262,6 +322,40 @@ func _apply_command(id: int, command: SimCommand) -> void:
 	var effects: Array = rule.get("effects", [])
 	for effect: Dictionary in effects:
 		_schedule(_tick + SimContract.to_int(effect.get("after_ticks")), effect, ctx)
+
+
+## v1.3 · Yol uygulaması: gerçek sim sırası (işleyici olayı, sonra `command.applied`). Mock geometri hesaplamaz.
+func _apply_public_work(id: int, command: SimCommand, ctx: Dictionary) -> void:
+	var command_ref := String(SimContract.ref(SimContract.REF_COMMAND, id))
+	if command.kind == SimCommand.KIND_PUBLIC_WORK_ROAD:
+		var w := PublicWorkView.new()
+		w.provenance = provenance()
+		w.work_id = _roads.size() + 1
+		w.command_id = id
+		w.tick = _tick
+		w.road_class = command.params["road_class"]
+		w.length_cm = _length_cm(command.params["points_cm"])
+		w.region_units = SimContract.to_args((_match_rule(command).get("preview", {}) as Dictionary).get("regions", {}))
+		_roads.append(w)
+		_emit_road_event(SimEvent.KIND_PUBLIC_WORK_BUILT, &"event.road.built", command_ref, w, {}, ctx)
+	elif command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and not _roads.is_empty():
+		var removed: PublicWorkView = _roads.pop_back()
+		_emit_road_event(SimEvent.KIND_PUBLIC_WORK_REMOVED, &"event.road.removed", command_ref, removed,
+			{"removed_command_id": removed.command_id}, ctx)
+
+
+func _emit_road_event(kind: StringName, message_key: StringName, command_ref: String, w: PublicWorkView,
+		extra: Dictionary, ctx: Dictionary) -> void:
+	var subjects: Array = [command_ref]
+	var codes: Array = w.region_units.keys()
+	codes.sort()
+	var args := {"road_class": w.road_class, "length_cm": w.length_cm, "length_m": roundi(w.length_cm * 0.01),
+		"units_total": _sum(w.region_units)}
+	args.merge(extra)
+	for code: String in codes:
+		subjects.append("%s.%s" % [SimContract.REF_REGION, code])
+		args["units.%s" % code] = w.region_units[code]
+	_emit({"kind": kind, "message_key": message_key, "args": args, "subjects": subjects}, ctx)
 
 
 ## Komutun senaryodan bağımsız genel anlamı; etkilenen varlık referanslarını döner.

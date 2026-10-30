@@ -5,7 +5,9 @@ extends RefCounted
 ## koşullarıdır; çıktı ReasonRecord'a doğrudan verilecek etkenler, eşik, puan ve sonuç kodudur. Formüller ve gerekçeler:
 ## design/specs/economy-core-v0.md §4. Tüm sayılar `EconomyConfig`'ten gelir.
 ##
-## Girdi sözlüğü (hepsi int, `zone_ok` bool): use, zone_ok, units, land_value, capital, infra_cap, infra_load (mevcut +
+## Girdi sözlüğü (hepsi int, `zone_ok` bool; isteğe bağlı `infra_source` StringName: kapasite etkeninin
+## `source_ref`i): use,
+## zone_ok, units, land_value, capital, infra_cap, infra_load (mevcut +
 ## boru hattı), demand_after_pm (proje arzı eklenmiş talep endeksi), rent_mult_pm (bugünkü kira çarpanı), sentiment
 ## (tohumlu gürültü, -sentiment_range..+sentiment_range), threshold_shift (yatırımcı risk istahı).
 ## Çıktı: {factors: [{name, value, weight, is_estimate}], threshold, score, positive, code (EconomyState.CODE_*),
@@ -45,7 +47,7 @@ static func decide(cfg: EconomyConfig, inp: Dictionary) -> Dictionary:
 		_factor(F_DEMAND, demand_value, cfg.p("w_demand"), false),
 		_factor(F_RETURN, return_value, cfg.p("w_expected_return"), true),
 		_factor(F_COST, cost_value, cfg.p("w_construction_cost"), true),
-		_factor(F_INFRA, infra_value, cfg.p("w_infrastructure"), false),
+		_factor(F_INFRA, infra_value, cfg.p("w_infrastructure"), false, StringName(inp.get("infra_source", &""))),
 		_factor(F_FINANCING, financing_value, cfg.p("w_financing"), false),
 		_factor(F_ZONING, zoning_value, cfg.p("w_zoning"), false),
 		_factor(F_SENTIMENT, int(inp["sentiment"]), cfg.p("w_sentiment"), true),
@@ -62,8 +64,13 @@ static func decide(cfg: EconomyConfig, inp: Dictionary) -> Dictionary:
 	}
 
 
-static func _factor(name: StringName, value: int, weight: int, is_estimate: bool) -> Dictionary:
-	return {"name": name, "value": value, "weight": weight, "is_estimate": is_estimate}
+## `source_ref` yalnız doluysa yazılır (T-042: kapasiteyi artıran yol komutu; yoksa kayıt eskisiyle bit-bit aynı kalır).
+static func _factor(name: StringName, value: int, weight: int, is_estimate: bool,
+		source_ref: StringName = &"") -> Dictionary:
+	var factor := {"name": name, "value": value, "weight": weight, "is_estimate": is_estimate}
+	if source_ref != &"":
+		factor["source_ref"] = source_ref
+	return factor
 
 
 ## Olumlu: approved. Olumsuz: önce engel etkenleri (imar > altyapı > finansman); engel yoksa talep/getiri katkısı

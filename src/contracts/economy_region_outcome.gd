@@ -29,6 +29,10 @@ var sim_commercial_units: int = 0
 var demand_residential_pm: int = 0
 var demand_commercial_pm: int = 0
 var infrastructure_load_pm: int = 0
+## v1.3 (T-042): bölgenin etkin altyapı kapasitesi (birim) ve bunun oyuncu yollarından gelen kısmı. `METRIC_KEYS`/
+## `metrics()` DIŞINDADIR (akış değil, durum); eski belgelerde yok -> 0.
+var infra_capacity_units: int = 0
+var infra_from_public_works_units: int = 0
 
 
 ## Sayısal alanların {anahtar: int} sözlüğü (`METRIC_KEYS`).
@@ -45,6 +49,8 @@ func metrics() -> Dictionary:
 func to_dict() -> Dictionary:
 	var d := metrics()
 	d["region_code"] = region_code
+	d["infra_capacity_units"] = infra_capacity_units
+	d["infra_from_public_works_units"] = infra_from_public_works_units
 	return d
 
 
@@ -62,4 +68,6 @@ static func from_dict(d: Dictionary) -> EconomyRegionOutcome:
 	r.demand_residential_pm = SimContract.to_int(d.get("demand_residential_pm"))
 	r.demand_commercial_pm = SimContract.to_int(d.get("demand_commercial_pm"))
 	r.infrastructure_load_pm = SimContract.to_int(d.get("infrastructure_load_pm"))
+	r.infra_capacity_units = SimContract.to_int(d.get("infra_capacity_units"))
+	r.infra_from_public_works_units = SimContract.to_int(d.get("infra_from_public_works_units"))
 	return r

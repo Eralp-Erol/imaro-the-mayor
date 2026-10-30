@@ -1,0 +1,10 @@
+{
+	"_header": "T-042 oyuncu yolu isi: CALISMA MODELI sayilari (F05-C: ayarlanabilir, kanon DEGIL). Etki formulu (D-009: yol bolgenin altyapi kapasitesini arttirir): bolgeye dusen kapasite birimi = yolun o bolgedeki uzunlugu (km) x classes.<sinif>.infra_units_per_km, tamsayi, sifira dogru kesme. Birim, ekonomi cekirdeginin altyapi kapasitesi birimidir (data/sim/economy/economy_config.json infra_per_unit ile ayni olcek: 1 konut/ticaret birimi = 1 birim). Sinif listesi: oyuncunun cizebilecegi siniflar (data/world/ismeral/network.json player_roads.allowed_classes bunun ust kumesi olmali). Maliyet/butce: T-014 kurulu degil, para birimi Q-003 ACIK -> maliyet 'henuz kurulmadi', uydurma para yok. Sayilar systems-designer onayina kadar tahmindir.",
+	"classes": {
+		"local": {"infra_units_per_km": 100}
+	},
+	"cost": {
+		"available": false,
+		"reason_key": "public_work.cost.not_built"
+	}
+}

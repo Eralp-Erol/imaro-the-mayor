@@ -5,15 +5,17 @@ extends RefCounted
 ## - Sürüm `MAJOR.MINOR`: MINOR = geriye uyumlu ekleme (yeni isteğe bağlı alan, yeni komut/olay türü);
 ##   MAJOR = kaldırma/yeniden adlandırma/anlam değişikliği. Tüketici yalnız MAJOR eşitliğini şart koşar.
 ##   Sürüm notları: 1.1 (M2/T-040) ParcelView proje alanları + EconomyOutcomeView; 1.2 (T-045) ParcelView.decision*
-##   kalıcı karar özeti + SimFacade.parcel_changes_since/ParcelChangeFeed (ADR-0005 Ek D).
+##   kalıcı karar özeti + SimFacade.parcel_changes_since/ParcelChangeFeed (ADR-0005 Ek D); 1.3 (T-042) oyuncu yolu:
+##   `public_work.road/undo_last` komutları, `public_work.built/removed` olayları, `SimFacade.public_works()`/
+##   `PublicWorkView`, `EconomyRegionOutcome.infra_*` (ADR-0005 Ek E).
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 2
-const VERSION := "1.2"
+const VERSION_MINOR := 3
+const VERSION := "1.3"
 
 const FIXED_SCALE := 1000
 
@@ -30,6 +32,7 @@ const REF_EVENT := &"event"
 const REF_REASON := &"reason"
 const REF_VOTE := &"vote"
 const REF_BUDGET := &"budget"
+const REF_REGION := &"region"
 
 
 ## `version` bu sözleşmeyle uyumlu mu (aynı MAJOR, biçim `A.B`)?

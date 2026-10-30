@@ -9,7 +9,9 @@ extends SimFacade
 ## - Yazma yalnız komut: `submit_command` -> ortak şekil denetimi -> işleyici ön doğrulaması -> `Commands.submit`;
 ##   komut sonraki tick sınırında uygulanır, `command.applied/rejected` olayı üretilir. Sözleşme `command_id` =
 ##   Commands seq + 1 (kimlikler 1'den); reddedilen komut kimlik tüketmez.
-## - CAN-03: katalog beyaz listedir (`zoning.propose`, `budget.propose`); özel bina fiili yoktur ve eklenemez.
+## - CAN-03: katalog beyaz listedir (`zoning.propose`, `budget.propose`; v1.3: `public_work.road`,
+##   `public_work.undo_last`); özel bina fiili yoktur ve eklenemez. Yol komutları `attach_public_works` ile takılır
+##   (ağ + sim yol listesi + kayıt).
 ## - Kurulmamış sistemler (bütçe, meclis, grup tepkileri) `snapshot().extensions["x.sim.available.<bölüm>"] = false`
 ##   ve varsayılan boş DTO ile görünür; UI bölümü gizler / `*.not_built` yazar. Komutları gerekçeli reddedilir.
 ## - Hız sim durumu DEĞİLDİR (TickDriver'dadır, hash'e girmez).
@@ -43,6 +45,9 @@ var _economy: EconomySystem  # T-040: ekonomi kuruluysa salt okunur sorgular (il
 ## T-040: sim-geliştirmeli bitmiş birim önbelleği {"completions": int, "units": Array[PackedInt64Array]}. Türetilmiştir
 ## (durum/hash dışı); yalnız tamamlanma sayacı değişince yeniden hesaplanır, kayıt yüklenince silinir.
 var _sim_units_cache: Dictionary = {}
+## T-042: oyuncu yolu bağlamı (ağ + kurallar + sim verisi); `attach_public_works` ile takılır, yoksa yol komutları
+## kayıtsızdır.
+var _public_works: PublicWorksContext
 ## T-045: değişen-parsel sorgusunun durum kuşağı. Kayıt yüklenince artar (halka boşalır); durum/hash dışıdır.
 var _change_epoch: int = 0
 
@@ -79,6 +84,47 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
 	world["world_id"] = String(parcels.world_id())
 	world["parcel_count"] = parcels.parcel_count()
 	return impl
+
+
+## T-042 · Oyuncu yolu komutlarını (`public_work.road`, `public_work.undo_last`) bu facade'a takar: ağ, oyun katmanının
+## kurduğu AYNI `WorldNetwork`dur; sim onu yalnız tick sınırında değiştirir. Ağın delta'sı boş olmalı (yol listesi sim
+## durumunda yaşar; kayıt yüklemesi ağı ona eşitler). Başarısızsa false (push_error ya da çift kurulum).
+func attach_public_works(ctx: PublicWorksContext) -> bool:
+	if ctx == null or _public_works != null:
+		push_error("SimFacadeImpl: oyuncu yolu bağlamı yok ya da zaten takılı")
+		return false
+	if not ctx.tracks(_state):
+		push_error("SimFacadeImpl: ağın yol işlemleri sim durumundaki yol listesiyle tutarsız (boş olmalı)")
+		return false
+	for handler in ctx.handlers():
+		if not _sim.add_handler(handler):
+			return false
+	_public_works = ctx
+	return true
+
+
+## Takılı oyuncu yolu bağlamı (yoksa null). YALNIZ app katmanı/testler.
+func public_works_context() -> PublicWorksContext:
+	return _public_works
+
+
+## v1.3 · Ağa eklenmiş oyuncu yolları, eskiden yeniye (sim durumundan; değer kopyası).
+func public_works() -> Array[PublicWorkView]:
+	var out: Array[PublicWorkView] = []
+	var d := PublicWorksState.data(_state)
+	if d.is_empty():
+		return out
+	for work: Dictionary in d["works"]:
+		var v := PublicWorkView.new()
+		v.provenance = provenance()
+		v.work_id = work["id"]
+		v.command_id = work["command_id"]
+		v.tick = work["tick"]
+		v.road_class = StringName(work["road_class"])
+		v.length_cm = work["length_cm"]
+		v.region_units = SimContract.to_args(work["region_units"])
+		out.append(v)
+	return out
 
 
 # --- Kimlik / saat / hız ---
@@ -135,7 +181,7 @@ func validate_command(command: SimCommand) -> CommandResult:
 	var problem := _precheck(command)
 	if not problem.is_empty():
 		return CommandResult.rejected(command, problem["reason_key"], problem["args"], _state.tick, provenance())
-	return CommandResult.accepted(command, CommandResult.STATUS_VALID, SimContract.NO_ID, _state.tick, provenance())
+	return _accepted(command, CommandResult.STATUS_VALID, SimContract.NO_ID)
 
 
 func submit_command(command: SimCommand) -> CommandResult:
@@ -143,7 +189,7 @@ func submit_command(command: SimCommand) -> CommandResult:
 	if problem.is_empty():
 		var seq := Commands.submit(_state, command.kind, SimContract.canonical(command.params) as Dictionary)
 		if seq >= 0:
-			return CommandResult.accepted(command, CommandResult.STATUS_QUEUED, seq + 1, _state.tick, provenance())
+			return _accepted(command, CommandResult.STATUS_QUEUED, seq + 1)
 		problem = {"reason_key": CommandResult.REJECT_INVALID_VALUE, "args": {}}
 	return CommandResult.rejected(command, problem["reason_key"], problem["args"], _state.tick, provenance())
 
@@ -238,6 +284,8 @@ func economy_outcome() -> EconomyOutcomeView:
 		region.demand_residential_pm = int(row["demand_res_pm"])
 		region.demand_commercial_pm = int(row["demand_com_pm"])
 		region.infrastructure_load_pm = int(row["infra_load_pm"])
+		region.infra_capacity_units = int(row["infra_cap"])
+		region.infra_from_public_works_units = int(row["infra_bonus"])
 		o.regions.append(region)
 	return o
 
@@ -332,6 +380,12 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 		corrupt.error_code = &"corrupt"
 		corrupt.message = "Kayıt bozuk: %s." % economy_problem
 		return corrupt
+	var network_problem := _sync_network(result.state)
+	if not network_problem.is_empty():
+		var mismatch := SimSave.LoadResult.new()
+		mismatch.error_code = &"network_mismatch"
+		mismatch.message = "Kayıt yol ağıyla eşitlenemedi: %s." % network_problem
+		return mismatch
 	_state = result.state
 	_driver.bind_state(_state)
 	_retained_cache = {}
@@ -359,6 +413,23 @@ func simulation() -> Simulation:
 
 # --- İç ---
 
+## T-042: ağı kayıttaki yol listesine eşitler (`PublicWorksContext.sync_to`). Ağ takılı değilse kayıt yolsuz olmalı.
+## Hata metni ya da "". Hata halinde ağ eski durumundadır (eşitleme kendi geri alır).
+func _sync_network(target: GameState) -> String:
+	if _public_works == null:
+		return "" if not PublicWorksState.is_present(target) or PublicWorksState.work_count(target) == 0 \
+			else "kayıtta yol var ama bu oturumda yol ağı bağlı değil"
+	return _public_works.sync_to(target)
+
+
+func _accepted(command: SimCommand, status: StringName, id: int) -> CommandResult:
+	var result := CommandResult.accepted(command, status, id, _state.tick, provenance())
+	var handler := _sim.handler_for(command.kind)
+	if handler != null:
+		result.args = SimContract.to_args(handler.preview_args(_state, command.params))
+	return result
+
+
 ## Geçerliyse {}, değilse {"reason_key", "args"}.
 func _precheck(command: SimCommand) -> Dictionary:
 	if command == null:
@@ -369,7 +440,7 @@ func _precheck(command: SimCommand) -> Dictionary:
 	var handler := _sim.handler_for(command.kind)
 	if handler == null:
 		return {"reason_key": CommandResult.REJECT_UNKNOWN_KIND, "args": {"kind": String(command.kind)}}
-	var code := handler.validate(_state, command.params)
+	var code := handler.validate_submit(_state, command.params)
 	if code == &"":
 		return {}
 	var args := handler.reject_args(_state, command.params)

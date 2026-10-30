@@ -13,6 +13,15 @@ extends SimDto
 
 const KIND_ZONING_PROPOSE := &"zoning.propose"
 const KIND_BUDGET_PROPOSE := &"budget.propose"
+## v1.3 (T-042, ADR-0005 Ek E): belediye inşası ilk fiili. Oyuncu yolu yalnız KOŞULU (ağ + bölge altyapı kapasitesi)
+## değiştirir; özel bina doğurmaz (CAN-03).
+const KIND_PUBLIC_WORK_ROAD := &"public_work.road"
+const KIND_PUBLIC_WORK_UNDO_LAST := &"public_work.undo_last"
+## `points_cm` parametresi koordinat taşır (sıfır/negatif geçerli); kimlik dizisi kuralı (>= 1) burada uygulanmaz.
+## Çift sayıda eleman, en az iki nokta, en çok `MAX_ROAD_POINTS`; değerler ±`COORD_LIMIT_CM` içinde.
+const COORDINATE_PARAMS: Array[String] = ["points_cm"]
+const MAX_ROAD_POINTS := 16
+const COORD_LIMIT_CM := 100_000_000
 
 ## Tür → {"required": {param: TYPE_*}, "optional": {param: TYPE_*}}. Sayısal değerler ≥ 0 olmalıdır.
 const CATALOG := {
@@ -22,6 +31,14 @@ const CATALOG := {
 	},
 	&"budget.propose": {
 		"required": {"lines": TYPE_DICTIONARY},
+		"optional": {},
+	},
+	&"public_work.road": {
+		"required": {"points_cm": TYPE_PACKED_INT64_ARRAY, "road_class": TYPE_STRING_NAME},
+		"optional": {},
+	},
+	&"public_work.undo_last": {
+		"required": {},
 		"optional": {},
 	},
 }
@@ -51,6 +68,16 @@ static func budget_propose(lines: Dictionary) -> SimCommand:
 	return make(KIND_BUDGET_PROPOSE, {"lines": SimContract.to_name_dict(lines)})
 
 
+## v1.3 · İki uç (v0) ya da daha çok noktalı yol: `points_cm` = [x0, z0, x1, z1, ...] santimetre tamsayı.
+static func public_work_road(points_cm: PackedInt64Array, road_class: StringName) -> SimCommand:
+	return make(KIND_PUBLIC_WORK_ROAD, {"points_cm": points_cm, "road_class": road_class})
+
+
+## v1.3 · Son oyuncu yolunu geri al (LIFO).
+static func public_work_undo_last() -> SimCommand:
+	return make(KIND_PUBLIC_WORK_UNDO_LAST, {})
+
+
 static func is_forbidden_kind(command_kind: StringName) -> bool:
 	for prefix in FORBIDDEN_PREFIXES:
 		if String(command_kind).begins_with(prefix):
@@ -74,7 +101,8 @@ func validate_shape() -> Dictionary:
 		var expected: int = required.get(p, optional.get(p, TYPE_NIL))
 		if expected == TYPE_NIL:
 			return _reject(CommandResult.REJECT_UNKNOWN_PARAM, {"param": str(p)})
-		var problem := _param_problem(params[p], expected)
+		var problem := _coordinate_problem(params[p]) if COORDINATE_PARAMS.has(str(p)) \
+			else _param_problem(params[p], expected)
 		if not problem.is_empty():
 			return _reject(problem, {"param": str(p)})
 	return {}
@@ -117,6 +145,19 @@ static func _coerce_amounts(value: Dictionary) -> Dictionary:
 		var v: Variant = value[k]
 		out[SimContract.to_name(k)] = SimContract.to_int(v) if v is float and v == floorf(v) else v
 	return out
+
+
+# Koordinat dizisi: tip, çift sayıda eleman (>= 4), üst sınır, mutlak değer sınırı.
+static func _coordinate_problem(value: Variant) -> StringName:
+	if typeof(value) != TYPE_PACKED_INT64_ARRAY:
+		return CommandResult.REJECT_BAD_PARAM_TYPE
+	var coords: PackedInt64Array = value
+	if coords.size() < 4 or coords.size() % 2 != 0 or coords.size() > MAX_ROAD_POINTS * 2:
+		return CommandResult.REJECT_INVALID_VALUE
+	for c in coords:
+		if absi(c) > COORD_LIMIT_CM:
+			return CommandResult.REJECT_INVALID_VALUE
+	return &""
 
 
 # Parametre sorunu varsa ret anahtarı, yoksa "".

@@ -31,23 +31,26 @@ static func region_stats(state: GameState, cfg: EconomyConfig) -> Array[Dictiona
 	if d.is_empty():
 		return out
 	var regions: Dictionary = d["regions"]
-	for r in (regions["codes"] as PackedStringArray).size():
-		out.append(region_row(regions, r, cfg))
+	var codes: PackedStringArray = regions["codes"]
+	for r in codes.size():
+		out.append(region_row(regions, r, cfg, PublicWorksState.infra_bonus(state, codes[r])))
 	return out
 
 
-static func region_row(regions: Dictionary, r: int, cfg: EconomyConfig) -> Dictionary:
+## `infra_bonus`: oyuncu yollarının eklediği kapasite (T-042); `infra_cap` ETKİN kapasitedir (taban + bonus).
+static func region_row(regions: Dictionary, r: int, cfg: EconomyConfig, infra_bonus: int = 0) -> Dictionary:
 	var latent: int = regions["latent_hh"][r]
 	var res_built: int = regions["res_built"][r]
 	var com_built: int = regions["com_built"][r]
-	var infra_cap: int = regions["infra_cap"][r]
+	var infra_cap: int = int(regions["infra_cap"][r]) + infra_bonus
 	var load := EconomyMath.infra_load(cfg, regions, r)
 	return {
 		"code": StringName((regions["codes"] as PackedStringArray)[r]),
 		"latent_hh": latent, "housed_hh": mini(latent, res_built),
 		"res_built": res_built, "res_pipe": regions["res_pipe"][r],
 		"com_built": com_built, "com_pipe": regions["com_pipe"][r],
-		"infra_cap": infra_cap, "infra_load": load, "infra_load_pm": EconomyMath.ratio_pm(load, infra_cap),
+		"infra_cap": infra_cap, "infra_bonus": infra_bonus, "infra_load": load,
+		"infra_load_pm": EconomyMath.ratio_pm(load, infra_cap),
 		"income_pm": regions["income_pm"][r], "access_pm": regions["access_pm"][r],
 		"service_pm": regions["service_pm"][r],
 		"demand_res_pm": EconomyMath.region_demand_pm(cfg, regions, r, EconomyConfig.USE_RESIDENTIAL, 0),

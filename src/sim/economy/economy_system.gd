@@ -429,7 +429,8 @@ func _evaluate(state: GameState, d: Dictionary, i: int, command_id: int, starts_
 		"use": use, "zone_ok": not allowed.is_empty(), "units": units,
 		"land_value": (d["land_value"] as PackedInt64Array)[i],
 		"capital": (investors["capital"] as PackedInt64Array)[investor],
-		"infra_cap": (regions["infra_cap"] as PackedInt64Array)[r],
+		"infra_cap": _effective_cap(state, regions, r),
+		"infra_source": PublicWorksState.infra_source(state, _region_codes[r]),
 		"infra_load": EconomyMath.infra_load(_cfg, regions, r),
 		"demand_after_pm": EconomyMath.region_demand_pm(_cfg, regions, r, use, units),
 		"rent_mult_pm": EconomyMath.rent_mult_pm(current_demand, _cfg.p("rent_floor_pm"), _cfg.p("rent_cap_pm")),
@@ -554,10 +555,17 @@ func _progress_projects(state: GameState, d: Dictionary) -> void:
 				_tick_stalled(state, d, i)
 
 
-func _headroom(d: Dictionary, i: int) -> int:
+## Bölgenin ETKİN altyapı kapasitesi: taban sütunu (`regions.infra_cap`) + oyuncu yollarının eklediği (T-042,
+## `PublicWorksState.infra_bonus`; yol yoksa 0 => eski davranış). Sütuna YAZILMAZ: geri alma bonusu kendiliğinden
+## düşürür.
+func _effective_cap(state: GameState, regions: Dictionary, r: int) -> int:
+	return int((regions["infra_cap"] as PackedInt64Array)[r]) + PublicWorksState.infra_bonus(state, _region_codes[r])
+
+
+func _headroom(state: GameState, d: Dictionary, i: int) -> int:
 	var regions: Dictionary = d["regions"]
 	var r := _region_of[i]
-	return int((regions["infra_cap"] as PackedInt64Array)[r]) - EconomyMath.infra_load(_cfg, regions, r)
+	return _effective_cap(state, regions, r) - EconomyMath.infra_load(_cfg, regions, r)
 
 
 func _tick_planned(state: GameState, d: Dictionary, i: int) -> void:
@@ -574,7 +582,7 @@ func _tick_planned(state: GameState, d: Dictionary, i: int) -> void:
 
 
 func _tick_construction(state: GameState, d: Dictionary, i: int) -> void:
-	if _headroom(d, i) < 0:
+	if _headroom(state, d, i) < 0:
 		_change_construction(state, d, i, EconomyState.STAGE_STALLED, &"construction_stalled",
 			&"event.construction.stalled", -1000)
 		return
@@ -599,10 +607,10 @@ func _tick_construction(state: GameState, d: Dictionary, i: int) -> void:
 
 
 func _tick_stalled(state: GameState, d: Dictionary, i: int) -> void:
-	var headroom := _headroom(d, i)
+	var headroom := _headroom(state, d, i)
 	if headroom < 0:
 		return
-	var cap: int = (d["regions"]["infra_cap"] as PackedInt64Array)[_region_of[i]]
+	var cap := _effective_cap(state, d["regions"], _region_of[i])
 	var value := mini(_cfg.p("infra_bonus_max"), EconomyMath.ratio_pm(headroom, cap))
 	_change_construction(state, d, i, EconomyState.STAGE_UNDER_CONSTRUCTION, &"construction_resumed",
 		&"event.construction.resumed", value)
@@ -617,7 +625,7 @@ func _change_construction(state: GameState, d: Dictionary, i: int, new_stage: in
 	if reason_col[i] > 0:
 		parents.append(reason_col[i])
 	var reason_id := state.record_reason(StringName("actor.investor.%d" % owner_id), &"decision.investor.continue",
-		[{"name": InvestorDecision.F_INFRA, "value": infra_value, "weight": _cfg.p("w_infrastructure")}], 0, code,
+		[_continue_infra_factor(state, i, infra_value)], 0, code,
 		PackedStringArray([String(SimContract.parcel_ref(_ids[i]))]), parents)
 	reason_col[i] = reason_id
 	var stage: PackedByteArray = d["stage"]
@@ -626,6 +634,15 @@ func _change_construction(state: GameState, d: Dictionary, i: int, new_stage: in
 		(d["totals"] as Dictionary)["stalls"] += 1
 	_changes.note(_ids[i])
 	_emit_parcel_event(state, d, i, message_key, reason_id)
+
+
+## Durma/devam gerekçesinin altyapı etkeni; kapasiteyi en son oyuncu yolu artırdıysa `source_ref` o yoldur (SIM-12).
+func _continue_infra_factor(state: GameState, i: int, infra_value: int) -> Dictionary:
+	var factor := {"name": InvestorDecision.F_INFRA, "value": infra_value, "weight": _cfg.p("w_infrastructure")}
+	var source := PublicWorksState.infra_source(state, _region_codes[_region_of[i]])
+	if source != &"":
+		factor["source_ref"] = source
+	return factor
 
 
 func _emit_parcel_event(state: GameState, d: Dictionary, i: int, message_key: StringName, reason_id: int) -> void:

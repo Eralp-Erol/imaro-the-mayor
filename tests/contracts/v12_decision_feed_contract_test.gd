@@ -81,9 +81,8 @@ func _approved_built() -> ParcelView:
 
 # --- Sürüm ---
 
-func test_contract_version_is_1_2() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.2")
-	assert_int(SimContract.VERSION_MINOR).is_equal(2)
+func test_contract_version_is_at_least_1_2_and_stays_compatible() -> void:
+	assert_bool(SimContract.VERSION_MINOR >= 2).is_true()  # 1.3 (T-042) 1.2 belgelerini kabul eder
 	assert_bool(SimContract.is_compatible("1.1")).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()
 

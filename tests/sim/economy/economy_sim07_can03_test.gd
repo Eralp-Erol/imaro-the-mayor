@@ -206,6 +206,8 @@ func test_every_catalog_command_leaves_development_to_actor_decisions() -> void:
 	var sample := {
 		&"zoning.propose": {"parcel_ids": p, "land_use": &"zone.mixed", "density": 1500, "max_height_m": 12},
 		&"budget.propose": {"lines": {&"budget.line.roads": 1000}},
+		&"public_work.road": {"points_cm": PackedInt64Array([0, 0, 0, 10000]), "road_class": &"local"},
+		&"public_work.undo_last": {},
 	}
 	for kind: StringName in SimCommand.CATALOG:
 		assert_bool(sample.has(kind)).override_failure_message("katalogda örneği olmayan komut: %s" % kind).is_true()

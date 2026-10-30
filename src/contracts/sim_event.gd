@@ -13,6 +13,9 @@ const KIND_PARCEL_CHANGED := &"parcel.changed"
 const KIND_BUDGET_CHANGED := &"budget.changed"
 const KIND_COUNCIL_VOTE_OPENED := &"council.vote_opened"
 const KIND_COUNCIL_VOTE_RESOLVED := &"council.vote_resolved"
+## v1.3 (T-042): oyuncu yolu ağa eklendi / son yol geri alındı. `subjects`: `command.N`, `region.<kod>`…
+const KIND_PUBLIC_WORK_BUILT := &"public_work.built"
+const KIND_PUBLIC_WORK_REMOVED := &"public_work.removed"
 
 var seq: int = SimContract.NO_ID
 var tick: int = 0

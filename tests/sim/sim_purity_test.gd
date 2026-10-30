@@ -18,7 +18,9 @@ const FORBIDDEN: Dictionary = {
 	"scene tree": "\\b(get_tree|SceneTree|get_node|get_parent|add_child|queue_free)\\b",
 	"Node class": "\\b(extends\\s+(Node|Node2D|Node3D|Control|CanvasItem|Window)|Node|Node2D|Node3D|Control)\\b",
 	"process callbacks": "\\b(_process|_physics_process|_input|_unhandled_input|_ready)\\b",
-	"delta": "\\bdelta\\b",
+	# Çıplak `delta` (kare süresi parametresi/değişkeni) yasak; üye erişimi (`net.delta.ops`, WorldNetwork'ün NetworkDelta
+	# alanı, T-042) kare süresi değildir.
+	"delta": "(?<![\\.\\w])delta\\b",
 	"input/display": "\\b(Input|InputEvent|DisplayServer|RenderingServer|PhysicsServer3D|Viewport)\\b",
 	"platform": "\\b(PlatformProfile|platform_profile|InputProfile|input_profile|ProjectSettings)\\b",
 	"threads": "\\b(Thread|Mutex|WorkerThreadPool)\\b",
@@ -29,7 +31,8 @@ const TRANSCENDENTAL := "\\b(sin|cos|tan|asin|acos|atan|atan2|sinh|cosh|tanh|exp
 const ROUNDING_MARKERS: Array[String] = ["roundi(", "snappedf(", "snappedi(", "floori(", "ceili(", "int("]
 ## Dosya düzeyi yetki: yalnızca kurulumda (tick dışında) yapılandırma dosyası okuyan sınıflar. Kayıt yuvası G/Ç'si
 ## src/app/save_slot*'tadır ve ayrı taranır (save_slot_purity_test.gd); sim içinde başka dosya G/Ç'ye izin yoktur.
-const FILE_IO_ALLOWED: Array[String] = ["sim_config.gd", "facade_config.gd", "economy_config.gd"]
+const FILE_IO_ALLOWED: Array[String] = ["sim_config.gd", "facade_config.gd", "economy_config.gd",
+	"public_works_config.gd"]
 ## Taban sınıfı çözümlemesi için ek kök: `class_name` -> `extends` haritası buradan da kurulur (örn. SimFacade).
 const CLASS_MAP_ROOTS: Array[String] = ["res://src/sim", "res://src/contracts"]
 const FILE_IO := "\\b(FileAccess|DirAccess)\\b"

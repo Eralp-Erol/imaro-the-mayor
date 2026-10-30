@@ -28,6 +28,19 @@ func reject_args(_state: GameState, _params: Dictionary) -> Dictionary:
 	return {}
 
 
+## Gönderim (`submit_command`/`validate_command`) anındaki ön doğrulama. Varsayılan `validate`; tick sınırında
+## çağrılmaz. Çalışma zamanı koşullarını (örn. "dünya meşgul", iş parçacığı sürüyor) yalnız gönderimde reddetmek için:
+## tick sınırındaki sonuç çalışma zamanına bağlı olmamalı (yeniden oynatılabilirlik).
+func validate_submit(state: GameState, params: Dictionary) -> StringName:
+	return validate(state, params)
+
+
+## Geçerli komutun ön izleme argümanları (`CommandResult.args`; `valid`/`queued` sonucunda UI'nın göreceği düz veri).
+## Durumu DEĞİŞTİRMEZ. Varsayılan boş.
+func preview_args(_state: GameState, _params: Dictionary) -> Dictionary:
+	return {}
+
+
 ## Komutun etkilediği varlık referansları (`parcel.12` ...); `command.applied/rejected` olaylarının
 ## `subjects`'ine girer.
 func subjects(_params: Dictionary) -> PackedStringArray:

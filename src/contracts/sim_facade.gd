@@ -1,3 +1,4 @@
+# gdlint:disable=max-public-methods
 @abstract
 class_name SimFacade
 extends RefCounted
@@ -104,3 +105,10 @@ func economy_outcome() -> EconomyOutcomeView:
 ## false` + boş `ids` -> tüketici her seferinde tam eşitler. Değer kopyası; sim durumunu DEĞİŞTİRMEZ.
 func parcel_changes_since(_tick: int) -> ParcelChangeFeed:
 	return ParcelChangeFeed.incomplete(provenance(), current_tick())
+
+
+## v1.3 (T-042) · Ağa eklenmiş oyuncu yolları, eskiden yeniye (son eleman = geri alınabilecek yol). Değer kopyası; sim
+## durumunu DEĞİŞTİRMEZ. Gerekçedeki `source_ref = command.N` bu listedeki `command_id`ye çözülür (T-041 denetçisi
+## "Altyapı kapasitesi <- Yol (gün N)" yazar). Varsayılan: kaynak yol sunmuyorsa boş.
+func public_works() -> Array[PublicWorkView]:
+	return []

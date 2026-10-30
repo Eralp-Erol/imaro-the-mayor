@@ -52,10 +52,11 @@ func _outcome(tick: int, bump: int) -> EconomyOutcomeView:
 # --- Sürüm ---
 
 func test_contract_version_is_minor_bumped_and_old_major_one_documents_stay_compatible() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.2")  # v1.2: karar özeti + parcel_changes_since (T-045)
+	assert_str(SimContract.VERSION).is_equal("1.3")  # v1.2: karar özeti + parcel_changes_since (T-045); v1.3: yol (T-042)
 	assert_bool(SimContract.is_compatible("1.0")).is_true()
 	assert_bool(SimContract.is_compatible("1.1")).is_true()
 	assert_bool(SimContract.is_compatible("1.2")).is_true()
+	assert_bool(SimContract.is_compatible("1.3")).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()
 
 
