@@ -179,7 +179,35 @@ static func check_agenda_items(facade: SimFacade, items: Array[AgendaItemView]) 
 				out.append("%s cause_ref '%s' is not a <kind>.<id> reference" % [where, ref])
 		for rid in it.reason_ids:
 			out.append_array(check_reason_id(facade, rid, where))
+		out.append_array(check_options(it.options, where))
 		out.append_array(check_no_aggregate_score(it.to_dict(), where))
+	return out
+
+
+## v1.5 (isteğe bağlı ek): yanıt seçenekleri dürüst olmalı. Kimlik/etiket dolu ve yinelemesiz; etkisiz seçenek (sahte
+## düğme) yok; kilit tutarlı (kilitliyse yetki anahtarı var, açıksa yok); her etkinin yönü ±1, süreleri >= 0.
+static func check_options(options: Array[AgendaOptionView], where: String) -> PackedStringArray:
+	var out := PackedStringArray()
+	var seen := {}
+	for o in options:
+		var at := "%s option '%s'" % [where, o.option_id]
+		if o.option_id == &"" or o.label_key == &"":
+			out.append("%s without option_id/label_key" % at)
+		if seen.has(o.option_id):
+			out.append("%s duplicated" % at)
+		seen[o.option_id] = true
+		if o.effects.is_empty():
+			out.append("%s has no effect (a button that does nothing)" % at)
+		if o.available == (o.locked_by != &""):
+			out.append("%s lock is inconsistent (available=%s locked_by='%s')" % [at, o.available, o.locked_by])
+		for effect: Dictionary in o.effects:
+			for key in AgendaOptionView.EFFECT_KEYS:
+				if not effect.has(key):
+					out.append("%s effect without '%s'" % [at, key])
+			if not [-1, 1].has(int(effect.get("direction", 0))):
+				out.append("%s effect direction must be -1 or +1" % at)
+			if int(effect.get("delay_days", -1)) < 0 or int(effect.get("duration_days", -1)) < 0:
+				out.append("%s effect has a negative delay/duration" % at)
 	return out
 
 

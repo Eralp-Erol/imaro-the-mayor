@@ -59,6 +59,9 @@ func run() -> void:
 	print("XPROBE_SETUP ", JSON.stringify(_scene.sim_stats))
 	for _i in 30:
 		await _frame()
+	await _wait_vegetation()
+	if _args.has("no-veg-parcel"):
+		_scene._pr.follow._veg_of = Callable()   # A/B: alınan parselin bitki gizlemesi KAPALI (yalnız koridor kaynağı)
 	var cand := _find_candidate(facade)
 	if cand.is_empty():
 		push_error("probe: aday yol yok")
@@ -221,11 +224,13 @@ func _drive_road(facade: SimFacadeImpl, cand: Dictionary) -> void:
 		var ms := await _frame()
 		frames += 1
 		pump_peak = maxf(pump_peak, ms)
-		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy():
+		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy() and _veg_idle():
 			break
 	print("XPROBE_FRAMES after_tick frames=%d max_ms=%.2f stats=%s" % [frames, pump_peak,
 			JSON.stringify(_scene._pr.follow.stats)])
 	print("XPROBE_SERIES after_tick ", _series())
+	print("XPROBE_WORST after_tick ", _worst())
+	_veg_report("after_tick")
 	print("XPROBE_RESULT hidden_t0=%d->%d parcels=%d graph_changed=%s works=%d" % [hidden_before,
 			_scene._pr.follow.taken_count(), net.parcels.size(), str(net.graph_hash() != graph_before),
 			facade.public_works().size()])
@@ -299,10 +304,12 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 	while frames < 600:
 		await _frame()
 		frames += 1
-		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy():
+		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy() and _veg_idle():
 			break
 	print("XPROBE_FRAMES after_tick frames=%d stats=%s" % [frames, JSON.stringify(_scene._pr.follow.stats)])
 	print("XPROBE_SERIES after_tick ", _series())
+	print("XPROBE_WORST after_tick ", _worst())
+	_veg_report("after_tick")
 	print("XPROBE_RESULT hidden_t0=%d graph_changed=%s works=%d step=%d" % [_scene._pr.follow.taken_count(),
 			str((_scene._net as WorldNetwork).graph_hash() != graph_before), facade.public_works().size(), tool.step])
 	for _i in 10:
@@ -337,11 +344,13 @@ func _undo_ui(facade: SimFacadeImpl) -> void:
 	while frames < 600:
 		await _frame()
 		frames += 1
-		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy():
+		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy() and _veg_idle():
 			break
 	print("XPROBE_FRAMES after_undo frames=%d hidden_t0=%d works=%d stats=%s" % [frames, _scene._pr.follow.taken_count(),
 			facade.public_works().size(), JSON.stringify(_scene._pr.follow.stats)])
 	print("XPROBE_SERIES after_undo ", _series())
+	print("XPROBE_WORST after_undo ", _worst())
+	_veg_report("after_undo")
 	print("XPROBE_UI undo done step=%d" % tool.step)
 	for _i in 10:
 		await _frame()
@@ -400,13 +409,65 @@ func _undo(facade: SimFacadeImpl) -> void:
 		var ms := await _frame()
 		frames += 1
 		peak = maxf(peak, ms)
-		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy():
+		if frames > 3 and not _scene._pr.follow.busy() and not _scene._pr.sync.world_busy() and _veg_idle():
 			break
 	print("XPROBE_FRAMES after_undo frames=%d max_ms=%.2f hidden_t0=%d stats=%s" % [frames, peak,
 			_scene._pr.follow.taken_count(), JSON.stringify(_scene._pr.follow.stats)])
 	print("XPROBE_SERIES after_undo ", _series())
+	print("XPROBE_WORST after_undo ", _worst())
+	_veg_report("after_undo")
 	for _i in 12:
 		await _frame()
+
+
+## Bitki görünümü yerleşimi gelene dek (gerçek pencere: önbellek ya da ~14 sn üretim) kare sürer; sonra yerleşir.
+func _wait_vegetation() -> void:
+	var veg: VegetationView = _scene.get("_vegetation")
+	if veg == null:
+		print("XPROBE_VEG none (bitki görünümü yok)")
+		return
+	var t0 := Time.get_ticks_msec()
+	while veg.layout == null and Time.get_ticks_msec() - t0 < 240000:
+		await _frame()
+	for _i in 40:
+		await _frame()
+	var n := 0
+	while not _veg_idle() and n < 600:
+		await _frame()
+		n += 1
+	print("XPROBE_VEG ready layout=%s wait_ms=%d instances=%d %s" % [str(veg.layout != null), Time.get_ticks_msec() - t0,
+			veg.layout.cols.count if veg.layout != null else 0, JSON.stringify(veg.stats)])
+
+
+func _veg_idle() -> bool:
+	var veg: VegetationView = _scene.get("_vegetation")
+	if veg == null or veg.layout == null:
+		return true
+	return int(veg.stats.get("queued", 0)) == 0 and int(veg.stats.get("blob_jobs", 0)) == 0
+
+
+func _veg_report(tag: String) -> void:
+	var veg: VegetationView = _scene.get("_vegetation")
+	if veg == null or veg.layout == null:
+		print("XPROBE_VEG %s none" % tag)
+		return
+	print(("XPROBE_VEG %s hidden_instances=%d lod0=%d lod1=%d blobs=%d mask_write_ms_parcel=%s corridor=%s "
+			+ "update_ms_max=%s follow=%s") % [tag,
+			veg.layout.hidden_count, int(veg.stats.get("lod0_instances", 0)), int(veg.stats.get("lod1_instances", 0)),
+			int(veg.stats.get("blob_chunks", 0)), str(veg.stats.get("mask_write_ms_2")), str(veg.stats.get("mask_write_ms_1")),
+			str(veg.stats.get("update_ms_max")), JSON.stringify(_scene._pr.follow.stats)])
+
+
+## En pahalı kareler ("sıra:ms"), tüm ölçülen kareler arasında.
+func _worst() -> String:
+	var items: Array[Vector2] = []
+	for i in _frame_ms.size():
+		items.append(Vector2(_frame_ms[i], float(i)))
+	items.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.x > b.x)
+	var parts: Array[String] = []
+	for it in items.slice(0, 5):
+		parts.append("#%d:%.1f" % [int(it.y), it.x])
+	return " ".join(parts)
 
 
 func _series() -> String:

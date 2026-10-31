@@ -37,7 +37,8 @@ static func create(net: WorldNetwork, roads: RoadView, facade: SimFacade, other_
 	if host != null and host.get(&"_t0_columns") != null and host.get(&"_buildings") != null:
 		r._cols = host.get(&"_t0_columns")
 		r.follow = PlayableExpropriation.create(net, r._cols, host.get(&"_buildings"), host.get(&"_t0_occupied"),
-				host.get(&"_terrain"), func() -> Object: return host.get(&"_selection_ring"))
+				host.get(&"_terrain"), func() -> Object: return host.get(&"_selection_ring"),
+				func() -> Object: return host.get(&"_vegetation"))
 	return r
 
 

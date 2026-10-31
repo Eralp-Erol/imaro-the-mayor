@@ -17,6 +17,10 @@ const KIND_BUDGET_PROPOSE := &"budget.propose"
 ## değiştirir; özel bina doğurmaz (CAN-03).
 const KIND_PUBLIC_WORK_ROAD := &"public_work.road"
 const KIND_PUBLIC_WORK_UNDO_LAST := &"public_work.undo_last"
+## v1.5 isteğe bağlı ek (ADR-0005 Ek F): oyuncunun gündem öğesine yanıtı. `AgendaItemView.options` listesindeki bir
+## seçeneği seçer; etkisi yalnız mevcut sistem durumlarına (şikâyet, güven, yatırımcı riski ...) zamana yayılarak
+## yazılır, özel bina doğurmaz (CAN-03).
+const KIND_AGENDA_RESPOND := &"agenda.respond"
 ## `points_cm` parametresi koordinat taşır (sıfır/negatif geçerli); kimlik dizisi kuralı (>= 1) burada uygulanmaz.
 ## Çift sayıda eleman, en az iki nokta, en çok `MAX_ROAD_POINTS`; değerler ±`COORD_LIMIT_CM` içinde.
 const COORDINATE_PARAMS: Array[String] = ["points_cm"]
@@ -39,6 +43,10 @@ const CATALOG := {
 	},
 	&"public_work.undo_last": {
 		"required": {},
+		"optional": {},
+	},
+	&"agenda.respond": {
+		"required": {"item_id": TYPE_INT, "option_id": TYPE_STRING_NAME},
 		"optional": {},
 	},
 }
@@ -82,6 +90,12 @@ static func public_work_road(points_cm: PackedInt64Array, road_class: StringName
 ## v1.3 · Son oyuncu yolunu geri al (LIFO).
 static func public_work_undo_last() -> SimCommand:
 	return make(KIND_PUBLIC_WORK_UNDO_LAST, {})
+
+
+## v1.5 (isteğe bağlı ek) · Gündem öğesine yanıt: `item_id` = `AgendaItemView.item_id`, `option_id` =
+## `AgendaOptionView.option_id`. Listede olmayan/kilitli/etkisiz seçenek gerekçeyle reddedilir.
+static func agenda_respond(item_id: int, option_id: StringName) -> SimCommand:
+	return make(KIND_AGENDA_RESPOND, {"item_id": item_id, "option_id": option_id})
 
 
 static func is_forbidden_kind(command_kind: StringName) -> bool:

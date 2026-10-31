@@ -326,6 +326,18 @@
        "command.1",
        "parcel.1",
        "parcel.2"
+      ],
+      "options": [
+       {"option_id": "listen", "verb": "listen_session", "label_key": "event.pe01.opt.listen", "available": true,
+        "locked_by": "", "effects": [
+         {"target": "bloc.grievance", "scope": "trigger_topic", "direction": -1, "delay_days": 7, "duration_days": 90, "curve": "decay"},
+         {"target": "relation.trust", "scope": "trigger_bloc", "direction": 1, "delay_days": 7, "duration_days": 0, "curve": "step"}]},
+       {"option_id": "remedy", "verb": "fund_remedy_project", "label_key": "event.pe01.opt.remedy", "available": false,
+        "locked_by": "district_works", "effects": [
+         {"target": "bloc.grievance", "scope": "trigger_topic", "direction": -1, "delay_days": 60, "duration_days": 360, "curve": "linear"}]},
+       {"option_id": "reverse", "verb": "revise_decision", "label_key": "event.pe01.opt.reverse", "available": true,
+        "locked_by": "", "effects": [
+         {"target": "investor.political_risk", "scope": "district", "direction": 1, "delay_days": 0, "duration_days": 180, "curve": "decay"}]}
       ]
      }
     }
