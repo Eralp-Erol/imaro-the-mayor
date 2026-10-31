@@ -55,6 +55,12 @@ static func parcels(net: WorldNetwork, include_owner: bool) -> PackedByteArray:
 	return nums.to_byte_array() + ",".join(text).to_utf8_buffer()
 
 
+## `WorldNetwork.graph_hash` önbelleksiz referans hesabı (taban özeti: düğüm + kenar sütunları, hub'lar, tohum).
+static func graph_hash_full(net: WorldNetwork) -> String:
+	return StateHash.of({"schema": WorldNetwork.SCHEMA_VERSION, "seed": net.net_seed, "nodes_sha": sha(nodes(net)),
+			"edges_sha": sha(edges(net)), "hubs": net._hubs_dict()})
+
+
 static func sha(bytes: PackedByteArray) -> String:
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)

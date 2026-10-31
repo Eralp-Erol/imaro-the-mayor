@@ -47,10 +47,9 @@ func subjects(_params: Dictionary) -> PackedStringArray:
 
 
 func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> void:
-	var points := RoadDraftCheck.points_from_cm(params["points_cm"])
 	var road_class: StringName = params["road_class"]
-	var plan := _ctx.draft(params["points_cm"], road_class)
-	var result := RoadDraftCheck.apply(_ctx.net, points, road_class, _ctx.rules)
+	var plan := _ctx.draft(params["points_cm"], road_class)  # aynı ağ sürümünde doğrulamayla tek denetim (önbellek)
+	var result := RoadDraftCheck.apply_checked(_ctx.net, plan, road_class, _ctx.rules)
 	if not bool(result["applied"]):
 		push_error("PublicWorkRoadHandler: doğrulanan yol uygulanamadı (%s); durum değişmedi" % str(result["reason"]))
 		return

@@ -19,6 +19,7 @@ static func set_counters(net: WorldNetwork, c: Dictionary) -> void:
 
 
 static func drop_node(net: WorldNetwork, id: int) -> void:
+	NetworkHashCache.mark_on(net, NetworkHashCache.NODE, id)
 	net.nodes.erase(id)
 	net.adjacency.erase(id)
 	net._node_grid.remove(id)
@@ -30,11 +31,13 @@ static func reinstate_node(net: WorldNetwork, id: int, pos: Vector2, kind: Strin
 	node.pos = pos
 	node.kind = kind
 	net.nodes[id] = node
+	NetworkHashCache.mark_on(net, NetworkHashCache.NODE, id)
 	net.adjacency[id] = PackedInt32Array()
 	net._node_grid.insert(id, Rect2(pos, Vector2.ZERO))
 
 
 static func drop_edge(net: WorldNetwork, id: int) -> void:
+	NetworkHashCache.mark_on(net, NetworkHashCache.EDGE, id)
 	net.edges.erase(id)
 	net._edge_grid.remove(id)
 
@@ -47,6 +50,7 @@ static func reinstate_edge(net: WorldNetwork, snap: Dictionary) -> void:
 		e = WorldRoadEdge.new()
 		e.id = id
 		net.edges[id] = e
+	NetworkHashCache.mark_on(net, NetworkHashCache.EDGE, id)
 	e.a = snap["a"]
 	e.b = snap["b"]
 	e.road_class = snap["road_class"]

@@ -56,6 +56,7 @@ var change_log: Array[NetworkChange] = []
 
 var _journal: NetworkOpJournal = null
 var _undo_stack: Array[NetworkOpJournal] = []
+var _hash_cache: NetworkHashCache = null
 var _blocks_single_comp: bool = false
 var _node_grid: NetworkSpatialHash = NetworkSpatialHash.new(NODE_CELL_M)
 var _edge_grid: NetworkSpatialHash = NetworkSpatialHash.new(EDGE_CELL_M)
@@ -91,7 +92,7 @@ func add_node_raw(pos: Vector2, kind: StringName = &"") -> int:
 	_node_grid.insert(node.id, Rect2(node.pos, Vector2.ZERO))
 	if _journal != null:
 		_journal.on_node_added(node.id, node.pos)
-	_touch()
+	_touch(NetworkHashCache.NODE, node.id)
 	return node.id
 
 
@@ -111,7 +112,7 @@ func add_edge_raw(a: int, b: int, road_class: StringName, width: float, layer: i
 				_journal.on_edge_set(self, e)
 			e.road_class = road_class
 			e.width = maxf(e.width, width)
-			_touch()
+			_touch(NetworkHashCache.EDGE, e.id)
 		return existing
 	var edge := WorldRoadEdge.new()
 	edge.id = _next_edge_id
@@ -129,7 +130,7 @@ func add_edge_raw(a: int, b: int, road_class: StringName, width: float, layer: i
 	_adjacency_add(a, edge.id)
 	_adjacency_add(b, edge.id)
 	_edge_grid.insert(edge.id, _edge_rect(edge))
-	_touch()
+	_touch(NetworkHashCache.EDGE, edge.id)
 	return edge.id
 
 
@@ -157,7 +158,7 @@ func move_node_raw(node_id: int, pos: Vector2) -> void:
 		var e: WorldRoadEdge = edges[eid]
 		e.length = node_pos(e.a).distance_to(node_pos(e.b))
 		_edge_grid.insert(eid, _edge_rect(e))
-	_touch()
+	_touch(NetworkHashCache.NODE, node_id)
 
 
 func remove_edge_raw(edge_id: int) -> void:
@@ -170,7 +171,7 @@ func remove_edge_raw(edge_id: int) -> void:
 	_adjacency_remove(e.b, edge_id)
 	edges.erase(edge_id)
 	_edge_grid.remove(edge_id)
-	_touch()
+	_touch(NetworkHashCache.EDGE, edge_id)
 
 
 func remove_node_raw(node_id: int) -> void:
@@ -179,7 +180,7 @@ func remove_node_raw(node_id: int) -> void:
 	nodes.erase(node_id)
 	adjacency.erase(node_id)
 	_node_grid.remove(node_id)
-	_touch()
+	_touch(NetworkHashCache.NODE, node_id)
 
 
 ## Kenarı `node_id` düğümünde böler: eski kenar (a -> node) olur, yeni kenar (node -> b) eklenir. Dönüş: yeni kenar.
@@ -194,7 +195,7 @@ func split_edge_raw(edge_id: int, node_id: int) -> int:
 	_adjacency_add(node_id, edge_id)
 	_edge_grid.insert(edge_id, _edge_rect(e))
 	var new_id := add_edge_raw(node_id, old_b, e.road_class, e.width, e.layer, e.open)
-	_touch()
+	_touch(NetworkHashCache.EDGE, edge_id)
 	return new_id
 
 
@@ -239,7 +240,8 @@ func author_polyline(points: PackedVector2Array, road_class: StringName, width: 
 ## Tabanı mühürler: blokları/parselleri üretir, taban özetini kaydeder; bundan sonra yalnız delta komutları.
 func seal_base() -> void:
 	refresh_blocks()
-	base_hash = graph_hash()
+	base_hash = graph_hash_full()
+	_hash_cache = NetworkHashCache.build(self)
 	delta = NetworkDelta.new()
 	delta.base_hash = base_hash
 	_undo_stack.clear()
@@ -445,7 +447,7 @@ func _op_set_open(op: Dictionary, report: Dictionary) -> void:
 	if _journal != null:
 		_journal.on_edge_set(self, edges[edge_id])
 	(edges[edge_id] as WorldRoadEdge).open = bool(op.get("open", true))
-	_touch()
+	_touch(NetworkHashCache.EDGE, edge_id)
 
 
 ## Kenar silindikten sonra düğüm temizliği: yalnız kalan düğüm silinir (hub değilse); iki kenarlı eşdoğrusal düğüm
@@ -485,6 +487,7 @@ func _cleanup_node(node_id: int, report: Dictionary) -> void:
 	_adjacency_add(far_end, e1.id)
 	_adjacency_remove(node_id, e1.id)
 	_edge_grid.insert(e1.id, _edge_rect(e1))
+	NetworkHashCache.mark_on(self, NetworkHashCache.EDGE, e1.id)  # graph_version artmaz
 	remove_node_raw(node_id)
 	WorldNetwork.report_add(report, "removed_edges", e2.id)
 
@@ -758,9 +761,12 @@ func _edge_rect(e: WorldRoadEdge) -> Rect2:
 	return Rect2(a, Vector2.ZERO).expand(b)
 
 
-func _touch() -> void:
+## `kind`/`id` (NetworkHashCache.NODE/EDGE): değişen düğüm/kenar; artımlı `graph_hash` önbelleğine kirli işaretlenir.
+func _touch(kind: int = 0, id: int = 0) -> void:
 	graph_version += 1
 	_component_cache.clear()
+	if _hash_cache != null and kind != 0:
+		_hash_cache.mark(kind, id)
 
 
 # ---------------------------------------------------------------- sorgu API'si (görünüm ve sim yalnız bunu okur)
@@ -966,9 +972,13 @@ func state_hash(include_owner: bool = true) -> String:
 ## Taban özeti: yalnız graf (düğüm + kenar sütunları, hub'lar, tohum). Bloklar/parseller graftan ve tohumdan TÜRETİLİR;
 ## delta bu grafın üstüne uygulanır (parsel üretim kodu değişse delta yine uygulanır, parseller yeniden türer).
 func graph_hash() -> String:
-	return StateHash.of({"schema": SCHEMA_VERSION, "seed": net_seed,
-			"nodes_sha": NetworkColumns.sha(NetworkColumns.nodes(self)),
-			"edges_sha": NetworkColumns.sha(NetworkColumns.edges(self)), "hubs": _hubs_dict()})
+	return graph_hash_full() if _hash_cache == null else StateHash.of({"schema": SCHEMA_VERSION, "seed": net_seed,
+			"nodes_sha": _hash_cache.nodes_sha(self), "edges_sha": _hash_cache.edges_sha(self), "hubs": _hubs_dict()})
+
+
+## Önbelleksiz referans hesap (eşdeğerlik testi ve mühürden önceki ağ için).
+func graph_hash_full() -> String:
+	return NetworkColumns.graph_hash_full(self)
 
 
 ## Yalnız topoloji: düğüm/kenar çiftleri, sınıf, açıklık, bloğun kenar çevrimleri (koordinat ve parsel ayrıntısı YOK).

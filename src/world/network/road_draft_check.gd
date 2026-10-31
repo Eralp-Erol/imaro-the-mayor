@@ -98,7 +98,14 @@ static func check(net: WorldNetwork, points: PackedVector2Array, road_class: Str
 ## Dönüş: `check` sonucu + {applied, report, change}.
 static func apply(net: WorldNetwork, points: PackedVector2Array, road_class: StringName, rules: RoadDraftRules,
 		busy: bool = false) -> Dictionary:
-	var result := check(net, points, road_class, rules, busy)
+	return apply_checked(net, check(net, points, road_class, rules, busy), road_class, rules)
+
+
+## `apply`ın uygulama yarısı: ÖNCEDEN hesaplanmış `check` sonucunu (aynı ağ sürümünde alınmış olmalı) yeniden
+## denetlemeden uygular. Girdi sözlüğü DEĞİŞTİRİLMEZ (sığ kopya üstünde çalışılır); dönüş `apply` ile aynıdır.
+static func apply_checked(net: WorldNetwork, checked: Dictionary, road_class: StringName, rules: RoadDraftRules) \
+		-> Dictionary:
+	var result := checked.duplicate()
 	result["applied"] = false
 	result["report"] = {}
 	result["change"] = null

@@ -920,7 +920,13 @@ func _update_land_values(d: Dictionary) -> void:
 	var relax_demand := _cfg.p("relax_demand_pm")
 	var relax_rate := _cfg.p("relax_rate_pm")
 	var max_mult := _cfg.p("max_multiplier_pm")
-	for i in _ids.size():
+	# T-049: plansız modda görülen imarı olmayan parselin imarı "" ve "" imarın izinli kullanımı yoksa (talep -1) hiçbiri
+	# yapılanmaya açık değildir: tam tarama (40 k parsel, ~19 ms) yerine yalnız `zone_seen` parselleri bakılır. Güncelleme
+	# parsel başına bağımsızdır, sonuç tam tarama ile aynıdır (tests/sim/economy/economy_land_values_unplanned_test.gd).
+	var only_seen := _unplanned_on and _all_closed(_zone_demand_by_region("", demand_by_use, rn))
+	var scan: Array = zone_seen.keys() if only_seen else []
+	for k in (scan.size() if only_seen else _ids.size()):
+		var i: int = scan[k] if only_seen else k
 		if stage[i] != EconomyState.STAGE_VACANT:
 			continue
 		var zone: String = String(_seen_zone(zone_seen, i))
@@ -934,6 +940,14 @@ func _update_land_values(d: Dictionary) -> void:
 			land[i] = mini(land[i] + land[i] * spec_rate / 1000, base * max_mult / 1000)
 		elif demand <= relax_demand and land[i] > base:
 			land[i] -= maxi(1, (land[i] - base) * relax_rate / 1000)
+
+
+## Bölge başına talep sütununun hepsi yapılanmaya kapalı (-1) mı?
+func _all_closed(demand: PackedInt32Array) -> bool:
+	for value in demand:
+		if value >= 0:
+			return false
+	return true
 
 
 func _zone_demand_by_region(zone: String, demand_by_use: Array, rn: int) -> PackedInt32Array:

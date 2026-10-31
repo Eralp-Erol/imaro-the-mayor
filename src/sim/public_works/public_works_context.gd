@@ -16,6 +16,10 @@ var busy_probe: Callable = Callable()
 var net: WorldNetwork
 var rules: RoadDraftRules
 var config: PublicWorksConfig
+var _memo: Dictionary = {}
+var _memo_version: int = -1
+var _memo_class: StringName = &""
+var _memo_points := PackedInt64Array()
 
 
 ## Kurulum sorunu varsa push_error + null (ağ mühürlü ve boş delta ile gelmeli; sınıflar kural kümesinde olmalı).
@@ -60,13 +64,26 @@ func tracks(state: GameState) -> bool:
 
 ## Taslağı denetler (ağa dokunmaz) ve sim'in kapasite hesabını ekler. Dönüş: `RoadDraftCheck.check` sonucu +
 ## {length_cm: int, region_units: {kod: birim}} (yalnız ok iken dolu).
+##
+## Son denetim ÖNBELLEKLİDİR (T-049): ağ sürümü (`graph_version`), noktalar ve sınıf aynıysa denetim yeniden çalışmaz
+## (doğrulama, uygulama ve gönderim aynı taslağı ağ değişmeden sorar; denetim 5-14 ms). Ağ her değiştiğinde
+## (`_touch`) sürüm artar, eski cevap verilmez. "Meşgul" cevabı ucuzdur ve önbelleğe alınmaz. Dönüş sığ kopyadır.
 func draft(points_cm: PackedInt64Array, road_class: StringName, busy: bool = false) -> Dictionary:
+	if not busy and _memo_version == net.graph_version and _memo_class == road_class and _memo_points == points_cm:
+		return _memo.duplicate()
 	var result := RoadDraftCheck.check(net, RoadDraftCheck.points_from_cm(points_cm), road_class, rules, busy)
 	if bool(result["ok"]) and not config.has_class(road_class):
 		result["ok"] = false
 		result["reason"] = RoadDraftCheck.REASON_BAD_CLASS
 		result["key"] = RoadDraftCheck.key_of(RoadDraftCheck.REASON_BAD_CLASS)
-	return _with_plan(result, road_class)
+	result = _with_plan(result, road_class)
+	if not busy:
+		_memo = result
+		_memo_version = net.graph_version
+		_memo_class = road_class
+		_memo_points = points_cm.duplicate()
+		return result.duplicate()
+	return result
 
 
 ## Kapasite planı: yolun bölge başına uzunluğu (cm tamsayı) x sınıf katsayısı. Sıralı bölge kodları, sıfır birim
