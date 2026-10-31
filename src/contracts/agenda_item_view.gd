@@ -2,8 +2,10 @@ class_name AgendaItemView
 extends SimDto
 ## Sim'in açtığı bir AÇIK gündem öğesi (v1.5 isteğe bağlı ekleme, ADR-0005 Ek F; T-042b, D-008 "halk tepki versin"):
 ## `SimFacade.agenda_items()` satırı. Olay motorunun öğesidir (PE-01 yerinden edilme dahil); sim'in kendi kaydı, uydurma
-## yok. Meclis oylamaları BURADA DEĞİLDİR: onlar `SimSnapshot.council` içindedir (UI ikisini birleştirir). Yanıt komutu
-## (`agenda.respond`) kataloğa girmediği için seçenek alanı YOKTUR: UI seçenek/ertele düğmesi uydurmaz.
+## yok. Meclis oylamaları BURADA DEĞİLDİR: onlar `SimSnapshot.council` içindedir (UI ikisini birleştirir).
+## `options` (isteğe bağlı ek): yanıt seçenekleri; YALNIZ sim'in gerçekten etki üretebildikleri (`AgendaOptionView`),
+## seçim `SimCommand.agenda_respond` ile. Boşsa öğe yalnız gösterilir (UI düğme/ertele uydurmaz); boşken `to_dict`
+## anahtarı HİÇ yazmaz (eski belgeler ve hash'ler bit-bit aynı kalır).
 ## Metin yok: `title_key` anahtardır; `args` kısa ilkel bağlamdır (`topic`, `stage`).
 ## `reason_ids`: öğeyi açan ateşleme gerekçesi; zinciri `parent_ids` ile neden kaydına (yerinden edilme: hane sayısı)
 ## iner.
@@ -31,6 +33,7 @@ var title_key: StringName = &""
 var args: Dictionary = {}
 var reason_ids: PackedInt64Array = PackedInt64Array()
 var cause_refs: PackedStringArray = PackedStringArray()
+var options: Array[AgendaOptionView] = []
 
 
 func ref() -> StringName:
@@ -38,12 +41,15 @@ func ref() -> StringName:
 
 
 func to_dict() -> Dictionary:
-	return {
+	var out := {
 		"provenance": provenance, "item_id": item_id, "template_id": template_id, "delivery": delivery,
 		"status": status, "region_code": region_code, "group": ActorRef.to_variant(group),
 		"opened_tick": opened_tick, "deadline_tick": deadline_tick, "title_key": title_key,
 		"args": SimContract.to_args(args), "reason_ids": reason_ids, "cause_refs": cause_refs,
 	}
+	if not options.is_empty():
+		out["options"] = SimDto.dicts_of(options)
+	return out
 
 
 static func from_dict(d: Dictionary) -> AgendaItemView:
@@ -61,4 +67,9 @@ static func from_dict(d: Dictionary) -> AgendaItemView:
 	v.args = SimContract.to_args(d.get("args", {}))
 	v.reason_ids = SimContract.to_int64_array(d.get("reason_ids", []))
 	v.cause_refs = SimContract.to_string_array(d.get("cause_refs", []))
+	var raw_options: Variant = d.get("options", [])
+	if raw_options is Array:
+		for option: Variant in raw_options:
+			if option is Dictionary:
+				v.options.append(AgendaOptionView.from_dict(option))
 	return v

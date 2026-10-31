@@ -290,12 +290,13 @@ func test_responding_through_the_command_queue_applies_at_the_tick_boundary_with
 	assert_str(String(events_of(h, &"command.rejected").back().message_key)).is_equal("command.reject.bad_param_type")
 
 
-func test_the_agenda_respond_command_is_not_in_the_contract_catalog_yet() -> void:
+func test_the_agenda_respond_command_is_in_the_contract_catalog_and_goes_through_the_facade() -> void:
 	var h := _protest_handle()
-	var command := SimCommand.make(AgendaRespondHandler.KIND, {"item_id": 1, "option_id": "listen"})
-	var result := h.facade.submit_command(command)
-	assert_bool(result.is_rejected()).override_failure_message("katalogda yok: sözleşme v1.1 isteği").is_true()
-	assert_str(String(result.reason_key)).is_equal("command.reject.unknown_kind")
+	assert_str(String(AgendaRespondHandler.KIND)).is_equal(String(SimCommand.KIND_AGENDA_RESPOND))
+	var result := h.facade.submit_command(SimCommand.agenda_respond(_item(h)["id"], &"listen"))
+	assert_bool(result.is_rejected()).override_failure_message(String(result.reason_key)).is_false()
+	h.facade.advance(1)
+	assert_str(_item(h)["status"]).is_equal("resolved")
 
 
 func test_no_option_ever_places_a_private_building() -> void:

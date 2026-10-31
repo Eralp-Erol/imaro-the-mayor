@@ -246,8 +246,9 @@ func _precheck(command: SimCommand) -> Dictionary:
 
 func _state_problem(command: SimCommand) -> Dictionary:
 	match command.kind:
-		SimCommand.KIND_PUBLIC_WORK_ROAD, SimCommand.KIND_PUBLIC_WORK_UNDO_LAST:
-			return _public_work_problem(command)
+		SimCommand.KIND_PUBLIC_WORK_ROAD, SimCommand.KIND_PUBLIC_WORK_UNDO_LAST, SimCommand.KIND_AGENDA_RESPOND:
+			return _public_work_problem(command) if command.kind != SimCommand.KIND_AGENDA_RESPOND \
+				else _agenda_response_problem(command)
 		SimCommand.KIND_ZONING_PROPOSE:
 			for id: int in command.params["parcel_ids"]:
 				if not _parcels.has(id):
@@ -262,6 +263,32 @@ func _state_problem(command: SimCommand) -> Dictionary:
 				if _budget.line(key) == null:
 					return _problem(CommandResult.REJECT_INVALID_TARGET, {"ref": key})
 	return {}
+
+
+## v1.5 · Gündem yanıtı: gerçek sim ile aynı ret kodları (hedef yok -> invalid_target; kapalı öğe -> precondition
+## agenda.closed; listede olmayan seçenek -> invalid_value; kilitli -> precondition authority.locked).
+func _agenda_response_problem(command: SimCommand) -> Dictionary:
+	var item_id: int = command.params["item_id"]
+	var item := _agenda_item(item_id)
+	var ref := String(SimContract.ref(SimContract.REF_AGENDA, item_id))
+	if item == null:
+		return _problem(CommandResult.REJECT_INVALID_TARGET, {"ref": ref})
+	if item.status != AgendaItemView.STATUS_OPEN or item.deadline_tick <= _tick:
+		return _problem(CommandResult.REJECT_PRECONDITION, {"why": "agenda.closed", "ref": ref})
+	for option in item.options:
+		if option.option_id == command.params["option_id"]:
+			if not option.available:
+				return _problem(CommandResult.REJECT_PRECONDITION,
+					{"why": "authority.locked", "authority": String(option.locked_by)})
+			return {}
+	return _problem(CommandResult.REJECT_INVALID_VALUE, {"param": "option_id"})
+
+
+func _agenda_item(item_id: int) -> AgendaItemView:
+	for item in _agenda:
+		if item.item_id == item_id:
+			return item
+	return null
 
 
 ## v1.3 · Yol komutları: ret senaryo kuralından (`reject.reason_key` `public_work.reject.*`), geri alma durumdan.
@@ -462,6 +489,10 @@ func _apply_semantics(command: SimCommand) -> PackedStringArray:
 			for id: int in command.params["parcel_ids"]:
 				(_parcels[id] as ParcelView).pending_zone = command.params["land_use"]
 				subjects.append(String(SimContract.parcel_ref(id)))
+		SimCommand.KIND_AGENDA_RESPOND:  # öğe kapanır; mock sayı/etki uydurmaz (senaryo kuralı isterse ekler)
+			var item := _agenda_item(command.params["item_id"])
+			item.status = AgendaItemView.STATUS_RESOLVED
+			subjects.append(String(item.ref()))
 		SimCommand.KIND_BUDGET_PROPOSE:
 			var lines: Dictionary = command.params["lines"]
 			for key: StringName in lines:
