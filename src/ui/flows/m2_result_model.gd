@@ -114,11 +114,32 @@ func structure_signature() -> String:
 	return "|".join(parts)
 
 
+## Bölüm başına düğüm-kümesi imzaları (sırası: parsel, ölçülen sonuç, siyasi): panel yalnız imzası değişen bölümü
+## yeniden kurar, diğer bölümlerin düğümlerine dokunmaz (izlenen diğer parsellerin kararı yalnız "diğer parseller"
+## satırının METNİNİ değiştirir).
+func section_structure_signatures() -> Array[String]:
+	var parcel_parts: Array[String] = [str(parcels.size()), str(parcels_capped), str(infra_declined_count())]
+	if primary != null:
+		var p := primary
+		parcel_parts.append("%d:%s:%s:%s:%s:%d:%d:%s:%s:%d:%d:%s" % [p.id(), p.view.development, p.view.pending_zone,
+				p.view.zone, p.view.use, p.view.units, p.decision, p.code, p.before_proposal, p.tick, p.reason_id,
+				p.recorded])
+	var outcome_parts: Array[String] = [str(outcome_available), str(baseline_valid), str(region_code),
+			str(baseline_tick), str(municipal_available)]
+	for r in metrics + counters:
+		outcome_parts.append("%s:%s" % [r.key, r.delta_valid])
+	var political_parts: Array[String] = []
+	for g in reactions:
+		political_parts.append("%d/%s/%s/%s" % [g.group.id, g.reaction, g.cause_refs, g.reason_ids])
+	political_parts.append("%d/%s" % [reactions_hidden, council_built])
+	return [",".join(parcel_parts), ",".join(outcome_parts), ",".join(political_parts)]
+
+
 ## Yalnız GÖSTERİLEN DEĞERLER (etiket metni/çubuk): değişirse düğümler yeniden kullanılıp güncellenir.
 func values_signature() -> String:
 	var parts: Array[String] = []
 	for p in parcels:
-		parts.append(str(p.view.progress_pm))
+		parts.append("%d/%d" % [p.view.progress_pm, p.decision])
 	for r in metrics + counters:
 		parts.append("%d/%d/%d" % [r.value, r.delta, r.total])
 	parts.append("%d/%d/%d" % [pipeline_residential, pipeline_commercial, municipal_value])

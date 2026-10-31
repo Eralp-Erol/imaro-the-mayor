@@ -29,6 +29,8 @@ var _budget_panel: BudgetPanel = null
 var _agenda_panel: AgendaPanel = null
 var _seen_agenda: Dictionary = {}
 var _agenda_ready: bool = false
+## Gündem türetmesi önbelleği (öğe kümesi imzası aynıysa her tick yeniden türetilmez).
+var _agenda_cache := AgendaModel.Cache.new()
 
 
 ## `structure_probe`: parselde sim dışı (T0 stok) yapı var mı (`Callable(parcel_id) -> bool`; ZoningFlowModel'e geçer).
@@ -62,6 +64,7 @@ func rebind(facade_in: SimFacade) -> void:
 	budget_draft = BudgetDraft.new()
 	_seen_agenda = {}
 	_agenda_ready = false
+	_agenda_cache.invalidate()
 
 
 # --- Panel açma ---
@@ -207,7 +210,7 @@ func _on_refreshed() -> void:
 
 
 func _update_agenda(snap: SimSnapshot) -> void:
-	var items := AgendaModel.derive_all(facade, snap)
+	var items := _agenda_cache.items_for(facade, snap)
 	hud.set_agenda(items.size(), AgendaModel.nearest_days(items), facade.is_mock())
 	var fresh := AgendaModel.unseen(items, _seen_agenda)
 	for it in items:

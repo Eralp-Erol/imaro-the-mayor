@@ -46,6 +46,39 @@ class Item:
 		return not options.is_empty()
 
 
+
+## `derive_all` önbelleği (kare başı maliyet: yerinden-edilme zinciri taraması + sıralama her tick koşmasın).
+## Öğe KÜMESİ imzası (meclis oylamaları + sim gündem öğeleri: kimlik, süre, gerekçe, başlık, seçenekler) aynıysa önceki
+## liste döner; yalnız `days_left` o günün tick'ine göre yenilenir (görünen sayılar `derive_all` ile birebir).
+## İmza değişince `derive_all` yeniden koşar. Sayaçlar test/ölçüm içindir.
+class Cache:
+	extends RefCounted
+
+	var builds: int = 0
+	var hits: int = 0
+	var _signature: String = ""
+	var _items: Array[Item] = []
+	var _valid: bool = false
+
+	func items_for(facade: SimFacade, snapshot: SimSnapshot) -> Array[Item]:
+		var views: Array[AgendaItemView] = facade.agenda_items() if facade != null else []
+		var sig := AgendaModel.set_signature(snapshot, views)
+		if _valid and sig == _signature:
+			hits += 1
+			var tick := snapshot.tick()
+			for it in _items:
+				it.days_left = maxi(0, it.deadline_tick - tick)
+			return _items
+		builds += 1
+		_items = AgendaModel.derive_with(facade, snapshot, views)
+		_signature = sig
+		_valid = true
+		return _items
+
+	func invalidate() -> void:
+		_valid = false
+
+
 ## Anlık görüntüden gündem öğeleri (süresi yakın olan önce).
 static func derive(snapshot: SimSnapshot) -> Array[Item]:
 	var out: Array[Item] = []
@@ -71,9 +104,15 @@ static func derive(snapshot: SimSnapshot) -> Array[Item]:
 ## UYDURMAZ (yanıt komutu `SimCommand.agenda_respond`, gönderimi panel yapar). Gerekçe zincirinde hane sayısı varsa
 ## tür `displacement`, yoksa `event`.
 static func derive_all(facade: SimFacade, snapshot: SimSnapshot) -> Array[Item]:
+	var views: Array[AgendaItemView] = facade.agenda_items() if facade != null else []
+	return derive_with(facade, snapshot, views)
+
+
+## `derive_all` ile aynı; sim gündem öğeleri çağıran tarafından verilir (önbellek imzayla aynı okumayı paylaşır).
+static func derive_with(facade: SimFacade, snapshot: SimSnapshot, views: Array[AgendaItemView]) -> Array[Item]:
 	var out := derive(snapshot)
 	if facade != null:
-		for v in facade.agenda_items():
+		for v in views:
 			var it := Item.new()
 			it.id = v.ref()
 			it.kind = KIND_DISPLACEMENT if bool(displaced_cause(facade, v.reason_ids)["found"]) else KIND_EVENT
@@ -90,6 +129,23 @@ static func derive_all(facade: SimFacade, snapshot: SimSnapshot) -> Array[Item]:
 			return a.deadline_tick < b.deadline_tick
 		return a.vote_id < b.vote_id or (a.vote_id == b.vote_id and String(a.id) < String(b.id)))
 	return out
+
+
+## Gündem KÜMESİNİN imzası: öğe listesini/sırasını/gösterilen alanları değiştirecek her sim okuması buradadır
+## (`tick` HARİÇ: kalan gün ayrıca hesaplanır).
+static func set_signature(snapshot: SimSnapshot, views: Array[AgendaItemView]) -> String:
+	var parts: Array[String] = []
+	if snapshot != null and SimSections.council_built(snapshot):
+		for v in snapshot.council.pending_votes():
+			parts.append("v%d/%s/%s/%d/%s" % [v.vote_id, v.title_key, v.subject_ref, v.closes_tick, v.reason_ids])
+	for v in views:
+		var opts: Array[String] = []
+		for ov in v.options:
+			opts.append("%s/%s/%s/%s/%s/%s" % [ov.option_id, ov.verb, ov.label_key, ov.available, ov.locked_by,
+					ov.effects])
+		parts.append("a%d/%s/%d/%s/%s/%s" % [v.item_id, v.title_key, v.deadline_tick, v.reason_ids,
+				v.status, ";".join(opts)])
+	return "|".join(parts)
 
 
 static func _option_from(ov: AgendaOptionView) -> Option:

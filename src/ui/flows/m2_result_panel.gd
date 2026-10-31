@@ -15,12 +15,20 @@ const ROW_STEP := "step"
 const ROW_METRIC := "metric"
 const ROW_REACTION := "reaction"
 const ROW_HINT := "hint"
+## Gövde bölümleri: parsel, ölçülen sonuç, siyasi.
+const SECTION_COUNT := 3
 
 var model: M2ResultModel = null
+## Sayaçlar (test/ölçüm): tam kurma ve bölüm yeniden kurma sayısı.
+var full_rebuilds: int = 0
+var section_rebuilds: int = 0
 
 var _results: M2Results = null
-var _structure: String = ""
-## Değeri her yenilemede güncellenen düğümler (yeniden kurma yok): her biri model'den metni/çubuğu yeniden okur.
+## Bölümler (gövde çocukları düz kalır; her bölümün düğümleri `_sec_nodes`ta, kendi imzası `_sec_sigs`te).
+var _sec_sigs: Array[String] = []
+var _sec_nodes: Array = []
+## Değeri her yenilemede güncellenen düğümler (yeniden kurma yok), bölüm başına: her biri model'den metni/çubuğu okur.
+var _sec_dyn: Array = []
 var _dyn: Array[Callable] = []
 
 
@@ -32,22 +40,26 @@ static func create(ctx: UiContext, facade: SimFacade, results: M2Results) -> M2R
 	return p
 
 
+## Yapı imzası değişmedikçe düğümler korunur; yalnız imzası değişen BÖLÜM yeniden kurulur, geri kalan düğümler yalnız
+## değer güncellemesi alır (odak/kaydırma kaybı ve sil-yarat maliyeti yok). Görünen metin/sıra aynıdır.
 func refresh() -> void:
 	if _body == null or _results == null:
 		return
 	model = _results.build_model()
-	var structure := model.structure_signature()
-	var sig := structure + "#" + model.values_signature()
+	var secs := model.section_structure_signatures()
+	var sig := "|".join(secs) + "#" + model.values_signature()
 	if sig == _signature:
 		return
-	if structure == _structure and not _dyn.is_empty():
-		# Yalnız değerler değişti: düğümler yeniden kullanılır (odak/kaydırma kaybı ve sil-yarat maliyeti yok).
-		_signature = sig
-		for update in _dyn:
-			update.call()
+	_signature = sig
+	if _sec_sigs.size() != SECTION_COUNT:
+		_render()
 		return
-	_structure = structure
-	refresh_if_changed(sig)
+	for i in SECTION_COUNT:
+		if secs[i] != _sec_sigs[i]:
+			_rebuild_section(i, secs[i])
+	for dyn: Array in _sec_dyn:
+		for update: Callable in dyn:
+			update.call()
 
 
 func _render() -> void:
@@ -55,13 +67,57 @@ func _render() -> void:
 		return
 	if model == null:
 		model = _results.build_model()
+	full_rebuilds += 1
 	var focus_role := _begin_render()
-	_dyn = []
 	state_view.show_normal()
-	_add_parcel_section()
-	_add_outcome_section()
-	_add_political_section()
+	var secs := model.section_structure_signatures()
+	_sec_sigs = []
+	_sec_nodes = []
+	_sec_dyn = []
+	for i in SECTION_COUNT:
+		_sec_sigs.append(secs[i])
+		_sec_nodes.append(_build_section(i))
+		_sec_dyn.append(_dyn)
 	_restore_focus(focus_role)
+
+
+## Bölümü gövdenin SONUNA kurar; düğümlerini döner (`_dyn` bölüm başına yeni liste).
+func _build_section(index: int) -> Array:
+	_dyn = []
+	var first := _body.get_child_count()
+	match index:
+		0:
+			_add_parcel_section()
+		1:
+			_add_outcome_section()
+		_:
+			_add_political_section()
+	var nodes: Array = []
+	for i in range(first, _body.get_child_count()):
+		nodes.append(_body.get_child(i))
+	return nodes
+
+
+## Yalnız bu bölümün düğümlerini atıp yeniden kurar; yerini korur, odak rolünü geri verir.
+func _rebuild_section(index: int, signature: String) -> void:
+	section_rebuilds += 1
+	var focused := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
+	var role := _pending_focus_role
+	var at := 0
+	for i in index:
+		at += (_sec_nodes[i] as Array).size()
+	for old: Node in _sec_nodes[index]:
+		if focused != null and (old == focused or old.is_ancestor_of(focused)):
+			role = String(focused.get_meta(META_ROLE, role))
+		_body.remove_child(old)
+		old.queue_free()
+	var nodes := _build_section(index)
+	for k in nodes.size():
+		_body.move_child(nodes[k], at + k)
+	_sec_sigs[index] = signature
+	_sec_nodes[index] = nodes
+	_sec_dyn[index] = _dyn
+	_restore_focus(role)
 
 
 # --- Parsel ---
@@ -187,10 +243,16 @@ func _set_meter(meter: MeterBar, permille: int) -> void:
 	meter.queue_redraw()
 
 
-func _add_others() -> void:
+func _others_text() -> String:
 	var c := model.counts_decided()
-	_body.add_child(_muted(UiText.t(&"m2.others", {"n": model.parcels.size(), "approved": c["approved"],
-			"declined": c["declined"], "waiting": c["waiting"]})))
+	return UiText.t(&"m2.others", {"n": model.parcels.size(), "approved": c["approved"],
+			"declined": c["declined"], "waiting": c["waiting"]})
+
+
+func _add_others() -> void:
+	var others := _muted(_others_text())
+	_body.add_child(others)
+	_dyn.append(func() -> void: others.text = _others_text())
 	if model.parcels_capped:
 		_body.add_child(_muted(UiText.t(&"m2.others.capped", {"n": M2ResultModel.MAX_DETAIL_PARCELS})))
 
