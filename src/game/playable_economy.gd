@@ -8,7 +8,9 @@ const PATH := "res://data/game/playable_economy.json"
 
 
 ## `views`: sim'e verilen parsel görünümleri (id -> bölge kodu). `stock`: T0 başlangıç stoğu. `patch`: türetilmiş
-## yapılandırma üstüne derin birleştirilen yama (yalnız testler/deneyler; oynanabilir sahne vermez).
+## yapılandırma üstüne derin birleştirilen yama (yalnız testler/deneyler; oynanabilir sahne vermez). `patch["playable"]`
+## (varsa) ekonomi yapılandırmasına DEĞİL `playable_economy.json` ayarlarına uygulanır (ör. kontrol koşusu için
+## `{"playable": {"infra_free_units_max": -1}}`).
 ## `infra_free_units` >= 0: (YALNIZ dev senaryosu, `--infra-free`) her bölgenin boş altyapı kapasitesi bu birime iner
 ## (kapasite = T0 yükü + N); -1 = oynanabilir varsayılan (yük + pay).
 static func config_for(views: Array[ParcelView], stock: ExistingStockSource, patch: Dictionary = {},
@@ -18,6 +20,11 @@ static func config_for(views: Array[ParcelView], stock: ExistingStockSource, pat
 	if not (raw is Dictionary and tune is Dictionary):
 		push_error("playable_economy: yapılandırma okunamadı; varsayılan ekonomi kullanılıyor")
 		return EconomyConfig.load_default()
+	var tune_patch: Variant = patch.get("playable", {})
+	if tune_patch is Dictionary:
+		tune = _merge(tune as Dictionary, tune_patch)
+		patch = patch.duplicate(true)
+		patch.erase("playable")
 	var region_of := {}
 	for v in views:
 		region_of[v.id] = v.region_code
@@ -33,6 +40,8 @@ static func config_for(views: Array[ParcelView], stock: ExistingStockSource, pat
 	var infra_com := int(((raw as Dictionary)["uses"] as Dictionary)["commercial"]["infra_per_unit"])
 	var headroom := int((tune as Dictionary).get("infra_headroom_pm", 0))
 	var latent := int((tune as Dictionary).get("latent_demand_pm", 0))
+	# Başlangıç BOŞ kapasitenin mutlak üst sınırı (birim); -1 = sınırsız (yalnız %`infra_headroom_pm` payı).
+	var free_max := int((tune as Dictionary).get("infra_free_units_max", -1))
 	var base_households := int((raw["regions"]["defaults"] as Dictionary)["initial_households"])
 	var overrides: Dictionary = (raw["regions"] as Dictionary).get("overrides", {})
 	var codes: Array = res_units.keys()
@@ -45,8 +54,10 @@ static func config_for(views: Array[ParcelView], stock: ExistingStockSource, pat
 		var com := int(com_units.get(code, 0))
 		var load := res * infra_res + com * infra_com
 		var entry: Dictionary = overrides.get(String(code), {})
-		entry["infra_capacity_units"] = load + load * headroom / 1000 + 1 if infra_free_units < 0 \
-				else load + infra_free_units
+		var free := load * headroom / 1000
+		if free_max >= 0:
+			free = mini(free, free_max)
+		entry["infra_capacity_units"] = load + free + 1 if infra_free_units < 0 else load + infra_free_units
 		entry["initial_households"] = base_households + res * latent / 1000
 		overrides[String(code)] = entry
 	(raw["regions"] as Dictionary)["overrides"] = overrides

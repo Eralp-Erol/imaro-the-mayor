@@ -7,7 +7,11 @@ extends RefCounted
 
 const SEED := 20261020
 ## Yalnız oyuncunun imar kararı yatırım değerlendirmesini tetikler (periyodik otonom tarama kapalı): nedensellik yalın.
-const ISOLATE := {"decision": {"review_enabled": 0}}
+## Bu testler yatırımcı -> projector -> görünüm zincirini sınar, yol-kapasite nedenselliğini DEĞİL (o:
+## `playable_infra_capacity_test.gd`): başlangıç boş kapasite mutlak sınırı (`infra_free_units_max`) kapalıdır (-1),
+## yani eski %30 pay geçerlidir ve imar önerisi yol olmadan da değerlendirilir.
+const NO_INFRA_CAP := {"infra_free_units_max": -1}
+const ISOLATE := {"decision": {"review_enabled": 0}, "playable": NO_INFRA_CAP}
 ## Elverişsiz koşul: dar altyapı + az hane (aynı imar kararı, yatırımcı reddeder; sonuç zorlanmaz).
 const UNFAVORABLE := {"regions": {"overrides": {"D1": {"initial_households": 12, "infra_capacity_units": 4}}}}
 
@@ -44,7 +48,8 @@ static func fixture() -> Dictionary:
 static func handle(patch: Dictionary = {}, sim_seed: int = SEED, sim_config: SimConfig = null) -> PoliticsHandle:
 	var fx := fixture()
 	var source := ListParcelSource.create(&"m2_fixture", fx["views"])
-	var cfg := PlayableEconomy.config_for(fx["views"], fx["stock"], patch)
+	var tuned := patch if patch.has("playable") else PlayableEconomy._merge(patch, {"playable": NO_INFRA_CAP})
+	var cfg := PlayableEconomy.config_for(fx["views"], fx["stock"], tuned)
 	var h := PoliticsBootstrap.create(sim_seed, source, cfg, fx["stock"], null, null, sim_config)
 	assert(h != null, "PoliticsBootstrap.create başarısız")
 	return h
