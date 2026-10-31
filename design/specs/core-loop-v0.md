@@ -100,7 +100,7 @@ Test senaryoları: **olumlu** yol + plan -> tetikleyiciden ≤40 gün içinde �
 | Parametre | Öneri | Gerekçe / test |
 |---|---|---|
 | `unplanned_land.enabled` | varsayılan false; oynanabilir true | altın korunumu; iki durumda kontrol testi |
-| `road_priority_radius_m` (R) / `max_parcels` (K) | 150 / 12 | gözlem 2; tick maliyeti ölçülür |
+| `decision.priority_radius_m` (R) / `decision.priority_max_parcels` (K) | 150 / 12 | gözlem 2; tick maliyeti ölçülür |
 | `plan_max_parcels_per_proposal` | 40 | UI/oylama yükü; gözlem 6 |
 | `requires_council` (zoning.propose) | oynanabilirde false ("meclis yok"), bayrakla true | Q-014 AÇIK; iki yol da test |
 | `infra_units_per_km` | §4 formülü | gözlem 1 |
