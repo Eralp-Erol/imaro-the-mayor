@@ -34,7 +34,7 @@ UI'ya DOKUNULMADI (`src/ui/**`, `src/game/**`, `src/world/**` aynı). `playable.
 - Liste yalnız çağrı anındaki duruma göre süzülür; komut uygulanma tick'inde durum değişmişse `command.rejected` olayı gelir (test var).
 
 ## TEST EDİLMEDİ / AÇIK SINIRLAR
-- `tools/verify.sh quick` aşağıdaki "Kapanış" satırında; `full` koşulmadı (milestone işi). Pencereli çalışma, ekran görüntüsü, gerçek `playable.tscn` akışı yok (UI'ya dokunulmadı).
+- `tools/verify.sh quick` (head e8d292d): **SONUÇ pass**: canon-check, studio-check, area-map, gdlint (121 dosya), import temiz; `unit-gdunit` kapsam 190/239 suite, **1979 test, 0 hata, 0 başarısız**, 20 sahipsiz nesne (eski; uyarı). KISMİ doğrulama: ATLANDI tests/app, art, library, view, world, canon-guard ve 4 yavaş bitki suite'i (app/view ayrıca doğrudan koşuldu, bkz. üstte). `full` koşulmadı (milestone işi). Pencereli çalışma, ekran görüntüsü, gerçek `playable.tscn` akışı yok (UI'ya dokunulmadı).
 - **Bedel yok:** şablonlardaki `costs` (siyasi sermaye, bütçe, `time_days`) sim'de DÜŞÜLMÜYOR; bu yüzden DTO'da bedel alanı yok. UI "Telafi: 500 bütçe" gibi bir bedel YAZMAMALI.
 - **"Kararı gözden geçir" (`reverse`) yolu GERİ ALMAZ:** etkisi yatırımcı riskini artırmak + destekleyen kesimlerin memnuniyetini düşürmek; yol/parseller geri gelmez (o iş `public_work.undo_last`). PE-01 yerinden edilme dünyasında destekleyen kesim yoksa yalnız risk etkisi listelenir. Etiketin ("gözden geçir") gerçek etkiyle uyumu `design-director`/`ui-engineer` kararı.
 - `defer` ("Ertele") listelenmez: sim'de etkisiz (öğe zaten açık kalır, süre dolumu sürer). UI "daha sonra" için düğme koymak istiyorsa bu bir panel kapatma davranışıdır, sim komutu değil.
@@ -46,4 +46,4 @@ UI'ya DOKUNULMADI (`src/ui/**`, `src/game/**`, `src/world/**` aynı). `playable.
 `SimFacade.agenda_items()[i].options` → her `AgendaOptionView` için bir kart/düğme: metin `label_key` (`event.pe01.opt.listen|remedy|reverse` zaten `data/ui/strings.tr.json`'da); `available == false` ise kilitli göster, nedeni `locked_by` (yetki anahtarı; metni UI tanımlar); önizleme `effects` (hedef, yön, gecikme, süre; sayı yok). Gönderim: `facade.submit_command(SimCommand.agenda_respond(item.item_id, option.option_id))`; ret nedeni `CommandResult.reason_key` + `args.why` (`authority.locked`, `agenda.closed`, `system.not_built`, `option.no_effect`). Başarıda öğe bir sonraki tick'te listeden çıkar; etkiler zamana yayılır. `options` boşsa yanıt düğmesi gösterme.
 
 ## Kapanış
-Dal `worktree-agent-a86e411e8baeeebc6`; commit hash'i teslim mesajında.
+Dal `worktree-agent-a86e411e8baeeebc6`; ana commit `e8d292d` (+ bu logu güncelleyen küçük commit).
