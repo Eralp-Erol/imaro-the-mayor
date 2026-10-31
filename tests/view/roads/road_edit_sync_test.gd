@@ -111,6 +111,7 @@ func _assert_plan_equal(got: RoadChunkPlan, want: RoadChunkPlan) -> void:
 	assert_dict(got.edge_keys).is_equal(want.edge_keys)
 	assert_dict(got.junction_keys).is_equal(want.junction_keys)
 	assert_dict(got.trims).is_equal(want.trims)
+	assert_dict(got.arm_trims).is_equal(want.arm_trims)
 	assert_dict(got.junctions).is_equal(want.junctions)
 	assert_int(got.strip_count).is_equal(want.strip_count)
 

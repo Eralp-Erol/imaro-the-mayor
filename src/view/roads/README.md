@@ -13,6 +13,16 @@ katman ve eskimiş payı veridedir; seçim kenar kimliği hash'iyle (`ViewHash`,
 `sidewalk_cobble` kaldırımı + koyu bordürü shader'da çizer: ek geometri/draw call yok. Kavşak dolgusunda kaldırım yok.
 Şerit ekseni düğüm konumlarıdır; bina yönü/cephe verisi yeniden yorumlanmaz.
 
+**Kavşak geometrisi (2026-10-31, `RoadJunction`):** kırpma düğüm başına tek değer değil KOL başına ve YAN başınadır
+(`RoadChunkPlan.arm_trims[düğüm][kenar] = Vector2(sağ, sol)`). Her kolun bir yan çizgisi, açısal komşusunun bakan yan
+çizgisiyle kesiştiği noktaya kadar kırpılır (mitre); komşular bu noktada (P) buluşur, şerit uçları eğik kesilir,
+çakışma/boşluk kalmaz. Komşuyla > 170 derece açı yapan yan (düz geçen yolun karşı kenarı) hiç kırpılmaz: kaldırım
+kavşaktan kesintisiz geçer. `plan.trims[düğüm]` = en büyük kol kırpması (sınır/yarıçap için). Kavşak dolgusu kolların
+uç köşelerinin açı sırasıyla çokgenidir (konveks zarf değil; dışbükey köşede mitre; basit değilse zarfa düşer). Eski
+model (tek kırpma + zarf) T'nin dar kolunda dev kama bırakıyor, düz devamda kaldırımı ~15 m koparıyordu. Test:
+`tests/view/roads/road_junction_geometry_test.gd` (kama/delik/çift yüzey/ters sarım). Bilinen küçük kusur: kavşak
+dolgusunda kaldırım yok; mitre noktalarında (T'nin çatalı, bükülmenin dış köşesi) ~1-2 m'lik kaldırım dişi kalır.
+
 `chunk_m` (veri: `road_style.json`, şimdi 2 km; T-049 perf'te 1 km'den çıkarıldı) başına yakın ve metro meshleri bir kez kurulur. Yakın görünüm ilçe/sokakta gerçek genişliktedir;
 metro daha ince ve daha seyrek segmentlidir. Godot mesafe görünürlüğü seçer; kare başına script yoktur.
 Arazi üçgenlerine kırpma (TerrainMeshBuilder köşegeni, stride=1) yüzeyin içine gömülmeyi engeller.
