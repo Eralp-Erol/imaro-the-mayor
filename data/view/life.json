@@ -1,0 +1,48 @@
+{
+	"schema_version": 1,
+	"_notes": [
+		"T-050 YAŞAM BELİRTİSİ (araç + yaya) görünüm ayarları. Simülasyon bu dosyayı OKUMAZ (ADR-0004: profil/görünüm); sim'e hiçbir şey yazılmaz, state_hash etkilenmez.",
+		"STATÜ: TÜM SAYILAR 'ÇALIŞMA DEĞERİ'dir (working-value). Kanon değil, AÇIK karar değil, ölçülmüş cihaz sonucu değil. Hangi oranın 'doğru' olduğu (araç sahipliği, yaya yoğunluğu, kalabalık okunabilirliği) AÇIK bir ürün kararıdır (Q-018 / Q-010); burada yalnız görülebilir bir başlangıç değeri vardır ve değiştirilebilir. Production/QUESTIONS.md'ye soru eklendi.",
+		"KAYNAK: yoğunluk YALNIZ gerçek sim verisinden türer. Kenar (yol parçası) başına faaliyet = cephe parsellerinin sim birimleri: biten konut birimi x bölgenin doluluğu (housed_households / residential_units, economy_outcome) x w_res + biten ticaret birimi x w_com + inşaat/planlı birimi x w_con. T0 stoku ile sim'in sonradan yaptığı yapılar aynı yoldan sayılır (T0 = sim'e verilen başlangıç stoğu; sonrası parcel_changes_since). Sim'den bağımsız rastgele dekor YOKTUR: seed yalnız KONUM/FAZ üretir, SAYI üretmez.",
+		"spill_share: bir kenarın faaliyetine komşu kenarların (aynı iki uç düğümde buluşan) faaliyetinin bu payı eklenir (yan sokaklardan toplanan trafik). Yeni çizilen bir yol, bağlandığı yollardan hemen pay alır; yanında bina çıktıkça kendi faaliyeti de artar.",
+		"classes: sınıf başına araç/yaya katsayısı ve yoğunluk tavanı (100 m başına). Tavan yalnız taşma emniyetidir; tipik değerler tavanın çok altında kalmalı (kalibrasyon: gerçek Ismeral T0 dağılımı, bkz. production/log/2026-10-31-T-050-yasam-belirtisi.md).",
+		"movement: yalnız yol parçası boyunca basit ileri akış. Rota bulma, kavşak, trafik sıkışıklığı YOK (M3, kapsam dışı). Hareket gölgelendiricidedir (UNIFORM life_t); CPU'da kare başı örnek güncellemesi yoktur. Parça sonunda araç/insan küçülüp kaybolur ve parça başında belirir (bilinen kusur: basit akış, parça başına döngü).",
+		"profiles: görünüm profilleri (ADR-0004). density çarpanı ve menzil; dokunmatik/iPad profili daha seyrek. iPad ölçülmedi."
+	],
+	"status": "working-value",
+	"spill_share": 0.3,
+	"weights": {"res": 1.0, "com": 1.4, "con": 1.2},
+	"classes": {
+		"arterial": {"cars_per_activity": 0.05, "cars_cap_per_100m": 10.0, "people_per_activity": 0.04, "people_cap_per_100m": 8.0},
+		"collector": {"cars_per_activity": 0.05, "cars_cap_per_100m": 9.0, "people_per_activity": 0.07, "people_cap_per_100m": 10.0},
+		"local": {"cars_per_activity": 0.05, "cars_cap_per_100m": 8.0, "people_per_activity": 0.07, "people_cap_per_100m": 12.0},
+		"field": {"cars_per_activity": 0.0, "cars_cap_per_100m": 0.0, "people_per_activity": 0.0, "people_cap_per_100m": 0.0}
+	},
+	"layout": {
+		"cell_m": 256.0,
+		"min_edge_len_m": 12.0,
+		"end_inset_m": 7.0,
+		"max_piece_m": 80.0,
+		"ground_lift_m": 0.14,
+		"car_lane_frac": 0.25,
+		"walker_sidewalk_frac": 0.5,
+		"body_broad_share": 0.35,
+		"human_scale_jitter": 0.04,
+		"min_open_width_m": 4.0
+	},
+	"movement": {
+		"car_speed_mps": 7.5,
+		"person_speed_mps": 1.35,
+		"speed_spread": 0.3,
+		"end_fade_m": 3.0
+	},
+	"profiles": {
+		"desktop": {"density": 1.0, "car_range_m": 900.0, "human_range_m": 230.0, "human_lod0_m": 40.0, "max_cars": 1600, "max_people": 1400, "max_cells_built_per_frame": 2},
+		"touch": {"density": 0.5, "car_range_m": 600.0, "human_range_m": 160.0, "human_lod0_m": 25.0, "max_cars": 700, "max_people": 600, "max_cells_built_per_frame": 1}
+	},
+	"update": {
+		"cell_margin_m": 120.0,
+		"camera_step_m": 12.0,
+		"init_parcels_per_frame": 5000
+	}
+}

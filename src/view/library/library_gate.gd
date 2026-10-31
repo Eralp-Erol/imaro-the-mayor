@@ -20,9 +20,11 @@ const FORMAT := "imaro-game-set/1"
 ## Bitki + sokak donatısı oyun tabloları (T-062 B0). Varsayılan kapıya EKLENMEZ (bina/zemin tüketicileri etkilenmez);
 ## bitki yerleşimi `load_plants()` ile kendi kapısını kurar.
 const PLANT_TABLE_PATHS := ["res://data/library/game_plants.json", "res://data/library/game_furniture.json"]
+## Araç + insan oyun tabloları (T-050; D-012 `veh_car`, D-013 yalnız B blok figür). Varsayılan kapıya EKLENMEZ.
+const LIFE_TABLE_PATHS := ["res://data/library/game_vehicles.json", "res://data/library/game_humans.json"]
 ## Tablo adı -> kayıt dizisi anahtarı. Bilinmeyen tablo adı reddedilir.
 const TABLE_RECORD_KEYS := {"buildings": "modules", "ground": "layers", "vegetation": "plants",
-		"furniture": "items"}
+		"furniture": "items", "vehicles": "items", "humans": "items"}
 const LOD_ORDER := ["LOD0", "LOD1", "PROXY"]
 
 const REASON_REJECTED := "rejected"
@@ -72,6 +74,13 @@ static func load_default() -> LibraryGate:
 static func load_plants() -> LibraryGate:
 	var gate := LibraryGate.new()
 	gate.load_game_tables(PackedStringArray(PLANT_TABLE_PATHS), CATALOG_PATH)
+	return gate
+
+
+## Araç + insan tabloları ve katalog (T-050): yaşam görünümü kimlikleri yalnız bu kapıdan alınır.
+static func load_life() -> LibraryGate:
+	var gate := LibraryGate.new()
+	gate.load_game_tables(PackedStringArray(LIFE_TABLE_PATHS), CATALOG_PATH)
 	return gate
 
 

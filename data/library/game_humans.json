@@ -1,0 +1,256 @@
+{
+ "format": "imaro-game-set/1",
+ "table": "humans",
+ "source_catalog": "data/library/catalog.json",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
+ "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+ "included_count": 2,
+ "unapproved": {
+  "count": 5,
+  "by_reason": {
+   "not_approved": 1,
+   "style_not_selected": 4
+  },
+  "entries": [
+   {
+    "id": "hum_hero_facet_broad_a",
+    "reason": "style_not_selected",
+    "detail": "D-013: only style:block is used in game"
+   },
+   {
+    "id": "hum_hero_facet_neutral_a",
+    "reason": "style_not_selected",
+    "detail": "D-013: only style:block is used in game"
+   },
+   {
+    "id": "hum_hero_pawn_broad_a",
+    "reason": "style_not_selected",
+    "detail": "D-013: only style:block is used in game"
+   },
+   {
+    "id": "hum_hero_pawn_neutral_a",
+    "reason": "style_not_selected",
+    "detail": "D-013: only style:block is used in game"
+   },
+   {
+    "id": "prop_human",
+    "reason": "not_approved",
+    "detail": "rejected"
+   }
+  ]
+ },
+ "items": [
+  {
+   "id": "hum_hero_block_broad_a",
+   "kind": "human",
+   "style": "block",
+   "ratio": "broad",
+   "family": "hero_block_broad",
+   "variant": "a",
+   "label_tr": "B blok figür · prizma uzuvlar, el/ayak blokları · geniş gövde oranı (1,75 m)",
+   "generator": "art/blender/human/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/human/hum_hero_block_broad_a_lod0.glb",
+     "sha256": "34143be9b5e20ab67171e7c0ac967bd78246f2921485d13dcf193610df857d00",
+     "tris": 198,
+     "aabb_m": {
+      "min": [
+       -0.307,
+       0.0,
+       -0.13
+      ],
+      "max": [
+       0.307,
+       1.75,
+       0.17
+      ]
+     },
+     "materials": [
+      "mat_human_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/human/hum_hero_block_broad_a_lod1.glb",
+     "sha256": "95efd55b271b08d1f65d68fd656146e22f93ef5e07a3568c2bb11d774a20a3ac",
+     "tris": 98,
+     "aabb_m": {
+      "min": [
+       -0.307,
+       0.0,
+       -0.13
+      ],
+      "max": [
+       0.307,
+       1.75,
+       0.17
+      ]
+     },
+     "materials": [
+      "mat_human_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 198,
+    "LOD1": 98
+   },
+   "footprint_m": [
+    0.614,
+    0.3
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.307,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 1.75,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/human/human_atlas.png",
+    "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+    "size_px": [
+     1024,
+     512
+    ],
+    "material": "mat_human_atlas",
+    "layout": "res://assets/hero/human/atlas_layout.json",
+    "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+   },
+   "material_policy": {
+    "material": "mat_human_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 30,
+    "LOD1_max": 120,
+    "beyond_lod1": "cull (no far proxy for a single small figure)",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: body-type count, clothing variety, uniformed staff and named characters (D-013 scope note)"
+  },
+  {
+   "id": "hum_hero_block_neutral_a",
+   "kind": "human",
+   "style": "block",
+   "ratio": "neutral",
+   "family": "hero_block_neutral",
+   "variant": "a",
+   "label_tr": "B blok figür · prizma uzuvlar, el/ayak blokları · nötr 1,75 m yetişkin",
+   "generator": "art/blender/human/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/human/hum_hero_block_neutral_a_lod0.glb",
+     "sha256": "4c0a6f05e9bd5333b978c26cfb800a03e5b17b1a5db8bad4e991b2f72986e544",
+     "tris": 198,
+     "aabb_m": {
+      "min": [
+       -0.261,
+       0.0,
+       -0.105
+      ],
+      "max": [
+       0.261,
+       1.75,
+       0.17
+      ]
+     },
+     "materials": [
+      "mat_human_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/human/hum_hero_block_neutral_a_lod1.glb",
+     "sha256": "40eaf4515d4dd6dbade42aca7e508465796ae98594a2aa22d3e02ed7a82b570e",
+     "tris": 98,
+     "aabb_m": {
+      "min": [
+       -0.261,
+       0.0,
+       -0.105
+      ],
+      "max": [
+       0.261,
+       1.75,
+       0.17
+      ]
+     },
+     "materials": [
+      "mat_human_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 198,
+    "LOD1": 98
+   },
+   "footprint_m": [
+    0.522,
+    0.275
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.261,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 1.75,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/human/human_atlas.png",
+    "sha256": "d264857cabfb6da5eb3caabbe24e6957407770c61e788a34c239ebbcb9d92721",
+    "size_px": [
+     1024,
+     512
+    ],
+    "material": "mat_human_atlas",
+    "layout": "res://assets/hero/human/atlas_layout.json",
+    "layout_sha256": "8b362e447159e29ab6c2454ded9eaf24a3ea5eb4d5c0b83dfc2a937fc471eeba"
+   },
+   "material_policy": {
+    "material": "mat_human_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB flat-tile atlas Texture2D shared by every human GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 30,
+    "LOD1_max": 120,
+    "beyond_lod1": "cull (no far proxy for a single small figure)",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: body-type count, clothing variety, uniformed staff and named characters (D-013 scope note)"
+  }
+ ]
+}
