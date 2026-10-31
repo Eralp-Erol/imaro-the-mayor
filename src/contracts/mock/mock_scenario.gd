@@ -9,7 +9,7 @@ extends RefCounted
 const FORMAT := "imaro.mock_scenario"
 const FORMAT_VERSION := 1
 const PROVENANCE_MARK := "MOCK"
-const EFFECT_TYPES: Array[String] = ["reason", "event", "parcel", "group", "budget", "council_vote"]
+const EFFECT_TYPES: Array[String] = ["reason", "event", "parcel", "group", "budget", "council_vote", "agenda"]
 
 var id: StringName = &""
 var description: String = ""

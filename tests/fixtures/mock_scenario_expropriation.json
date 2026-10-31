@@ -298,6 +298,36 @@
        "r_react"
       ]
      }
+    },
+    {
+     "after_ticks": 5,
+     "type": "agenda",
+     "reason_labels": [
+      "r_react"
+     ],
+     "item": {
+      "item_id": 1,
+      "template_id": "PE-01",
+      "delivery": "agenda",
+      "status": "open",
+      "region_code": "F1",
+      "group": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "expires_after": 30,
+      "title_key": "event.pe01.reason",
+      "args": {
+       "topic": "housing",
+       "stage": 0
+      },
+      "cause_refs": [
+       "command.1",
+       "parcel.1",
+       "parcel.2"
+      ]
+     }
     }
    ]
   },

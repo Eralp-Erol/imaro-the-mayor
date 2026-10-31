@@ -95,6 +95,46 @@ static func agenda(state: GameState, ctx: PoliticsContext, only_open: bool = tru
 	return out
 
 
+## Sözleşme görünümü (`SimFacade.agenda_items`, T-042b): AÇIK gündem öğeleri, kimlik artan. Sim'in kendi kaydıdır:
+## `reason_ids` = ateşleme gerekçesi (hâlâ saklanıyorsa), `cause_refs` = ateşleme gerekçesinin ebeveyn (neden)
+## kayıtlarındaki komut/parsel konuları (sıralı, yinelemesiz; PE-01 yerinden edilmede komut + alınan parseller).
+static func agenda_views(state: GameState, ctx: PoliticsContext) -> Array[AgendaItemView]:
+	var out: Array[AgendaItemView] = []
+	var first := state.reasons.first_id()
+	for item: Dictionary in PoliticsState.data(state)["events"]["agenda"]:
+		if item["status"] != EventEngine.OPEN:
+			continue
+		var template := ctx.politics.template(item["template"])
+		var view := AgendaItemView.new()
+		view.item_id = int(item["id"])
+		view.template_id = StringName(item["template"])
+		view.delivery = StringName(item["delivery"])
+		view.status = AgendaItemView.STATUS_OPEN
+		view.region_code = StringName(item["region"])
+		var bloc := str(item["bloc"])
+		view.group = actor_ref_of(state, bloc) if not bloc.is_empty() else null
+		view.opened_tick = int(item["opened_tick"])
+		view.deadline_tick = int(item["deadline"])
+		view.title_key = StringName(template.get("reason_key", ""))
+		view.args = {"topic": str(item["topic"]), "stage": int(item["stage"])}
+		view.reason_ids = _retained([int(item["reason_id"])], first)
+		view.cause_refs = _cause_refs(state, view.reason_ids)
+		out.append(view)
+	return out
+
+
+## Ateşleme gerekçelerinin ebeveyn kayıtlarındaki `command.N` / `parcel.N` konuları (kayıt sırası, yinelemesiz).
+static func _cause_refs(state: GameState, fire_ids: PackedInt64Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	for fire_id in fire_ids:
+		var fire := state.reasons.peek(fire_id)
+		for parent_id: int in fire.get("parent_ids", PackedInt64Array()):
+			for subject: String in state.reasons.peek(parent_id).get("subjects", PackedStringArray()):
+				if (subject.begins_with("command.") or subject.begins_with("parcel.")) and not out.has(subject):
+					out.append(subject)
+	return out
+
+
 ## Konu tonları (kopya).
 static func media_tone(state: GameState) -> Dictionary:
 	return PoliticsState.data(state)["media"]["tone"].duplicate()

@@ -53,8 +53,8 @@ func _render() -> void:
 	var focus_role := _begin_render()
 	_auto_pause_button = null
 	var snap := _facade.snapshot()
-	items = item_provider.call(snap) if item_provider.is_valid() else AgendaModel.derive(snap)
-	if not AgendaModel.source_built(snap) and not item_provider.is_valid():
+	items = item_provider.call(snap) if item_provider.is_valid() else AgendaModel.derive_all(_facade, snap)
+	if not AgendaModel.source_built(snap) and items.is_empty() and not item_provider.is_valid():
 		state_view.show_not_built(&"agenda.not_built")
 		return
 	state_view.show_normal()
@@ -62,7 +62,8 @@ func _render() -> void:
 		_body.add_child(UiFactory.label(UiText.t(&"agenda.empty"), &"", true))
 	for it in items:
 		_body.add_child(_item_card(it))
-	if not item_provider.is_valid():
+	if not item_provider.is_valid() and not items.any(func(i: AgendaModel.Item) -> bool:
+			return i.kind != AgendaModel.KIND_COUNCIL_VOTE):  # not, "yalnız meclis oylaması" iken doğrudur
 		_body.add_child(_muted(UiText.t(&"agenda.derived_note")))
 	_add_settings()
 	_restore_focus(focus_role)

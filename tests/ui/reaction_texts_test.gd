@@ -3,8 +3,8 @@ extends GdUnitTestSuite
 ## (`decision.bloc.expropriation_cause`, `decision.bloc.react.<basamak>`) Türkçe düz metinle görünür; hane sayısı
 ## neden kaydından okunur (UI uydurmaz); gündem öğesinde "Nedenini gör" zinciri nedene iner.
 ## Kaynak: MOCK fixture `mock_scenario_expropriation` (gerçek sim kayıt yapısıyla hizalı, sayılar SAHTE).
-## Gerçek `SimFacadeImpl` ile PE-01 gündem öğesi sözleşmeden henüz okunamıyor (AgendaItemView yok): bu testler öğeyi
-## `item_provider` ile besler; gerçek bağlantı DOĞRULANMADI.
+## Bu testler gündem öğesini `item_provider` ile besler; gerçek `SimFacadeImpl` + `agenda_items()` bağlantısı
+## `agenda_real_sim_test.gd` ve `agenda_facade_adapter_test.gd`de sınanır.
 
 const P := preload("res://tests/sim/public_works/public_works_support.gd")
 const SCENARIO := "mock_scenario_expropriation"

@@ -205,7 +205,7 @@ func _on_refreshed() -> void:
 
 
 func _update_agenda(snap: SimSnapshot) -> void:
-	var items := AgendaModel.derive(snap)
+	var items := AgendaModel.derive_all(facade, snap)
 	hud.set_agenda(items.size(), AgendaModel.nearest_days(items), facade.is_mock())
 	var fresh := AgendaModel.unseen(items, _seen_agenda)
 	for it in items:

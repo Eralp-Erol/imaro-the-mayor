@@ -114,6 +114,13 @@ func public_works() -> Array[PublicWorkView]:
 	return []
 
 
+## v1.5 (T-042b, isteğe bağlı ek) · Sim'in açtığı AÇIK gündem öğeleri (olay motoru; PE-01 yerinden edilme dahil), kimlik
+## artan. Meclis oylamaları burada değil, `snapshot().council` içindedir. Değer kopyası; sim durumunu DEĞİŞTİRMEZ.
+## Varsayılan (kaynak olay sistemi sunmuyorsa): boş (uydurma öğe yok). Uygulama geçersiz kılar.
+func agenda_items() -> Array[AgendaItemView]:
+	return []
+
+
 ## v1.4 (T-043A, D-010) · Parselin imar PLANI durumu (Plansız / Teklif verildi / Planlı / ...). Salt okunur, değer
 ## kopyası. Varsayılan (kaynak plan kavramı sunmuyorsa, mock dahil): `untracked`. Uygulama geçersiz kılar.
 func plan_state(parcel_id: int) -> PlanStateView:

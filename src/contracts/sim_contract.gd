@@ -10,7 +10,9 @@ extends RefCounted
 ##   `PublicWorkView`, `EconomyRegionOutcome.infra_*` (ADR-0005 Ek E);
 ##   1.4 (T-043A) imar planı sorguları: `SimFacade.plan_state()`/`PlanStateView`, `plan_preview()`/`PlanPreviewView`
 ##   (ADR-0005 Ek G); 1.5 (T-042b, D-011) kamulaştırma: `public_work.road` + `expropriate`, `ParcelView.development =
-##   taken`, `public_work.expropriated/restored` olayları, kamulaştırma ret anahtarları (ADR-0005 Ek F).
+##   taken`, `public_work.expropriated/restored` olayları, kamulaştırma ret anahtarları (ADR-0005 Ek F);
+##   1.5'e isteğe bağlı ek (sürüm artmadı): `SimFacade.agenda_items()`/`AgendaItemView` (sim'in açık gündem öğeleri,
+##   PE-01 yerinden edilme dahil; soyut olmayan, boş varsayılan; ADR-0005 Ek F son paragraf).
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
@@ -36,6 +38,7 @@ const REF_REASON := &"reason"
 const REF_VOTE := &"vote"
 const REF_BUDGET := &"budget"
 const REF_REGION := &"region"
+const REF_AGENDA := &"agenda"
 
 
 ## `version` bu sözleşmeyle uyumlu mu (aynı MAJOR, biçim `A.B`)?

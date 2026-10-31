@@ -8,3 +8,8 @@ extends RefCounted
 ## `snapshot`ı yerinde doldurur.
 func fill(_state: GameState, _snapshot: SimSnapshot) -> void:
 	pass
+
+
+## v1.5 (isteğe bağlı) · Açık gündem öğeleri (`SimFacade.agenda_items`); kaynağı olmayan sağlayıcı boş döner.
+func agenda_items(_state: GameState) -> Array[AgendaItemView]:
+	return []
