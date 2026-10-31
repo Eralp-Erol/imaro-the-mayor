@@ -31,7 +31,11 @@ static func refresh(net: WorldNetwork, j: NetworkOpJournal) -> Dictionary:
 	var affected := _affected_blocks(net, j, touched)
 	var matched := {}
 	var faces := NetworkBlocks.extract_local(net, seeds)
-	for face in NetworkBlockMatch.match_faces(net, faces, matched, affected):
+	var pending := NetworkBlockMatch.match_faces(net, faces, matched, affected)
+	if NetworkExpropriation.active(net):  # tam yenilemeyle AYNI havuzlu yeniden kurma işlevi (T-042b)
+		NetworkExpropriation.rebuild(net, pending, matched, report, affected.keys())
+		return report
+	for face in pending:
 		var block: WorldBlock = net._build_block(face, report)
 		matched[block.id] = true
 		WorldNetwork.report_add(report, "added_blocks", block.id)

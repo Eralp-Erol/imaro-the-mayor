@@ -193,6 +193,14 @@ static func first_parcel_hit(net: WorldNetwork, pts: PackedVector2Array, rules: 
 	return {"found": false, "at": Vector2.ZERO}
 
 
+## T-042b kamulaştırma: bu yolun alacağı parsel kimlikleri (artan, PackedInt64Array): yol eksenine uzaklığı <= yarı
+## genişlik + `expropriation_margin_m` olan parseller (`NetworkExpropriation.taken_parcels`). `pts` cm'ye yuvarlanmış
+## (`check` sonucundaki `points`) olmalı. Ağa dokunmaz; `WorldNetwork.add_road_expropriating` raporunun
+## `removed_parcels`ı buna eşittir.
+static func taken_parcels(net: WorldNetwork, pts: PackedVector2Array, road_class: StringName) -> PackedInt64Array:
+	return NetworkExpropriation.taken_parcels(net, pts, net.rules.width_of(road_class))
+
+
 ## Bölge kodu başına yol uzunluğu (m): her parça, orta noktasının bölgesine yazılır (yetki alanı hesabıyla aynı işlev).
 static func region_lengths(net: WorldNetwork, pts: PackedVector2Array) -> Dictionary:
 	var out := {}

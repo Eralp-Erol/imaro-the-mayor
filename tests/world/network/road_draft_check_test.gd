@@ -230,7 +230,7 @@ func test_crossing_parcels_is_a_data_rule_closed_in_v0_and_openable_for_stage_tw
 	assert_bool(_check(net, pts, LOCAL, stage_two)["ok"]).is_true()
 	var from_data := RoadDraftRules.from_control({"player_roads": {"crossing_parcels": "allow"}})
 	assert_bool(_check(net, pts, LOCAL, from_data)["ok"]).is_true()
-	assert_str(String(RoadDraftRules.load_path().crossing_parcels)).is_equal("reject")
+	assert_str(String(RoadDraftRules.load_path().crossing_parcels)).is_equal("expropriate")  # T-042b; düz denetim yine ret
 
 
 # --- v0 değişmezi: geçerli taslak parsel kümesini değiştirmez; geri alınca taban ---
