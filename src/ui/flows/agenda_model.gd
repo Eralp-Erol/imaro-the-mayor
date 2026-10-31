@@ -8,6 +8,9 @@ extends RefCounted
 ## Gündem kaynağı yoksa (meclis kurulmamış) liste boştur ve panel "kurulmadı" der.
 
 const KIND_COUNCIL_VOTE := &"council_vote"
+## Sim'in yerinden edilme neden kaydı: bu etken adı kayıtta hane SAYISI taşır (T-042b, ağırlık 0 = yalnız gösterim).
+const DISPLACED_COUNT_FACTOR := &"reason.factor.displaced_household_count"
+const CHAIN_DEPTH := 4
 
 
 class Option:
@@ -56,6 +59,33 @@ static func derive(snapshot: SimSnapshot) -> Array[Item]:
 	out.sort_custom(func(a: Item, b: Item) -> bool:
 		return a.deadline_tick < b.deadline_tick or (a.deadline_tick == b.deadline_tick and a.vote_id < b.vote_id))
 	return out
+
+
+## Öğenin gerekçe zincirinde (öğe kaydı -> ebeveyn ... en çok `CHAIN_DEPTH` basamak) sim'in yazdığı yerinden edilme
+## sayısını arar. Dönüş: `{found, households, record_id}`; yoksa `found=false` (UI sayı UYDURMAZ, satır gizlenir).
+static func displaced_cause(facade: SimFacade, reason_ids: PackedInt64Array) -> Dictionary:
+	var queue: Array[int] = []
+	for rid in reason_ids:
+		queue.append(rid)
+	var seen: Dictionary = {}
+	var depth := 0
+	while not queue.is_empty() and depth < CHAIN_DEPTH:
+		var next: Array[int] = []
+		for rid in queue:
+			if seen.has(rid):
+				continue
+			seen[rid] = true
+			var rec := facade.reason(rid)
+			if rec == null:
+				continue
+			for f in rec.factors:
+				if f.name_key == DISPLACED_COUNT_FACTOR:
+					return {"found": true, "households": f.value, "record_id": rid}
+			for pid in rec.parent_ids:
+				next.append(pid)
+		queue = next
+		depth += 1
+	return {"found": false, "households": 0, "record_id": SimContract.NO_ID}
 
 
 ## Gündemin kaynağı kurulu mu (kurulmadıysa "Olay sistemi henüz kurulmadı").

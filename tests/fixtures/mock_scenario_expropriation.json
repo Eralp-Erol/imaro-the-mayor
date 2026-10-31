@@ -175,18 +175,75 @@
        "id": 1,
        "name_key": "mock.actor.group.1"
       },
-      "decision_key": "decision.group.protest",
+      "decision_key": "decision.bloc.expropriation_cause",
       "factors": [
        {
         "name_key": "reason.factor.displaced_households",
-        "value": 800,
-        "weight": 600
+        "value": 40,
+        "weight": 700,
+        "source_ref": "command.1"
        },
        {
         "name_key": "reason.factor.road_proximity",
-        "value": 300,
-        "weight": 400,
-        "is_estimate": true
+        "value": 20,
+        "weight": 300,
+        "is_estimate": true,
+        "source_ref": "command.1"
+       },
+       {
+        "name_key": "reason.factor.displaced_household_count",
+        "value": 11,
+        "weight": 0,
+        "source_ref": "command.1"
+       }
+      ],
+      "threshold": 10,
+      "outcome": "positive",
+      "subjects": [
+       "parcel.1",
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "reason",
+     "label": "r_react",
+     "reason": {
+      "actor": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "decision_key": "decision.bloc.react.protest",
+      "parent_labels": [
+       "r_displacement"
+      ],
+      "factors": [
+       {
+        "name_key": "reason.factor.grievance_level",
+        "value": 1000,
+        "weight": 450
+       },
+       {
+        "name_key": "reason.factor.satisfaction_level",
+        "value": 0,
+        "weight": -250
+       },
+       {
+        "name_key": "reason.factor.media_amplification",
+        "value": 600,
+        "weight": 150
+       },
+       {
+        "name_key": "reason.factor.organizer_capacity",
+        "value": 700,
+        "weight": 100
+       },
+       {
+        "name_key": "reason.factor.trust_in_player",
+        "value": 200,
+        "weight": -50
        }
       ],
       "threshold": 500,
@@ -201,7 +258,8 @@
      "after_ticks": 3,
      "type": "group",
      "reason_labels": [
-      "r_displacement"
+      "r_displacement",
+      "r_react"
      ],
      "reaction": {
       "group": {
@@ -237,7 +295,7 @@
       ],
       "message_key": "event.group.protest",
       "reason_labels": [
-       "r_displacement"
+       "r_react"
       ]
      }
     }

@@ -79,6 +79,7 @@ func _item_card(it: AgendaModel.Item) -> Control:
 	if it.subject_ref != &"":
 		inner.add_child(_pair(UiText.t(&"council.subject"), UiText.humanize(String(it.subject_ref))))
 	inner.add_child(UiFactory.label(_time_text(it), &"", true))
+	_add_displacement_cause(inner, it)
 	if it.kind == AgendaModel.KIND_COUNCIL_VOTE:
 		var open := UiFactory.button(_ctx, UiText.t(&"zoning.see_vote"), true)
 		_tag(open, "open_item_%s" % it.id)
@@ -93,6 +94,23 @@ func _item_card(it: AgendaModel.Item) -> Control:
 		defer.pressed.connect(func() -> void: deferred.emit(it.id))
 		inner.add_child(defer)
 	return parts[0]
+
+
+## Yerinden edilme tepkisi (PE-01, T-042b): hane sayısı öğenin gerekçe zincirindeki sim kaydından okunur; kayıtta sayı
+## yoksa satır ve düğme çıkmaz. "Nedenini gör" zinciri (öğe kaydı -> yerinden edilme nedeni) gerekçe panelini açar.
+func _add_displacement_cause(inner: VBoxContainer, it: AgendaModel.Item) -> void:
+	if it.reason_ids.is_empty():
+		return
+	var cause := AgendaModel.displaced_cause(_facade, it.reason_ids)
+	if not bool(cause["found"]):
+		return
+	inner.add_child(UiFactory.label(UiText.t(&"agenda.displacement.households", {"count": UiText.number(
+		int(cause["households"]))}), &"", true))
+	var ids := it.reason_ids
+	var why := UiFactory.button(_ctx, UiText.t(&"agenda.displacement.why"), false)
+	_tag(why, "why_%s" % it.id)
+	why.pressed.connect(func() -> void: _request_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(ids)))
+	inner.add_child(why)
 
 
 ## Yanıtlanabilir öğe: "yanıt için kalan"; oylama gibi yalnız izlenen öğe: "sonuç ... içinde".

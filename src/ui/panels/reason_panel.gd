@@ -29,6 +29,8 @@ const MODE_WORK := &"work"
 const MAX_STACK := 32
 ## Altyapı kapasitesi etkeninin ad anahtarı (sim kaydındaki kimlik; veto kapısı notu için).
 const INFRA_FACTOR_KEY := &"reason.factor.infrastructure_capacity"
+## Sim'in yazdığı SAYIM etkeni (T-042b): değer hane sayısıdır, binde sinyal değil; `0,01` gibi sabit nokta gösterilmez.
+const COUNT_FACTOR_KEY := &"reason.factor.displaced_household_count"
 const META_ROLE := &"role"
 const NAME_FACTOR := "FactorRow"
 const NAME_PARENT := "ChainParent"
@@ -558,6 +560,8 @@ func _factor_row(row: ReasonModel.Row, index: int, current_id: int) -> Control:
 		box.add_child(ReasonFactorBar.create(_ctx, row))
 	var calc := UiText.t(&"reason.calc", {"value": UiText.fixed(row.value), "weight": UiText.fixed(row.weight),
 		"contribution": UiText.fixed(row.contribution, true)})
+	if row.name_key == COUNT_FACTOR_KEY and row.is_info_only:
+		calc = UiText.t(&"reason.count_value", {"count": UiText.number(row.value)})
 	box.add_child(UiFactory.label(calc, UiTheme.V_LABEL_MUTED, true))
 	box.tooltip_text = calc
 	if row.name_key == INFRA_FACTOR_KEY and row.direction != ReasonModel.DIR_AGAINST:
