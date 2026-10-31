@@ -26,7 +26,7 @@ Yıkımlı yol artık yerinden ettiği hane sayısına göre yol başına tek g�
 - A) Önerilen: Şimdiki ayar kalsın (200 hane, eşik 20 pm, tavan 200 pm). Küçük yol hafif, büyük yol (yaklaşık 40+ hane) en sert tepkiyi alır.
 - B) Daha yumuşak (tavan daha yüksek / mahalle daha büyük). Büyük yollar da kademeli ayırt edilir, ama tepki geç ve zayıf başlar; yeni değerler ölçülmedi.
 - C) Daha sert (mahalle daha küçük / eşik düşük). Orta yol bile belirgin tepki alır, oyuncu ilk yıkımda cezalandırılmış hisseder; yeni değerler ölçülmedi.
-- Bekleyen: `data/politics/reactions.json` `local.neighborhood_households` 200, `min_displacement_pm` 20, `full_displacement_pm` 200. Ayrıca oynanabilir oyunda yıkımlı yol çizilemiyor (`playable_roads.gd` köprüsü, "kamulaştırma henüz yok"); Kart 1 (yıkım kapsamı) cevabı gelmeden ölçek ayarı erken.
+- Bekleyen: `data/politics/reactions.json` `local.neighborhood_households` 200, `min_displacement_pm` 20, `full_displacement_pm` 200. Oynanabilir oyunda yıkımlı yol artık çizilebiliyor (`playable_roads.gd` köprüsü takılı, 2026-10-31); yine de Kart 1 (yıkım kapsamı) cevabı gelmeden ölçek ayarı erken.
 - Kaynak: `2026-10-31-yerinden-edilme-mahalle-olcegi.md` (Önce/sonra tablosu, "Doğrulanmadı"); `2026-10-31-meclis-tepki-gercek-olcum.md` §0 madde 2-3, §4.
 
 **Kart D · Şehirde kaç araç/yaya görünsün? (Q-026, güncel)**
