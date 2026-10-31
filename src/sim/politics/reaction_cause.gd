@@ -54,6 +54,35 @@ static func record(state: GameState, ctx: PoliticsContext, key: String, bloc: Di
 	return {"id": id, "command_refs": refs, "parcel_refs": parcels, "households": int(found["households"])}
 
 
+## Mahalle ölçekli neden kaydı (`ReactionAgenda.local_readings` okuması): TEK komutun (yolun) o bölgedeki yerinden
+## edilmesi. Etken değerleri mahalle ölçekli pm (yerinden edilen / yakındaki haneler, mahalle büyüklüğüne oranlı),
+## gösterim etkeni gerçek hane sayısı; özneler = komut + o komutun hâlâ alınmış parselleri (bölgede). Kesim sinyali
+## aranmaz (bölge ölçekli sinyal küçük olabilir). Dönüş `record` ile aynı biçim; yazılamazsa {}.
+static func record_local(state: GameState, ctx: PoliticsContext, key: String, reading: Dictionary) -> Dictionary:
+	if not PublicWorksState.has_reactions(state) or int(reading.get("households", 0)) <= 0:
+		return {}
+	var command_id := int(reading["command_id"])
+	var ref := String(SimContract.ref(SimContract.REF_COMMAND, command_id))
+	var regions: Array[String] = [String(reading["code"])]
+	var parcels := _taken_parcels(state, ctx, [command_id], regions, int(ctx.politics.cadence["cause_cap"]))
+	var subjects := PackedStringArray([ref])
+	subjects.append_array(parcels)
+	var cfg: Dictionary = ctx.politics.reactions["cause"]
+	var factors: Array = [
+		{"name": FACTOR_DISPLACED, "value": int(reading["displacement_pm"]),
+			"weight": int(cfg["weights"]["displaced_households"]), "source_ref": ref},
+		{"name": FACTOR_PROXIMITY, "value": int(reading["proximity_pm"]),
+			"weight": int(cfg["weights"]["road_proximity"]), "is_estimate": true, "source_ref": ref},
+		{"name": FACTOR_COUNT, "value": int(reading["households"]), "weight": 0, "source_ref": ref},
+	]
+	var id := state.record_reason(StringName(key), StringName(cfg["decision"]), factors, int(cfg["threshold"]), CODE,
+		subjects)
+	if id < 1:
+		return {}
+	return {"id": id, "command_refs": PackedStringArray([ref]), "parcel_refs": parcels,
+		"households": int(reading["households"])}
+
+
 ## Kesimin tepkisini besleyen bölgeler (sıralı kod): kesim payı olan ve bölge sinyali sıfırdan büyük olanlar
 ## (tepe kipinde yalnız `min_share` ve üstü: kesim sinyali de yalnız onlardan türer).
 static func _regions(ctx: PoliticsContext, bloc: Dictionary, by_region: Dictionary) -> Array[String]:

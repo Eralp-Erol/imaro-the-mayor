@@ -121,6 +121,7 @@ func test_a_displacement_agenda_item_is_not_opened_without_expropriation_or_belo
 	var strict := func(files: Dictionary) -> void:
 		files["reactions"] = _raw_reactions()
 		files["reactions"]["agenda"]["min_displacement_pm"] = 1000
+		files["reactions"]["local"]["min_displacement_pm"] = 100000  # mahalle ölçekli yol da eşik altında (2026-10-31)
 	var h: PoliticsHandle = _world(true, strict)["handle"]
 	h.facade.advance(14)
 	assert_int(_agenda(h).size()).override_failure_message("eşik altında gündem maddesi yok").is_equal(0)

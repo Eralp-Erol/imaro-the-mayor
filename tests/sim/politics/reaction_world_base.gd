@@ -26,10 +26,10 @@ func _views() -> Array[ParcelView]:
 	return out
 
 
-## `edit`: ham siyaset dosyası düzenleyici (isteğe bağlı).
-func _world(expropriate: bool = true, edit: Callable = Callable()) -> Dictionary:
+## `edit`: ham siyaset dosyası düzenleyici (isteğe bağlı). `stock_rows`: varsayılan stok yerine konacak satırlar.
+func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: Array = []) -> Dictionary:
 	var net := P.network()
-	var stock := ListStockSource.create([
+	var stock := ListStockSource.create(stock_rows if not stock_rows.is_empty() else [
 		{"parcel_id": 1, "use": "residential", "units": 10, "owner": 1},
 		{"parcel_id": 2, "use": "residential", "units": 6, "owner": 1},
 		{"parcel_id": 3, "use": "commercial", "units": 4, "owner": 1},

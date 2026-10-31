@@ -8,7 +8,8 @@ extends SceneTree
 ## Çalıştır (tek koşu = tek süreç):
 ##   tools/godot.sh --headless --path . --script res://tests/sim/perf/expropriation_reaction_real_probe.gd -- \
 ##       --list [--pool=150]                       (D2'de aday yolların yıkım/hane dağılımı; `EXPROP_LIST `)
-##   ... -- --pick=q10|q50|q90 [--days=400] [--undo-at=N] [--sim-seed=N] [--no-port] [--no-road]
+##   ... -- --pick=q10|q50|q90|max [--days=400] [--undo-at=N] [--sim-seed=N] [--no-port] [--no-road] [--no-local]
+## --no-local: mahalle ölçekli okumayı (`reactions.local.enabled`) kapatır = 2026-10-31 öncesi davranış (önce/sonra tablosu).
 ## --pick: adayları yerinden edilen haneye göre sıralar, dilimi seçer (`--idx=K` ile doğrudan sıra); --undo-at: yoldan N gün
 ## sonra `public_work.undo_last`; --no-road: yol yok (tepki gürültüsü için taban çizgisi). Çıktı: `EXPROP_REAL ` + JSON.
 
@@ -49,6 +50,8 @@ func run() -> void:
 	if _args.has("cf-agenda-min"):
 		pol_cfg.reactions["agenda"]["min_displacement_pm"] = int(_args["cf-agenda-min"])
 		pol_cfg.reactions["agenda"]["full_displacement_pm"] = maxi(int(_args["cf-agenda-min"]) * 5, 1)
+	if _args.has("no-local"):
+		pol_cfg.reactions["local"]["enabled"] = false
 	var handle := PoliticsBootstrap.create(sim_seed, source, cfg, stock, null, pol_cfg)
 	if handle == null:
 		push_error("probe: sim kurulamadı")
@@ -282,6 +285,8 @@ class _Rec:
 	var strip_by_prio: Dictionary = {0: 0, 1: 0, 2: 0}
 	var declines_hidden: int = 0
 	var agenda_seen: Dictionary = {}  # item_id -> özet
+	var open_by_day: Dictionary = {}  # tick -> aynı anda açık gündem öğesi sayısı (her gün)
+	var first_pe01_chain: Array = []  # ilk PE-01 öğesinin neden zinciri (gerekçe kayıtları: karar, etkenler)
 	var samples: Array = []
 	var events_per_day: Dictionary = {}
 	var _seq: int = 0
@@ -314,8 +319,12 @@ class _Rec:
 				var pr := NotificationStrip.priority(e)
 				strip_by_prio[pr] = int(strip_by_prio[pr]) + 1
 				strip_by_day[e.tick] = int(strip_by_day.get(e.tick, 0)) + 1
-		for it in facade.agenda_items():
+		var open_now := facade.agenda_items()
+		open_by_day[tick] = open_now.size()
+		for it in open_now:
 			if not agenda_seen.has(it.item_id):
+				if String(it.template_id) == "PE-01" and first_pe01_chain.is_empty():
+					first_pe01_chain = _chain(Array(it.reason_ids))
 				agenda_seen[it.item_id] = {"id": it.item_id, "template": String(it.template_id), "opened": it.opened_tick,
 					"deadline": it.deadline_tick, "delivery": String(it.delivery), "region": String(it.region_code),
 					"title_key": String(it.title_key), "args": SimContract.to_args(it.args),
@@ -326,6 +335,36 @@ class _Rec:
 
 	func _noop(_c: Variant, _v: Variant) -> void:
 		pass
+
+	## Neden zinciri: gerekçe kimlikleri + ebeveynleri (en çok 2 düzey) -> [karar, etkenler [ad, değer, ağırlık], özneler].
+	func _chain(ids: Array) -> Array:
+		var out: Array = []
+		var seen := {}
+		var queue: Array = ids.duplicate()
+		while not queue.is_empty() and out.size() < 8:
+			var id := int(queue.pop_front())
+			if seen.has(id) or id < 1:
+				continue
+			seen[id] = true
+			var rec: Dictionary = facade.game_state().reasons.by_id(id)
+			if rec.is_empty():
+				continue
+			var factors: Array = []
+			for f: Dictionary in rec.get("factors", []):
+				factors.append([String(f["name"]), int(f["value"]), int(f.get("weight", 0))])
+			out.append({"id": id, "decision": str(rec.get("decision", "")), "factors": factors,
+				"subjects": Array(rec.get("subjects", PackedStringArray())).slice(0, 6).map(func(x: Variant) -> String: return str(x))})
+			for pid: Variant in rec.get("parent_ids", PackedInt64Array()):
+				queue.append(int(pid))
+		return out
+
+	func open_stats() -> Dictionary:
+		var most := 0
+		var days_open := 0
+		for t: int in open_by_day:
+			most = maxi(most, int(open_by_day[t]))
+			days_open += 1 if int(open_by_day[t]) > 0 else 0
+		return {"max_open_at_once": most, "days_with_open_item": days_open}
 
 	func region_row() -> Dictionary:
 		for row in EconomyQuery.region_stats(facade.game_state(), cfg):
@@ -394,6 +433,9 @@ class _Rec:
 			"agenda_items": agenda_rows,
 			"agenda_per_template": per_template,
 			"first_pe01_opened_tick": first_pe01, "first_pe01_rel_days": (first_pe01 - t_ref) if first_pe01 >= 0 and t_ref >= 0 else -1,
+			"agenda_total_items": agenda_rows.size(), "open_stats": open_stats(), "first_pe01_chain": first_pe01_chain,
+			"reaction_local": PoliticsState.data(facade.game_state()).get("reaction_local", {}),
+			"media_published": int(PoliticsState.data(facade.game_state())["media"]["published"]),
 			"agenda_events_n": agenda_events.size(),
 			"agenda_events_first40": agenda_events.slice(0, 40).map(func(a: Array) -> Array: return [rel.call(int(a[0]))] + a.slice(1)),
 			"group_reacted_n": reacted.size(), "group_reacted_days": react_days.size(),

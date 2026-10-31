@@ -8,6 +8,7 @@ extends RefCounted
 ## Sim varsayılanı (GOLDEN A/B) DEĞİŞMEZ: dosyalar kopyalanır ve yama kopyaya uygulanır. Sim bu sınıfı bilmez.
 
 const PATH := "res://data/game/playable_politics.json"
+const REACTIONS_PATH := "res://data/politics/reactions.json"
 ## Meclis bölümüne kopyalanan, imar planı büyüklük eşiği yama anahtarları (D-011 Soru 4).
 const PLAN_COUNCIL_KEYS: Array[String] = ["plan_council_min_parcels", "plan_council_min_units"]
 
@@ -25,6 +26,8 @@ static func config(actors: ActorConfig = null) -> PoliticsConfig:
 		for template_id: Variant in (index as Dictionary)["templates"]:
 			templates[str(template_id)] = _read(PoliticsConfig.EVENT_DIR + str(template_id) + ".json")
 	files["templates"] = templates
+	if FileAccess.file_exists(REACTIONS_PATH):  # T-042b: isteğe bağlı, digest dışı (mahalle ölçekli yıkım tepkisi dahil)
+		files["reactions"] = _read(REACTIONS_PATH)
 	var patch_ok: bool = patch is Dictionary and (patch as Dictionary).get("requires_council", null) is Dictionary
 	if not (patch_ok and files["council"] is Dictionary):
 		push_error("playable_politics: yama ya da meclis verisi okunamadı")
