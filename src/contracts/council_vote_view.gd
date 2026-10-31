@@ -20,6 +20,12 @@ var no: int = 0
 var abstain: int = 0
 var positions: Array[CouncilBlocView] = []
 var reason_ids: PackedInt64Array = PackedInt64Array()
+## İSTEĞE BAĞLI (sözleşme sürümü değişmez): sonuçlanmış oylamanın nedeni, etki büyüklüğüne (|net|) göre azalan sırada;
+## boş = sim neden kaydı yazmadı. `infra_load_pm` / `infra_region`: imar oylamasında uygulanabilirliği
+## (`budget_realism`) belirleyen en yüksek altyapı yükü (binde) ve bölgesi; -1 / boş = yok.
+var why_factors: Array[CouncilWhyFactor] = []
+var infra_load_pm: int = -1
+var infra_region: StringName = &""
 
 
 func ref() -> StringName:
@@ -31,6 +37,7 @@ func to_dict() -> Dictionary:
 		"vote_id": vote_id, "subject_ref": subject_ref, "title_key": title_key, "opened_tick": opened_tick,
 		"closes_tick": closes_tick, "status": status, "yes": yes, "no": no, "abstain": abstain,
 		"positions": SimDto.dicts_of(positions), "reason_ids": reason_ids,
+		"why_factors": SimDto.dicts_of(why_factors), "infra_load_pm": infra_load_pm, "infra_region": infra_region,
 	}
 
 
@@ -49,4 +56,9 @@ static func from_dict(d: Dictionary) -> CouncilVoteView:
 		if pd is Dictionary:
 			v.positions.append(CouncilBlocView.from_dict(pd))
 	v.reason_ids = SimContract.to_int64_array(d.get("reason_ids", []))
+	for wd: Variant in d.get("why_factors", []):
+		if wd is Dictionary:
+			v.why_factors.append(CouncilWhyFactor.from_dict(wd))
+	v.infra_load_pm = SimContract.to_int(d.get("infra_load_pm"), -1)
+	v.infra_region = SimContract.to_name(d.get("infra_region", ""))
 	return v
