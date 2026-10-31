@@ -259,7 +259,7 @@
    "reject": {
     "reason_key": "public_work.reject.crosses_parcels",
     "args": {
-     "expropriation_offered": true,
+     "expropriate": true,
      "taken_parcels": 3,
      "taken_built_parcels": 2,
      "taken_project_parcels": 0,

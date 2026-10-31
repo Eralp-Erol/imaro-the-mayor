@@ -31,7 +31,7 @@ static func scan(state: GameState, ctx: PoliticsContext) -> void:
 	if rows.is_empty():
 		return
 	var pol := PoliticsState.data(state)
-	var by_region := _region_signals(pol, rows, _reaction_signals(state, ctx, rows))
+	var by_region := _region_signals(pol, rows, reaction_signals(state, ctx, rows))
 	_update_service(pol, rows, int(ctx.politics.cadence["scan_days"]))
 	var total_size := 0
 	var order: Array[String] = PoliticsState.bloc_keys(state)
@@ -70,7 +70,7 @@ static func _region_signals(pol: Dictionary, rows: Array[Dictionary], extra: Dic
 
 
 ## T-042b · Yerinden edilme/yakınlık sinyalleri {bölge: {displacement, proximity}} (kamulaştırma yoksa boş).
-static func _reaction_signals(state: GameState, ctx: PoliticsContext, rows: Array[Dictionary]) -> Dictionary:
+static func reaction_signals(state: GameState, ctx: PoliticsContext, rows: Array[Dictionary]) -> Dictionary:
 	var out := {}
 	if not PublicWorksState.has_reactions(state):
 		return out
@@ -162,7 +162,7 @@ static func _scan_bloc(state: GameState, ctx: PoliticsContext, key: String, by_r
 		+ int(ctx.politics.blocs["organizer_k"]) * share / SCALE, 0, SCALE)
 	if not _should_evaluate(state, ctx, bloc) or budget <= 0:
 		return 0
-	return _evaluate(state, ctx, key, bloc, actor)
+	return _evaluate(state, ctx, key, bloc, actor, by_region)
 
 
 ## Öncelik ve eksen konumunu kohort kurallarından yeniden türetir: base + k * (kaynak - 500) / 500.
@@ -259,13 +259,18 @@ static func _should_evaluate(state: GameState, ctx: PoliticsContext, bloc: Dicti
 ## Kararı verir, durumu ve olayları yazar; yazılan gerekçe kaydı sayısını döner.
 @warning_ignore("integer_division")
 static func _evaluate(state: GameState, ctx: PoliticsContext, key: String, bloc: Dictionary,
-		actor: Dictionary) -> int:
+		actor: Dictionary, by_region: Dictionary) -> int:
 	var player := ActorStore.protagonist_key(state, ctx.actors)
 	var trust: Dictionary = ActorInputs.relation_factors(state, ctx.actors, key, player)["trust_in_player"]
 	var causes := EventCauses.region_projects(state, ctx, bloc["exposure"])
 	var subjects := PackedStringArray([key])
 	subjects.append_array(causes["parcel_refs"])
-	var parents: PackedInt64Array = causes["reason_ids"]
+	var parents: PackedInt64Array = (causes["reason_ids"] as PackedInt64Array).duplicate()
+	# T-042b: kamulaştırma/yakınlık tepkisi varsa nedeni AYRI kayıt (etkenler: yerinden edilen haneler, yola yakınlık);
+	# tepki kararı onu ebeveyn alır, kesim tepkisi ve gündem öğesi ona bağlanır. Defter yoksa boş (hiçbir şey yazılmaz).
+	var displaced := ReactionCause.record(state, ctx, key, bloc, by_region)
+	if not displaced.is_empty():
+		parents.append(displaced["id"])
 	var react_id: String = ctx.politics.blocs["react_decision"]
 	var shared := {"grievance_level": bloc["G"], "satisfaction_level": bloc["S"],
 		"media_amplification": {"value": bloc["amp"], "source_ref": MediaEngine.organ_key(ctx)},
@@ -278,13 +283,15 @@ static func _evaluate(state: GameState, ctx: PoliticsContext, key: String, bloc:
 	if not react["ok"] or not support["ok"]:
 		push_error("BlocEngine: karar verilemedi (%s / %s)" % [react.get("error", ""), support.get("error", "")])
 		return 0
-	var written: int = react["records"].size() + support["records"].size()
+	var written: int = react["records"].size() + support["records"].size() + (1 if not displaced.is_empty() else 0)
 	PoliticsState.count(state, "reason_records", written)
 	var previous: Dictionary = bloc["eval"]
 	var topic := dominant_topic(actor["salience"], actor["state"]["grievances"] if int(bloc["G"]) >= int(bloc["S"])
 		else actor["state"]["satisfaction"])
 	var outcome := _reaction_of(ctx, react, support)
 	var ids := PackedInt64Array()
+	if not displaced.is_empty():
+		ids.append(displaced["id"])  # neden önce: "Nedenini gör" kesim tepkisinin kök nedenini ilk gösterir
 	for rec: Dictionary in react["records"]:
 		ids.append(rec["reason_id"])
 	ids.append(support["records"][0]["reason_id"])
@@ -299,6 +306,9 @@ static func _evaluate(state: GameState, ctx: PoliticsContext, key: String, bloc:
 	var stance := ActorMath.clamp_permille(trust_after + MediaEngine.tone_for(state, ctx, key) / 2 + net / 2)
 	var cause_refs := PackedStringArray()
 	cause_refs.append_array(causes["parcel_refs"])
+	if not displaced.is_empty():
+		_add_refs(cause_refs, displaced["command_refs"])
+		_add_refs(cause_refs, displaced["parcel_refs"])
 	bloc["eval"] = {
 		"tick": state.tick, "G": bloc["G"], "S": bloc["S"], "amp": bloc["amp"], "tier": outcome["tier"],
 		"reaction": outcome["reaction"], "intensity": outcome["intensity"], "stance": stance,
@@ -308,6 +318,12 @@ static func _evaluate(state: GameState, ctx: PoliticsContext, key: String, bloc:
 	if outcome["reaction"] != previous["reaction"] or outcome["tier"] != previous["tier"]:
 		_publish(state, ctx, key, bloc, ids, subjects)
 	return written
+
+
+static func _add_refs(into: PackedStringArray, refs: PackedStringArray) -> void:
+	for ref in refs:
+		if not into.has(ref):
+			into.append(ref)
 
 
 ## Basamak ya da destek sonucu -> tepki. Tepki yoğunluğu o kararın skoru (0..1000); eşit/yüksekte basamak kazanır.

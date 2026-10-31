@@ -118,7 +118,7 @@ func test_mock_plain_road_through_buildings_is_rejected_with_the_expropriation_o
 	var untouched := S.facade(SCENARIO)
 	for r in [f.validate_command(_road(false)), f.submit_command(_road(false))]:
 		assert_str(String(r.reason_key)).is_equal("public_work.reject.crosses_parcels")
-		assert_bool(bool(r.args["expropriation_offered"])).is_true()
+		assert_bool(bool(r.args["expropriate"])).is_true()  # gerçek sim ile AYNI anahtar (parite)
 		assert_int(int(r.args["taken_parcels"])).is_equal(3)
 		assert_int(int(r.args["displaced_households"])).is_equal(11)
 		var preview := f.validate_command(_road(true)).args  # teklifin sayıları = kabul edilecek yolun önizlemesi

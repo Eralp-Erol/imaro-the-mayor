@@ -156,13 +156,14 @@ static func compare(value: int, op: String, threshold: int) -> bool:
 
 # --- Ateşleme ---
 
-static func _fire(state: GameState, ctx: PoliticsContext, template: Dictionary, evaluated: Dictionary) -> void:
+static func _fire(state: GameState, ctx: PoliticsContext, template: Dictionary, evaluated: Dictionary,
+		trigger_bloc: String = "", direct_causes: PackedInt64Array = PackedInt64Array()) -> void:
 	var pol := PoliticsState.data(state)
 	var events: Dictionary = pol["events"]
 	var item_id: int = events["next_item"]
 	events["next_item"] = item_id + 1
 	events["fired"] = int(events["fired"]) + 1
-	var trigger := EventSources.trigger_bloc(state, ctx)
+	var trigger := trigger_bloc if not trigger_bloc.is_empty() else EventSources.trigger_bloc(state, ctx)
 	var bloc: Dictionary = pol["blocs"].get(trigger, {})
 	var factors: Array = []
 	for part: Dictionary in evaluated["parts"]:
@@ -173,7 +174,7 @@ static func _fire(state: GameState, ctx: PoliticsContext, template: Dictionary, 
 	var subjects := PackedStringArray([agenda_ref])
 	if not trigger.is_empty():
 		subjects.append(trigger)
-	var causes := _cause_ids(state, ctx, template, trigger)
+	var causes := direct_causes if not direct_causes.is_empty() else _cause_ids(state, ctx, template, trigger)
 	var reason_id := state.record_reason(StringName(ctx.politics.events["system_actor"]), StringName(FIRE_DECISION),
 		factors, 0, StringName(template["id"].to_lower()), subjects, causes)
 	if reason_id < 0:
@@ -196,6 +197,32 @@ static func _fire(state: GameState, ctx: PoliticsContext, template: Dictionary, 
 		{"template": template["id"], "delivery": delivery, "expires_tick": item["deadline"]},
 		PackedInt64Array([reason_id]), 0, StringName(ctx.politics.events["system_actor"]))
 	PoliticsState.count(state, "events_emitted")
+
+
+## T-042b · DOĞRUDAN nedenle (yerinden edilme) gündem öğesi açılabilir mi: tepki basamağı şartı aranmaz, ama kilometre
+## taşı, kapalı etiket, silahlanma/bekleme ve karşılıklı dışlama kapıları aynıdır. Durumu (silahlanma kaydı hariç)
+## değiştirmez.
+static func can_open_direct(state: GameState, ctx: PoliticsContext, template_id: String, pressure: int) -> bool:
+	var template := ctx.politics.template(template_id)
+	if template.is_empty() or not ctx.politics.milestone_open(template["min_milestone"]) or _blocked(ctx, template):
+		return false
+	var events: Dictionary = PoliticsState.data(state)["events"]
+	return _is_armed(state, events, template, pressure) and not _mutex_active(events, ctx, template)
+
+
+## T-042b · Doğrudan nedenli öğeyi açar (`can_open_direct` doğruysa). Çekiliş yok: neden doğrudan ve görünür (yerinden
+## edilen hane); ateşleme gerekçesi `causes` (önceden yazılmış neden kaydı) ebeveynli yazılır. Dönüş: açıldı mı.
+static func open_direct(state: GameState, ctx: PoliticsContext, template_id: String, trigger_bloc: String,
+		pressure: int, source: String, causes: PackedInt64Array) -> bool:
+	if not can_open_direct(state, ctx, template_id, pressure):
+		return false
+	var template := ctx.politics.template(template_id)
+	var events: Dictionary = PoliticsState.data(state)["events"]
+	var before := int(events["next_item"])
+	_fire(state, ctx, template, {"id": template_id, "weight": int(template["weight"]), "fire": true,
+		"pressure": pressure, "hazard": pressure, "draw": 0, "parts": [{"name": source, "value": pressure}]},
+		trigger_bloc, causes)
+	return int(events["next_item"]) > before
 
 
 ## `decision` düzeyi çeyrek kesinti bütçesini aşarsa `agenda`ya düşer.

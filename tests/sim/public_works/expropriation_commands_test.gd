@@ -11,6 +11,10 @@ const P := preload("res://tests/sim/public_works/public_works_support.gd")
 const SEEDS: Array[int] = [11, 20261030, 3033, 40404, 505050]
 const DIAGONAL: Array[int] = [110000, 110000, 126000, 120000]
 const KEYS := "public_work.reject."
+## Reddin yol bilgisi anahtarları (teklif anahtarlarının dışında; mock senaryosu bunları taşımak zorunda değil).
+const ROAD_REJECT_KEYS: Array[String] = ["length_m", "min_m", "max_m", "at_x_cm", "at_z_cm"]
+const MOCK_SCENARIO := "mock_scenario_expropriation"
+const MOCK_POINTS: Array[int] = [-45000, 21000, -45000, 11000]
 
 
 func _diag() -> PackedInt64Array:
@@ -138,6 +142,39 @@ func test_without_the_flag_the_rejection_carries_the_simulations_own_offer() -> 
 			"taken_com_units", "displaced_households", "taken_regions", "nearby_households", "nearby_parcels"]:
 		assert_bool(plain.args.has(key)).override_failure_message(key).is_true()
 		assert_that(plain.args[key]).override_failure_message(key).is_equal(preview.args[key])
+
+
+func test_the_offer_keys_are_exactly_the_shared_summary_helpers_keys() -> void:
+	var plain := _f(_setup()).validate_command(_road(_diag(), false)).args
+	var offer: Array = plain.keys().filter(func(k: Variant) -> bool: return not ROAD_REJECT_KEYS.has(str(k)))
+	assert_array(offer).contains_exactly_in_any_order(ExpropriationSummary.preview_args({}).keys())
+
+
+func test_the_mock_scenarios_rejection_has_the_same_offer_keys_and_types_as_the_real_simulation() -> void:
+	var real := _f(_setup()).validate_command(_road(_diag(), false))
+	var mock := ContractTestSupport.facade(MOCK_SCENARIO).validate_command(
+		SimCommand.public_work_road(PackedInt64Array(MOCK_POINTS), &"local", false))
+	assert_str(String(mock.reason_key)).is_equal(String(real.reason_key))
+	for key: Variant in real.args:
+		if ROAD_REJECT_KEYS.has(str(key)):
+			continue
+		assert_bool(mock.args.has(key)).override_failure_message("mock teklifinde yok: %s" % key).is_true()
+		if not mock.args.has(key):
+			continue
+		assert_int(typeof(mock.args[key])).override_failure_message("tür farkı: %s" % key).is_equal(typeof(real.args[key]))
+	for key: Variant in mock.args:
+		assert_bool(real.args.has(key)).override_failure_message("mock fazladan anahtar: %s" % key).is_true()
+
+
+func test_the_mock_reaction_reason_uses_the_factor_names_the_real_cause_record_writes() -> void:
+	var raw := ContractTestSupport.scenario_dict(MOCK_SCENARIO)
+	var real: Array[String] = [String(ReactionCause.FACTOR_DISPLACED), String(ReactionCause.FACTOR_PROXIMITY)]
+	for rule: Dictionary in raw["rules"]:
+		for effect: Dictionary in rule.get("effects", []):
+			if effect.get("type", "") == "reason":
+				for factor: Dictionary in effect["reason"]["factors"]:
+					assert_bool(real.has(String(factor["name_key"]))).override_failure_message(
+						"mock etkeni gerçek sim'de yok: %s" % factor["name_key"]).is_true()
 
 
 func test_preview_counts_buildings_and_households_from_the_economy_not_from_the_world() -> void:
