@@ -7,7 +7,10 @@ extends RefCounted
 var cells: Dictionary = {}
 var edge_keys: Dictionary = {}
 var junction_keys: Dictionary = {}
+## Düğüm -> en büyük kol kırpması (m). Kol başına değerler `arm_trims`te (RoadJunction).
 var trims: Dictionary = {}
+## Düğüm -> {kenar kimliği: Vector2(sağ, sol) kırpma (m, tam genişlik)}.
+var arm_trims: Dictionary = {}
 var junctions: Dictionary = {}
 var cell_m: float
 var origin: Vector2
@@ -109,24 +112,16 @@ func _add_edge(net: WorldNetwork, style: RoadStyle, eid: int, touched: Dictionar
 
 func _add_node(net: WorldNetwork, style: RoadStyle, nid: int, connected: Array, touched: Dictionary = {}) -> void:
 	var trim := 0.0
+	var per_arm: Dictionary = {}
 	if connected.size() > 1:
-		for eid: int in connected:
-			trim = maxf(trim, style.width_of(net.edges[eid]) * 0.5)
-		# Dar açıda birleşme noktasını genişlet: komşu şeritler kavşak dışında üst üste binmesin.
-		for i in connected.size():
-			var left: WorldRoadEdge = net.edges[connected[i]]
-			var a := (net.node_pos(left.other(nid)) - net.node_pos(nid)).normalized()
-			for j in range(i + 1, connected.size()):
-				var right: WorldRoadEdge = net.edges[connected[j]]
-				var b := (net.node_pos(right.other(nid)) - net.node_pos(nid)).normalized()
-				var angle := acos(clampf(a.dot(b), -1.0, 1.0))
-				var half := maxf(style.width_of(left), style.width_of(right)) * 0.5
-				trim = maxf(trim, half / tan(maxf(angle, 0.01) * 0.5))
-		for eid: int in connected:
-			trim = minf(trim, (net.edges[eid] as WorldRoadEdge).length * 0.45)
+		# Kol başına, açısal komşusuyla yan çizgi kesişimine kadar (RoadJunction): dar açılı tek çift tüm kolları şişirmez.
+		per_arm = RoadJunction.arm_trims(net, style, nid, connected)
+		for t: Vector2 in per_arm.values():
+			trim = maxf(trim, maxf(t.x, t.y))
 	trims[nid] = trim
-	if trim <= 0.0:
+	if connected.size() < 2:
 		return
+	arm_trims[nid] = per_arm
 	junctions[nid] = connected
 	var radius := trim
 	for eid: int in connected:
@@ -161,6 +156,7 @@ func _remove_node(nid: int, touched: Dictionary) -> void:
 		_erase_from_cell(key, "nodes", nid, touched)
 	junction_keys.erase(nid)
 	junctions.erase(nid)
+	arm_trims.erase(nid)
 	trims.erase(nid)
 
 

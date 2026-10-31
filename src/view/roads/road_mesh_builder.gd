@@ -70,26 +70,67 @@ static func build(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, key:
 			var direction := (b - a).normalized()
 			var normal := Vector2(-direction.y, direction.x) * style.width_of(edge, metro) * 0.5
 			var color := style.color_of(edge)
-			a += direction * float(plan.trims.get(edge.a, 0.0)) * factor
-			b -= direction * float(plan.trims.get(edge.b, 0.0)) * factor
+			# Kol başına (sağ, sol) kırpma: yan çizgiler açısal komşuyla kesiştiği yerde biter (eğik uç, mitre).
+			var trim_a := _arm_trim(plan, edge.a, eid) * factor
+			var trim_b := _arm_trim(plan, edge.b, eid) * factor
+			var full_a := maxf(trim_a.x, trim_a.y)
+			var full_b := maxf(trim_b.x, trim_b.y)
 			var patch_a: Array = patches.get(edge.a, [])
 			var patch_b: Array = patches.get(edge.b, [])
 			# Hull şeridin uç çizgisinin gerisinde kalıyorsa (olağan kavşak) şeritle kesişimi sıfır alandır.
-			if not patch_a.is_empty() and _behind(patch_a[0], a, direction):
+			var cut_a := PackedVector2Array([a + direction * trim_a.x - normal, a + direction * trim_a.y + normal])
+			# b ucunda kolun yönü -direction: kolun sağı = +normal tarafı (trim_b.x), solu = -normal tarafı (trim_b.y).
+			var cut_b := PackedVector2Array([b - direction * trim_b.y - normal, b - direction * trim_b.x + normal])
+			if not patch_a.is_empty() and _behind(patch_a[0], cut_a, direction):
 				patch_a = []
-			if not patch_b.is_empty() and _behind(patch_b[0], b, -direction):
+			if not patch_b.is_empty() and _behind(patch_b[0], cut_b, -direction):
 				patch_b = []
-			var count := maxi(1, ceili(a.distance_to(b) / step))
+			# Eğik uç: kısa taraf kırpmasından başlayan gövde; uzun taraf köşesi ilk/son parçanın köşesi olur (ek poligon
+			# yok). Fark parçaya göre büyükse (dar açılı kavşak) ayrı yamuk parça kesilir, gövde `full`dan başlar.
+			var near_a := minf(trim_a.x, trim_a.y)
+			var near_b := minf(trim_b.x, trim_b.y)
+			var body_a := a + direction * near_a
+			var body_b := b - direction * near_b
+			var dist := body_a.distance_to(body_b)
+			var count := maxi(1, ceili(dist / step))
+			var seg := dist / count
+			var merge_a := full_a - near_a <= 0.4 * seg
+			var merge_b := full_b - near_b <= 0.4 * seg
+			if count == 1 and (full_a - near_a) + (full_b - near_b) > 0.8 * seg:
+				merge_a = false
+				merge_b = false
+			if not merge_a or not merge_b:
+				body_a = a + direction * (near_a if merge_a else full_a)
+				body_b = b - direction * (near_b if merge_b else full_b)
+				count = maxi(1, ceili(body_a.distance_to(body_b) / step))
 			var before := sink.vertices.size()
 			sink.axis_on = true
 			sink.axis_a = a
 			sink.axis_n = normal.normalized()
 			sink.half_w = normal.length()
+			var quads: Array[PackedVector2Array] = []
+			var slant_a := absf(trim_a.x - trim_a.y) > EPS_M
+			var slant_b := absf(trim_b.x - trim_b.y) > EPS_M
+			if slant_a and not merge_a:
+				quads.append(PackedVector2Array([cut_a[1], cut_a[0], body_a - normal, body_a + normal]))
 			for s in count:
-				var start := a.lerp(b, float(s) / count)
-				var end := a.lerp(b, float(s + 1) / count)
-				var pieces: Array[PackedVector2Array] = [PackedVector2Array(
-					[start + normal, start - normal, end - normal, end + normal])]
+				var start := body_a.lerp(body_b, float(s) / count)
+				var end := body_a.lerp(body_b, float(s + 1) / count)
+				var start_left := start + normal
+				var start_right := start - normal
+				var end_left := end + normal
+				var end_right := end - normal
+				if s == 0 and slant_a and merge_a:
+					start_left = cut_a[1]
+					start_right = cut_a[0]
+				if s == count - 1 and slant_b and merge_b:
+					end_right = cut_b[0]
+					end_left = cut_b[1]
+				quads.append(PackedVector2Array([start_left, start_right, end_right, end_left]))
+			if slant_b and not merge_b:
+				quads.append(PackedVector2Array([body_b + normal, body_b - normal, cut_b[0], cut_b[1]]))
+			for quad in quads:
+				var pieces: Array[PackedVector2Array] = [quad]
 				# Dar açılı kavşakta hull şeridin ucunu aşabilir; ortak düzlemde çift yüzey bırakma.
 				sink.concave = false
 				if not patch_a.is_empty():
@@ -108,29 +149,53 @@ static func build(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, key:
 				if WorldRoadEdge.rank(edge.road_class) > WorldRoadEdge.rank(dominant.road_class):
 					dominant = edge
 			var patch: Array = _patch(net, style, plan, nid, metro, patch_cache)
-			sink.concave = false
+			if patch.is_empty():
+				continue
+			# Dolgu içbükey olabilir (bazı dış mitreli köşeler): ızgara bölmesi yalnız konveks çokgenle güvenlidir.
+			sink.concave = not _is_convex(patch[0])
 			_emit(patch[0], style.color_of(dominant), net.world, chunk, sink)
 			junctions += 1
 	return {"vertices": sink.vertices, "normals": sink.normals, "colors": sink.colors, "uvs": sink.uvs,
 		"strips": strips, "junctions": junctions}
 
 
-## [hull, hull sınırı (EPS_M büyütülmüş)] — sınır, kırpmaya hiç girmeyecek parçaları ayıklar.
+## [dolgu çokgeni, sınırı (EPS_M büyütülmüş)] — sınır, kırpmaya hiç girmeyecek parçaları ayıklar.
+## Dejenere dolgu (düz geçen iki kol vb.) için boş dizi.
 static func _patch(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, nid: int, metro: bool,
 		cache: Dictionary) -> Array:
 	var cache_key := nid * 2 + (1 if metro else 0)
 	if cache.has(cache_key):
 		return cache[cache_key]
 	var hull := _junction(net, style, plan, nid, metro)
-	var entry: Array = [hull, _bounds(hull).grow(EPS_M * 10.0)]
+	var entry: Array = [] if hull.size() < 3 else [hull, _bounds(hull).grow(EPS_M * 10.0)]
 	cache[cache_key] = entry
 	return entry
 
 
-## Tüm hull köşeleri, `from` noktasından `toward` yönüne dik çizginin (EPS_M toleranslı) gerisinde mi?
-static func _behind(hull: PackedVector2Array, from: Vector2, toward: Vector2) -> bool:
+## Kesit çizgisi (cut[0] sağ, cut[1] sol köşe; `toward` yönüne bakan taraf dışarısı) gerisinde mi?
+## Tüm dolgu köşeleri, bu çizginin (EPS_M toleranslı) kavşak tarafında kalıyorsa şeritle kesişimi sıfır alandır.
+static func _behind(hull: PackedVector2Array, cut: PackedVector2Array, toward: Vector2) -> bool:
+	var across := cut[1] - cut[0]
+	var outward := Vector2(-across.y, across.x).normalized()
+	if outward.dot(toward) < 0.0:
+		outward = -outward
 	for v in hull:
-		if (v - from).dot(toward) > EPS_M:
+		if (v - cut[0]).dot(outward) > EPS_M:
+			return false
+	return true
+
+
+static func _is_convex(polygon: PackedVector2Array) -> bool:
+	var count := polygon.size()
+	var sign_seen := 0.0
+	for i in count:
+		var a := polygon[i]
+		var turn := (polygon[(i + 1) % count] - a).cross(polygon[(i + 2) % count] - polygon[(i + 1) % count])
+		if absf(turn) <= 1e-6:
+			continue
+		if sign_seen == 0.0:
+			sign_seen = signf(turn)
+		elif signf(turn) != sign_seen:
 			return false
 	return true
 
@@ -149,20 +214,13 @@ static func _minus_patch(pieces: Array[PackedVector2Array], patch: Array, sink: 
 
 static func _junction(net: WorldNetwork, style: RoadStyle, plan: RoadChunkPlan, nid: int,
 		metro: bool) -> PackedVector2Array:
-	var points := PackedVector2Array()
-	var center := net.node_pos(nid)
-	var factor := float(style.data["metro_width_scale"]) if metro else 1.0
-	for eid: int in plan.junctions[nid]:
-		var edge: WorldRoadEdge = net.edges[eid]
-		var direction := (net.node_pos(edge.other(nid)) - center).normalized()
-		var normal := Vector2(-direction.y, direction.x) * style.width_of(edge, metro) * 0.5
-		var end := center + direction * float(plan.trims[nid]) * factor
-		points.append(end + normal)
-		points.append(end - normal)
-	var hull := Geometry2D.convex_hull(points)
-	if hull.size() > 3:
-		hull.resize(hull.size() - 1) # convex_hull ilk köşeyi sonda tekrarlar.
-	return hull
+	return RoadJunction.polygon(net, style, nid, plan.junctions[nid], plan.arm_trims.get(nid, {}), metro)
+
+
+## Kolun düğümdeki (sağ, sol) kırpması (m, tam genişlik); kavşak değilse sıfır.
+static func _arm_trim(plan: RoadChunkPlan, nid: int, eid: int) -> Vector2:
+	var node: Dictionary = plan.arm_trims.get(nid, {})
+	return node.get(eid, Vector2.ZERO)
 
 
 static func _bounds(polygon: PackedVector2Array) -> Rect2:
