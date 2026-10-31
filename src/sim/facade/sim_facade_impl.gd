@@ -83,6 +83,8 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
 			impl._economy = system
 	for handler in extra_handlers:
 		impl._sim.add_handler(handler)
+	if impl._sim.handler_for(SimCommand.KIND_AGENDA_RESPOND) == null:  # siyaset kurulu değil: gerekçeli ret
+		impl._sim.add_handler(UnbuiltCommandHandler.new(SimCommand.KIND_AGENDA_RESPOND, &"agenda"))
 	impl._driver = TickDriver.new(impl._sim, impl._state, sc.driver)
 	impl._driver_speeds = (sc.driver["speeds"] as Dictionary).duplicate()
 	var world := impl._state.system_data(WORLD_SYSTEM)

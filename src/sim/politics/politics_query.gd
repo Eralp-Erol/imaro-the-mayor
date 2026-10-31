@@ -119,6 +119,7 @@ static func agenda_views(state: GameState, ctx: PoliticsContext) -> Array[Agenda
 		view.args = {"topic": str(item["topic"]), "stage": int(item["stage"])}
 		view.reason_ids = _retained([int(item["reason_id"])], first)
 		view.cause_refs = _cause_refs(state, view.reason_ids)
+		view.options = AgendaOptions.views(state, ctx, item)
 		out.append(view)
 	return out
 

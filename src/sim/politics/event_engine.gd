@@ -402,6 +402,11 @@ static func _schedule(state: GameState, ctx: PoliticsContext, item: Dictionary, 
 	return effects.size()
 
 
+## Kapsam çözümü, salt okunur (yanıt önizlemesi ve komut doğrulaması `_schedule` ile AYNI çözümü kullanır).
+static func scope_of(state: GameState, ctx: PoliticsContext, item: Dictionary, effect: Dictionary) -> Dictionary:
+	return _resolve_scope(state, ctx, item, effect)
+
+
 ## Kapsam -> {blocs [anahtar], members [anahtar]}.
 static func _resolve_scope(state: GameState, ctx: PoliticsContext, item: Dictionary, effect: Dictionary) -> Dictionary:
 	var blocs: Array = []
