@@ -43,6 +43,8 @@ var edge_parcels_before: Dictionary = {}
 var change: NetworkChange = null
 ## Yol dışı kenar özellikleri bu işlemde değişti mi (yalnız set_open): bloklar etkilenmez.
 var geometry_changed: bool = false
+## İşlemden ÖNCEki bileşen önbelleği kopyası (NetworkComponents.remember; geri alınca geri konur; boş = kopya yok).
+var components: Dictionary = {}
 
 
 static func begin(net: WorldNetwork, p_op: Dictionary) -> NetworkOpJournal:
@@ -51,6 +53,7 @@ static func begin(net: WorldNetwork, p_op: Dictionary) -> NetworkOpJournal:
 	j.version_before = net.graph_version
 	j.single_before = net._blocks_single_comp
 	j.counters = NetworkRestore.counters(net)
+	NetworkComponents.remember(net, j)
 	return j
 
 
