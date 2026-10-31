@@ -5,6 +5,10 @@ extends RefCounted
 ## iş parçacığı güvenli (yalnız okur); aynı sütun + dünya -> aynı çıktı (determinizm). Sütunları DEĞİŞTİRMEZ.
 ## Görünüm sütunlarla BİRE BİR eşlenir: `cols.count` örnek, `y.size() == cols.count`.
 
+## Gizleme maskesi kaynak bitleri (`hidden`).
+const CH_CORRIDOR := 1
+const CH_PARCEL := 2
+
 var cols: VegetationColumns = null
 ## Zemin yüksekliği (m), `cols` satırıyla aynı sıra (gövde tabanı; çöküntü `config.sink_m` yerleştirmede).
 var y: PackedFloat32Array = PackedFloat32Array()
@@ -15,12 +19,16 @@ var cell_ymax: PackedFloat32Array = PackedFloat32Array()
 var cell_proxy_count: PackedInt32Array = PackedInt32Array()
 var global_ymin: float = 0.0
 var global_ymax: float = 0.0
-## T-042 yol koridoru maskesi (GÖRÜNÜM katmanı; sütunlara ve sim'e dokunmaz): `cols` satırıyla aynı sıra, 1 = bu örnek
-## gizli (yeni yolun koridorunda). BOŞ dizi = hiçbir örnek gizli değil (varsayılan; hızlı yol). Yazma YALNIZ
-## `set_hidden`; iş parçacığı okuyan görünümler (leke işçileri) yazmadan önce BEKLETİLİR (`VegetationView`).
+## Gizleme maskesi (GÖRÜNÜM katmanı; sütunlara ve sim'e dokunmaz): `cols` satırıyla aynı sıra, 0 = çizilir, bit seti =
+## bu örnek gizli. Bitler kaynağı ayırır (`CH_CORRIDOR`: T-042 yeni yol koridoru, `CH_PARCEL`: alınan/kamulaştırılan
+## parsel içi) ki biri değişince öbürü bozulmasın. BOŞ dizi = hiçbir örnek gizli değil (varsayılan; hızlı yol).
+## Yazma YALNIZ `set_channel_rows`; iş parçacığı okuyan görünümler (leke işçileri) yazmadan önce BEKLETİLİR
+## (`VegetationView`).
 var hidden: PackedByteArray = PackedByteArray()
+## Gizli (herhangi bir bit seti) örnek sayısı.
 var hidden_count: int = 0
 
+var _channel_rows: Dictionary = {}   # bit -> sıralı tekil satırlar (son uygulanan)
 var _chunk_boxes: Dictionary = {}
 
 
@@ -58,9 +66,9 @@ static func build(columns: VegetationColumns, world: WorldData, height_m: Packed
 	return lay
 
 
-## Satır `i` gizli mi (koridor maskesi). Maske boşsa her zaman false.
+## Satır `i` gizli mi (herhangi bir kaynak). Maske boşsa her zaman false.
 func is_hidden(i: int) -> bool:
-	return not hidden.is_empty() and hidden[i] == 1
+	return not hidden.is_empty() and hidden[i] != 0
 
 
 ## Satır `i`nin hücre dizini k (`cell_start[k] <= i < cell_start[k + 1]`).
@@ -68,37 +76,77 @@ func cell_of_row(i: int) -> int:
 	return cols.cell_start.bsearch(i, false) - 1
 
 
-## Gizli satır kümesini (sıralı/sırasız, tekil olmayabilir) KÖKTEN kurar.
-## Dönüş: maskesi değişen hücre dizinleri k (artan).
-## Deterministik: aynı satır kümesi -> aynı maske; boş küme maskeyi tamamen kaldırır (hepsi geri gelir).
+## Yol koridoru kaynağı (`CH_CORRIDOR`); `set_channel_rows` ile aynı.
 func set_hidden(rows: PackedInt32Array) -> PackedInt32Array:
-	if rows.is_empty() and hidden.is_empty():
+	return set_channel_rows(CH_CORRIDOR, rows)
+
+
+## `bit` kaynağının gizli satır kümesini (sıralı/sırasız, tekil olmayabilir) yerleştirir. ARTIMLI: önceki kümeyle
+## karşılaştırılır, yalnız farkın satırlarına yazılır (tüm sütunlar taranmaz; maliyet ~ |eski| + |yeni|). Dönüş:
+## GÖRÜNÜR durumu (herhangi bir bit) değişen hücre dizinleri k (artan). Deterministik: aynı küme -> aynı maske; boş küme
+## kaynağın tüm satırlarını geri getirir (başka kaynağın tuttukları gizli kalır).
+func set_channel_rows(bit: int, rows: PackedInt32Array) -> PackedInt32Array:
+	var fresh := _clean_rows(rows)
+	var old: PackedInt32Array = _channel_rows.get(bit, PackedInt32Array())
+	if fresh == old:
 		return PackedInt32Array()
-	var fresh := PackedByteArray()
-	var count := 0
-	if not rows.is_empty():
-		fresh.resize(cols.count)
-		for i in rows:
-			if i >= 0 and i < cols.count and fresh[i] == 0:
-				fresh[i] = 1
-				count += 1
+	if hidden.is_empty() and not fresh.is_empty():
+		hidden.resize(cols.count)
 	var changed := {}
-	if hidden.is_empty():
-		for i in rows:
-			if i >= 0 and i < cols.count:
-				changed[cell_of_row(i)] = true
-	elif fresh.is_empty():
-		for i in cols.count:
-			if hidden[i] == 1:
-				changed[cell_of_row(i)] = true
+	var a := 0
+	var b := 0
+	while a < old.size() or b < fresh.size():
+		var ra := old[a] if a < old.size() else 0x7fffffff
+		var rb := fresh[b] if b < fresh.size() else 0x7fffffff
+		if ra == rb:
+			a += 1
+			b += 1
+		elif ra < rb:
+			_clear_bit(ra, bit, changed)
+			a += 1
+		else:
+			_set_bit(rb, bit, changed)
+			b += 1
+	if fresh.is_empty():
+		_channel_rows.erase(bit)
 	else:
-		for i in cols.count:
-			if hidden[i] != fresh[i]:
-				changed[cell_of_row(i)] = true
-	hidden = fresh
-	hidden_count = count
+		_channel_rows[bit] = fresh
+	if hidden_count == 0:
+		hidden = PackedByteArray()
 	var out := PackedInt32Array(changed.keys())
 	out.sort()
+	return out
+
+
+func _set_bit(i: int, bit: int, changed: Dictionary) -> void:
+	var was := hidden[i]
+	hidden[i] = was | bit
+	if was == 0:
+		hidden_count += 1
+		changed[cell_of_row(i)] = true
+
+
+func _clear_bit(i: int, bit: int, changed: Dictionary) -> void:
+	var was := hidden[i]
+	var now := was & ~bit
+	hidden[i] = now
+	if now == 0 and was != 0:
+		hidden_count -= 1
+		changed[cell_of_row(i)] = true
+
+
+## Geçerli aralıktaki, sıralı ve tekil satırlar.
+func _clean_rows(rows: PackedInt32Array) -> PackedInt32Array:
+	if rows.is_empty():
+		return rows
+	var sorted := rows.duplicate()
+	sorted.sort()
+	var out := PackedInt32Array()
+	var last := -1
+	for i in sorted:
+		if i != last and i >= 0 and i < cols.count:
+			out.append(i)
+			last = i
 	return out
 
 

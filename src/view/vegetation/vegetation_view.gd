@@ -45,8 +45,12 @@ var _blob_queue: Array[Vector2i] = []
 var _blob_replace: Dictionary = {}
 ## true: sonraki `track_camera` kamera hareket etmese de pencereyi yeniden hesaplar (maske değişti).
 var _force_window: bool = false
-## Son uygulanan gizli satır kümesi (aynı küme tekrar gelirse iş yapılmaz: işçileri bekletmeyiz).
+## Kaynak başına son uygulanan gizli satır kümesi (aynı küme tekrar gelirse iş yapılmaz: işçileri bekletmeyiz).
 var _mask_rows: PackedInt32Array = PackedInt32Array()
+var _parcel_rows: PackedInt32Array = PackedInt32Array()
+## Leke işçileri çalışırken gelen maske değişimi (bit -> satırlar): işçiler bitince `track_camera` yazar. Ana iş
+## parçacığı işçiyi BEKLEMEZ (parça kurulumu onlarca ms sürebilir).
+var _mask_pending: Dictionary = {}
 var _blob_mat: ShaderMaterial = null
 var _cam: Vector3 = Vector3.ZERO
 var _last_cam: Vector3 = Vector3.ZERO
@@ -131,6 +135,8 @@ func clear() -> void:
 	_blob_replace.clear()
 	_force_window = false
 	_mask_rows = PackedInt32Array()
+	_parcel_rows = PackedInt32Array()
+	_mask_pending.clear()
 	_has_cam = false
 	layout = null
 	stats = {}
@@ -167,16 +173,59 @@ func set_corridors(corridors: Array) -> int:
 	return set_hidden_rows(VegetationCorridor.rows_inside(layout, corridors))
 
 
+## Yol koridoru kaynağı (`VegetationLayout.CH_CORRIDOR`).
 func set_hidden_rows(rows: PackedInt32Array) -> int:
 	if layout == null or rows == _mask_rows:
 		return 0
 	_mask_rows = rows
-	# Leke işçileri `layout.hidden`i okur: yazmadan önce hepsi biter (yarış yok).
+	return _apply_channel(VegetationLayout.CH_CORRIDOR, rows)
+
+
+## Alınan (kamulaştırılan) parsellerin içindeki bitki satırları (`VegetationLayout.CH_PARCEL`; koridorla birbirini
+## bozmaz). Aynı küme tekrar gelirse iş yapılmaz. Dönüş: maskesi değişen hücre sayısı.
+func set_parcel_rows(rows: PackedInt32Array) -> int:
+	if layout == null or rows == _parcel_rows:
+		return 0
+	_parcel_rows = rows
+	return _apply_channel(VegetationLayout.CH_PARCEL, rows)
+
+
+## Dönüş: maskesi değişen hücre sayısı; leke işçileri çalışıyorsa yazma ERTELENİR (0 döner, `track_camera` yazar).
+func _apply_channel(bit: int, rows: PackedInt32Array) -> int:
+	if _blob_jobs_running():
+		_mask_pending[bit] = rows
+		return 0
+	_mask_pending.erase(bit)
+	return _write_channel(bit, rows)
+
+
+## Bekleyen maske yazımları (işçiler bitince).
+func _flush_masks() -> void:
+	if _mask_pending.is_empty() or _blob_jobs_running():
+		return
+	var bits: Array = _mask_pending.keys()
+	bits.sort()
+	for bit: int in bits:
+		_write_channel(bit, _mask_pending[bit] as PackedInt32Array)
+	_mask_pending.clear()
+
+
+func _blob_jobs_running() -> bool:
+	for job: _BlobJob in _blob_jobs.values():
+		if not job.is_done():
+			return true
+	return false
+
+
+func _write_channel(bit: int, rows: PackedInt32Array) -> int:
+	var t0 := Time.get_ticks_usec()
+	# Leke işçileri `layout.hidden`i okur: yazmadan önce hepsi biter (yarış yok; burada hepsi zaten bitmiştir).
 	# Değişmeyen parçaların sonuçları geçerli kalır.
 	_join_blob_jobs()
-	var changed := layout.set_hidden(rows)
+	var changed := layout.set_channel_rows(bit, rows)
 	stats["hidden_instances"] = layout.hidden_count
 	if changed.is_empty():
+		_note_write(bit, t0)
 		return 0
 	var cc := config.blob_chunk_cells
 	for k in changed:
@@ -196,7 +245,13 @@ func set_hidden_rows(rows: PackedInt32Array) -> int:
 		if _blob_active.has(chunk):
 			_blob_replace[chunk] = true
 	_force_window = true
+	_note_write(bit, t0)
 	return changed.size()
+
+
+func _note_write(bit: int, t0: int) -> void:
+	var stat_key := "mask_write_ms_%d" % bit
+	stats[stat_key] = snappedf(maxf(float(stats.get(stat_key, 0.0)), (Time.get_ticks_usec() - t0) / 1000.0), 0.01)
 
 
 ## Kameranın DÜNYA konumu (view_root yerel; rebasing'den bağımsız). Her karede çağrılır; iş yalnız kamera `step_m`
@@ -207,6 +262,9 @@ func track_camera(cam: Vector3) -> void:
 	var t0 := Time.get_ticks_usec()
 	_cam = cam
 	var worked := _poll_blobs()
+	if not _mask_pending.is_empty() and not _blob_jobs_running():
+		_flush_masks()
+		worked = true
 	var t1 := Time.get_ticks_usec()
 	if not _has_cam or _force_window or cam.distance_to(_last_cam) >= config.step_m:
 		_force_window = false
@@ -581,6 +639,8 @@ func _ensure_mmi(cell: _Cell, run: _Run, t: int) -> MultiMeshInstance3D:
 # --- leke parçaları ----------------------------------------------------------------------------------------------
 
 func _start_blob_jobs() -> void:
+	if not _mask_pending.is_empty():
+		return   # yeni işçi başlamaz: bekleyen maske yazımı mevcut işçilerin bitmesini bekliyor
 	var max_new := 1 << 30 if _unlimited else config.blob_max_chunks_per_frame
 	var started := 0
 	while not _blob_queue.is_empty() and started < max_new:
