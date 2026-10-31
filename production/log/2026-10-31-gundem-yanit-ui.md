@@ -35,3 +35,6 @@ TEST EDİLMEDİ:
 - `bloc.satisfaction`/`media.tone`/`council.friction` hedeflerinin gerçek sim'de görünüşü (yalnız PE-01 gerçek dünyada sınandı; metinler tüm hedefler için var).
 - Etki başlangıcından sonra "bekleyen etkiler" izlemesi (sözleşmede sorgu yok; ayrı iş).
 - `tools/verify.sh quick`: bkz. kapanış.
+
+## Kapanış (devam oturumu)
+Dal güncel tabanla (60453b3) birleştirildi, çatışma yok. Yeniden koşuldu: agenda_facade_adapter (13), agenda_real_sim (6), decision_panels (28), reaction_texts (6): 0 hata/0 başarısız; gdlint temiz. `tools/verify.sh` bu oturumda KOŞULMADI.
