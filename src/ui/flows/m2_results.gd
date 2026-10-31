@@ -124,6 +124,7 @@ func _build_results(ctx: UiContext) -> Control:
 
 
 func _build_reason(ctx: UiContext) -> Control:
+	_last_refresh_msec = Time.get_ticks_msec()
 	var p := ReasonPanel.create(ctx, facade)
 	_reason_panel = p
 	if not _reason_nav.is_empty():
@@ -142,18 +143,21 @@ func _on_tool_selected(tool_id: StringName) -> void:
 
 func _on_refreshed() -> void:
 	_follow_zoning_flow()
-	if results_panel() != null:
+	# Gerekçe paneli de aynı üst sınırı kullanır: eskiden her tick'te tüm düğümleri yeniden kurardı (kare takılması).
+	if results_panel() != null or reason_panel() != null:
 		_refresh_throttled()
-	var rp := reason_panel()
-	if rp != null:
-		rp.refresh()
 
 
 func _refresh_panel() -> void:
 	var p := results_panel()
+	var rp := reason_panel()
+	if p == null and rp == null:
+		return
+	_last_refresh_msec = Time.get_ticks_msec()
 	if p != null:
-		_last_refresh_msec = Time.get_ticks_msec()
 		p.refresh()
+	if rp != null:
+		rp.refresh()
 
 
 ## Yenileme üst sınırı: sınır içindeyse tek bir kuyruklu yenileme planlanır (panel kapalıyken hiç iş yok).

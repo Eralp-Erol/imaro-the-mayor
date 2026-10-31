@@ -50,6 +50,10 @@ var _body: VBoxContainer = null
 var _stack: Array[Dictionary] = []
 var _shown_non_sim: bool = false
 var _last_request: Callable = Callable()
+## Son çizilen LİSTE görünümünün kayıt kimlikleri (sıralı). Geçerli değilse liste yeniden çizilir. Gerekçe kayıtları
+## değişmez (yalnız eklenir): kimlik kümesi aynıysa tick'te yeniden kurmak boşa iştir (35 satırlı liste ~34 ms/tick).
+var _list_ids: PackedInt64Array = PackedInt64Array()
+var _list_ids_valid: bool = false
 
 
 static func create(ctx: UiContext, facade: SimFacade) -> ReasonPanel:
@@ -180,8 +184,11 @@ func restore_nav(state: Array[Dictionary]) -> void:
 	_changed()
 
 
-## Facade verisi değişti (yeni tick): açık görünümü yeniden okur, gezinti korunur.
+## Facade verisi değişti (yeni tick): açık görünümü yeniden okur, gezinti korunur. Liste görünümünde kayıt kümesi
+## değişmediyse düğümler yeniden kurulmaz (odak ve kaydırma da korunur).
 func refresh() -> void:
+	if _list_unchanged():
+		return
 	_render()
 
 
@@ -244,7 +251,25 @@ func _open_list(entry: Dictionary, auto_detail: bool) -> void:
 	_changed()
 
 
+## Açık görünüm LİSTE ise ve kayıt kimlikleri son çizimdekiyle aynıysa true (çizim gerekmez).
+func _list_unchanged() -> bool:
+	if not _list_ids_valid or _facade == null or _stack.is_empty():
+		return false
+	var entry: Dictionary = _stack.back()
+	if StringName(entry["mode"]) != MODE_LIST:
+		return false
+	return _record_ids(_records_of(entry)) == _list_ids
+
+
+static func _record_ids(records: Array[ReasonRecord]) -> PackedInt64Array:
+	var out := PackedInt64Array()
+	for r in records:
+		out.append(r.id)
+	return out
+
+
 func _render() -> void:
+	_list_ids_valid = false
 	for child in _body.get_children():
 		_body.remove_child(child)
 		child.queue_free()
@@ -285,6 +310,8 @@ func _render_list(entry: Dictionary) -> void:
 	_body.add_child(UiFactory.label(UiText.t(&"reason.count", {"n": records.size()}), UiTheme.V_LABEL_MUTED, true))
 	for r in records:
 		_body.add_child(_list_row(r, NAME_ROW))
+	_list_ids = _record_ids(records)
+	_list_ids_valid = true
 
 
 func _render_detail(reason_id: int) -> void:
