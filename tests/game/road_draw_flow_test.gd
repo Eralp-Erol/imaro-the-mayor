@@ -379,7 +379,8 @@ func test_rapid_mouse_motion_is_coalesced_and_the_last_position_wins() -> void:
 	for i in 30:
 		_move(_screen(Vector2(1100.0, 1090.0 - 2.0 * float(i))))
 	assert_int(changes[0]).override_failure_message("30 hareket bir karede en çok 1 denetim yapmalı").is_less_equal(1)
-	await get_tree().create_timer(float(RoadDrawController.HOVER_INTERVAL_MSEC + 30) / 1000.0).timeout
+	# T-042b: pahalı önizleme (kamulaştırma teklifi) aralığı uzatır; bekleme güncel aralığa göre.
+	await get_tree().create_timer(float(ctrl.hover_interval_msec() + 30) / 1000.0).timeout
 	ctrl.process()
 	assert_int(changes[0]).is_less_equal(2)
 	assert_float(ctrl.tool.end.distance_to(last)) \

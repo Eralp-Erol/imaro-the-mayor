@@ -21,6 +21,8 @@ extends Node3D
 signal cells_rebuilt(keys: Array)
 
 const SUPER_PREFIX := "Super_"
+## Gizleme/geri koymada eşzamanlı arka plan mesh işi sayısı (`pump_pending`).
+const MAX_TASKS := 2
 const TRIS_META := &"tris"
 ## MultiMeshInstance3D üstünde modül kimliği (onaylı kimlik denetimi/test için; `drawn_module_ids`).
 const MODULE_META := &"module_id"
@@ -42,6 +44,11 @@ var _cell_data: Dictionary = {}
 var _dropped: Dictionary = {}
 var _super_nodes: Dictionary = {}
 var _proxy_mat: ShaderMaterial = null
+## T-042b: parsel kimliğiyle gizlenen satırlar (kamulaştırma) ve dilimli yeniden kurulum kuyruğu.
+var _mask: BuildingParcelMask = BuildingParcelMask.new()
+var _pend_cells: Dictionary = {}
+var _pend_supers: Dictionary = {}
+var _tasks: Array[Dictionary] = []
 ## Kameranın göz açıklığı için çatı yükseklik dizini (aynı sütunlardan; `set_columns` yeniler, aynı nesne kalır).
 var _roofs: RoofClearance = RoofClearance.new()
 # iş parçacığı görev girdileri (set_columns sırasında geçerli)
@@ -61,6 +68,7 @@ func setup(world: WorldData, kit: BuildingKit, p_config: BuildingViewConfig = nu
 
 
 func clear() -> void:
+	_drain_tasks()
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
@@ -73,6 +81,9 @@ func clear() -> void:
 	_cols = null
 	_version = -1
 	_roofs.clear()
+	_mask = BuildingParcelMask.new()
+	_pend_cells.clear()
+	_pend_supers.clear()
 	stats = {}
 
 
@@ -89,6 +100,10 @@ func set_columns(cols: BuildingColumns, version: int = -1) -> Dictionary:
 		return {"ok": true, "skipped": true, "rebuilt": 0, "cells": _cell_nodes.size()}
 	var t0 := Time.get_ticks_usec()
 	var new_plan := BuildingChunkPlan.build(cols, _world.origin, config.cell_m, config.super_cells)
+	_drain_tasks()
+	_mask.apply_all(new_plan, cols)
+	_pend_cells.clear()
+	_pend_supers.clear()
 	var new_hashes := new_plan.cell_hashes(cols)
 	var changed := BuildingChunkPlan.changed_cells(_hashes, new_hashes)
 	var t1 := Time.get_ticks_usec()
@@ -98,6 +113,9 @@ func set_columns(cols: BuildingColumns, version: int = -1) -> Dictionary:
 	var tr0 := Time.get_ticks_usec()
 	_roofs.set_from_columns(_world, cols, _kit)
 	stats["roof_index_ms"] = snappedf((Time.get_ticks_usec() - tr0) / 1000.0, 0.1)
+	for pid: int in _mask.hidden:
+		for r in _mask.rows_of(pid):
+			_roofs.set_enabled_at(cols.x[r], cols.z[r], false)
 	# değişmeyen hücrelerin sütun indeksleri yeni plana bağlanır
 	for k: Vector2i in _cell_data:
 		if new_hashes.has(k) and _hashes.get(k, "") == new_hashes[k]:
@@ -138,7 +156,7 @@ func drawn_module_ids() -> PackedStringArray:
 
 
 func building_count() -> int:
-	return _cols.count if _cols != null else 0
+	return _cols.count - _mask.rows_hidden if _cols != null else 0
 
 
 func plan() -> BuildingChunkPlan:
@@ -205,6 +223,150 @@ func warm_up(camera: Camera3D, frames: int = 3) -> void:
 		await get_tree().process_frame
 	if is_instance_valid(root):
 		root.queue_free()
+
+
+## T-042b · Kamulaştırma: parsellerin yapı satırlarını gizler (`hide = true`) ya da geri koyar. Sütunlar ve sim
+## DEĞİŞMEZ.
+## Plan/özet yalnız etkilenen hücrelerde yenilenir; hücre/süper-chunk yeniden kurulumu KUYRUĞA girer ve `pump_pending`
+## ile karelere dilimlenir (tek karede yüzlerce ms olmasın). Çatı dizini (göz açıklığı) hemen güncellenir.
+## Dönüş: {ok, rows, cells (özeti değişen hücre sayısı), ms}.
+func set_parcels_hidden(ids: PackedInt32Array, hide: bool) -> Dictionary:
+	if _plan == null or _cols == null:
+		return {"ok": false, "errors": ["set_columns çağrılmadı"]}
+	var t0 := Time.get_ticks_usec()
+	var res := _mask.set_hidden(_plan, _cols, ids, hide)
+	var rows: PackedInt32Array = res["rows"]
+	for r in rows:
+		_roofs.set_enabled_at(_cols.x[r], _cols.z[r], not hide)
+	var queued := 0
+	for key: Vector2i in res["cells"]:
+		var old: String = _hashes.get(key, "")
+		var fresh := _plan.cell_hash(_cols, key) if _plan.cells.has(key) else ""
+		if fresh == old:
+			continue
+		if fresh.is_empty():
+			_hashes.erase(key)
+		else:
+			_hashes[key] = fresh
+		_pend_cells[key] = true
+		queued += 1
+	return {"ok": true, "rows": rows.size(), "cells": queued, "ms": (Time.get_ticks_usec() - t0) / 1000.0}
+
+
+## parsel -> satır dizinini önceden kurar (ilk gizlemede ~10 ms takılma olmasın).
+func prepare_parcel_index() -> void:
+	if _cols != null:
+		_mask.index(_cols)
+
+
+## Bekleyen (kuyrukta ya da arka planda hesaplanan) hücre/süper-chunk işi var mı (adet)?
+func pending_work() -> int:
+	return _pend_cells.size() + _pend_supers.size() + _tasks.size()
+
+
+## Kuyruktaki hücre ve süper-chunk işini yürütür: mesh VERİSİ (`BuildingChunkBuilder`, `BuildingHlod2`; saf) arka plan
+## iş
+## parçacığında (en çok `MAX_TASKS`) hesaplanır, ana iş parçacığı yalnız biten işin düğümlerini kurar. Her kurulum
+## sonrası
+## `budget_us` aşıldıysa durur (en az bir kurulum ilerler). Süper-chunk işi, hücre işi bitince başlar (hücre verisini
+## okur). `use_threads = false` ise satır içi çalışır (testler). Dönüş: {done: kurulan birim, left: kalan, ms}.
+func pump_pending(budget_us: int) -> Dictionary:
+	var t0 := Time.get_ticks_usec()
+	var done := 0
+	var keys: Array[Vector2i] = []
+	_start_tasks()
+	var i := 0
+	while i < _tasks.size():
+		if done > 0 and Time.get_ticks_usec() - t0 >= budget_us:
+			break
+		var job: Dictionary = _tasks[i]
+		if job["id"] >= 0 and not WorkerThreadPool.is_task_completed(job["id"]):
+			i += 1
+			continue
+		if job["id"] >= 0:
+			WorkerThreadPool.wait_for_task_completion(job["id"])
+		_tasks.remove_at(i)
+		var t_inst := Time.get_ticks_usec()
+		if job["kind"] == "cell":
+			_install_cell(job["out"] as BuildingCellData)
+			keys.append(job["key"])
+		else:
+			_install_super(job["key"], job["out"] as Dictionary)
+		var inst_ms := (Time.get_ticks_usec() - t_inst) / 1000.0
+		stats["mask_install_max_ms"] = snappedf(maxf(float(stats.get("mask_install_max_ms", 0.0)), inst_ms), 0.01)
+		stats["mask_build_max_ms"] = snappedf(maxf(float(stats.get("mask_build_max_ms", 0.0)), float(job["ms"])), 0.01)
+		done += 1
+		_start_tasks()
+	if done > 0:
+		if pending_work() == 0:
+			_refresh_stats()   # tüm hücreleri gezer (~3 ms): yalnız iş bitince, kare dilimini şişirmesin
+		cells_rebuilt.emit(keys)
+	return {"done": done, "left": pending_work(), "ms": (Time.get_ticks_usec() - t0) / 1000.0}
+
+
+## Boş kalan tüm işçi yuvalarını doldurur (önce hücreler; süper-chunk'lar hücre işi bitince).
+func _start_tasks() -> void:
+	while _tasks.size() < MAX_TASKS and not _pend_cells.is_empty():
+		var k: Vector2i = _pend_cells.keys()[0]
+		_pend_cells.erase(k)
+		_pend_supers[_plan.super_of(k)] = true
+		if not _plan.cells.has(k):
+			_remove_cell(k)   # hücredeki son yapı gizlendi
+			continue
+		var one := BuildingChunkPlan.new()
+		one.cell_m = _plan.cell_m
+		one.super_cells = _plan.super_cells
+		one.origin = _plan.origin
+		one.cells = {k: _plan.indices(k)}
+		var cols := _cols
+		var kit := _kit
+		var world := _world
+		var cfg := config
+		_spawn(k, "cell", func() -> Variant: return BuildingChunkBuilder.build_cell(cols, one, k, kit, world, cfg))
+	if not _pend_cells.is_empty() or _has_task_kind("cell"):
+		return
+	while _tasks.size() < MAX_TASKS and not _pend_supers.is_empty():
+		var sk: Vector2i = _pend_supers.keys()[0]
+		_pend_supers.erase(sk)
+		if not config.build_hlod2:
+			continue
+		var members: Array = []
+		for ck in _plan.super_groups().get(sk, []):
+			if _cell_data.has(ck):
+				members.append(_cell_data[ck])
+		var cols2 := _cols
+		var kit2 := _kit
+		var cfg2 := config
+		var origin := _plan.super_origin(sk)
+		_spawn(sk, "super", func() -> Variant: return BuildingHlod2.build(members, cols2, kit2, cfg2, origin))
+
+
+## Çalışan arka plan işlerini bekler ve sonuçlarını atar (yeniden kurulum / temizlik öncesi).
+func _drain_tasks() -> void:
+	for job: Dictionary in _tasks:
+		if job["id"] >= 0:
+			WorkerThreadPool.wait_for_task_completion(job["id"])
+	_tasks.clear()
+
+
+func _has_task_kind(kind: String) -> bool:
+	for job: Dictionary in _tasks:
+		if job["kind"] == kind:
+			return true
+	return false
+
+
+func _spawn(key: Vector2i, kind: String, work: Callable) -> void:
+	var job := {"key": key, "kind": kind, "out": null, "id": -1, "ms": 0.0}
+	var run := func() -> void:
+		var t := Time.get_ticks_usec()
+		job["out"] = work.call()
+		job["ms"] = (Time.get_ticks_usec() - t) / 1000.0
+	if config.use_threads:
+		job["id"] = WorkerThreadPool.add_task(run, false, "building mask %s" % kind)
+	else:
+		run.call()
+	_tasks.append(job)
 
 
 # --- özel -----------------------------------------------------------------------------------------------------

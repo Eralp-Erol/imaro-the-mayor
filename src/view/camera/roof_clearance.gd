@@ -26,6 +26,8 @@ var _hw: PackedFloat32Array = PackedFloat32Array()
 var _hd: PackedFloat32Array = PackedFloat32Array()
 var _top: PackedFloat32Array = PackedFloat32Array()
 var _grid: Dictionary = {}
+## T-042b: kamulaştırmada yıkılan yapının çatısı (indeks -> özgün tepe); sorguda sayılmaz, geri alınca döner.
+var _disabled: Dictionary = {}
 
 
 ## Gerçek veri: sütunlar + kit + dünya. Su üstünde/dünya dışında kalan (çizilmeyen) yapılar dizine girmez.
@@ -73,6 +75,24 @@ func max_roof_y(x: float, z: float, radius: float) -> float:
 	return best
 
 
+## (x, z) ayak izi merkezindeki çatıyı kapatır/açar (yıkım / geri alma). Merkez `set_from_columns`taki float32 ile
+## bire bir eşleşir. Dönüş: bulundu mu.
+func set_enabled_at(x: float, z: float, enabled: bool) -> bool:
+	var bucket: Variant = _grid.get(Vector2i(floori(x / CELL_M), floori(z / CELL_M)))
+	if bucket == null:
+		return false
+	for i in bucket as PackedInt32Array:
+		if is_equal_approx(_x[i], x) and is_equal_approx(_z[i], z):
+			if enabled and _disabled.has(i):
+				_top[i] = float(_disabled[i])
+				_disabled.erase(i)
+			elif not enabled and not _disabled.has(i):
+				_disabled[i] = _top[i]
+				_top[i] = NO_ROOF
+			return true
+	return false
+
+
 ## Yaw'lı dikdörtgen ayak izine en yakın uzaklık (içerideyse 0). Yerel çerçeve: BuildingGround ile aynı dönüş.
 func _distance_to_footprint(i: int, x: float, z: float) -> float:
 	var dx := x - _x[i]
@@ -95,6 +115,7 @@ func clear() -> void:
 	_hd = PackedFloat32Array()
 	_top = PackedFloat32Array()
 	_grid.clear()
+	_disabled.clear()
 
 
 func _append(x: float, z: float, yaw: float, hw: float, hd: float, top: float) -> void:

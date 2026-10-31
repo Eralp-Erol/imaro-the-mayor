@@ -374,7 +374,7 @@ func _start_sim() -> void:
 		push_error("playable: ekonomi/aktör/siyaset çekirdeği kurulamadı")
 		return
 	_facade = handle.facade
-	_pr = PlayableRoads.create(_net, _roads, _facade, func() -> bool: return _veg_loader != null)
+	_pr = PlayableRoads.create(_net, _roads, _facade, func() -> bool: return _veg_loader != null, self)
 	PlayableBudget.attach(_facade, _pr.attach_commands())
 	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
 	if _projector == null:
