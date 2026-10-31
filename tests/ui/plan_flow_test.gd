@@ -143,9 +143,13 @@ func test_flow_panel_shows_only_sim_preview_numbers_and_no_council_word_without_
 	assert_str(text).contains(UiText.t(&"zoning.preview.infra", {"n": UiText.number(pv.total_infra_units)}))
 	assert_str(text).contains(UiText.t(&"zoning.preview.effect"))  # yarar/zarar işareti kurulu değil
 	assert_str(text).contains(UiText.t(&"plan.state.unplanned_short"))
-	assert_bool(text.to_lower().contains("meclis")).override_failure_message(
-			"meclis sözcüğü bayrak kapalıyken görünmemeli: " + text).is_false()
+	# Oynanabilir siyasette bayrak AÇIK (büyük plan meclise): küçük planda yalnız "doğrudan + eşik" satırı meclisi anar,
+	# gönderim yolu "meclis oylaması" demez.
+	assert_str(text).contains(panel.route_note_text())
+	assert_str(text).contains("Plan küçük")
+	assert_bool(text.contains(UiText.t(&"zoning.path.council"))).is_false()
 	var sent := panel.send_button()
+	assert_str(sent.button.text).contains(UiText.t(&"zoning.submit_direct"))
 	assert_bool(sent.is_enabled()).is_true()
 	panel.send()
 	f.advance(1)
@@ -225,3 +229,61 @@ func test_structure_warning_is_taken_at_send_so_the_plans_own_building_is_not_ca
 	assert_bool(f.parcel_views(ids)[0].development != ParcelView.DEVELOPMENT_VACANT).override_failure_message(
 			"planlı parselde 200 günde yapı başlamadı").is_true()
 	assert_bool(m.structure_parcels().is_empty()).is_true()
+
+
+# --- D-011 Soru 4: büyük plan meclise, küçük plan doğrudan (yol metni + neden sim eşiklerinden) ---
+
+func test_small_plan_is_direct_and_large_plan_goes_to_council_with_the_recorded_reason() -> void:
+	var f := _real()  # oynanabilir siyaset: eşik 10 parsel / 40 birim
+	var cfg := PlayablePolitics.config()
+	var min_parcels: int = cfg.council["plan_council_min_parcels"]
+	var ids := _free_ids(f, min_parcels)
+	assert_int(ids.size()).override_failure_message("fixture yeterli boş parsel vermedi").is_equal(min_parcels)
+	var small := ZoningFlowModel.create(f)
+	assert_bool(small.add_parcel(ids[0])).is_true()
+	small.choose_use(&"zone.mixed")
+	assert_bool(small.council_required()).is_false()
+	assert_str(small.submit_label()).is_equal(UiText.t(&"zoning.submit_direct"))
+	assert_str(small.route_text()).contains("Plan küçük")
+	assert_str(small.route_text()).contains("%d parsel" % min_parcels)
+	assert_bool(small.route_text().to_lower().contains("meclise gidiyor")).is_false()
+	var large := ZoningFlowModel.create(f)
+	for id in ids:
+		assert_bool(large.add_parcel(id)).is_true()
+	large.choose_use(&"zone.mixed")
+	assert_bool(large.council_required()).is_true()
+	assert_str(large.submit_label()).is_equal(UiText.t(&"zoning.submit"))
+	assert_str(large.path_text()).contains("oylama")
+	var why := large.route_text()
+	assert_str(why).contains("Neden meclise gidiyor")
+	assert_str(why).contains("%d parsel, eşik %d" % [min_parcels, min_parcels])
+	var pv := large.preview()
+	assert_int(pv.council_min_parcels).is_equal(min_parcels)
+	assert_int(pv.council_min_units).is_equal(cfg.council["plan_council_min_units"])
+
+
+func test_route_reason_stays_after_send_and_panel_shows_it() -> void:
+	var f := _real()
+	var ids := _free_ids(f, int(PlayablePolitics.config().council["plan_council_min_parcels"]))
+	var hud := _hud(f)
+	var d := DecisionPanels.attach(hud, f, Callable(), false)
+	d.open_zoning(ids)
+	var panel := d.zoning_panel()
+	panel.choose_use(&"zone.mixed")
+	var before := panel.route_note_text()
+	assert_str(before).contains("Neden meclise gidiyor")
+	assert_str(panel.joined_text()).contains(before)
+	assert_str(panel.send_button().button.text).contains(UiText.t(&"zoning.submit"))
+	panel.send()
+	f.advance(1)
+	assert_str(panel.route_note_text()).is_equal(before)
+	assert_str(panel.joined_text()).contains(before)
+
+
+func test_no_route_line_without_thresholds() -> void:
+	var f := _real(false)  # sim varsayılanı: eşik yok, bayrak her planı meclise götürür
+	var m := ZoningFlowModel.create(f)
+	m.add_parcel(_free_ids(f, 1)[0])
+	m.choose_use(&"zone.mixed")
+	assert_bool(m.council_required()).is_true()
+	assert_str(m.route_text()).is_empty()

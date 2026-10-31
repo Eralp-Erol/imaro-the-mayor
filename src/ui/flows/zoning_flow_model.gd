@@ -39,6 +39,7 @@ var structure_probe: Callable = Callable()
 ## Gönderim anında yapılı olan parseller: gönderimden SONRA yatırımcının bu plan yüzünden diktiği yapı "mevcut yapı"
 ## sayılmaz (uyarı yanlış olurdu). Gönderimden önce canlı okunur.
 var _structures_at_send: PackedInt64Array = PackedInt64Array()
+var _route_sent: String = ""
 var _facade: SimFacade = null
 var _phase: Phase = Phase.PICK_AREA
 var _effective_ticks: Dictionary = {}  # parsel referansı (String) -> tick
@@ -159,10 +160,22 @@ func plan_flags() -> PlanPreviewView:
 ## Meclis yolu açık mı? Gerçek sim bayrağı (`requires_council.zoning.propose`); yalnız kaynak sim değilse (mock/ui_lab)
 ## `UiPrefs` yer tutucusuna düşer. "Meclis" sözcüğü yalnız bu true iken görünür.
 func council_required() -> bool:
-	var flags := plan_flags()
+	var pv := preview()  # seçim varsa O PLANIN kararı (D-011 Soru 4); yoksa genel bayrak
+	var flags := pv if pv != null else plan_flags()
 	if flags.provenance == SimContract.PROVENANCE_SIM:
 		return flags.council_required
 	return UiPrefs.zoning_requires_council()
+
+
+## "Neden meclise gitti / gitmez" (SIM-12): plan eşikleri sim'den (`PlanPreviewView.council_min_*`), plan boyutu aynı
+## önizlemeden. Eşik yoksa (kapı yok / eşik kapalı / sim değil) "". Gönderimden sonra gönderim anındaki cümle kalır.
+func route_text() -> String:
+	if _phase >= Phase.SENT and _route_sent != "":
+		return _route_sent
+	var pv := preview()
+	if pv == null or pv.provenance != SimContract.PROVENANCE_SIM:
+		return ""
+	return _route_of(pv)
 
 
 ## Teklifte en çok parsel (sim `plan_max_parcels_per_proposal`); 0 = sınır bilinmiyor.
@@ -197,6 +210,7 @@ func send_block_reason() -> String:
 func send() -> bool:
 	if not can_send():
 		return false
+	_route_sent = route_text()
 	_structures_at_send = structure_parcels()
 	var result := _facade.submit_command(_command())
 	last_submit = result
@@ -221,6 +235,7 @@ func reset() -> void:
 	reason_ids = PackedInt64Array()
 	_effective_ticks = {}
 	_structures_at_send = PackedInt64Array()
+	_route_sent = ""
 	_phase = Phase.PICK_USE if not parcel_ids.is_empty() else Phase.PICK_AREA
 
 
@@ -383,6 +398,28 @@ func command() -> SimCommand:
 
 
 # --- İç ---
+
+## Eşik sayıları ve plan boyutu yalnız `pv`den; yalnız karşılanan ölçüt "neden"e yazılır.
+func _route_of(pv: PlanPreviewView) -> String:
+	var min_p := pv.council_min_parcels
+	var min_u := pv.council_min_units
+	if min_p <= 0 and min_u <= 0:
+		return ""
+	var met := PackedStringArray()
+	if min_p > 0 and parcel_ids.size() >= min_p:
+		met.append(UiText.t(&"zoning.route.part_parcels",
+				{"n": UiText.number(parcel_ids.size()), "min": UiText.number(min_p)}))
+	if min_u > 0 and pv.ok and pv.total_units >= min_u:
+		met.append(UiText.t(&"zoning.route.part_units",
+				{"n": UiText.number(pv.total_units), "min": UiText.number(min_u)}))
+	if pv.council_required:
+		return UiText.t(&"zoning.route.large", {"why": " · ".join(met)}) if not met.is_empty() else ""
+	var limits := PackedStringArray()
+	if min_p > 0:
+		limits.append(UiText.t(&"zoning.route.limit_parcels", {"min": UiText.number(min_p)}))
+	if min_u > 0:
+		limits.append(UiText.t(&"zoning.route.limit_units", {"min": UiText.number(min_u)}))
+	return UiText.t(&"zoning.route.small", {"limit": " / ".join(limits)})
 
 func _command() -> SimCommand:
 	# Yeni komut türü YOK (CAN-03): mevcut `zoning.propose`, yoğunluk isteğe bağlı parametre.

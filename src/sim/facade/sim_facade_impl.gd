@@ -347,15 +347,20 @@ func plan_preview(parcel_ids: PackedInt64Array, land_use: StringName, density: i
 	var council := _proposal_gate != null and _proposal_gate.requires_vote_for(_state, SimCommand.KIND_ZONING_PROPOSE,
 		{"parcel_ids": parcel_ids, "land_use": land_use, "density": density, "max_height_m": max_height_m})
 	var limit := _facade_config.plan_max_parcels_per_proposal
+	var th: Dictionary = _proposal_gate.plan_thresholds() if _proposal_gate != null else {}
+	var min_parcels := int(th.get("min_parcels", 0))
+	var min_units := int(th.get("min_units", 0))
 	if _economy == null:
 		var none := PlanPreviewView.new()
 		none.provenance = provenance()
 		none.land_use = land_use
 		none.max_parcels = limit
 		none.council_required = council
+		none.council_min_parcels = min_parcels
+		none.council_min_units = min_units
 		return none
 	return PlanPreviewView.from_economy(_economy.plan_preview(_state, parcel_ids, land_use, density, max_height_m),
-		provenance(), land_use, limit, council)
+		provenance(), land_use, limit, council, min_parcels, min_units)
 
 
 ## T-045 · `tick`ten sonra (tick, şimdi] değişen parseller; O(değişen), olay/gerekçe ufkundan BAĞIMSIZ (halka:

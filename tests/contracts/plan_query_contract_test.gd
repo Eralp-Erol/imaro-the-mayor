@@ -62,8 +62,13 @@ func test_plan_preview_view_round_trips_through_json() -> void:
 	v.total_infra_units = 10
 	v.max_parcels = 40
 	v.council_required = true
+	v.council_min_parcels = 10
+	v.council_min_units = 40
 	var back := PlanPreviewView.from_dict(JSON.parse_string(JSON.stringify(v.to_dict())))
 	assert_bool(back.same_as(v)).is_true()
 	assert_int(int(back.parcels[0]["units"])).is_equal(10)
 	assert_bool(bool(back.regions[0]["fits"])).is_true()
 	assert_bool(back.council_required).is_true()
+	assert_int(back.council_min_parcels).is_equal(10)
+	assert_int(back.council_min_units).is_equal(40)
+	assert_bool(PlanPreviewView.new().to_dict().has("council_min_parcels")).is_true()

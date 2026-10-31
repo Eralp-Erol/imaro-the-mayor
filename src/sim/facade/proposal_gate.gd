@@ -17,6 +17,12 @@ func requires_vote_for(state: GameState, command_kind: StringName, _params: Dict
 	return requires_vote(state, command_kind)
 
 
+## D-011 Soru 4: imar planı meclis eşikleri `{min_parcels, min_units}` (0 = ölçüt kapalı); eşik etkin değilse `{}`.
+## UI "neden meclise gitti" açıklaması için `PlanPreviewView`e taşınır (salt okunur).
+func plan_thresholds() -> Dictionary:
+	return {}
+
+
 ## Durum bağımlı ön denetim: {} geçerli; aksi halde {"code": ret kodu, "args": {...}}.
 func precheck(_state: GameState, _command_kind: StringName, _params: Dictionary) -> Dictionary:
 	return {}

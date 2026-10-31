@@ -259,17 +259,33 @@ func _add_send_and_status() -> void:
 	_add_honesty_notes()
 	if not model.is_locked():
 		_body.add_child(_muted(model.path_text()))
+		_add_route_note()
 		_send = ActionButton.create(_ctx, model.submit_label(), true)
 		_tag(_send.button, "send")
 		_send.set_enabled(model.can_send(), model.send_block_reason())
 		_send.pressed.connect(send)
 		_body.add_child(_send)
+	if model.is_locked():
+		_add_route_note()
 	_status = UiFactory.label(model.status_text(), &"", true)
 	_status.visible = not _status.text.is_empty()
 	if model.phase() == ZoningFlowModel.Phase.REFUSED or model.phase() == ZoningFlowModel.Phase.VOTE_FAILED:
 		_status.theme_type_variation = UiTheme.V_LABEL_DANGER
 	_body.add_child(_status)
 	_add_followups()
+
+
+## SIM-12: planın meclise gitme/gitmeme nedeni (eşik sim'den); eşik yoksa satır yok. Gönderimden sonra da kalır.
+func _add_route_note() -> void:
+	var text := model.route_text()
+	if text != "":
+		var note := _muted(text)
+		_tag(note, "route_note")
+		_body.add_child(note)
+
+
+func route_note_text() -> String:
+	return model.route_text()
 
 
 ## Onay adımında (gönderimden önce) yapılı parsel uyarısı ve "özel yatırım yapılmaz" notu; sim davranışından türer.

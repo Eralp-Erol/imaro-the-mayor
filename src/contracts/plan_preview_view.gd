@@ -31,6 +31,11 @@ var max_parcels: int = 0
 ## Öneri meclis oylamasına gider mi (gerçek `requires_council.zoning.propose`)? UI "meclis" sözcüğünü YALNIZ true iken
 ## yazar. Meclis sürecinin kendisi Q-014 AÇIK; burada yalnız bayrak.
 var council_required: bool = false
+## Plan eşikleri (D-011 Soru 4, ÇALIŞMA DEĞERİ): "büyük plan" ölçütü = parsel sayısı >= `council_min_parcels` YA DA
+## toplam birim >= `council_min_units`. 0 = o ölçüt kapalı / eşik yok (kapı yoksa ikisi de 0). UI eşik sayısını yalnız
+## buradan okur; "neden meclise gitti" cümlesi bunlarla + `parcels.size()`/`total_units` ile kurulur.
+var council_min_parcels: int = 0
+var council_min_units: int = 0
 
 
 func to_dict() -> Dictionary:
@@ -38,6 +43,7 @@ func to_dict() -> Dictionary:
 		"provenance": provenance, "ok": ok, "reason": reason, "land_use": land_use, "parcels": _rows(parcels, PARCEL_ROW),
 		"regions": _rows(regions, REGION_ROW), "total_units": total_units, "total_infra_units": total_infra_units,
 		"max_parcels": max_parcels, "council_required": council_required,
+		"council_min_parcels": council_min_parcels, "council_min_units": council_min_units,
 	}
 
 
@@ -53,6 +59,8 @@ static func from_dict(d: Dictionary) -> PlanPreviewView:
 	v.total_infra_units = SimContract.to_int(d.get("total_infra_units"))
 	v.max_parcels = SimContract.to_int(d.get("max_parcels"))
 	v.council_required = SimContract.to_bool(d.get("council_required", false))
+	v.council_min_parcels = SimContract.to_int(d.get("council_min_parcels"))
+	v.council_min_units = SimContract.to_int(d.get("council_min_units"))
 	return v
 
 
@@ -83,11 +91,13 @@ static func _rows(source: Variant, shape: Dictionary) -> Array:
 
 ## Sim sorgusu sonucundan ({ok, reason, parcels, regions, totals}) satır kopyası kurar. `EconomySystem.plan_preview`
 ## çıktısını DEĞİŞTİRMEDEN taşır (sayılar aynı).
-static func from_economy(raw: Dictionary, source: StringName, use_name: StringName, limit: int, council: bool) \
-		-> PlanPreviewView:
+static func from_economy(raw: Dictionary, source: StringName, use_name: StringName, limit: int, council: bool,
+		min_parcels: int = 0, min_units: int = 0) -> PlanPreviewView:
 	var v := PlanPreviewView.from_dict(raw)
 	v.provenance = source
 	v.land_use = use_name
 	v.max_parcels = limit
 	v.council_required = council
+	v.council_min_parcels = min_parcels
+	v.council_min_units = min_units
 	return v

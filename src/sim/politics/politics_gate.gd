@@ -50,6 +50,13 @@ func _plan_route(state: GameState, params: Dictionary) -> Dictionary:
 	return {"large": large, "parcels": ids.size(), "units": units}
 
 
+func plan_thresholds() -> Dictionary:
+	if not _ctx.politics.plan_council_thresholds_active():
+		return {}
+	return {"min_parcels": int(_ctx.politics.council.get("plan_council_min_parcels", 0)),
+		"min_units": int(_ctx.politics.council.get("plan_council_min_units", 0))}
+
+
 func pending_vote_for_parcel(state: GameState, parcel_id: int) -> int:
 	return CouncilEngine.pending_vote_for_parcel(state, parcel_id)
 
