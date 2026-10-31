@@ -8,10 +8,13 @@ extends SceneTree
 ## Çalıştır (tek koşu = tek süreç; Godot başına tek koşu):
 ##   tools/godot.sh --headless --path . --script res://tests/sim/perf/t043b_real_world_probe.gd -- \
 ##       [--queue=1|0] [--rank=0] [--plan-n=12] [--order=road_first|plan_first|plan_only|road_only] [--sim-seed=N]
-##       [--days=260] [--profile] [--list]
+##       [--days=260] [--profile] [--bands] [--no-stop] [--list]
 ## --queue: decision.priority_review_enabled (varsayılan 1 = oynanabilir veri); --rank: aday yol sırası (0 = en çok boş
 ## parsel); --plan-n: tek imar teklifindeki parsel sayısı (yola en yakın boş parseller); --order: plan_only = yol yok,
-## road_only = plan yok (kontrol); --profile: tick'i sistem sistem zamanlar (aynı adımlar, `Simulation.step` kopyası);
+## road_only = plan yok (kontrol); --bands (2026-10-31, kare sıçramaları): --profile ile birlikte sistem başına
+## tick süresini 300 günlük bantlar x {haftalık gün (tick % 7 == 0), diğer} toplar + tick başına sabit CPU
+## kalibrasyonu (makine hızı); --no-stop: plan bitse de `--days` boyunca sürer; --profile: tick'i sistem sistem
+## zamanlar (aynı adımlar, `Simulation.step` kopyası);
 ## --list: yalnız aday yolları yazar.
 ## Çıktı: `T043B_REAL ` + JSON satırı.
 
@@ -123,6 +126,7 @@ func run() -> void:
 	rec.facade = facade
 	rec.pump = pump
 	rec.profile = _args.has("profile")
+	rec.bands = _args.has("bands")
 	# 1) ısınma (T0 stoku ile yaşayan dünya)
 	for _d in WARM_DAYS:
 		rec.step("warm")
@@ -148,7 +152,7 @@ func run() -> void:
 	var finish_extra := 0
 	for _d in days:
 		rec.step("run")
-		if not near_ids.is_empty() and rec.completed_in(near_ids) >= near_ids.size():
+		if not _args.has("no-stop") and not near_ids.is_empty() and rec.completed_in(near_ids) >= near_ids.size():
 			finish_extra += 1
 			if finish_extra >= AFTER_PLAN_DAYS:
 				break
@@ -183,6 +187,8 @@ func run() -> void:
 	out["plan_parcel_started"] = rec.started_in(near_ids)
 	out["plan_parcel_completed"] = rec.completed_in(near_ids)
 	out["profile"] = rec.profile_summary()
+	if rec.bands:
+		out["bands"] = rec.band_summary()
 	out["economy_totals"] = EconomyQuery.totals(facade.game_state())
 	out["timing_ms"] = rec.timing_summary()
 	out["trigger_ticks_ms"] = rec.trigger_ms
@@ -345,11 +351,14 @@ class _Recorder:
 	var facade: SimFacadeImpl = null
 	var pump: SimBuildingPump = null
 	var profile: bool = false
+	var bands: bool = false
 	var all_ms: Array[float] = []
 	var all_ticks: Array[int] = []
 	var all_labels: Array[String] = []
 	var trigger_ms: Dictionary = {}
 	var counts: Dictionary = {}
+	var _band_book: Dictionary = {}
+	var _cal_book: Dictionary = {}
 	var _seq: int = 0
 	var _events: Dictionary = {}
 	var _proj_ms: Array[float] = []
@@ -358,6 +367,8 @@ class _Recorder:
 
 	func step(label: String) -> void:
 		var t0 := Time.get_ticks_usec()
+		if bands:
+			note_cal(facade.current_tick())
 		if profile:
 			_profiled_step()
 		else:
@@ -406,9 +417,53 @@ class _Recorder:
 
 	func _note(name: String, t0: int, tick: int, month: bool) -> void:
 		var ms := (Time.get_ticks_usec() - t0) / 1000.0
+		if bands and tick > 1:
+			var key := "%s|%s" % [name, "wk" if tick % 7 == 0 else "std"]
+			var band := tick / 300
+			var book: Dictionary = _band_book.get(key, {})
+			var cell: Array = book.get(band, [0.0, 0, 0.0])
+			cell[0] = float(cell[0]) + ms
+			cell[1] = int(cell[1]) + 1
+			cell[2] = maxf(float(cell[2]), ms)
+			book[band] = cell
+			_band_book[key] = book
 		var book := _sys_month_max if month else _sys_max
 		if tick > 1 and ms > float((book.get(name, [0.0, 0])[0])):
 			book[name] = [ms, tick]
+
+	## Sabit CPU işi (makine hızı göstergesi) süresi, 300 günlük banda toplanır.
+	func note_cal(tick: int) -> void:
+		var t := Time.get_ticks_usec()
+		var acc := 0.0
+		for i in 8000:
+			acc += float(i) * 0.5
+		if acc < 0.0:
+			print(acc)
+		var band := tick / 300
+		var cell: Array = _cal_book.get(band, [0.0, 0])
+		cell[0] = float(cell[0]) + (Time.get_ticks_usec() - t) / 1000.0
+		cell[1] = int(cell[1]) + 1
+		_cal_book[band] = cell
+
+	## {sistem|wk/std: {bant: [ort ms, sayı, maks ms]}} yalnız ort >= 0,2 ms olanlar + bant başına kalibrasyon ort.
+	func band_summary() -> Dictionary:
+		var out := {}
+		for key: String in _band_book:
+			var row := {}
+			var keep := false
+			for band: int in _band_book[key]:
+				var cell: Array = _band_book[key][band]
+				var avg := float(cell[0]) / maxi(int(cell[1]), 1)
+				row[str(band * 300)] = [snappedf(avg, 0.01), int(cell[1]), snappedf(float(cell[2]), 0.1)]
+				if avg >= 0.2 or float(cell[2]) >= 2.0:
+					keep = true
+			if keep:
+				out[key] = row
+		var cal := {}
+		for band: int in _cal_book:
+			cal[str(band * 300)] = snappedf(float(_cal_book[band][0]) / maxi(int(_cal_book[band][1]), 1), 0.001)
+		out["_cal_ms"] = cal
+		return out
 
 	func profile_summary() -> Dictionary:
 		var out := {}

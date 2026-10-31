@@ -10,6 +10,13 @@ extends SceneTree
 ##   tools/godot.sh --headless --path . --script res://tests/sim/perf/demo_frame_probe.gd -- \
 ##       [--ticks=1700] [--dt=0.016667] [--speed=3] [--no-road] [--top=12] [--legacy-reason] \
 ##       [--panel=results|inspector|reason|none]
+##       [--split] (sahne altındaki düğümlerin `_process`'ini engine yerine buradan, düğüm başına zamanlayarak sürer;
+##        `np` sütunu) [--spike-ms=30] (toplam kare süresi bu eşiği aşan kareleri FRAME_PROBE_SPIKE olarak yazar)
+##       [--plan-n=12] [--plan-radius=150] (imar önerisindeki boş parsel sayısı / yol çevresi yarıçapı: şehir büyümesi)
+##       [--why-poll-ms=15] (HUD yoklaması bu eşiği aşan karelerin olay anahtarları: FRAME_PROBE_WHY)
+##       [--calls-at=200,600,1000] (ayırıcı , veya ;) (bu tick'lerde bileşen çağrı süreleri: FRAME_PROBE_CALLS)
+##       [--engine] (sahnenin `_process`'ini motor GERÇEK delta ile sürer: tick yetiştirme/sarmal davranışı dahil)
+##       Sahneye giden dev argümanları (`--no-life`, `--no-vegetation`...) olduğu gibi geçer (A/B).
 ## Çıktı: `FRAME_PROBE_WINDOW` (120 karelik pencereler), `FRAME_PROBE_TOP` (en yavaş kareler), `FRAME_PROBE` JSON.
 
 const SCENE := "res://scenes/game/playable.tscn"
@@ -26,6 +33,8 @@ var _rows: Array[Dictionary] = []
 var _prev: Dictionary = {}
 var _frame_t: int = 0
 var _reason_ids: PackedInt64Array = PackedInt64Array()
+var _split_nodes: Array[Node] = []
+var _split_dt: float = 0.016667
 
 
 func _initialize() -> void:
@@ -43,7 +52,9 @@ func run() -> void:
 	root.add_child(_scene)
 	await process_frame
 	await process_frame
-	_scene.set_process(false)  # kareleri biz süreriz (sabit dt)
+	if not _args.has("engine"):
+		_scene.set_process(false)  # kareleri biz süreriz (sabit dt); `--engine`: motor kendi gerçek delta'sıyla sürer
+	_split_dt = dt
 	var facade: SimFacade = _scene._facade
 	if facade == null:
 		push_error("probe: facade yok")
@@ -63,6 +74,9 @@ func run() -> void:
 	_prev = _snap()
 	_frame_t = Time.get_ticks_usec()
 	var max_frames := 400000
+	var calls_at: Array[int] = []
+	for part in str(_args.get("calls-at", "")).replace(";", ",").split(",", false):
+		calls_at.append(int(part))
 	while frame < max_frames:
 		if frame == WARM_FRAMES and not _args.has("no-road"):
 			sent_road = facade.current_tick()
@@ -76,6 +90,9 @@ func run() -> void:
 			_open_reason_panel(facade)
 		_step(frame, dt)
 		frame += 1
+		if not calls_at.is_empty() and facade.current_tick() >= calls_at[0]:
+			print("FRAME_PROBE_CALLS tick=%d %s" % [facade.current_tick(), JSON.stringify(_time_calls())])
+			calls_at.remove_at(0)
 		await process_frame
 		if facade.current_tick() >= target_ticks:
 			break
@@ -94,8 +111,10 @@ func _step(frame: int, dt: float) -> void:
 	var tick0 := facade.current_tick()
 	var seq0 := facade.last_event_seq()
 	var t0 := Time.get_ticks_usec()
-	_scene._process(dt)
+	if not _args.has("engine"):
+		_scene._process(dt)
 	var proc_us := Time.get_ticks_usec() - t0
+	var np: Dictionary = _split_step(frame, dt) if _args.has("split") else {}
 	var cur := _snap()
 	var row := {
 		"f": frame, "tick": facade.current_tick(), "ticks": facade.current_tick() - tick0,
@@ -107,7 +126,18 @@ func _step(frame: int, dt: float) -> void:
 		"views": int(cur["view_n"]) - int(_prev["view_n"]),
 		"road_n": int(cur["road_n"]) - int(_prev["road_n"]),
 		"veg_ms": float(cur["veg_ms"]),
+		"life_builds": int(cur["life_builds"]) - int(_prev["life_builds"]),
+		"life_ms": float(cur["life_ms"]) - float(_prev["life_ms"]),
+		"np": np,
+		"mon": _monitors(),
 	}
+	if not _args.has("engine") and float(row["poll_ms"]) >= float(_args.get("why-poll-ms", "1000000")):
+		# Ağır HUD yoklaması: bu karedeki olay anahtarları (neden ağır sorusu).
+		var keys := PackedStringArray()
+		for e in facade.events_since(seq0):
+			keys.append("%s%s" % [String(e.message_key), "" if e.subjects.is_empty() else "@" + String(e.subjects[0])])
+		print("FRAME_PROBE_WHY tick=%d poll_ms=%.1f drive_ms=%.1f events=%s" % [facade.current_tick(),
+				float(row["poll_ms"]), float(row["drive_ms"]), ",".join(keys)])
 	_prev = cur
 	row["_frame_start_us"] = t0
 	_rows.append(row)
@@ -115,11 +145,76 @@ func _step(frame: int, dt: float) -> void:
 	if _rows.size() >= 2:
 		var p := _rows[_rows.size() - 2]
 		p["total_ms"] = (t0 - int(p["_frame_start_us"])) / 1000.0
+		if _args.has("engine"):
+			# Motor kipinde sahnenin kare işi bu `_step`ten SONRA koşar: evre farkları bir sonraki satırda görünür.
+			p["ticks"] = int(row["tick"]) - int(p["tick"])
+			for key in ["events", "drive_ms", "poll_ms", "sync_ms", "view_ms", "views", "life_ms", "life_builds"]:
+				p[key] = row[key]
+		if float(p["total_ms"]) >= float(_args.get("spike-ms", "1000000")):
+			var c := p.duplicate()
+			c.erase("_frame_start_us")
+			print("FRAME_PROBE_SPIKE ", JSON.stringify(_rounded(c)))
+
+
+## Sahne altındaki işlenen düğümleri (betikli) engine'den alıp burada zamanlayarak sürer. Dönüş: "ad:betik" -> ms.
+func _split_step(frame: int, dt: float) -> Dictionary:
+	if frame % 30 == 0:
+		_collect_split(_scene)
+	var out := {}
+	for n in _split_nodes:
+		if not is_instance_valid(n) or not n.is_inside_tree():
+			continue
+		var t := Time.get_ticks_usec()
+		n._process(dt)
+		var us := Time.get_ticks_usec() - t
+		if us >= 200:
+			var sc: Script = n.get_script()
+			var key := "%s:%s" % [n.name, sc.resource_path.get_file() if sc != null else n.get_class()]
+			out[key] = float(out.get(key, 0.0)) + us / 1000.0
+	return out
+
+
+func _collect_split(node: Node) -> void:
+	for c in node.get_children():
+		var sc: Script = c.get_script()
+		if sc != null and c.is_processing() and c.has_method("_process"):
+			c.set_process(false)
+			_split_nodes.append(c)
+		_collect_split(c)
+
+
+## Dış gürültü göstergesi: sabit CPU işi (~0,2 ms) süresi. Çekirdek başka süreçlerce çalınırsa şişer; yavaş karelerde
+## şişmişse sebep makine yüküdür (kod değil).
+func _calibrate() -> float:
+	var t := Time.get_ticks_usec()
+	var acc := 0.0
+	for i in 8000:
+		acc += float(i) * 0.5
+	if acc < 0.0:
+		print(acc)
+	return (Time.get_ticks_usec() - t) / 1000.0
+
+
+func _monitors() -> Dictionary:
+	return {
+		"cal_ms": snappedf(_calibrate(), 0.01),
+		"nodes": int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)),
+		"objs": int(Performance.get_monitor(Performance.OBJECT_COUNT)),
+		"mem_mb": snappedf(Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0, 0.1),
+		"draws": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+		"prims_k": snappedf(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME) / 1000.0, 0.1),
+		"tproc_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.01),
+		"rcpu_ms": snappedf(RenderingServer.viewport_get_measured_render_time_cpu(root.get_viewport_rid()), 0.01),
+		"rgpu_ms": snappedf(RenderingServer.viewport_get_measured_render_time_gpu(root.get_viewport_rid()), 0.01),
+	}
 
 
 func _snap() -> Dictionary:
 	var s: Dictionary = _scene.sim_stats
+	var lf: Variant = _scene.build_stats.get("life")
+	var lstats: Dictionary = lf if lf is Dictionary else {}
 	return {
+		"life_builds": int(lstats.get("cell_builds", 0)), "life_ms": float(lstats.get("build_ms_sum", 0.0)),
 		"drive_us": int(s.get("drive_us_sum", 0)), "poll_us": int(s.get("poll_us_sum", 0)),
 		"sync_ms": float(s.get("sync_ms_sum", 0.0)), "view_ms": float(s.get("view_ms_sum", 0.0)),
 		"view_n": int(s.get("view_n", 0)), "road_n": int(s.get("road_sync_n", 0)),
@@ -188,12 +283,13 @@ func _send_road(facade: SimFacade, out: Dictionary) -> PackedInt64Array:
 	out["road_submit_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.01)
 	var near := PackedInt64Array()
 	var scored: Array = []
+	var radius := float(_args.get("plan-radius", str(NEAR_M)))
 	for v in vacant:
 		var d := _dist_to_segment(v.center, pts[0], pts[pts.size() - 1])
-		if d <= NEAR_M:
+		if d <= radius:
 			scored.append([d, v.id])
 	scored.sort_custom(func(x: Array, y: Array) -> bool: return x[0] < y[0] or (x[0] == y[0] and x[1] < y[1]))
-	for k in mini(12, scored.size()):
+	for k in mini(int(_args.get("plan-n", "12")), scored.size()):
 		near.append(int(scored[k][1]))
 	return near
 
@@ -237,6 +333,11 @@ func _report(out: Dictionary) -> void:
 			"road_sync_ms_max": sc.get("road_sync_ms_max"), "tick_cost_n": sc.get("tick_cost_n")}
 	var bs: Dictionary = _scene.build_stats
 	out["sim_sync"] = bs.get("sim_sync")
+	out["life"] = bs.get("life")
+	var lh: Node = _scene.get_node_or_null("Life")
+	if lh != null and lh.get("reader") != null:
+		out["life_reader"] = lh.reader.stats
+		out["life_activity"] = lh.activity.stats
 	out["tick_cost"] = bs.get("tick_cost")
 	out["calls_ms"] = _time_calls()
 	print("FRAME_PROBE ", JSON.stringify(out))
@@ -286,7 +387,7 @@ func _summ(rows: Array) -> Dictionary:
 	var out := {"frames": rows.size()}
 	if rows.is_empty():
 		return out
-	var keys := ["proc_ms", "total_ms", "drive_ms", "poll_ms", "sync_ms", "view_ms"]
+	var keys := ["proc_ms", "total_ms", "drive_ms", "poll_ms", "sync_ms", "view_ms", "life_ms"]
 	for key in keys:
 		var sum := 0.0
 		var mx := 0.0
@@ -302,21 +403,53 @@ func _summ(rows: Array) -> Dictionary:
 	var ticks := 0
 	var events := 0
 	var views := 0
+	var lbuilds := 0
 	for r: Dictionary in rows:
+		lbuilds += int(r.get("life_builds", 0))
 		ticks += int(r["ticks"])
 		events += int(r["events"])
 		views += int(r["views"])
 	out["ticks"] = ticks
 	out["events"] = events
 	out["view_builds"] = views
+	out["life_builds"] = lbuilds
 	out["tick_end"] = int(rows[rows.size() - 1]["tick"])
+	out["mon"] = rows[rows.size() - 1].get("mon", {})
+	var cal_sum := 0.0
+	var cal_max := 0.0
+	var cal_n := 0
+	for r: Dictionary in rows:
+		var m: Dictionary = r.get("mon", {})
+		if m.has("cal_ms"):
+			cal_sum += float(m["cal_ms"])
+			cal_max = maxf(cal_max, float(m["cal_ms"]))
+			cal_n += 1
+	out["cal_avg_max"] = [snappedf(cal_sum / maxf(cal_n, 1), 0.001), snappedf(cal_max, 0.01)]
+	out["t_unix"] = snappedf(Time.get_unix_time_from_system(), 1.0)
+	var np_sum := {}
+	var np_max := {}
+	for r: Dictionary in rows:
+		var np: Dictionary = r.get("np", {})
+		for key: String in np:
+			np_sum[key] = float(np_sum.get(key, 0.0)) + float(np[key])
+			np_max[key] = maxf(float(np_max.get(key, 0.0)), float(np[key]))
+	if not np_sum.is_empty():
+		var rep := {}
+		for key: String in np_sum:
+			rep[key] = [snappedf(float(np_sum[key]) / rows.size(), 0.01), snappedf(float(np_max[key]), 0.1)]
+		out["np_avg_max"] = rep
 	return out
 
 
 func _rounded(d: Dictionary) -> Dictionary:
 	var out := {}
 	for key: String in d:
-		out[key] = snappedf(float(d[key]), 0.01) if d[key] is float else d[key]
+		if d[key] is float:
+			out[key] = snappedf(float(d[key]), 0.01)
+		elif d[key] is Dictionary:
+			out[key] = _rounded(d[key])
+		else:
+			out[key] = d[key]
 	return out
 
 
