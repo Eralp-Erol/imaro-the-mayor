@@ -192,8 +192,12 @@ func _snap_votes(facade: SimFacadeImpl) -> Array:
 	if c == null:
 		return out
 	for v: CouncilVoteView in c.votes:
+		var why: Array = []
+		for f: CouncilWhyFactor in v.why_factors:
+			why.append([String(f.name_key), f.net, f.for_members, f.against_members])
 		out.append({"id": v.vote_id, "status": String(v.status), "yes": v.yes, "no": v.no, "abstain": v.abstain,
-			"opened": v.opened_tick, "closes": v.closes_tick, "title_key": String(v.title_key), "reasons": v.reason_ids.size()})
+			"opened": v.opened_tick, "closes": v.closes_tick, "title_key": String(v.title_key), "reasons": v.reason_ids.size(),
+			"why": why, "infra_load_pm": v.infra_load_pm, "infra_region": String(v.infra_region)})
 	return out
 
 

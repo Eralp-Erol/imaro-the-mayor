@@ -69,6 +69,12 @@ static func vote_view(state: GameState, ctx: PoliticsContext, vote: Dictionary, 
 		bloc.reason_id = int(position["reason_id"]) if int(position["reason_id"]) >= first_reason else 0
 		view.positions.append(bloc)
 	view.reason_ids = _retained(vote["reason_ids"], first_reason)
+	var why: Dictionary = vote.get("why", {})  # SIM-12 neden kaydı (yalnız `unplanned_land_enabled` iken yazılır)
+	for factor: Dictionary in why.get("factors", []):
+		view.why_factors.append(CouncilWhyFactor.make(StringName(factor["name"]), int(factor["net"]),
+			int(factor["for"]), int(factor["against"])))
+	view.infra_load_pm = int(why.get("infra_load_pm", -1))
+	view.infra_region = StringName(why.get("infra_region", ""))
 	return view
 
 

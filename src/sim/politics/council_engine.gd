@@ -162,6 +162,8 @@ static func _resolve(state: GameState, ctx: PoliticsContext, vote: Dictionary) -
 	vote["resolved_tick"] = state.tick
 	var passed: bool = yes > no or (yes == no and cfg["tie_result"] == "pass")
 	vote["status"] = PASSED if passed else FAILED
+	if ctx.economy.p("unplanned_land_enabled") == 1:  # SIM-12 neden kaydı: bayrak kapalıyken yeni alan yazılmaz
+		vote["why"] = CouncilWhy.build(state, reason_ids, peak_infra(state, ctx, vote))
 	if passed and vote["kind"] == "zoning":
 		_apply_zoning(state, ctx, vote)
 	elif vote["kind"] == "zoning" and ctx.economy.p("unplanned_land_enabled") == 1:
@@ -289,19 +291,29 @@ static func realism_of(state: GameState, ctx: PoliticsContext, vote: Dictionary)
 	if vote["kind"] != "zoning":
 		return int(vote["context"].get("realism", 0))
 	var spec: Dictionary = ctx.politics.council["realism"].get("zoning", {})
-	var codes: Array = vote["context"].get("regions", [])
-	if spec.is_empty() or codes.is_empty():
-		return 0
-	var rows := EconomyQuery.region_stats(state, ctx.economy)
-	var peak_load := -1
-	for row in rows:
-		if codes.has(String(row["code"])):
-			peak_load = maxi(peak_load, int(row["infra_load_pm"]))
-	if peak_load < 0:
+	var peak_load := int(peak_infra(state, ctx, vote)["peak_pm"])
+	if spec.is_empty() or peak_load < 0:
 		return 0
 	var span := int(spec["hi"]) - int(spec["lo"])
 	var ratio := clampi((peak_load - int(spec["lo"])) * SCALE / span, 0, SCALE)
 	return SCALE - 2 * ratio
+
+
+## İmar oylamasında etkilenen bölgelerin EN YÜKSEK altyapı yükü (binde) ve bölgesi (`realism_of`un girdisi; ikinci bir
+## hesap yok): {load, region}. Bölge/uygulanabilirlik tanımı yoksa ya da imar değilse {load: -1, region: ""}.
+static func peak_infra(state: GameState, ctx: PoliticsContext, vote: Dictionary) -> Dictionary:
+	var none := {"peak_pm": -1, "region": ""}
+	if vote["kind"] != "zoning":
+		return none
+	var spec: Dictionary = ctx.politics.council["realism"].get("zoning", {})
+	var codes: Array = vote["context"].get("regions", [])
+	if spec.is_empty() or codes.is_empty():
+		return none
+	var peak := none
+	for row in EconomyQuery.region_stats(state, ctx.economy):
+		if codes.has(String(row["code"])) and int(row["infra_load_pm"]) > int(peak["peak_pm"]):
+			peak = {"peak_pm": int(row["infra_load_pm"]), "region": String(row["code"])}
+	return peak
 
 
 # --- Tahmin ---
