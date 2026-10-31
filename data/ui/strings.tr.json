@@ -2,11 +2,9 @@
 	"_meta.dil": "tr",
 	"_meta.surum": "0.1 (T-018, taslak; tüm metinler ÇALIŞMA MODELİ, kanon değil)",
 	"_meta.kural": "Anahtar: alan.alt_alan.ad (küçük harf, rakam, alt çizgi). Yer tutucu: {ad}. Para yalnız {money} biçimleyicisinden gelir; bu dosyada para simgesi/adı YOKTUR (Q-003).",
-
 	"app.title": "Imaro: The Mayor",
 	"app.mock_badge": "MOCK",
 	"app.mock_banner": "MOCK VERİ — bu ekrandaki değerler simülasyondan gelmiyor",
-
 	"common.ok": "Tamam",
 	"common.confirm": "Onayla",
 	"common.cancel": "Vazgeç",
@@ -20,14 +18,12 @@
 	"common.unknown": "Bilinmiyor",
 	"common.estimate": "tahmin",
 	"common.retry": "Yeniden dene",
-
 	"mode.build": "İnşa",
 	"mode.plan": "İmar",
 	"mode.manage": "Yönetim",
 	"mode.build.hint": "Yol, meydan, park ve belediye tesisi çizimi",
 	"mode.plan.hint": "Arazi kullanımı, yoğunluk ve yükseklik önerileri",
 	"mode.manage.hint": "Bütçe, öncelik, meclis ve sicil",
-
 	"zoom.country": "Ülke",
 	"zoom.metro": "Metropol",
 	"zoom.district": "İlçe",
@@ -36,10 +32,8 @@
 	"zoom.in": "Yakınlaştır",
 	"zoom.out": "Uzaklaştır",
 	"zoom.locked_here": "Bu ölçekte kullanılamaz: {tool}. {scale} ölçeğine yakınlaşın.",
-
 	"district.code": "D{n}",
 	"district.name_pending": "Ad henüz belirlenmedi",
-
 	"clock.pause": "Duraklat",
 	"clock.resume": "Sürdür",
 	"clock.speed_1": "1×",
@@ -49,7 +43,6 @@
 	"clock.paused": "Duraklatıldı",
 	"clock.date_ingame": "{year}. yıl, {day}. gün",
 	"clock.speed_capped": "Bu cihazda en yüksek hız {n}×",
-
 	"tool.road": "Yol",
 	"tool.avenue": "Bulvar",
 	"tool.junction": "Kavşak",
@@ -60,7 +53,6 @@
 	"tool.zone": "İmar önerisi",
 	"tool.inspect": "Denetçi",
 	"tool.overlay": "Harita katmanı",
-
 	"draw.start": "Başlangıç noktasını seçin",
 	"draw.next": "Sonraki nokta ya da bitirmek için onaylayın",
 	"draw.finish": "Bitir",
@@ -75,7 +67,6 @@
 	"draw.over_budget": "Bütçe bu proje için yetmiyor",
 	"draw.queued": "İnşaat sıraya alındı",
 	"draw.no_private_building": "Özel bina belediyece yerleştirilemez; yatırımcılar imar ve altyapıya göre karar verir.",
-
 	"zoning.title": "İmar değişikliği önerisi",
 	"zoning.area": "Alan",
 	"zoning.use": "Arazi kullanımı",
@@ -93,7 +84,6 @@
 	"zoning.submit": "Meclise sun",
 	"zoning.submit_direct": "Planı sun",
 	"zoning.no_instant_building": "Bu karar bina yerleştirmez; yatırımcılar koşullar uygunsa kendileri karar verir.",
-
 	"inspector.title": "Denetçi",
 	"inspector.parcel": "Parsel",
 	"inspector.district": "İlçe",
@@ -106,7 +96,6 @@
 	"inspector.owner.public": "Kamu",
 	"inspector.owner.private": "Özel",
 	"inspector.hover_hint": "Ayrıntı için seçin",
-
 	"reason.title": "Neden böyle oldu?",
 	"reason.outcome": "Sonuç",
 	"reason.factors": "Etkenler",
@@ -126,7 +115,6 @@
 	"reason.outcome.council_approved": "Meclis onayladı",
 	"reason.outcome.council_delayed": "Meclis kararı erteledi",
 	"reason.show_on_map": "Haritada göster",
-
 	"alert.new": "Yeni gelişme",
 	"alert.seen": "Görüldü",
 	"alert.open_reason": "Nedenini gör",
@@ -136,10 +124,8 @@
 	"agenda.time_left": "Yanıt için kalan: {days} gün",
 	"agenda.option": "Seçenek",
 	"agenda.cost": "Bedel",
-	"agenda.preview": "Beklenen etki (tahmin)",
-	"agenda.choose": "Bu seçeneği uygula",
-	"agenda.defer": "Ertele",
-	"agenda.defer_note": "Ertelemek de bir karardır; süre dolarsa varsayılan sonuç uygulanır",
+	"agenda.preview": "Beklenen etki (yön; büyüklük hesaplanmıyor)",
+	"agenda.choose": "Bu yanıtı ver",
 	"agenda.expired": "Süre doldu; sonuç kaydedildi",
 	"agenda.empty": "Bekleyen gündem öğesi yok",
 	"agenda.not_built": "Olay sistemi henüz kurulmadı",
@@ -148,7 +134,6 @@
 	"menu.start_district_none": "Oynanabilir ilçe bulunamadı",
 	"menu.start_district_pick": "Bir ilçe seçin",
 	"alert.feed_empty": "Henüz bir olay kaydedilmedi",
-
 	"council.title": "Meclis",
 	"council.proposal": "Öneri",
 	"council.seats": "Koltuk dağılımı",
@@ -164,7 +149,6 @@
 	"council.outcome.partial": "Kısmen uygulandı",
 	"council.reasons_for_bloc": "Bu grubun gerekçesi",
 	"council.not_built": "Meclis sistemi henüz kurulmadı",
-
 	"budget.title": "Bütçe",
 	"budget.income": "Son ay vergi geliri",
 	"budget.expense": "Gider",
@@ -178,7 +162,6 @@
 	"budget.apply_note": "Değişiklikler meclis oylamasına bağlı olabilir",
 	"budget.stress": "Bütçe baskısı",
 	"budget.not_built": "Bütçe sistemi henüz kurulmadı",
-
 	"record.title": "Sicil",
 	"record.delivery": "Taahhütlerin yerine getirilmesi",
 	"record.fiscal": "Mali durum",
@@ -192,7 +175,6 @@
 	"record.group.placeholder": "Grup {n}",
 	"record.group.complaints": "Şikâyetler",
 	"record.group.reason": "Tepkinin nedeni",
-
 	"election.title": "Seçim",
 	"election.stage.governing": "Yönetim dönemi",
 	"election.stage.campaign": "Kampanya",
@@ -206,7 +188,6 @@
 	"election.defeated": "Seçim kazanılamadı",
 	"election.party.placeholder": "Parti {n}",
 	"election.not_built": "Seçim sistemi henüz kurulmadı",
-
 	"state.loading": "Yükleniyor",
 	"state.loading_world": "Dünya hazırlanıyor",
 	"state.loading_progress": "Yükleniyor — {percent}",
@@ -221,14 +202,12 @@
 	"state.error.stale_data": "Veri güncel olmayabilir",
 	"state.not_built": "Bu sistem henüz kurulmadı",
 	"state.disabled_reason": "Kullanılamıyor: {reason}",
-
 	"menu.pause_title": "Duraklatıldı",
 	"menu.resume": "Oyuna dön",
 	"menu.settings": "Ayarlar",
 	"menu.save": "Kaydet",
 	"menu.load": "Yükle",
 	"menu.quit": "Çık",
-
 	"settings.title": "Ayarlar",
 	"settings.ui_scale": "Arayüz ölçeği",
 	"settings.text_size": "Metin boyutu",
@@ -239,7 +218,6 @@
 	"settings.input_profile.desktop": "Masaüstü (fare/klavye)",
 	"settings.input_profile.touch": "Dokunmatik",
 	"settings.language": "Dil",
-
 	"a11y.close_panel": "Paneli kapat",
 	"a11y.open_panel": "Paneli aç",
 	"a11y.selected": "Seçili",
@@ -248,7 +226,6 @@
 	"a11y.trend_up": "Artıyor",
 	"a11y.trend_down": "Azalıyor",
 	"a11y.trend_flat": "Değişmiyor",
-
 	"format.money": "{amount} {currency}",
 	"format.number_hint": "Sayı biçimi yerel ayardan gelir (Türkçe: 1.234,5)",
 	"format.percent": "%{value}",
@@ -256,7 +233,6 @@
 	"format.days": "{n} gün",
 	"format.delta_plus": "+{value}",
 	"format.delta_minus": "−{value}",
-
 	"actor.placeholder": "{kind} {n}",
 	"actor.kind.investor": "Yatırımcı",
 	"actor.kind.landowner": "Arsa sahibi",
@@ -426,7 +402,6 @@
 	"reason.rejected_command": "Komut",
 	"reason.rejected_reason": "Neden",
 	"reason.meta_item": "{caption}: {value}",
-
 	"tool.budget": "Bütçe",
 	"tool.council": "Meclis",
 	"tool.agenda": "Gündem",
@@ -546,13 +521,12 @@
 	"road.refund_line": "İade: {units} birim",
 	"budget.expenses_total": "Toplam gider",
 	"agenda.kind.council_vote": "Meclis oylaması",
-	"agenda.derived_note": "Şimdilik gündemde yalnız açık meclis oylamaları var. Yanıt seçeneği sunan olaylar henüz kurulmadı.",
+	"agenda.derived_note": "Şimdilik gündemde yalnız açık meclis oylamaları var.",
 	"agenda.open_item": "Aç",
 	"agenda.due_today": "Süre bugün doluyor",
 	"agenda.auto_pause_state_on": "Açık",
 	"agenda.auto_pause_state_off": "Kapalı",
 	"agenda.auto_pause_note": "Yalnız bir ayardır: açıkken yeni gündem öğesi gelince oyun duraklar.",
-	"agenda.option_cost": "Bedel: {money}",
 	"agenda.estimate_label": "tahmin",
 	"event.council.vote_failed": "Meclis oylaması reddedildi: {yes} evet, {no} hayır",
 	"council.issue.seats_mismatch": "Veri hatası: grupların koltuk toplamı meclis koltuk sayısıyla uyuşmuyor",
@@ -569,7 +543,6 @@
 	"event.construction.completed": "İnşaat tamamlandı",
 	"event.construction.stalled": "İnşaat durdu",
 	"event.construction.resumed": "İnşaat yeniden başladı",
-
 	"tool.results": "Döngü sonucu",
 	"actor.kind.bloc": "Grup",
 	"m2.title": "Döngü sonucu",
@@ -721,7 +694,6 @@
 	"reason.work_gone": "Bu yol artık yok; geri alınmış olabilir.",
 	"reason.infra_gate_note": "Bu etken eşik kapısıdır: kapasite yetmeseydi karar reddedilirdi. Yetince yalnız kalan boş pay karara küçük bir katkı verir.",
 	"reason.work_effect": "Etki: bölgenin altyapı kapasitesi arttı; yatırımcı kararı kendi kurallarıyla verilir.",
-
 	"m2.decline.unplanned": "bu parsel için imar planı yok; plan teklifi verilmeli",
 	"reason.factor.zoning_unplanned": "İmar planı yok",
 	"event.zoning.plan_rejected": "İmar planı teklifi reddedildi; parsel plansız kaldı, yeniden teklif verilebilir",
@@ -759,7 +731,6 @@
 	"zoning.path.vote": "Teklif oylamaya gider; sonuç gelene dek parsel plansız kalır",
 	"plan.state.unplanned_why": "Yatırımcı, yürürlükte imar planı olmayan parselde inşa etmez.",
 	"plan.state.unplanned_short": "Plansız",
-
 	"public_work.reject.crosses_parcels_offer": "Yol yapılı arsaların içinden geçiyor. Kamulaştırarak geçilebilir; etkisi aşağıda.",
 	"public_work.reject.protected_structure": "Yol korunan yapıların arsasından geçemez (tarihî, simge ya da kamu yapısı): {protected_parcels} korunan arsa var. Korunan yapılar kamulaştırılamaz.",
 	"public_work.reject.expropriation_disabled": "Kamulaştırma henüz yok; yol arsaların içinden geçemez.",
@@ -828,5 +799,38 @@
 	"reason.count_value": "{count} hane (sayım; karar hesabına girmez)",
 	"agenda.kind.displacement": "Yerinden edilme tepkisi",
 	"agenda.displacement.households": "Yol yüzünden {count} hane yerinden edildi.",
-	"agenda.displacement.why": "Nedenini gör"
+	"agenda.displacement.why": "Nedenini gör",
+	"agenda.respond.sent": "Yanıt gönderildi; sonraki günde işlenir ve öğe gündemden kalkar.",
+	"agenda.respond.rejected": "Yanıt verilemedi: {reason}",
+	"agenda.respond.rejected_generic": "yanıt kabul edilmedi",
+	"agenda.respond.refused_at_tick": "Yanıt uygulanırken reddedildi: {reason}",
+	"agenda.respond.why.authority.locked": "bu seçenek için gereken yetki yok",
+	"agenda.respond.why.agenda.closed": "öğe artık açık değil",
+	"agenda.respond.why.system.not_built": "gündem sistemi henüz kurulmadı",
+	"agenda.respond.why.option.no_effect": "bu seçeneğin şimdi uygulanabilecek etkisi yok",
+	"agenda.locked.district_works": "Kilitli: ilçe işleri yetkisi gerekir.",
+	"agenda.locked.generic": "Kilitli: gereken yetki yok ({authority}).",
+	"agenda.note.revise_decision": "Yolu geri almaz; yalnızca yatırımcı riskini ve destekleyen kesimlerin memnuniyetini etkiler.",
+	"agenda.effect.bloc.grievance.down": "Mahalle şikâyeti azalır",
+	"agenda.effect.bloc.grievance.up": "Mahalle şikâyeti artar",
+	"agenda.effect.bloc.satisfaction.down": "Memnuniyet azalır",
+	"agenda.effect.bloc.satisfaction.up": "Memnuniyet artar",
+	"agenda.effect.relation.trust.up": "Güven artar",
+	"agenda.effect.relation.trust.down": "Güven azalır",
+	"agenda.effect.investor.political_risk.up": "Yatırımcı riski artar",
+	"agenda.effect.investor.political_risk.down": "Yatırımcı riski azalır",
+	"agenda.effect.media.tone.up": "Medya tonu yükselir",
+	"agenda.effect.media.tone.down": "Medya tonu düşer",
+	"agenda.effect.council.friction.up": "Meclis sürtüşmesi artar",
+	"agenda.effect.council.friction.down": "Meclis sürtüşmesi azalır",
+	"agenda.effect.generic_up": "artar",
+	"agenda.effect.generic_down": "azalır",
+	"agenda.effect.scope.trigger_topic": "bu konuda",
+	"agenda.effect.scope.trigger_bloc": "bu grupta",
+	"agenda.effect.scope.beneficiary_blocs": "destekleyen kesimlerde",
+	"agenda.effect.scope.district": "bu bölgede",
+	"agenda.effect.starts_now": "hemen başlar",
+	"agenda.effect.starts_in": "{days} gün sonra başlar",
+	"agenda.effect.lasts": "{days} gün sürer",
+	"agenda.effect.once": "tek seferlik"
 }

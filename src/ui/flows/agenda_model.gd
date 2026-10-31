@@ -2,9 +2,9 @@ class_name AgendaModel
 extends RefCounted
 ## Gündem modeli (ux-flows-v0 §I, T-022). İki kaynak: açık meclis oylamaları (`CouncilVoteView.closes_tick`, `derive`)
 ## ve sim'in açık gündem öğeleri (`SimFacade.agenda_items`, v1.5 isteğe bağlı ek; `derive_all`).
-## Türetilen öğede yanıt SEÇENEĞİ yoktur (oyuncu oylamaya komutla müdahale edemez); UI seçenek/ertele düğmesi
-## uydurmaz. `Item.options` ve `can_defer`, v1.1 `AgendaItemView` geldiğinde aynı görünümün seçenek kartlarını
-## göstermesi içindir; v1.0'da hep boştur/false'tur.
+## Meclis oylamasından türetilen öğede yanıt SEÇENEĞİ yoktur (oyuncu oylamaya komutla müdahale edemez). Sim öğesinde
+## (`AgendaItemView.options`, v1.5) seçenekler sim'in verdiği gibi taşınır; `options` boşsa düğme YOKTUR. Bedel yok
+## (sim düşmüyor), "ertele" yok (sim'de etkisiz; öğe zaten açık kalır).
 ## Gündem kaynağı yoksa (meclis kurulmamış) liste boştur ve panel "kurulmadı" der.
 
 const KIND_COUNCIL_VOTE := &"council_vote"
@@ -16,15 +16,16 @@ const DISPLACED_COUNT_FACTOR := &"reason.factor.displaced_household_count"
 const CHAIN_DEPTH := 4
 
 
+## Sim'in `AgendaOptionView`ı: kilit (`available`/`locked_by`) ve etki önizlemesi (yön + zaman, büyüklük YOK) aynen.
 class Option:
 	extends RefCounted
 	var id: StringName = &""
+	var verb: StringName = &""
 	var label_key: StringName = &""
-	var has_cost: bool = false
-	var cost: int = 0
-	## Etki önizlemesi yalnız sim verirse; her zaman TAHMİN işaretlidir (`is_estimate`).
-	var preview_key: StringName = &""
-	var preview_is_estimate: bool = true
+	var available: bool = true
+	var locked_by: StringName = &""
+	## `{target, scope, direction, delay_days, duration_days, curve}` sözlükleri.
+	var effects: Array = []
 
 
 class Item:
@@ -34,14 +35,15 @@ class Item:
 	var title_key: StringName = &""
 	var subject_ref: StringName = &""
 	var vote_id: int = SimContract.NO_ID
+	## Sim gündem öğesinin sayısal kimliği (`agenda_respond` komutu için); meclis oylamasında NO_ID.
+	var agenda_item_id: int = SimContract.NO_ID
 	var deadline_tick: int = 0
 	var days_left: int = 0
 	var options: Array[Option] = []
-	var can_defer: bool = false
 	var reason_ids: PackedInt64Array = PackedInt64Array()
 
 	func answerable() -> bool:
-		return not options.is_empty() or can_defer
+		return not options.is_empty()
 
 
 ## Anlık görüntüden gündem öğeleri (süresi yakın olan önce).
@@ -65,8 +67,9 @@ static func derive(snapshot: SimSnapshot) -> Array[Item]:
 
 
 ## Gündem = açık meclis oylamaları (`derive`) + sim'in açık gündem öğeleri (`SimFacade.agenda_items`, v1.5; PE-01
-## yerinden edilme dahil). İnce köprü: facade öğesi sözleşme alanlarını aynen taşır, yanıt seçeneği/erteleme UYDURMAZ
-## (`agenda.respond` komutu yok). Gerekçe zincirinde hane sayısı varsa tür `displacement`, yoksa `event`.
+## yerinden edilme dahil). İnce köprü: facade öğesi sözleşme alanlarını ve `options`ı aynen taşır; seçenek/erteleme
+## UYDURMAZ (yanıt komutu `SimCommand.agenda_respond`, gönderimi panel yapar). Gerekçe zincirinde hane sayısı varsa
+## tür `displacement`, yoksa `event`.
 static func derive_all(facade: SimFacade, snapshot: SimSnapshot) -> Array[Item]:
 	var out := derive(snapshot)
 	if facade != null:
@@ -78,12 +81,49 @@ static func derive_all(facade: SimFacade, snapshot: SimSnapshot) -> Array[Item]:
 			it.deadline_tick = v.deadline_tick
 			it.days_left = maxi(0, v.deadline_tick - snapshot.tick())
 			it.reason_ids = v.reason_ids
+			it.agenda_item_id = v.item_id
+			for ov in v.options:
+				it.options.append(_option_from(ov))
 			out.append(it)
 	out.sort_custom(func(a: Item, b: Item) -> bool:
 		if a.deadline_tick != b.deadline_tick:
 			return a.deadline_tick < b.deadline_tick
 		return a.vote_id < b.vote_id or (a.vote_id == b.vote_id and String(a.id) < String(b.id)))
 	return out
+
+
+static func _option_from(ov: AgendaOptionView) -> Option:
+	var o := Option.new()
+	o.id = ov.option_id
+	o.verb = ov.verb
+	o.label_key = ov.label_key
+	o.available = ov.available
+	o.locked_by = ov.locked_by
+	o.effects = ov.effects.duplicate(true)
+	return o
+
+
+## Etki önizlemesinin düz Türkçe satırı: "Yatırımcı riski artar; 7 gün sonra başlar, 30 gün sürer". Büyüklük sayısı
+## YOKTUR (sim vermiyor). Bilinmeyen hedef/kapsam için anahtar adı değil, hedefin okunur adı gösterilir.
+static func effect_text(effect: Dictionary) -> String:
+	var target := String(effect.get("target", ""))
+	var up := int(effect.get("direction", 0)) > 0
+	var key := StringName("agenda.effect.%s.%s" % [target, "up" if up else "down"])
+	var what := UiText.t(key) if UiText.has(key) else "%s %s" % [UiText.humanize(target),
+		UiText.t(&"agenda.effect.generic_up" if up else &"agenda.effect.generic_down")]
+	var scope_key := StringName("agenda.effect.scope.%s" % String(effect.get("scope", "")))
+	if UiText.has(scope_key):
+		what = "%s (%s)" % [what, UiText.t(scope_key)]
+	var delay := int(effect.get("delay_days", 0))
+	var length := int(effect.get("duration_days", 0))
+	var when := UiText.t(&"agenda.effect.starts_now")
+	if delay > 0:
+		when = UiText.t(&"agenda.effect.starts_in", {"days": delay})
+	if length > 0:
+		when += ", " + UiText.t(&"agenda.effect.lasts", {"days": length})
+	else:
+		when += ", " + UiText.t(&"agenda.effect.once")
+	return "%s; %s" % [what, when]
 
 
 ## Öğenin gerekçe zincirinde (öğe kaydı -> ebeveyn ... en çok `CHAIN_DEPTH` basamak) sim'in yazdığı yerinden edilme

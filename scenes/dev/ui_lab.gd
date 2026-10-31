@@ -13,8 +13,10 @@ extends Control
 ## states | reason (senaryonun gerekçe paneli) | reason_list | reason_parcel | reason_actor | reason_rejected |
 ## reason_bad (tutarsız kayıt, yalnız dev) | reason_chain (zincir gezinmesi, yalnız dev)
 ## T-022: zoning_sent | zoning_done | zoning_vote | zoning_multi | council | council_pending | council_done |
-## budget | budget_edit | budget_locked | agenda | agenda_empty | agenda_options (yalnız dev: v1.1 şekli)
-## Klavye (dev): N seçili parselin gerekçeleri · F5 aktör listesi (aktör girişi önizlemesi) · F1 masaüstü profili · F2 iPad yatay (1366x1024) · F3 iPad dikey (1024x1366) · F4 güvenli alan
+## budget | budget_edit | budget_locked | agenda | agenda_empty | agenda_options
+## (--ui-lab-scenario=expropriation: yanıt kartları)
+## Klavye (dev): N seçili parselin gerekçeleri · F5 aktör listesi (aktör girişi önizlemesi) · F1 masaüstü profili
+## · F2 iPad yatay (1366x1024) · F3 iPad dikey (1024x1366) · F4 güvenli alan
 ## simülasyonu · F6 imar yolu: meclis gerekli/gerekmez (Q-014 önizlemesi)
 ##
 ## DEV metinleri aşağıdaki sabitlerdedir (oyuncu UI'ı değildir; oyun metinleri UiText'ten gelir).
@@ -26,6 +28,7 @@ const SCENARIO_FILES := {
 	"council": "res://tests/fixtures/mock_scenario_council_budget_vote.json",
 	"invalid": "res://tests/fixtures/mock_scenario_invalid_commands.json",
 	"zoning_council": "res://tests/ui/fixtures/ui_mock_zoning_council.json",
+	"expropriation": "res://tests/fixtures/mock_scenario_expropriation.json",
 }
 ## Dev tick sürücüsü: hız basamağı -> saniyedeki tick (gerçek eşleme sim sürücü yapılandırması, ÇM).
 const DEV_TICKS_PER_SECOND := {0: 0.0, 1: 1.0, 2: 2.0, 3: 4.0}
@@ -355,28 +358,9 @@ func _demo_decisions(step: String) -> void:
 			decisions.open_agenda()
 		"agenda_empty":
 			decisions.open_agenda()
-		"agenda_options":
+		"agenda_options":  # --ui-lab-scenario=expropriation: MOCK PE-01 öğesi ve yanıt kartları (sayılar sahte)
+			_play_scenario()
 			decisions.open_agenda()
-			decisions.agenda_panel().set_item_provider(_dev_option_items)
-
-
-## DEV: v1.1 `AgendaItemView` şeklinin önizlemesi (sözleşmede yok; sayılar SAHTE, yalnız mock modda gösterilir).
-func _dev_option_items(_snapshot: SimSnapshot) -> Array[AgendaModel.Item]:
-	var it := AgendaModel.Item.new()
-	it.id = &"dev.item.1"
-	it.kind = &"dev_event"
-	it.title_key = &"agenda.item_new"
-	it.days_left = 4
-	it.can_defer = true
-	var o := AgendaModel.Option.new()
-	o.id = &"a"
-	o.label_key = &"agenda.option"
-	o.has_cost = true
-	o.cost = 2000
-	o.preview_key = &"zoning.preview.estimate_note"
-	it.options = [o]
-	var out: Array[AgendaModel.Item] = [it]
-	return out
 
 
 ## Aynı senaryonun parselleriyle GERÇEK SimFacadeImpl (T-027): bütçe/meclis/gruplar kurulmamıştır.
@@ -445,6 +429,10 @@ func _play_scenario() -> void:
 		"groups":
 			facade.submit_command(SimCommand.zoning_propose(PackedInt64Array([2]), &"zone.commercial"))
 			facade.advance(6)
+		"expropriation":
+			facade.submit_command(SimCommand.public_work_road(PackedInt64Array([-45000, 21000, -45000, 11000]),
+				&"local", true))
+			facade.advance(12)
 		"council":
 			facade.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
 			facade.advance(6)

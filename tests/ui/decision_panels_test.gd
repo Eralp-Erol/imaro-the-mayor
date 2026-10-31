@@ -325,23 +325,24 @@ func test_agenda_options_degrade_gracefully_and_render_when_a_v11_item_has_them(
 	it.kind = &"event"
 	it.title_key = &"agenda.item_new"
 	it.days_left = 4
-	it.can_defer = true
+	it.agenda_item_id = 1
 	var o := AgendaModel.Option.new()
 	o.id = &"a"
 	o.label_key = &"agenda.option"
-	o.has_cost = true
-	o.cost = 2000
-	o.preview_key = &"zoning.preview.estimate_note"
+	o.effects = [{"target": "investor.political_risk", "scope": "district", "direction": 1, "delay_days": 0,
+		"duration_days": 30, "curve": "decay"}]
 	it.options = [o]
 	panel.set_item_provider(func(_s: SimSnapshot) -> Array[AgendaModel.Item]: return [it])
 	var text := " ".join(panel.texts())
-	assert_str(text).contains("Bedel: 2.000 ¤")
+	assert_str(text).contains("Yatırımcı riski artar (bu bölgede); hemen başlar, 30 gün sürer")
 	assert_str(text).contains("tahmin")  # önizleme tahmin işaretli
 	assert_str(text).contains("Yanıt için kalan: 4 gün")
-	assert_str(text).contains("Ertelemek de bir karardır")
+	assert_bool(text.contains("Bedel")).is_false()  # sim bedel düşmüyor: UI bedel yazmaz
+	assert_bool(text.contains("Ertele")).is_false()
 	var chosen := []
-	panel.option_chosen.connect(func(i: StringName, opt: StringName) -> void: chosen.append([i, opt]))
-	panel.button_with_text("Bu seçeneği uygula").pressed.emit()
+	panel.option_chosen.connect(func(i: StringName, opt: StringName, _r: CommandResult) -> void:
+		chosen.append([i, opt]))
+	panel.button_with_text("Bu yanıtı ver").pressed.emit()
 	assert_array(chosen).is_equal([[&"x.1", &"a"]])
 
 

@@ -120,7 +120,6 @@ func _agenda_panel(reason_ids: PackedInt64Array) -> AgendaPanel:
 	it.kind = &"displacement"
 	it.title_key = &"event.pe01.reason"
 	it.days_left = 6
-	it.can_defer = true
 	it.reason_ids = reason_ids
 	panel.set_item_provider(func(_s: SimSnapshot) -> Array[AgendaModel.Item]: return [it])
 	return panel

@@ -1,16 +1,16 @@
 class_name AgendaPanel
 extends FlowPanel
-## Gündem paneli (ux-flows-v0 §I, T-022): modal olmayan, geri sayımlı öğeler. `AgendaItemView` sözleşmede v1.0'da
-## YOKTUR (v1.1 isteği); öğeler `AgendaModel.derive` ile açık meclis oylamalarından türetilir ve YANIT SEÇENEĞİ
-## taşımaz: panel bunu açıkça söyler, seçenek/ertele düğmesi uydurmaz. Seçenekli öğe gelirse (`item_provider`
-## değişince ya da v1.1 uyarlayıcısıyla) kartlar bedel + TAHMİN işaretli önizleme + "Bu seçeneği uygula"/"Ertele" ile
-## çizilir; bu yol v1.0 verisiyle erişilemez ve yalnız birim testlidir.
-## Kaynak kurulmamışsa ("Olay sistemi henüz kurulmadı") yalnız durum bileşeni görünür.
+## Gündem paneli (ux-flows-v0 §I, T-022): modal olmayan, geri sayımlı öğeler. Öğeler meclis oylamalarından (yalnız
+## izlenir) ve sim'in açık gündem öğelerinden (`AgendaItemView`) gelir. Sim öğesinde `options` varsa her seçenek bir
+## kart olur:
+## `label_key` metni, düz Türkçe etki önizlemesi (yön + zaman; büyüklük YOK), kilitliyse gri + nedeni; "Bu yanıtı ver"
+## `SimFacade.submit_command(SimCommand.agenda_respond(...))` gönderir, ret nedeni sim'in `reason_key`/`args.why`ından
+## gösterilir. `options` boşsa düğme YOKTUR. Bedel yazılmaz (sim düşmüyor); "ertele" yoktur (sim'de etkisiz).
+## Başarıda öğe sonraki tick'te listeden kalkar; panel bunu olduğu gibi yansıtır (iyimser silme yok).
 ## Otomatik duraklatma: yalnız AYAR (`UiPrefs.auto_pause_agenda`); varsayılanı AÇIK SORU (Q-011/AS-11).
 
-## v1.1 yanıt komutu için (`RespondAgenda`): şimdilik bağlayan yok; yalnız seçenekli öğede erişilebilir.
-signal option_chosen(item_id: StringName, option_id: StringName)
-signal deferred(item_id: StringName)
+## Yanıt komutu gönderildikten sonra (kabul ya da ret) yayımlanır; `result` sim'in sonucudur.
+signal option_chosen(item_id: StringName, option_id: StringName, result: CommandResult)
 signal auto_pause_changed(on: bool)
 
 ## `func(snapshot: SimSnapshot) -> Array[AgendaModel.Item]`; varsayılan türetme.
@@ -18,6 +18,10 @@ var item_provider: Callable = Callable()
 var items: Array[AgendaModel.Item] = []
 
 var _auto_pause_button: Button = null
+## Öğe ref -> son ret sonucu (gönderimde ya da tick sınırında); öğe gündemden kalkınca silinir.
+var _refusals: Dictionary = {}
+## Öğe ref -> {command_id, tick}: kuyrukta bekleyen yanıt (çift gönderimi engeller).
+var _pending: Dictionary = {}
 
 
 static func create(ctx: UiContext, facade: SimFacade) -> AgendaPanel:
@@ -27,7 +31,7 @@ static func create(ctx: UiContext, facade: SimFacade) -> AgendaPanel:
 	return p
 
 
-## Öğe kaynağını değiştirir (v1.1 `AgendaItemView` uyarlayıcısı ya da dev önizlemesi) ve yeniden çizer.
+## Öğe kaynağını değiştirir (dev önizlemesi / test) ve yeniden çizer.
 func set_item_provider(provider: Callable) -> void:
 	item_provider = provider
 	_render()
@@ -46,6 +50,18 @@ func refresh() -> void:
 	refresh_if_changed(signature_now())
 
 
+## Tick sınırında reddedilen yanıt (`command.rejected`): nedeni öğe kartında gösterilir.
+func handle_event(event: SimEvent) -> void:
+	if event.kind != SimEvent.KIND_COMMAND_REJECTED:
+		return
+	for ref: Variant in _pending.keys():
+		if int(_pending[ref]["command_id"]) == event.command_id:
+			_refusals[ref] = {"reason_key": event.message_key, "args": event.args, "late": true}
+			_pending.erase(ref)
+			_render()
+			return
+
+
 func _render() -> void:
 	if _body == null:
 		return
@@ -54,6 +70,7 @@ func _render() -> void:
 	_auto_pause_button = null
 	var snap := _facade.snapshot()
 	items = item_provider.call(snap) if item_provider.is_valid() else AgendaModel.derive_all(_facade, snap)
+	_prune_tracking(snap.tick())
 	if not AgendaModel.source_built(snap) and items.is_empty() and not item_provider.is_valid():
 		state_view.show_not_built(&"agenda.not_built")
 		return
@@ -86,14 +103,9 @@ func _item_card(it: AgendaModel.Item) -> Control:
 		_tag(open, "open_item_%s" % it.id)
 		open.pressed.connect(func() -> void: navigate_requested.emit(&"council"))
 		inner.add_child(open)
+	_add_response_state(inner, it)
 	for o in it.options:
 		inner.add_child(_option_card(it, o))
-	if it.can_defer:
-		inner.add_child(_muted(UiText.t(&"agenda.defer_note")))
-		var defer := UiFactory.button(_ctx, UiText.t(&"agenda.defer"), false)
-		_tag(defer, "defer_%s" % it.id)
-		defer.pressed.connect(func() -> void: deferred.emit(it.id))
-		inner.add_child(defer)
 	return parts[0]
 
 
@@ -123,24 +135,86 @@ func _time_text(it: AgendaModel.Item) -> String:
 	return UiText.t(&"council.closes_in", {"days": it.days_left})
 
 
+## Gündemden kalkan öğelerin izini sil; tick ilerlediyse bekleyen kaydı bırak.
+func _prune_tracking(tick: int) -> void:
+	var live: Dictionary = {}
+	for it in items:
+		live[it.id] = true
+	for store: Dictionary in [_refusals, _pending]:
+		for ref: Variant in store.keys():
+			if not live.has(ref):
+				store.erase(ref)
+	for ref: Variant in _pending.keys():
+		if tick > int(_pending[ref]["tick"]) + 1:
+			_pending.erase(ref)   # olay yenilemeden sonra gelebilir: 1 tick pay; sonra bekleyen kaydı bırak
+
+
 func _option_card(it: AgendaModel.Item, o: AgendaModel.Option) -> Control:
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
 	inner.add_child(UiFactory.label(UiText.t(o.label_key), UiTheme.V_LABEL_TITLE, true))
-	if o.has_cost:
-		inner.add_child(UiFactory.label(UiText.t(&"agenda.option_cost", {"money": o.cost}), &"", true))
-	if o.preview_key != &"":
+	var note_key := StringName("agenda.note.%s" % o.verb)
+	if UiText.has(note_key):
+		inner.add_child(_muted(UiText.t(note_key)))
+	if not o.effects.is_empty():
 		var head := HBoxContainer.new()
 		head.add_child(UiFactory.label(UiText.t(&"agenda.preview"), UiTheme.V_LABEL_MUTED, true))
-		if o.preview_is_estimate:
-			head.add_child(_estimate_chip())
+		head.add_child(_estimate_chip())
 		inner.add_child(head)
-		inner.add_child(UiFactory.label(UiText.t(o.preview_key), &"", true))
+		for effect: Variant in o.effects:
+			inner.add_child(UiFactory.label("• " + AgendaModel.effect_text(effect as Dictionary), &"", true))
+	if not o.available:
+		inner.add_child(_muted(_locked_text(o)))
 	var choose := UiFactory.button(_ctx, UiText.t(&"agenda.choose"), true)
+	choose.disabled = not o.available or _pending.has(it.id)
 	_tag(choose, "choose_%s_%s" % [it.id, o.id])
-	choose.pressed.connect(func() -> void: option_chosen.emit(it.id, o.id))
+	choose.pressed.connect(func() -> void: respond(it, o))
 	inner.add_child(choose)
 	return parts[0]
+
+
+func _locked_text(o: AgendaModel.Option) -> String:
+	var key := StringName("agenda.locked.%s" % o.locked_by)
+	if UiText.has(key):
+		return UiText.t(key)
+	return UiText.t(&"agenda.locked.generic", {"authority": UiText.humanize(o.locked_by)})
+
+
+## Yanıtı sim'e gönderir (tek yol `submit_command`); sonuç kartta gösterilir. Gönderilemezse null.
+func respond(it: AgendaModel.Item, o: AgendaModel.Option) -> CommandResult:
+	if it.agenda_item_id == SimContract.NO_ID or not o.available or _pending.has(it.id):
+		return null
+	var result := _facade.submit_command(SimCommand.agenda_respond(it.agenda_item_id, o.id))
+	if result.is_rejected():
+		_refusals[it.id] = {"reason_key": result.reason_key, "args": result.args, "late": false}
+		_pending.erase(it.id)
+	else:
+		_refusals.erase(it.id)
+		_pending[it.id] = {"command_id": result.command_id, "tick": _facade.snapshot().tick()}
+	option_chosen.emit(it.id, o.id, result)
+	_render()
+	return result
+
+
+## Durum satırı: bekleyen yanıt ya da son ret (sim'in gerekçesiyle).
+func _add_response_state(inner: VBoxContainer, it: AgendaModel.Item) -> void:
+	if _pending.has(it.id):
+		inner.add_child(UiFactory.label(UiText.t(&"agenda.respond.sent"), &"", true))
+	elif _refusals.has(it.id):
+		var r: Dictionary = _refusals[it.id]
+		var key := &"agenda.respond.refused_at_tick" if bool(r["late"]) else &"agenda.respond.rejected"
+		inner.add_child(UiFactory.label(UiText.t(key, {"reason": _reason_text(r["reason_key"], r["args"])}), &"",
+			true))
+
+
+## Ret nedeni: önce sim'in `args.why`ı (kısa Türkçe karşılık), sonra `reason_key` metni; ikisi de yoksa genel metin.
+func _reason_text(reason_key: StringName, args: Dictionary) -> String:
+	var why := StringName("agenda.respond.why.%s" % String(args.get("why", "")))
+	if args.has("why") and UiText.has(why):
+		return UiText.t(why)
+	if UiText.has(reason_key):
+		return UiText.reject_reason(reason_key, args)
+	return UiText.t(&"agenda.respond.rejected_generic")
 
 
 func _add_settings() -> void:

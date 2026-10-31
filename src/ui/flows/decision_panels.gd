@@ -192,6 +192,8 @@ func _on_events(events: Array[SimEvent]) -> void:
 		budget_draft.handle_event(e)
 		if budget_panel() != null:
 			budget_panel().handle_event(e)
+		if agenda_panel() != null:
+			agenda_panel().handle_event(e)
 
 
 func _on_refreshed() -> void:
