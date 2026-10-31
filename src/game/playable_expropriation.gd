@@ -7,6 +7,11 @@ extends RefCounted
 ##     GELİR) T0 yapıları görünümde gizlenir/geri gelir, kent zemini maskesi yerelde yenilenir. Kaynak yalnız dünya
 ##     verisidir (`net.parcels`): alınan T0 parseli = ağda artık olmayan parsel. Değişim günlüğü (`changes_since`) varsa
 ##     yalnız ilgili kimlikler yoklanır; günlük eksikse (yükleme/uzun boşluk) T0'ın tüm parselleri bir kez eşitlenir.
+## (3) BİTKİ: alınan parselin (yapılı olsun olmasın) İÇİNDEKİ ağaç/çalı/çit de gizlenir (`VegetationParcelMask`,
+##     `VegetationView.set_parcel_rows`; yol koridoru kaynağından ayrı bit). Alınan parselin dış çizgisi ağdan
+##     çıktığı için kurulumda parsel nesneleri bir kez tutulur (`net.parcels.duplicate()`, yalnız
+##     referans). Bitki yerleşimi (`_vegetation.layout`) asenkron gelir: hazır olunca (ya da yeni yerleşimle) alınanlar
+##     baştan istenir. Tarama kare dilimli; sonuç parsel başına saklanır (geri alınca yeniden taranmaz).
 ## Sim durumuna YAZMAZ; sim yapıları (projector) alınan parseli `development == taken` ile zaten satırsız çizer.
 ## Kare payı: gizleme anında yalnız plan/özet süzülür (ms); hücre/süper-chunk kurulumu `BuildingView.pump_pending` ile
 ## `BUDGET_US` dilimlerine bölünür.
@@ -15,6 +20,8 @@ extends RefCounted
 const PROTECT_FLAGS := BuildingColumns.FLAG_HERITAGE | BuildingColumns.FLAG_LANDMARK | BuildingColumns.FLAG_CIVIC
 ## Kare başına görünüm kurulumu dilimi (µs): ölçüt <= 8 ms/kare.
 const BUDGET_US := 4000
+## Bitki taraması için kare başına en az dilim (µs); diğer iş bütçeyi bitirmiş olsa da bitki ilerler.
+const VEG_MIN_SLICE_US := 1500
 
 var stats: Dictionary = {}
 
@@ -29,6 +36,12 @@ var _taken: Dictionary = {}
 var _seen_version: int = 0
 var _ground_dirty: Rect2 = Rect2()
 var _has_ground_dirty: bool = false
+var _veg_of: Callable = Callable()
+var _veg_mask: VegetationParcelMask = VegetationParcelMask.new()
+var _parcel_snap: Dictionary = {}
+## Ağdan çıkmış (alınmış) HER parsel: kimlik -> dış çizgisi (yapılı olması gerekmez; bitki için).
+var _gone: Dictionary = {}
+var _veg_want_dirty: bool = true
 
 
 ## T0 sütunlarının korunan (tarihî/simge/kamu bayraklı) parsel kimlikleri, artan ve tekil.
@@ -51,9 +64,10 @@ static func attach_port(ctx: PublicWorksContext, net: WorldNetwork, rules: RoadD
 
 
 ## `occupied`: playable `_t0_occupied` (alınanlar çıkarılır, geri gelenler eklenir; denetçi/imar "yapı var mı" sorgusu).
-## `terrain` ve `ring_of` (seçim halkasını döndüren çağrılabilir) isteğe bağlıdır.
+## `terrain`, `ring_of` (seçim halkasını döndüren çağrılabilir) ve `veg_of` (VegetationView döndüren çağrılabilir;
+## görünüm geç kurulur, her çağrıda sorulur) isteğe bağlıdır.
 static func create(net: WorldNetwork, cols: BuildingColumns, view: BuildingView, occupied: Dictionary,
-		terrain: TerrainView = null, ring_of: Callable = Callable()) -> PlayableExpropriation:
+		terrain: TerrainView = null, ring_of: Callable = Callable(), veg_of: Callable = Callable()) -> PlayableExpropriation:
 	var f := PlayableExpropriation.new()
 	f._net = net
 	f._cols = cols
@@ -61,6 +75,8 @@ static func create(net: WorldNetwork, cols: BuildingColumns, view: BuildingView,
 	f._occupied = occupied
 	f._terrain = terrain
 	f._ring_of = ring_of
+	f._veg_of = veg_of
+	f._parcel_snap = net.parcels.duplicate()
 	f._seen_version = net.graph_version
 	for pid in cols.occupied_parcels():
 		f._t0_pids[int(pid)] = true
@@ -82,7 +98,7 @@ func is_hidden(parcel_id: int) -> bool:
 
 ## Bekleyen görünüm işi var mı (kurulum kuyruğu ya da kent zemini yenilemesi)?
 func busy() -> bool:
-	return _has_ground_dirty or (_terrain != null and _terrain.urban_update_pending()) \
+	return _veg_busy() or _has_ground_dirty or (_terrain != null and _terrain.urban_update_pending()) \
 			or (_view != null and _view.pending_work() > 0)
 
 
@@ -101,6 +117,7 @@ func poll(budget_us: int = BUDGET_US) -> Dictionary:
 	if (_has_ground_dirty or (_terrain != null and _terrain.urban_update_pending())) \
 			and (_view == null or _view.pending_work() == 0):
 		_update_ground(budget_us)
+	_poll_vegetation(maxi(budget_us - (Time.get_ticks_usec() - t0), VEG_MIN_SLICE_US))
 	if not rep.is_empty():
 		rep["ms"] = (Time.get_ticks_usec() - t0) / 1000.0
 		_note("poll_max_ms", float(rep["ms"]))
@@ -119,17 +136,22 @@ func settle() -> Dictionary:
 func reconcile() -> Dictionary:
 	var full := not _net.change_log_covers(_seen_version)
 	var cand: Dictionary = {}
+	var veg_cand: Dictionary = {}
 	if full:
 		cand = _t0_pids.duplicate()
 		for pid: int in _taken:
 			cand[pid] = true
+		for pid: int in _parcel_snap:
+			veg_cand[pid] = true
 		_mark_ground(Rect2(-1.0e6, -1.0e6, 2.0e6, 2.0e6))
 	else:
 		for change in _net.changes_since(_seen_version):
 			for pid in change.parcels_removed:
 				cand[int(pid)] = true
+				veg_cand[int(pid)] = true
 			for pid in change.parcels_added:
 				cand[int(pid)] = true
+				veg_cand[int(pid)] = true
 			var blocks_moved := not change.blocks_added.is_empty() or not change.blocks_removed.is_empty()
 			if (blocks_moved or change.changes_parcels()) and change.dirty_rect.has_area():
 				_mark_ground(change.dirty_rect)
@@ -146,6 +168,7 @@ func reconcile() -> Dictionary:
 	hide.sort()
 	show.sort()
 	_seen_version = _net.graph_version
+	_note_gone(veg_cand)
 	var res_h := _apply(hide, true)
 	var res_s := _apply(show, false)
 	stats["hidden_total"] = _taken.size()
@@ -209,3 +232,60 @@ func _update_ground(budget_us: int) -> void:
 
 func _note(key: String, value: float) -> void:
 	stats[key] = snappedf(maxf(float(stats.get(key, 0.0)), value), 0.01)
+
+
+# --- bitki örtüsü (alınan parselin içi) ------------------------------------------------------------------------------
+
+## Ağda artık olmayan (ya da geri gelen) parselleri `_gone` kümesine işler. Dış çizgisi tutulmamış (kurulumdan sonra
+## doğup alınan) parsel bitki için atlanır (görünüm yalnız bilinen dünya verisini kullanır).
+func _note_gone(cand: Dictionary) -> void:
+	var moved := false
+	for pid: int in cand:
+		var live: WorldParcel = _net.parcels.get(pid)
+		if live != null:
+			if not _parcel_snap.has(pid):
+				_parcel_snap[pid] = live
+			if _gone.erase(pid):
+				moved = true
+		elif _parcel_snap.has(pid) and not _gone.has(pid):
+			_gone[pid] = (_parcel_snap[pid] as WorldParcel).outline
+			moved = true
+	if moved:
+		_veg_want_dirty = true
+	stats["veg_parcels"] = _gone.size()
+
+
+func _veg() -> VegetationView:
+	if not _veg_of.is_valid():
+		return null
+	var v := _veg_of.call() as VegetationView
+	return v if v != null and v.layout != null else null
+
+
+func _veg_busy() -> bool:
+	return _veg() != null and (_veg_want_dirty or _veg_mask.pending() or _veg_mask.changed())
+
+
+## Kare dilimi: yerleşim yeni ise baştan ister, eksik parselleri `budget_us` ile tarar, bitince maskeyi tek seferde
+## yazar.
+func _poll_vegetation(budget_us: int) -> void:
+	var v := _veg()
+	if v == null:
+		return
+	if _veg_mask.bind(v.layout):
+		_veg_want_dirty = true
+	if _veg_want_dirty:
+		_veg_want_dirty = false
+		_veg_mask.want(_gone, _gone)
+	if _veg_mask.pending():
+		var t0 := Time.get_ticks_usec()
+		_veg_mask.step(_gone, budget_us)
+		_note("veg_scan_max_ms", (Time.get_ticks_usec() - t0) / 1000.0)
+		stats["veg_rows_scanned"] = _veg_mask.rows_scanned
+	if not _veg_mask.pending() and _veg_mask.changed():
+		var t1 := Time.get_ticks_usec()
+		var rows := _veg_mask.union_rows()
+		var cells := v.set_parcel_rows(rows)
+		stats["veg_rows_hidden"] = rows.size()
+		stats["veg_cells_changed"] = cells
+		_note("veg_apply_max_ms", (Time.get_ticks_usec() - t1) / 1000.0)
