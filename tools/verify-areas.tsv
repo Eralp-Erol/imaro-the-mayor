@@ -76,7 +76,7 @@ map	export_presets.cfg	tests/app
 map	tools/export.sh	tests/app
 map	project.godot	ALL
 map	addons	ALL
-map	tests/fixtures	ALL
+map	tests/fixtures	tests/contracts tests/sim tests/ui tests/game
 map	tests/app	tests/app
 map	tests/art	tests/art
 map	tests/contracts	tests/contracts
