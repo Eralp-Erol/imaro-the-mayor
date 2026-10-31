@@ -117,7 +117,7 @@ static func actor_name(actor: ActorRef) -> String:
 ## UYDURULMADAN
 ## çevrilir; `why` argümanı varsa ikinci cümle olarak eklenir (örn. `zoning.reject.protected_area`).
 static func reject_reason(reason_key: StringName, args: Dictionary = {}) -> String:
-	var text := t(reason_key, args)
+	var text := t(ExpropriationText.reject_key(reason_key, args), args)  # T-042b: teklif taşıyan crosses_parcels
 	if args.has("why"):
 		text += ". " + t(&"reason.because", {"reason": humanize(args["why"])})
 	return text
@@ -127,6 +127,8 @@ static func reject_reason(reason_key: StringName, args: Dictionary = {}) -> Stri
 static func event_text(event: SimEvent) -> String:
 	if event.kind == SimEvent.KIND_COMMAND_REJECTED:
 		return t(&"state.error.command_rejected", {"reason": reject_reason(event.message_key, event.args)})
+	if ExpropriationText.handles_event(event.message_key):  # T-042b: bina yoksa "boş arsa" varyantı
+		return ExpropriationText.event_text(event)
 	return t(event.message_key, event.args)
 
 

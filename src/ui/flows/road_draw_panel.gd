@@ -19,6 +19,12 @@ var tool: RoadDrawTool = null
 var _confirm_button: Button = null
 var _cancel_button: Button = null
 var _undo_button: Button = null
+var _accept_button: Button = null
+var _back_button: Button = null
+var _undo_yes_button: Button = null
+var _undo_keep_button: Button = null
+## T-042b · Yıkımlı yolu geri alma ikinci adımda onaylanır (binalar geri gelir, halk tepkisi gelmez).
+var _undo_pending: bool = false
 ## İpucu önbelleği: (son yol komutu, gün/PLAN_HINT_DAYS) -> bölgede plansız parsel var mı (ilk bulunanda durur).
 var _hint_key: String = ""
 var _hint_value: bool = false
@@ -44,6 +50,27 @@ func undo_button() -> Button:
 	return _undo_button
 
 
+## T-042b · "Kamulaştırarak geç" (sim teklifi), onaydan vazgeçme ve yıkımlı yolu geri alma onayı düğmeleri (yoksa null).
+func accept_button() -> Button:
+	return _accept_button
+
+
+func back_button() -> Button:
+	return _back_button
+
+
+func undo_confirm_button() -> Button:
+	return _undo_yes_button
+
+
+func undo_keep_button() -> Button:
+	return _undo_keep_button
+
+
+func undo_pending() -> bool:
+	return _undo_pending
+
+
 ## Tick/olay başına değil, ARAÇ durumu değişince yeniden çizer (imleç ret/önizlemeyi değiştirmedikçe düğüm kurmaz).
 func refresh() -> void:
 	refresh_if_changed(_signature_of())
@@ -53,7 +80,7 @@ func _signature_of() -> String:
 	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(_plan_hint_needed()), str(tool.is_valid()),
 			str(tool.message),
 			str(tool.message_args), str(tool.has_undoable_road()), str(_facade.speed() == SimFacade.SPEED_PAUSED),
-			str(_undo_refund())]
+			str(_undo_refund()), str(tool.expropriate), str(_undo_pending)]
 	if tool.verdict != null:
 		parts.append(String(tool.verdict.reason_key))
 		parts.append(str(tool.verdict.args))
@@ -67,6 +94,12 @@ func _render() -> void:
 	_confirm_button = null
 	_cancel_button = null
 	_undo_button = null
+	_accept_button = null
+	_back_button = null
+	_undo_yes_button = null
+	_undo_keep_button = null
+	if not tool.has_undoable_road():
+		_undo_pending = false
 	if not tool.band_active:
 		_body.add_child(UiFactory.label(UiText.t(&"road.zoom_in"), UiTheme.V_LABEL_DANGER, true))
 		_add_undo_row()
@@ -75,12 +108,17 @@ func _render() -> void:
 	_body.add_child(_muted(UiText.t(&"road.step_line", {"n": _step_number(), "total": 3})))
 	# Adım 3/3 (yol yapılabilir): tek satır yönerge + büyük Onayla EN ÜSTTE (kullanıcı denemesi: onayı bulamadı).
 	var review_confirmable := tool.step == RoadDrawTool.Step.REVIEW and tool.can_confirm()
+	var review_offer := tool.step == RoadDrawTool.Step.REVIEW and not tool.offer().is_empty()
 	if review_confirmable:
-		var hint := UiFactory.label(UiText.t(&"road.confirm_hint_touch" if _ctx.is_touch() else &"road.confirm_hint"),
-				UiTheme.V_LABEL_HEADING, true)
+		var hint_key := &"road.confirm_hint_touch" if _ctx.is_touch() else &"road.confirm_hint"
+		if tool.demolishes():
+			hint_key = &"expropriation.confirm_hint_touch" if _ctx.is_touch() else &"expropriation.confirm_hint"
+		var hint := UiFactory.label(UiText.t(hint_key), UiTheme.V_LABEL_HEADING, true)
 		hint.add_theme_color_override("font_color", _ctx.tokens.color("ok"))
 		_tag(hint, "road_confirm_hint")
 		_body.add_child(hint)
+		_add_buttons()
+	elif review_offer:   # T-042b: teklif kabul düğmesi de en üstte (kart altta okunur)
 		_add_buttons()
 	_body.add_child(UiFactory.label(UiText.t(_step_key()), &"", true))
 	if tool.step == RoadDrawTool.Step.SENDING and _facade.speed() == SimFacade.SPEED_PAUSED:
@@ -96,7 +134,7 @@ func _render() -> void:
 	if tool.step == RoadDrawTool.Step.PICK_B or tool.step == RoadDrawTool.Step.REVIEW \
 			or tool.step == RoadDrawTool.Step.SENDING:
 		_add_preview_card()
-	if not review_confirmable:
+	if not review_confirmable and not review_offer:
 		_add_buttons()
 	_body.add_child(_muted(UiText.t(&"road.no_building")))
 	if not _ctx.is_touch():
@@ -171,7 +209,9 @@ func _add_preview_card() -> void:
 	if tool.is_valid():
 		var args := tool.preview_args()
 		# Ana vurgu: karar (başlık boyunda, ok rengi); sayılar ikincil (T-042 sanat düzeltmesi).
-		var verdict_label := UiFactory.label(UiText.t(&"road.valid"), UiTheme.V_LABEL_HEADING, true)
+		var expropriating := ExpropriationText.has_impact(args)
+		var verdict_label := UiFactory.label(UiText.t(&"expropriation.valid_title" if expropriating else &"road.valid"),
+				UiTheme.V_LABEL_HEADING, true)
 		verdict_label.add_theme_color_override("font_color", _ctx.tokens.color("ok"))
 		inner.add_child(verdict_label)
 		inner.add_child(UiFactory.label(UiText.t(&"road.length", {"length": UiText.number(int(args.get("length_m", 0)))}),
@@ -186,25 +226,70 @@ func _add_preview_card() -> void:
 				inner.add_child(_muted(UiText.t(&"road.capacity_region", {"region": code, "units": int(regions[code])})))
 		inner.add_child(_muted(UiText.t(&"road.class_line", {"class": UiText.t(&"road.class.local")})))
 		inner.add_child(_muted(cost_line(args)))
+		if expropriating:
+			_add_expropriation_block(inner, args, true)
+	elif not tool.offer().is_empty():
+		inner.add_child(UiFactory.label(UiText.t(&"expropriation.offer_title"), UiTheme.V_LABEL_DANGER, true))
+		_add_expropriation_block(inner, tool.offer(), false)
 	else:
 		var reason := UiText.reject_reason(tool.verdict.reason_key, tool.verdict.args)
 		inner.add_child(UiFactory.label(UiText.t(&"road.invalid", {"reason": reason}), UiTheme.V_LABEL_DANGER, true))
 	_body.add_child(card)
 
 
+## T-042b · Kamulaştırma bloğu: yalnız sim args'ından düz Türkçe sayılar + "Bedel: henüz kurulmadı". `accepted`: teklif
+## kabul edilmiş, onay bekleniyor (geri alınabilirlik notu görünür); değilse teklif ("Kamulaştırarak geç").
+func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: bool) -> void:
+	if not accepted:
+		inner.add_child(_muted(UiText.t(&"expropriation.offer_intro")))
+	var impact := UiFactory.label(ExpropriationText.impact_line(args), UiTheme.V_LABEL_HEADING, true)
+	if ExpropriationText.demolishes(args):
+		impact.add_theme_color_override("font_color", _ctx.tokens.color("danger"))
+	_tag(impact, "expropriation_impact")
+	inner.add_child(impact)
+	inner.add_child(UiFactory.label(ExpropriationText.cost_line(), &"", true))
+	for line in ExpropriationText.detail_lines(args):
+		inner.add_child(_muted(line))
+	var nearby := ExpropriationText.nearby_line(args)
+	if nearby != "":
+		inner.add_child(_muted(nearby))
+	inner.add_child(_muted(UiText.t(&"expropriation.react_note")))
+	if accepted:
+		inner.add_child(_muted(UiText.t(&"expropriation.undo_note")))
+
+
 func _add_buttons() -> void:
 	var row := HFlowContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_confirm_button = UiFactory.button(_ctx, UiText.t(&"road.confirm"), true)
-	# Birincil vurgu + büyük hedef (dokunmatikte >= 44 pt zaten target_primary tabanından gelir).
-	UiFactory.emphasize(_ctx, _confirm_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
-	_confirm_button.custom_minimum_size.x = maxf(_confirm_button.custom_minimum_size.x, _ctx.px(CONFIRM_MIN_WIDTH))
-	_tag(_confirm_button, "road_confirm")
-	_confirm_button.disabled = not tool.can_confirm()
-	_confirm_button.pressed.connect(func() -> void:
-		tool.confirm()
-		refresh())
-	row.add_child(_confirm_button)
+	var offer := tool.offer()
+	if not offer.is_empty() and tool.step == RoadDrawTool.Step.REVIEW:
+		# 1. adım: sim'in kamulaştırma teklifini kabul et (sayılar kartta); 2. adım yıkım onayıdır.
+		_accept_button = UiFactory.button(_ctx, UiText.t(&"expropriation.accept"), true)
+		UiFactory.emphasize(_ctx, _accept_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
+		_tag(_accept_button, "road_expropriate")
+		_accept_button.pressed.connect(func() -> void:
+			tool.accept_offer()
+			refresh())
+		row.add_child(_accept_button)
+	if tool.expropriate and tool.step == RoadDrawTool.Step.REVIEW:
+		_back_button = UiFactory.button(_ctx, UiText.t(&"expropriation.back"), false)
+		_tag(_back_button, "road_expropriate_back")
+		_back_button.pressed.connect(func() -> void:
+			tool.withdraw_offer()
+			refresh())
+		row.add_child(_back_button)
+	if _accept_button == null:   # teklif varken Onayla yerine tek birincil eylem: "Kamulaştırarak geç"
+		_confirm_button = UiFactory.button(_ctx, UiText.t(
+				&"expropriation.confirm" if tool.demolishes() else &"road.confirm"), true)
+		# Birincil vurgu + büyük hedef (dokunmatikte >= 44 pt zaten target_primary tabanından gelir).
+		UiFactory.emphasize(_ctx, _confirm_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
+		_confirm_button.custom_minimum_size.x = maxf(_confirm_button.custom_minimum_size.x, _ctx.px(CONFIRM_MIN_WIDTH))
+		_tag(_confirm_button, "road_confirm")
+		_confirm_button.disabled = not tool.can_confirm()
+		_confirm_button.pressed.connect(func() -> void:
+			tool.confirm()
+			refresh())
+		row.add_child(_confirm_button)
 	_cancel_button = UiFactory.button(_ctx, UiText.t(&"road.cancel"), false)
 	_tag(_cancel_button, "road_cancel")
 	_cancel_button.disabled = tool.step == RoadDrawTool.Step.PICK_A or tool.step == RoadDrawTool.Step.SENDING
@@ -239,13 +324,55 @@ func _add_undo_row() -> void:
 	# Ölü düğme yok: geri alınacak yol yoksa düğme hiç görünmez.
 	if not tool.has_undoable_road():
 		return
+	var last := tool.last_road()
+	if _undo_pending and last != null and last.expropriated:
+		_add_undo_confirm(last)
+		return
 	_undo_button = UiFactory.button(_ctx, UiText.t(&"road.undo_last"), false)
 	_tag(_undo_button, "road_undo")
 	_undo_button.disabled = tool.step == RoadDrawTool.Step.SENDING
 	_undo_button.pressed.connect(func() -> void:
-		tool.undo_last()
+		if last != null and last.expropriated:   # T-042b: yıkımlı yol ikinci adımda onaylanır
+			_undo_pending = true
+		else:
+			tool.undo_last()
 		refresh())
 	_body.add_child(_undo_button)
 	var refund := _undo_refund()
 	if refund >= 0:
 		_body.add_child(_muted(UiText.t(&"road.refund_line", {"units": UiText.number(refund)})))
+
+
+## T-042b · Yıkımlı yolu geri alma onayı (D-011): binalar geri gelir, halkın tepkisi geri GELMEZ. Geri gelecek sayılar
+## sim'in önizlemesi (`restored_*`) ya da yolun sim kaydıdır; iade satırı (bütçe) varsa ayrıca gösterilir.
+func _add_undo_confirm(last: PublicWorkView) -> void:
+	var parts := _card()
+	var inner: VBoxContainer = parts[1]
+	inner.add_child(UiFactory.label(UiText.t(&"expropriation.undo_title"), UiTheme.V_LABEL_HEADING, true))
+	var warning := UiFactory.label(UiText.t(&"expropriation.undo_warning"), UiTheme.V_LABEL_DANGER, true)
+	_tag(warning, "expropriation_undo_warning")
+	inner.add_child(warning)
+	var probe := _facade.validate_command(SimCommand.public_work_undo_last())
+	var restore := ExpropriationText.restore_args(probe.args, last)
+	if not restore.is_empty():
+		inner.add_child(UiFactory.label(UiText.t(&"expropriation.undo_restores", restore), &"", true))
+	var refund := _undo_refund()
+	if refund >= 0:
+		inner.add_child(_muted(UiText.t(&"road.refund_line", {"units": UiText.number(refund)})))
+	var row := HFlowContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_undo_yes_button = UiFactory.button(_ctx, UiText.t(&"expropriation.undo_confirm"), true)
+	_tag(_undo_yes_button, "road_undo_confirm")
+	_undo_yes_button.pressed.connect(func() -> void:
+		_undo_pending = false
+		tool.undo_last()
+		refresh())
+	row.add_child(_undo_yes_button)
+	_undo_keep_button = UiFactory.button(_ctx, UiText.t(&"expropriation.undo_keep"), false)
+	_tag(_undo_keep_button, "road_undo_keep")
+	_undo_keep_button.pressed.connect(func() -> void:
+		_undo_pending = false
+		refresh())
+	row.add_child(_undo_keep_button)
+	inner.add_child(row)
+	_body.add_child(parts[0])
