@@ -141,6 +141,15 @@ func counts_decided() -> Dictionary:
 	return out
 
 
+## Öneri SONRASI kararı "altyapı yetmiyor" olan takip edilen parsel sayısı (yol ipucu için; sim ret kodundan).
+func infra_declined_count() -> int:
+	var n := 0
+	for p in parcels:
+		if p.decision == Decision.DECLINED and p.cause == CAUSE_INFRASTRUCTURE:
+			n += 1
+	return n
+
+
 func metric(key: StringName) -> MetricRow:
 	for r in metrics + counters:
 		if r.key == key:

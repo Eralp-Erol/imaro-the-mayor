@@ -14,6 +14,7 @@ const META_ROW := &"m2_row"
 const ROW_STEP := "step"
 const ROW_METRIC := "metric"
 const ROW_REACTION := "reaction"
+const ROW_HINT := "hint"
 
 var model: M2ResultModel = null
 
@@ -87,8 +88,20 @@ func _add_parcel_section() -> void:
 	inner.add_child(_step_label(&"m2.step.stage"))
 	_add_stage(inner, v)
 	_body.add_child(parts[0])
+	_add_infra_hint()
 	if model.parcels.size() > 1:
 		_add_others()
+
+
+## Altyapı nedeniyle vazgeçen parsel varsa düz dille ne yapılacağı (yol çiz). Yalnız sim ret kodundan; yoksa satır yok.
+func _add_infra_hint() -> void:
+	var n := model.infra_declined_count()
+	if n <= 0:
+		return
+	var key := &"m2.hint.infrastructure" if n == 1 else &"m2.hint.infrastructure_n"
+	var l := _muted(UiText.t(key, {"n": n}))
+	l.set_meta(META_ROW, ROW_HINT)
+	_body.add_child(l)
 
 
 func _step_label(key: StringName) -> Label:

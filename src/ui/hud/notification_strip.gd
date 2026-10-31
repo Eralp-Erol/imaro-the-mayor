@@ -11,6 +11,7 @@ signal reason_requested(event: SimEvent)
 
 const _EVENT_META := &"strip_event"
 const _CODE_UNPLANNED := "zoning_unplanned"
+const _CODE_INFRA := "infrastructure_exhausted"
 ## Şerit önceliği: oyuncunun eylemi ve inşaat > diğer parsel/çıkış olayları > arka plan vazgeçmeleri.
 const PRIO_BACKGROUND := 0
 const PRIO_NORMAL := 1
@@ -23,6 +24,9 @@ var _rows: Array[PanelContainer] = []
 ## Plansız yüzünden vazgeçilen (ve sonra değişmeyen) parseller: şeritte tek tek değil, gerçek sayıyla tek özet satırı.
 var _unplanned: Dictionary = {}
 var _summary: PanelContainer = null
+## Altyapı yetmediği için vazgeçilen parseller: tek özet satırı ("yol eklemek kapasiteyi artırır"); gerçek sayı.
+var _infra: Dictionary = {}
+var _infra_summary: PanelContainer = null
 
 
 static func create(ctx: UiContext) -> NotificationStrip:
@@ -35,6 +39,10 @@ static func create(ctx: UiContext) -> NotificationStrip:
 	s._summary.theme_type_variation = UiTheme.V_HUD_BAR
 	s._summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	s._summary.add_child(UiFactory.label("", &"", true))
+	s._infra_summary = PanelContainer.new()
+	s._infra_summary.theme_type_variation = UiTheme.V_HUD_BAR
+	s._infra_summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	s._infra_summary.add_child(UiFactory.label("", &"", true))
 	return s
 
 
@@ -44,7 +52,7 @@ func push_events(events: Array[SimEvent]) -> void:
 		return
 	for e in events:
 		_track_unplanned(e)
-		if is_unplanned_decline(e):
+		if is_unplanned_decline(e) or is_infra_decline(e):
 			continue
 		_add(e)
 	_rebuild()
@@ -53,6 +61,11 @@ func push_events(events: Array[SimEvent]) -> void:
 ## Plansız arazi yüzünden toplu vazgeçme mi (`event.investor.declined`, kod `zoning_unplanned`)?
 static func is_unplanned_decline(event: SimEvent) -> bool:
 	return event.message_key == &"event.investor.declined" and str(event.args.get("code", "")) == _CODE_UNPLANNED
+
+
+## Altyapı kapasitesi yetmediği için vazgeçme mi (`event.investor.declined`, kod `infrastructure_exhausted`)?
+static func is_infra_decline(event: SimEvent) -> bool:
+	return event.message_key == &"event.investor.declined" and str(event.args.get("code", "")) == _CODE_INFRA
 
 
 static func priority(event: SimEvent) -> int:
@@ -71,6 +84,14 @@ func unplanned_count() -> int:
 	return _unplanned.size()
 
 
+func infra_count() -> int:
+	return _infra.size()
+
+
+func infra_summary_text() -> String:
+	return UiText.t(&"strip.infra_summary", {"n": _infra.size()}) if not _infra.is_empty() else ""
+
+
 func summary_text() -> String:
 	return UiText.t(&"strip.unplanned_summary", {"n": _unplanned.size()}) if not _unplanned.is_empty() else ""
 
@@ -85,8 +106,13 @@ func _track_unplanned(e: SimEvent) -> void:
 		return
 	if is_unplanned_decline(e):
 		_unplanned[parcel] = true
+		_infra.erase(parcel)
+	elif is_infra_decline(e):
+		_infra[parcel] = true
+		_unplanned.erase(parcel)
 	elif String(e.message_key).begins_with("event.investor") or String(e.message_key).begins_with("event.construction"):
 		_unplanned.erase(parcel)
+		_infra.erase(parcel)
 
 
 ## Sakin şerit: aynı metin tekrar satır açmaz (arka plan olayları), doluyken düşük öncelik yüksek önceliği itmez.
@@ -128,11 +154,15 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_PREDELETE and _summary != null and is_instance_valid(_summary) \
 			and _summary.get_parent() == null:
 		_summary.free()
+	if what == NOTIFICATION_PREDELETE and _infra_summary != null and is_instance_valid(_infra_summary) \
+			and _infra_summary.get_parent() == null:
+		_infra_summary.free()
 
 
 func clear() -> void:
 	_events.clear()
 	_unplanned.clear()
+	_infra.clear()
 	_rebuild()
 
 
@@ -148,7 +178,7 @@ func row_texts() -> PackedStringArray:
 
 
 func _rebuild() -> void:
-	visible = not _events.is_empty() or not _unplanned.is_empty()
+	visible = not _events.is_empty() or not _unplanned.is_empty() or not _infra.is_empty()
 	var shown := _events.size()
 	# Satırlar yeniden kullanılır: her tick'te düğüm silip yaratmak (60 olay/gün rejiminde) kareyi ~2 ms uzatıyordu.
 	while _rows.size() < shown:
@@ -172,6 +202,13 @@ func _rebuild() -> void:
 		move_child(_summary, -1)
 	elif _summary.get_parent() != null:
 		remove_child(_summary)
+	if not _infra.is_empty():
+		((_infra_summary.get_child(0)) as Label).text = infra_summary_text()
+		if _infra_summary.get_parent() == null:
+			add_child(_infra_summary)
+		move_child(_infra_summary, -1)
+	elif _infra_summary.get_parent() != null:
+		remove_child(_infra_summary)
 
 
 func _make_row() -> PanelContainer:

@@ -166,6 +166,8 @@ func _add_decision(inner: VBoxContainer, row: M2ResultModel.ParcelRow, with_fact
 		inner.add_child(_direction_row(ReasonGlyph.Kind.DOWN, "danger", UiTheme.V_LABEL_DANGER, _decision_line(row)))
 		var cause := UiText.t(StringName("m2.decline.%s" % row.cause))
 		inner.add_child(UiFactory.label(UiText.t(&"m2.decline.cause", {"cause": cause}), &"", true))
+		if row.cause == M2ResultModel.CAUSE_INFRASTRUCTURE:
+			inner.add_child(_muted(UiText.t(&"m2.hint.infrastructure")))
 	if model.reason_pruned or model.record == null:
 		inner.add_child(_muted(UiText.t(&"m2.investor.pruned")))
 		return
@@ -332,6 +334,8 @@ func _add_selected_line() -> void:
 	if model.is_declined():
 		var cause := UiText.t(StringName("m2.decline.%s" % model.row().cause))
 		inner.add_child(UiFactory.label(UiText.t(&"m2.decline.cause", {"cause": cause}), &"", true))
+		if model.row().cause == M2ResultModel.CAUSE_INFRASTRUCTURE:
+			inner.add_child(_muted(UiText.t(&"m2.hint.infrastructure")))
 	inner.add_child(_muted(UiText.t(&"inspector.zoom_hint")))
 	_body.add_child(parts[0])
 
