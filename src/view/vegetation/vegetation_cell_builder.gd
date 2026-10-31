@@ -33,7 +33,7 @@ static func canonical_buffer(layout: VegetationLayout, lo: int, hi: int, origin:
 	var cols := layout.cols
 	var masked := not layout.hidden.is_empty()
 	for i in range(lo, hi):
-		if masked and layout.hidden[i] == 1:
+		if masked and layout.hidden[i] != 0:
 			continue   # yeni yol koridoru: örnek çizilmez (sütun duruyor)
 		_write(buf, o, cols.x[i] - origin.x, layout.y[i] - sink_m, cols.z[i] - origin.y, cols.yaw[i], cols.scale[i])
 		o += FLOATS_PER_INSTANCE
@@ -60,7 +60,7 @@ static func partition(layout: VegetationLayout, lo: int, hi: int, origin: Vector
 	var counts := PackedInt32Array([0, 0, 0, 0])
 	var masked := not layout.hidden.is_empty()
 	for i in range(lo, hi):
-		if masked and layout.hidden[i] == 1:
+		if masked and layout.hidden[i] != 0:
 			continue
 		var dx := cols.x[i] - cam.x
 		var dy := layout.y[i] - cam.y
