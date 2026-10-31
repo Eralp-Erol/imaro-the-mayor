@@ -50,7 +50,8 @@ var _tris_h0: int = 0
 var _tris_h1: int = 0
 
 
-func setup(p_cfg: LifeConfig, p_assets: LifeAssets, p_activity: LifeEdgeActivity, p_seed: int, p_ground: Callable) -> void:
+func setup(p_cfg: LifeConfig, p_assets: LifeAssets, p_activity: LifeEdgeActivity, p_seed: int,
+		p_ground: Callable) -> void:
 	cfg = p_cfg
 	assets = p_assets
 	activity = p_activity
@@ -82,7 +83,10 @@ func _mesh_tris(mesh: Mesh) -> int:
 	for s in mesh.get_surface_count():
 		var arrays := mesh.surface_get_arrays(s)
 		var idx: Variant = arrays[Mesh.ARRAY_INDEX]
-		n += (idx as PackedInt32Array).size() / 3 if idx != null else (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
+		if idx != null:
+			n += (idx as PackedInt32Array).size() / 3
+		else:
+			n += (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
 	return n
 
 
@@ -149,7 +153,8 @@ func _refresh_cells() -> void:
 	var close_dist := reach + cm
 	for cell in _cells:
 		var dist_c := _cell_distance(cell)
-		var stale: bool = (_cells[cell] as Dictionary)["dirty"] or int((_cells[cell] as Dictionary)["version"]) != _data_version
+		var entry := _cells[cell] as Dictionary
+		var stale: bool = entry["dirty"] or int(entry["version"]) != _data_version
 		if dist_c > close_dist or (stale and dist_c > reach):
 			drop.append(cell)
 	for cell in drop:

@@ -363,5 +363,43 @@ class PlantFurnitureSetTest(unittest.TestCase):
         self.assertIsNone(re.search(r"veg_hero_|fur_hero_", src), "no embedded id list allowed")
 
 
+class VehicleHumanSetTest(unittest.TestCase):
+    """T-050 (D-012/D-013): game_vehicles.json holds only the approved kit car; game_humans.json only the user-selected
+    human style (block). Other approved styles are listed as style_not_selected and never reach the table."""
+
+    build = GameSetTest.build
+
+    def test_vehicle_table_is_only_the_approved_kit_car(self):
+        docs, errors = self.build()
+        self.assertEqual([], errors)
+        d = docs["game_vehicles.json"]
+        self.assertEqual(["veh_car"], [m["id"] for m in d["items"]])
+        self.assertEqual(expected_ids(load(), "vehicle"), {"veh_car"})
+        rec = d["items"][0]
+        self.assertEqual(["LOD0"], list(rec["lods"]))
+        self.assertTrue(rec["palette"]["wall_rows"])
+
+    def test_human_table_is_only_the_block_style(self):
+        docs, errors = self.build()
+        self.assertEqual([], errors)
+        d = docs["game_humans.json"]
+        ids = [m["id"] for m in d["items"]]
+        self.assertEqual(["hum_hero_block_broad_a", "hum_hero_block_neutral_a"], ids)
+        self.assertEqual({"block"}, {m["style"] for m in d["items"]})
+        for m in d["items"]:
+            self.assertEqual(["LOD0", "LOD1"], sorted(m["lods"]))
+        ex = {x["id"]: x["reason"] for x in d["unapproved"]["entries"]}
+        for pid in ("hum_hero_pawn_neutral_a", "hum_hero_pawn_broad_a", "hum_hero_facet_neutral_a", "hum_hero_facet_broad_a"):
+            self.assertEqual("style_not_selected", ex[pid])
+        self.assertNotIn("prop_human", ids)
+
+    def test_committed_life_tables_equal_fresh_build(self):
+        t1, e1 = bgs.build_sets(REAL, ROOT)
+        self.assertEqual([], e1)
+        for name in ("game_vehicles.json", "game_humans.json"):
+            with open(os.path.join(ROOT, bgs.OUT_DIR, name), "r", encoding="utf-8") as fh:
+                self.assertEqual(t1[name], fh.read(), name + " is stale (python3 tools/library/build_game_set.py --write)")
+
+
 if __name__ == "__main__":
     unittest.main()

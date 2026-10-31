@@ -51,6 +51,7 @@ Durumlar:
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 | Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
 | Q-025 | Halk neye tepki versin? (D-008 son adımı, bugün sessiz) | **open** | — (engellemiyor) |
+| Q-026 | Şehirde kaç araç/yaya görünsün? (T-050 yaşam belirtisi yoğunluğu, araç renk çeşitliliği) | **open** | — (engellemiyor) |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
@@ -159,3 +160,10 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: bkz. "Şimdi kullanıcıya sorulacaklar" Kart 2 (A sessiz / B yeni bina tepkisi / C yol-plan kararına tepki / D eski hale).
 - Recommendation: A; kullanıcı B/C seçerse `construction_burden`, `min_share_pm` ya da olay kaynağı veri olarak ayarlanır; sahte tepki eklenmez (SIM-12).
 - Meanwhile: tepki yok; HUD yalnız gerçek veriyi gösterir; bina sayısı, ret ve gerekçeler yol+plan etkisini okunur kılar.
+
+
+### Q-026 · Şehirde ne kadar araç ve yaya görünsün? (T-050; status: open — engellemiyor)
+- Context: araç/yaya sayısı gerçek sim verisinden türer (hane/işyeri/inşaat birimi x doluluk; aktivite yoksa sahte trafik yok). Ama "birim başına kaç araç/yaya" ve sınıf tavanları çalışma değeri (`data/view/life.json`). Ölçüm: `production/log/2026-10-31-T-050-yasam-belirtisi.md`.
+- Options: A) Mevcut seyrek his (sokakta 100 m'de ~2-3 araç, ~3 yaya; "yaşam belirtisi", okunaklı). B) Daha kalabalık (2x). C) Çok seyrek, yalnız ana yollarda.
+- Recommendation: A (kare süresi ve okunurluk dengeli); renk çeşitliliği/araç tipi (taksi, kamu aracı) Q-018 madde 3 ile birlikte.
+- Meanwhile: A; kullanıcı değiştirirse yalnız `life.json` yoğunluk/ağırlık değeri değişir.

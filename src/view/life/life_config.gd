@@ -23,7 +23,9 @@ static func load_default(profile: StringName = &"desktop") -> LifeConfig:
 static func load_path(path: String, profile: StringName = &"desktop") -> LifeConfig:
 	var c := LifeConfig.new()
 	c.profile_name = profile
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	var parsed: Variant = null
+	if FileAccess.file_exists(path):
+		parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if not (parsed is Dictionary):
 		c.errors.append("%s: okunamadı ya da sözlük değil" % path)
 		return c

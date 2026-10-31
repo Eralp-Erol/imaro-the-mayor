@@ -1,7 +1,8 @@
 class_name LifeHost
 extends Node
 ## Yaşam belirtisinin sahneye bağlayıcısı (T-050). `scenes/game/playable.tscn` içinde `Playable` düğümünün ÇOCUĞUDUR;
-## sahne kökündeki `playable.gd` değişmez (dosya satır sınırı). Ana oyunun nesnelerini (`_facade`, `_net`, `_t0_columns`,
+## sahne kökündeki `playable.gd` değişmez (dosya satır sınırı). Ana oyunun nesnelerini (`_facade`, `_net`,
+## `_t0_columns`,
 ## `_view_root`, `_camera`, `_terrain`, `_world`, `_args`) `Object.get` ile OKUR (PlayableRoads ile aynı yöntem); hepsi
 ## hazır olunca `LifeView` kurar. Sim'e yalnız okuma sorgularıyla bağlıdır (`LifeSimReader`); hiçbir komut göndermez.
 ##
@@ -55,12 +56,10 @@ func _try_start() -> void:
 		return
 	_args = args
 	if _args.has("no-life"):
-		stats["state"] = "disabled (--no-life)"
-		set_process(false)
+		_stop("disabled (--no-life)")
 		return
 	if DisplayServer.get_name() == "headless" and not _args.has("life-force"):
-		stats["state"] = "skipped (headless)"
-		set_process(false)
+		_stop("skipped (headless)")
 		return
 	_facade = _host.get(&"_facade")
 	_net = _host.get(&"_net")
@@ -72,6 +71,15 @@ func _try_start() -> void:
 	if _facade == null or _net == null or _camera == null or view_root == null or terrain == null or cols == null \
 			or world == null:
 		return  # ana sahne henüz hazır değil (ilk kare); sonraki karede tekrar
+	_start(view_root, terrain, cols, world)
+
+
+func _stop(state: String) -> void:
+	stats["state"] = state
+	set_process(false)
+
+
+func _start(view_root: Node3D, terrain: TerrainView, cols: BuildingColumns, world: WorldData) -> void:
 	var t0 := Time.get_ticks_usec()
 	var profile := LifeConfig.profile_for(PlatformProfile.current().input_profile)
 	if _args.has("life-profile"):
@@ -79,16 +87,14 @@ func _try_start() -> void:
 	config = LifeConfig.load_default(profile)
 	if not config.valid():
 		push_error("life: ayar geçersiz: %s" % "; ".join(config.errors))
-		stats["state"] = "invalid config"
-		set_process(false)
+		_stop("invalid config")
 		return
 	if _args.has("life-density"):
 		config.data["profiles"][String(profile)]["density"] = clampf(float(str(_args["life-density"])), 0.0, 4.0)
 	var assets := LifeAssets.load_default()
 	if not assets.ok():
 		push_error("life: varlıklar yüklenemedi: %s" % "; ".join(assets.errors))
-		stats["state"] = "assets failed"
-		set_process(false)
+		_stop("assets failed")
 		return
 	activity = LifeEdgeActivity.create(_net, config)
 	reader = LifeSimReader.create(_facade, activity, _net, PlayableStock.from_columns(cols))

@@ -1,8 +1,9 @@
 class_name LifeAssets
 extends RefCounted
 ## Yaşam görünümünün varlıkları (T-050). Kimlikler YALNIZ `LibraryGate` (araç + insan oyun tabloları) üzerinden alınır:
-## araç `veh_car` (D-012), insan `hum_hero_block_neutral_a` / `hum_hero_block_broad_a` (D-013, B blok figür). Başka kimlik
-## istenirse kapı reddeder (`gate.unapproved_ids`); mesh/materyal yüklenmez. Piyon/faset ve eski kit insanı (`prop_human`)
+## araç `veh_car` (D-012), insan `hum_hero_block_neutral_a` / `hum_hero_block_broad_a` (D-013, B blok figür).
+## Başka kimlik
+## istenirse kapı reddeder (`gate.unapproved_ids`); mesh/materyal yüklenmez. Piyon/faset ve eski kit insanı
 ## oyuna girmez.
 
 const CAR_ID := "veh_car"

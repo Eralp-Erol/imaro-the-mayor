@@ -20,6 +20,9 @@ var occupancy: Dictionary = {}
 var edge_units: Dictionary = {}
 ## Yaşam taşıyabilir kenarlar: eid -> true. Kenar -> hücre ve bölge.
 var eligible: Dictionary = {}
+## Hücre kenarı (m); `layout.cell_m`.
+var cell_m: float = 256.0
+var stats: Dictionary = {"edges_eligible": 0, "parcels_mapped": 0, "rebuilds": 0}
 
 ## pid -> [eid, Vector3i]: şu an kenar toplamlarına eklenmiş katkı.
 var _placed: Dictionary = {}
@@ -30,9 +33,6 @@ var _dirty_cells: Dictionary = {}
 var _rebuild_keys: Array = []
 var _rebuild_i: int = 0
 var _rebuilding: bool = false
-var cell_m: float = 256.0
-
-var stats: Dictionary = {"edges_eligible": 0, "parcels_mapped": 0, "rebuilds": 0}
 
 
 static func create(p_net: WorldNetwork, p_cfg: LifeConfig) -> LifeEdgeActivity:

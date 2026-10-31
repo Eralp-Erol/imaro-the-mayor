@@ -25,10 +25,12 @@ func run() -> void:
 		return
 	print("LIFEDATA_NET ", JSON.stringify(net.counts()))
 	var f0 := facade.parcel_changes_since(-1)
-	print("LIFEDATA_FEED_INIT complete=%s n=%d epoch=%d up_to=%d" % [str(f0.complete), f0.ids.size(), f0.epoch, f0.up_to_tick])
+	print("LIFEDATA_FEED_INIT complete=%s n=%d epoch=%d up_to=%d" % [
+			str(f0.complete), f0.ids.size(), f0.epoch, f0.up_to_tick])
 	facade.advance(1)
 	var f1 := facade.parcel_changes_since(0)
-	print("LIFEDATA_FEED_T1 complete=%s n=%d epoch=%d up_to=%d" % [str(f1.complete), f1.ids.size(), f1.epoch, f1.up_to_tick])
+	print("LIFEDATA_FEED_T1 complete=%s n=%d epoch=%d up_to=%d" % [
+			str(f1.complete), f1.ids.size(), f1.epoch, f1.up_to_tick])
 	var t_s := Time.get_ticks_usec()
 	var sample := PackedInt64Array()
 	for i in 400:

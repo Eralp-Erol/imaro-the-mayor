@@ -42,7 +42,8 @@ static func sidewalk_table(path: String = "res://data/view/road_style.json") -> 
 
 
 ## Bir hücreyi kurar. `ground`: Callable(x, z) -> dünya yüksekliği (m). `car_rows`: kit palet satırı dizini listesi.
-## Dönüş: {rows: Array[PackedFloat32Array] (KIND_COUNT), counts: PackedInt32Array(KIND_COUNT), bounds: AABB (hücre yerel),
+## Dönüş: {rows: Array[PackedFloat32Array] (KIND_COUNT), counts: PackedInt32Array(KIND_COUNT),
+## bounds: AABB (hücre yerel),
 ## edges: int}. Hiç örnek yoksa counts sıfır.
 static func build_cell(act: LifeEdgeActivity, cell: Vector2i, world_seed: int, density: float, ground: Callable,
 		car_rows: PackedInt32Array, sidewalks: Dictionary) -> Dictionary:
