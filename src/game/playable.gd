@@ -376,7 +376,6 @@ func _start_sim() -> void:
 	_facade = handle.facade
 	_pr = PlayableRoads.create(_net, _roads, _facade, func() -> bool: return _veg_loader != null)
 	PlayableBudget.attach(_facade, _pr.attach_commands())
-	_facade.set_speed(3 if _demo else 1)
 	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
 	if _projector == null:
 		push_error("playable: SimBuildingProjector kurulamadı; sim yapıları çizilmeyecek")
@@ -477,6 +476,7 @@ func _place_status() -> void:
 ## projector koduna dokunmaz). `--m2-open-results` (dev) paneli başlangıçta açar.
 func _on_hud_ready() -> void:
 	_m2_results = M2Results.attach(_hud, _facade, _decisions)
+	PlayableTempo.attach(_hud, _facade)  # T-043B C: başlangıç hızı "hızlı" + tek seferlik hız ipucu
 	if _args.has("m2-open-results"):
 		_m2_results.open()
 	_inspector = InspectorHost.attach(_hud, _facade, _m2_results.open_reason, _open_zoning_for,

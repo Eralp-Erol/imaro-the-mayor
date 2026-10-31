@@ -553,7 +553,9 @@ func _factor_row(row: ReasonModel.Row, index: int, current_id: int) -> Control:
 		road_link.pressed.connect(show_work.bind(road.command_id))
 		box.add_child(road_link)
 	elif row.source_ref != &"":
-		var src_text := UiText.t(&"reason.source", {"subject": UiText.humanize(String(row.source_ref))})
+		var src_text := _plan_source_text(row.source_ref, current_id)
+		if src_text == "":
+			src_text = UiText.t(&"reason.source", {"subject": UiText.humanize(String(row.source_ref))})
 		if _has_other_records(row.source_ref, current_id):
 			var src := _link_button(src_text, NAME_SUBJECT + "_src_" + String(row.source_ref))
 			src.pressed.connect(_push_subject.bind(row.source_ref))
@@ -561,6 +563,41 @@ func _factor_row(row: ReasonModel.Row, index: int, current_id: int) -> Control:
 		else:
 			box.add_child(UiFactory.label(src_text, UiTheme.V_LABEL_MUTED, true))
 	return box
+
+
+## "İmar planı <- komut (gün N)" (T-043B): `command.N` kaynağı, kaydın parsellerinden birinin yürürlükteki/bekleyen
+## planının komutuysa okunur metin; değilse boş (genel "Kaynak: Komut N" kalır). Gün: komutun olay günü (olay
+## saklama ufku içindeyse), yoksa planın yürürlük günü (ayrı etiketle). Plan sim'den okunur; uydurma yok.
+func _plan_source_text(ref: StringName, current_id: int) -> String:
+	var parsed := SimContract.parse_ref(ref)
+	if str(parsed["kind"]) != String(SimContract.REF_COMMAND) or int(parsed["id"]) == SimContract.NO_ID:
+		return ""
+	var command_id := int(parsed["id"])
+	var record := _facade.reason(current_id)
+	if record == null:
+		return ""
+	for subject in record.subjects:
+		var sp := SimContract.parse_ref(StringName(subject))
+		if str(sp["kind"]) != "parcel" or int(sp["id"]) == SimContract.NO_ID:
+			continue
+		var plan := _facade.plan_state(int(sp["id"]))
+		if plan == null or (plan.source_ref != ref and plan.command_id != command_id):
+			continue
+		var tick := _command_tick(command_id)
+		if tick >= 0:
+			return UiText.t(&"reason.source_plan", {"date": UiText.tick_date(tick)})
+		if plan.due_tick >= 0:
+			return UiText.t(&"reason.source_plan_due", {"date": UiText.tick_date(plan.due_tick)})
+		return ""
+	return ""
+
+
+## Komutun ilk olayının günü (olay günlüğünde yoksa -1).
+func _command_tick(command_id: int) -> int:
+	for e in _facade.events_since(maxi(_facade.first_retained_event_seq() - 1, 0)):
+		if e.command_id == command_id:
+			return e.tick
+	return -1
 
 
 func _margin_label(model: ReasonModel) -> Label:

@@ -11,7 +11,10 @@ extends RefCounted
 ## zone_seen, attention, attention_cmd, active. Bölge ve yatırımcı verisi iç sözlüklerde Packed*Array sütunlarıdır.
 
 const KEY := "economy"
+## Kayıt sürümü: durum kurulurken yazılan (`VERSION`) ve T-043B öncelik kuyruğu İLK KEZ yaratılınca yükselen
+## (`VERSION_PRIORITY`). Kuyruksuz koşular 1'de kalır (t0/altın hash'ler değişmez); 1 ve 2 ikisi de geçerli okunur.
 const VERSION := 1
+const VERSION_PRIORITY := 2
 
 const STAGE_VACANT := 0
 const STAGE_PLANNED := 1
@@ -47,6 +50,9 @@ const REGION_COLUMNS: Array[String] = [
 	"com_built", "com_pipe",
 ]
 const SPARSE_KEYS: Array[String] = ["zone_seen", "attention", "attention_cmd", "active"]
+## T-043B: öncelik kuyruğu (parsel indeksi -> vade günü / tetikleyici komut). Yalnız ilk tetikte yaratılır; v1 kayıtta
+## yok.
+const PRIORITY_KEYS: Array[String] = ["priority", "priority_cmd"]
 const TOTAL_KEYS: Array[String] = [
 	"evaluations", "approvals", "declines", "declines_recorded", "completions", "stalls", "land_sales",
 	"construction_spend", "rent_income", "capital_inflow",
@@ -129,11 +135,8 @@ static func decorate_view(state: GameState, view: ParcelView, cfg: EconomyConfig
 	view.units = units
 	view.developed_by_sim = stage != STAGE_VACANT and (d["last_code"] as PackedByteArray)[i] == CODE_APPROVED
 	view.progress_pm = progress_pm(stage, use, units, (d["days_left"] as PackedInt32Array)[i], cfg)
-	if cfg != null and cfg.p("unplanned_land_enabled") == 1 and stage == STAGE_VACANT:
-		# T-043A (D-010): boş parselde yürürlükte plan yoksa şablondaki placeholder imar "yürürlükteki imar" DEĞİLDİR.
-		var entry: Variant = ParcelZoningSystem.overlay_ref(state).get(view.id, null)
-		if not (entry is Dictionary) or entry.get("zone", &"") == &"":
-			view.zone = &""
+	# (T-043A/T-043B: plansız boş parselde placeholder imarın gizlenmesi `EconomySystem.hides_template_zone` ile
+	# facade'ta yapılır: ekonomi durumu kurulmadan önce de geçerli olmalı.)
 	_decorate_decision(state, d, i, view)
 
 
@@ -186,7 +189,7 @@ static func validate_data(d: Variant, expected_parcels: int = -1) -> String:
 		return ""
 	if not (d is Dictionary) or not (d as Dictionary).has("parcel_ids"):
 		return "durum.systems.economy sözlük değil ya da parsel sütunları yok"
-	if typeof(d.get("version", null)) != TYPE_INT or int(d["version"]) != VERSION:
+	if typeof(d.get("version", null)) != TYPE_INT or int(d["version"]) < VERSION or int(d["version"]) > VERSION_PRIORITY:
 		return "durum.systems.economy.version desteklenmiyor"
 	var n: int = (d["parcel_ids"] as PackedInt64Array).size() if d["parcel_ids"] is PackedInt64Array else -1
 	if n < 0:
@@ -203,6 +206,11 @@ static func validate_data(d: Variant, expected_parcels: int = -1) -> String:
 	for key in SPARSE_KEYS:
 		if not (d.get(key, null) is Dictionary):
 			return "durum.systems.economy.%s sözlük değil" % key
+	for key in PRIORITY_KEYS:
+		if d.has(key) and (int(d["version"]) < VERSION_PRIORITY or not (d[key] is Dictionary)):
+			return "durum.systems.economy.%s sözlük değil ya da sürüm 2'den eski kayıtta" % key
+	if d.has("priority") != d.has("priority_cmd"):
+		return "durum.systems.economy.priority ve priority_cmd birlikte olmalı"
 	var regions: Variant = d.get("regions", null)
 	if not (regions is Dictionary) or not (regions.get("codes", null) is PackedStringArray):
 		return "durum.systems.economy.regions.codes yok"

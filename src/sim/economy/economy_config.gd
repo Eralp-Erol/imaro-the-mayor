@@ -39,10 +39,17 @@ const _DECISION_SPEC := {
 	"prescreen_demand_pm": [0, 1000], "negative_repeat_days": [1, 36500], "max_starts_per_region_per_day": [1, 10000],
 	"storey_m": [1, 1000], "reference_floors": [1, 1000], "change_window_ticks": [16, 100000],
 	"unplanned_land_enabled": [0, 1],
+	"priority_review_enabled": [0, 1], "priority_radius_m": [1, 100000], "priority_max_parcels": [1, 100000],
 }
 ## T-043A: veride yoksa varsayılan (eski yapılandırmalar/fixture'lar bit-eşit çalışır). 1 = boş arazinin imarı çevreden
 ## TÜRETİLMEZ: oyuncu planı yürürlüğe girmeden yatırımcı inşa etmez (D-010).
-const _DECISION_OPTIONAL := {"unplanned_land_enabled": 0}
+## T-043B: yol/imar sonrası öncelikli değerlendirme (D-010 karar 1): `priority_review_enabled` 1 (ve
+## `unplanned_land_enabled` 1) iken tetikleyici olaydan sonra `priority_radius_m` metre içindeki en çok
+## `priority_max_parcels` uygun parsel zorunlu değerlendirme kuyruğuna girer. Veride yoksa kapalı (eski yapılandırmalar
+## bit-eşit).
+const _DECISION_OPTIONAL := {
+	"unplanned_land_enabled": 0, "priority_review_enabled": 0, "priority_radius_m": 150, "priority_max_parcels": 12,
+}
 const _COHORT_SPEC := {
 	"initial_occupancy_pm": [0, 1000], "shops_per_household_pm": [0, _NO_MAX], "jobs_per_commercial_unit": [0, _NO_MAX],
 	"jobs_needed_per_household_pm": [0, _NO_MAX], "w_access": [0, 1000], "w_service": [0, 1000], "w_jobs": [0, 1000],

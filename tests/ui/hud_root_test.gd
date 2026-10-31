@@ -229,8 +229,10 @@ func test_strip_reuses_row_nodes_and_updates_text_and_reason_button() -> void:
 	assert_int(strip.row_count()).is_equal(3)
 	assert_int(strip.get_child_count()).is_equal(3)  # üst sınır: satır sayısı hiç artmaz, düğüm sızmaz
 	var texts := Array(strip.row_texts())
-	assert_str(texts[0]).is_equal(UiText.event_text(_event(4, &"event.investor.develop")))
-	assert_str(texts[1]).is_equal(UiText.event_text(_event(5, &"event.investor.declined")))
+	# Öncelik (şerit süzgeci): arka plan "vazgeçti" (2, 5) inşaat/yatırım yapıldı olaylarının yerini almaz, itilir.
+	assert_str(texts[2]).is_equal(UiText.event_text(_event(6, &"event.investor.develop")))
+	assert_str(texts[1]).is_equal(UiText.event_text(_event(4, &"event.investor.develop")))
+	assert_str(texts[0]).is_equal(UiText.event_text(_event(3, &"event.construction.started")))
 	# Düğme yalnız gerekçeli olayda görünür ve basılınca O satırın olayını bildirir.
 	var visible_whys := UiTestSupport.visible_buttons(strip)
 	assert_int(visible_whys.size()).is_equal(2)  # seq 4 ve 6 gerekçeli; 5 değil

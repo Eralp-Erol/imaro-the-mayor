@@ -261,6 +261,8 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 		view.development = overlay.get("development", view.development)
 		# T-013: ekonomi kuruluysa gelişme/arsa değeri/sahip (CAN-03: bunları yalnız aktör kararı yazar)
 		EconomyState.decorate_view(_state, view, _economy.config() if _economy != null else null)
+		if _economy != null and _economy.hides_template_zone(_state, id):  # D-010: plansız boş parselde imar &""
+			view.zone = &""
 		view.reason_ids = reason_index.get(String(SimContract.parcel_ref(id)), PackedInt64Array())
 		view.provenance = provenance()
 		out.append(view)

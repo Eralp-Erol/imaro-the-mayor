@@ -31,6 +31,13 @@ var _changes: ParcelChangeLog
 ## bütün yollar eskisiyle
 ## bit-eşittir.
 var _unplanned_on: bool = false
+## T-043B: öncelikli değerlendirme kuyruğu (`decision.priority_review_enabled` ve `unplanned_land_enabled` ikisi 1).
+## Kapalıyken hiçbir yeni yol çalışmaz (bit-eşit). Yarıçap cm^2 ve K önbelleğidir (yapılandırma değişmez).
+var _priority_on: bool = false
+var _priority_radius2_cm: int = 0
+var _priority_max_parcels: int = 0
+var _center_x_cm: PackedInt64Array = PackedInt64Array()  # parsel indeksi -> merkez x (cm), kaynak şablonundan
+var _center_z_cm: PackedInt64Array = PackedInt64Array()
 
 
 ## Kurulum sorunu (Türkçe metin) ya da "". Kaynak, yapılandırma ve stok tutarlılığı.
@@ -63,6 +70,10 @@ static func create(parcels: ParcelSource, cfg: EconomyConfig, stock: ExistingSto
 	system._cfg = cfg
 	system._changes = ParcelChangeLog.new(cfg.p("change_window_ticks"))
 	system._unplanned_on = cfg.p("unplanned_land_enabled") == 1
+	system._priority_on = system._unplanned_on and cfg.p("priority_review_enabled") == 1
+	var radius_cm := cfg.p("priority_radius_m") * 100
+	system._priority_radius2_cm = radius_cm * radius_cm
+	system._priority_max_parcels = cfg.p("priority_max_parcels")
 	system._stock = stock if stock != null else EmptyStockSource.new()
 	system._cache_static(parcels)
 	return system
@@ -116,6 +127,16 @@ func sim_built_units(state: GameState) -> Array[PackedInt64Array]:
 func plan_state(state: GameState, parcel_id: int, pending_vote_id: int = 0) -> Dictionary:
 	return ParcelPlanning.describe(ParcelZoningSystem.overlay_of(state, parcel_id), _is_vacant(state, parcel_id),
 		_unplanned_on, pending_vote_id)
+
+
+## T-043B ek · Görünüm katmanı için: parselin `ParcelView.zone` değeri şablondaki placeholder'dan (T0 başlangıç imarı)
+## mi geliyor, yoksa gösterilmemeli mi? Bayrak açıkken boş parselde YÜRÜRLÜKTE oyuncu planı yoksa placeholder imar
+## görünmez (`plan_state` ile aynı kural; ekonomi durumu henüz kurulmadıysa T0 stoğuna bakılır). Bayrak kapalıysa false.
+func hides_template_zone(state: GameState, parcel_id: int) -> bool:
+	if not _unplanned_on or not _is_vacant(state, parcel_id):
+		return false
+	var entry: Variant = ParcelZoningSystem.overlay_ref(state).get(parcel_id, null)
+	return not (entry is Dictionary) or entry.get("zone", &"") == &""
 
 
 ## T-043A · İmar planı ÖNİZLEMESİ: oyuncu seçili parsellere `land_use` (+ isteğe bağlı yoğunluk/yükseklik) teklif ederse
@@ -181,8 +202,10 @@ func on_daily(state: GameState) -> void:
 	starts_today.resize(_region_codes.size())
 	_progress_projects(state, d)  # önce ilerlet: bugün onaylanan proje yarın saymaya başlar
 	_scan_zone_changes(state, d)
+	_scan_road_triggers(state, d)
 	_run_attention(state, d, starts_today)
-	_run_reviews(state, d, starts_today)
+	var priority_reviews := _run_priority_queue(state, d, starts_today)  # önce kuyruk: bütçeyi tarama değil kuyruk yer
+	_run_reviews(state, d, starts_today, priority_reviews)
 
 
 func on_monthly(state: GameState) -> void:
@@ -212,8 +235,12 @@ func _cache_static(parcels: ParcelSource) -> void:
 	_area.resize(n)
 	_base_land.resize(n)
 	_base_zone.resize(n)
+	_center_x_cm.resize(n)
+	_center_z_cm.resize(n)
 	for i in n:
 		var view := parcels.template(_ids[i])
+		_center_x_cm[i] = roundi(view.center.x * 100.0)
+		_center_z_cm[i] = roundi(view.center.y * 100.0)
 		_area[i] = view.area_m2
 		_base_land[i] = view.land_value
 		_base_zone[i] = String(view.zone)
@@ -381,6 +408,7 @@ func _scan_zone_changes(state: GameState, d: Dictionary) -> void:
 	var next_review: PackedInt32Array = d["next_review"]
 	var ids: Array = overlay.keys()
 	ids.sort()
+	var fresh_plans: Array = []  # T-043B: [parsel indeksi, plan komutu] (öncelik modunda yönlendirilecek)
 	for id: int in ids:
 		var entry: Dictionary = overlay[id]
 		var zone: StringName = entry.get("zone", &"")
@@ -395,11 +423,16 @@ func _scan_zone_changes(state: GameState, d: Dictionary) -> void:
 		if stage[i] == EconomyState.STAGE_VACANT:
 			if last_code[i] != EconomyState.CODE_NONE:  # görünür karar özeti sıfırlanıyor
 				_changes.note(_ids[i])
-			attention[i] = state.tick + _cfg.p("attention_delay_days")
-			attention_cmd[i] = int(entry.get("command_id", 0))
+			if _priority_on:
+				fresh_plans.append([i, int(entry.get("command_id", 0))])
+			else:
+				attention[i] = state.tick + _cfg.p("attention_delay_days")
+				attention_cmd[i] = int(entry.get("command_id", 0))
 			last_code[i] = EconomyState.CODE_NONE
 			last_reason_tick[i] = -1
 			next_review[i] = 0
+	if not fresh_plans.is_empty():
+		_route_fresh_plans(state, d, fresh_plans)
 
 
 ## Vadesi gelen imar-sonrası dikkat değerlendirmeleri (ön eleme yok: oyuncunun kararının sonucu mutlaka görünür).
@@ -428,7 +461,7 @@ func _run_attention(state: GameState, d: Dictionary, starts_today: PackedInt32Ar
 ## değerlendirme (`max_reviews_per_tick`, yatırımcı dikkati kıt) vardır. İmleç durumda saklanır: kesilen tarama kaldığı
 ## yerden sürer, yüksek indeksli parseller geride kalmaz. Tamamen deterministik (RNG yalnız değerlendirmede).
 @warning_ignore("integer_division")
-func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Array) -> void:
+func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Array, used_reviews: int = 0) -> void:
 	var n := _ids.size()
 	if _cfg.p("review_enabled") == 0 or n == 0:
 		return
@@ -443,7 +476,7 @@ func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Arra
 	var max_starts := _cfg.p("max_starts_per_region_per_day")
 	var cursor: int = d["review_cursor"]
 	var scanned := 0
-	var reviews := 0
+	var reviews := used_reviews  # T-043B: öncelikli kuyruk aynı günlük değerlendirme bütçesinden yemiştir
 	# Ön eleme talebi yalnız (bölge, imar) çiftine bağlıdır, parsele değil: aynı çift için tekrar hesaplanmaz.
 	# `_evaluate` bölge durumunu (boru hattı/talep) değiştirdiğinden her değerlendirmeden sonra önbellek sıfırlanır;
 	# sonuçlar önbelleksiz hesapla birebir aynıdır (sıra, RNG ve kayıt değişmez).
@@ -475,6 +508,114 @@ func _run_reviews(state: GameState, d: Dictionary, starts_today: PackedInt32Arra
 		_evaluate(state, d, i, 0, starts_today)
 		demand_cache.clear()
 	d["review_cursor"] = cursor
+
+
+# --- Öncelikli değerlendirme (T-043B, D-010 karar 1; durum/geometri yardımcıları `PriorityReview`) ---
+## Tetikleyici: bölgenin hem erişimi (oyuncu yolu) hem planı tamamlandığı SON olay. İki olay vardır: yol onayı (bu tick
+## `public_works.works`e eklenen yol) ve plan yürürlüğü (`_scan_zone_changes`). Her tetikte olayın etkilediği,
+## YÜRÜRLÜKTE
+## planlı + oyuncu yoluna bağlı (yarıçap R içinde) + boş parseller en yakından başlayarak en çok K tane
+## `attention_delay_days` sonra `d["priority"]` kuyruğuna girer (parsel indeksi -> vade günü; `priority_cmd`:
+## tetikleyici
+## komut). Kuyruk yalnız ilk girişte yaratılır (kayıt sürümü `VERSION_PRIORITY`); boşken durum yazılmaz. Ön eleme
+## yoktur.
+## Karar yine yatırımcı kararıdır (CAN-03): kuyruk yalnız BAKIŞI öne çeker.
+
+## Bu tick onaylanan yollar için komşu planlı parselleri kuyruğa alır.
+func _scan_road_triggers(state: GameState, d: Dictionary) -> void:
+	if not _priority_on:
+		return
+	var roads := PriorityReview.new_roads(state)
+	if roads.is_empty():
+		return
+	var overlay := ParcelZoningSystem.overlay_ref(state)
+	var plan_ids: Array = overlay.keys()
+	plan_ids.sort()
+	var stage: PackedByteArray = d["stage"]
+	var attention: Dictionary = d["attention"]
+	var due := state.tick + _cfg.p("attention_delay_days")
+	for road: Dictionary in roads:
+		var candidates: Array = []
+		for id: int in plan_ids:
+			var i := EconomyState.index_of(d, id)
+			if i < 0 or stage[i] != EconomyState.STAGE_VACANT or attention.has(i) or not _is_planned_buildable(overlay[id]):
+				continue
+			var dist2 := PriorityReview.dist2_to_polyline(_center_x_cm[i], _center_z_cm[i], road["pts"])
+			if dist2 <= _priority_radius2_cm:
+				candidates.append([dist2, i])
+		PriorityReview.enqueue(d, candidates, _priority_max_parcels, due, int(road["command_id"]), false)
+
+
+## Bu tick yürürlüğe giren planların boş parselleri: oyuncu yoluna bağlı olanlar (en çok K, plan komutu başına, yola en
+## yakın önce) kuyruğa; kalanı (bağlı değil ya da K'yı aşan) eski dikkat yoluna (`attention`) gider: zorunlu
+## değerlendirme
+## HİÇBİR plan parselinde kaybolmaz.
+func _route_fresh_plans(state: GameState, d: Dictionary, fresh_plans: Array) -> void:
+	var attention: Dictionary = d["attention"]
+	var attention_cmd: Dictionary = d["attention_cmd"]
+	var due := state.tick + _cfg.p("attention_delay_days")
+	var roads := PriorityReview.road_polylines(state)
+	var overlay := ParcelZoningSystem.overlay_ref(state)
+	var by_command: Dictionary = {}  # plan komutu -> [[dist2, i]...]
+	var fallback: Array = []
+	for pair: Array in fresh_plans:
+		var i: int = pair[0]
+		var dist2 := -1
+		if _is_planned_buildable(overlay[_ids[i]]):
+			dist2 = PriorityReview.dist2_to_roads(_center_x_cm[i], _center_z_cm[i], roads)
+		if dist2 >= 0 and dist2 <= _priority_radius2_cm:
+			if not by_command.has(pair[1]):
+				by_command[pair[1]] = []
+			(by_command[pair[1]] as Array).append([dist2, i])
+		else:
+			fallback.append(pair)
+	var commands: Array = by_command.keys()
+	commands.sort()
+	for command_id: int in commands:
+		fallback.append_array(PriorityReview.enqueue(d, by_command[command_id], _priority_max_parcels, due, command_id, true))
+	for pair: Array in fallback:
+		attention[pair[0]] = due
+		attention_cmd[pair[0]] = pair[1]
+		if d.has("priority"):  # parsel kuyruktaysa eski girişi düşer: tek zorunlu değerlendirme
+			(d["priority"] as Dictionary).erase(pair[0])
+			(d["priority_cmd"] as Dictionary).erase(pair[0])
+
+
+## Vadesi gelen kuyruk girişleri, (vade, indeks) sırasıyla, günlük değerlendirme bütçesi (`max_reviews_per_tick`) kadar.
+## Bölgenin günlük başlangıç sınırı dolmuşsa giriş ertesi güne kalır (bütçe harcamaz); parsel artık boş değilse sessizce
+## düşer. Kullanılan değerlendirme sayısını döndürür (periyodik tarama kalan bütçeyi kullanır).
+func _run_priority_queue(state: GameState, d: Dictionary, starts_today: PackedInt32Array) -> int:
+	var due := PriorityReview.due_keys(d, state.tick)
+	if due.is_empty():
+		return 0
+	var queue: Dictionary = d["priority"]
+	var cmds: Dictionary = d["priority_cmd"]
+	var stage: PackedByteArray = d["stage"]
+	var max_reviews := _cfg.p("max_reviews_per_tick")
+	var max_starts := _cfg.p("max_starts_per_region_per_day")
+	var used := 0
+	for key: int in due:
+		if used >= max_reviews:
+			break
+		var i := PriorityReview.index_of_key(key)
+		if stage[i] != EconomyState.STAGE_VACANT:
+			queue.erase(i)
+			cmds.erase(i)
+			continue
+		if starts_today[_region_of[i]] >= max_starts:
+			continue
+		var command_id: int = cmds.get(i, 0)
+		queue.erase(i)
+		cmds.erase(i)
+		_evaluate(state, d, i, command_id, starts_today)
+		used += 1
+	return used
+
+
+## Yürürlükteki plan yatırıma açık bir imar mı? (izinli kullanımı olan; `zone.green` gibi kapalı imar değil)
+func _is_planned_buildable(entry: Dictionary) -> bool:
+	var zone: StringName = entry.get("zone", &"")
+	return zone != &"" and not (_cfg.zone_profile(zone).get("uses", []) as Array).is_empty()
 
 
 func _effective_zone(overlay: Dictionary, i: int) -> StringName:
