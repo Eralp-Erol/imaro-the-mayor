@@ -174,6 +174,11 @@ static func count_connections(net: WorldNetwork, pts: PackedVector2Array) -> int
 ## örnekler (uç yapışması ve kesişimler) atlanır. Dönüş: {found, at}.
 static func first_parcel_hit(net: WorldNetwork, pts: PackedVector2Array, rules: RoadDraftRules,
 		half_width_m: float) -> Dictionary:
+	if pts.size() < 2:
+		return {"found": false, "at": Vector2.ZERO}
+	var scan := RoadDraftParcelScan.create(net, RoadDraftParcelScan.sample_box(pts, half_width_m))
+	if scan.is_empty():
+		return {"found": false, "at": Vector2.ZERO}
 	for i in range(pts.size() - 1):
 		var a := pts[i]
 		var b := pts[i + 1]
@@ -183,7 +188,7 @@ static func first_parcel_hit(net: WorldNetwork, pts: PackedVector2Array, rules: 
 		for s in steps + 1:
 			var p := a.lerp(b, float(s) / float(steps))
 			for probe in [p, p + normal, p - normal]:
-				if _in_parcelized_block(net, probe):
+				if scan.covers(probe) and _in_parcelized_block(net, probe):
 					return {"found": true, "at": probe}
 	return {"found": false, "at": Vector2.ZERO}
 

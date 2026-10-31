@@ -1,12 +1,21 @@
 class_name NetworkComponents
 extends RefCounted
-## Kip başına BAĞLI BİLEŞEN önbelleği (WorldNetwork.components/component_of; T-050 tick maliyeti). Her kip için
-## `info = {of, list, memo, pe, pn}`:
-##   list: bileşen başına sıralı düğüm listesi, bileşenler en küçük düğüm kimliğine göre sıralı;
-##   of:   düğüm kimliği -> `list` indeksi (kipte kenarı olan düğümler;
-##         kenarı yalnız kapalı olan düğüm tek başına bileşendir);
-##   memo: kenar kimliği -> Vector3i(a, b, açık) (kipteki kenarların önbellek anındaki hâli);
+## Kip başına BAĞLI BİLEŞEN önbelleği (WorldNetwork.components/component_of; T-050 tick maliyeti, T-051 geri alma).
+## Her kip için `info = {of, list, memo, pe, pn}`:
+##   list: bileşen başına sıralı düğüm listesi, bileşenler en küçük düğüm kimliğine göre sıralı (yerinde DEĞİŞTİRİLMEZ,
+##         yama yeni dizi üretir; anlık görüntüler paylaşır);
+##   of:   PackedInt32Array, düğüm kimliği -> `list` indeksi (kipte kenarı olan düğümler; yoksa -1; kenarı yalnız
+##         kapalı olan düğüm tek başına bileşendir);
+##   memo: PackedInt32Array, kenar kimliği e için [3e, 3e+1, 3e+2] = (a, b, açık 0/1) kenarın önbellek anındaki hâli
+##         (a = -1: kipte değil);
 ##   pe/pn: önbellekten sonra değişen (işaretli) kenar / düğüm kimlikleri (NetworkHashCache.mark iletir).
+## Godot 4.7'de Packed*Array atama/argüman geçirmede PAYLAŞILIR (yazma her yerde görünür): anlık görüntü
+## `duplicate()` ister.
+##
+## Geri alma (T-051): `NetworkOpJournal.begin` işlemden ÖNCEki önbelleği ucuz kopyalar (`remember`: iki Packed dizi
+## memcpy, ~0,03 ms), `undo_last_op` ağ işlemden önceki ile BİREBİR aynı olduğundan o kopyayı geri koyar (`restore`);
+## bileşen sorgusu tam hesap (~30 ms) yerine yamasız önbellekten gelir. Bellek için yalnız son `UNDO_SNAPSHOTS` işlemde
+## kopya tutulur; daha eskisi geri alınırsa önbellek temizlenir (eski davranış, doğru ama yavaş).
 ##
 ## Sorguda işaretler varsa önbellek YAMALANIR; sonuç `build` (tam hesap) ile BİT-BİT aynıdır (liste, sıra, indeksler).
 ## Yama yalnız şu durumda geçerlidir: silinen düğüm yok, kipte kenarını yitiren düğüm yok ve kaybolan her AÇIK bağlantı
@@ -14,9 +23,13 @@ extends RefCounted
 ## yükseltme). Aksi halde (silme, kapatma, kopma) tam hesaba düşer. Mühürsüz ağda WorldNetwork her değişimde sözlüğü
 ## temizler (tam hesap). Saf; WorldNetwork'ün `_`-önekli üyelerine bilerek erişir (arkadaş sınıf).
 
+## Bileşen önbelleği kopyası tutulan son geri alınabilir işlem sayısı (bellek: işlem başına ~0,1 MB / kip).
+const UNDO_SNAPSHOTS := 8
+
 ## Ölçüm/test sayaçları (durum değildir, hash'e girmez).
 static var patched: int = 0
 static var rebuilt: int = 0
+static var restored: int = 0
 
 
 ## Kipin bileşen bilgisi; işaretler varsa yamalar, yamalanamıyorsa baştan kurar.
@@ -42,6 +55,38 @@ static func mark(cache: Dictionary, kind: int, id: int) -> void:
 		pending[id] = true
 
 
+## Düğümün bileşen indeksi (`list` sırasında); kipte kenarı yoksa -1.
+static func index_of(info_dict: Dictionary, nid: int) -> int:
+	var of: PackedInt32Array = info_dict["of"]
+	return of[nid] if nid >= 0 and nid < of.size() else -1
+
+
+## İşlem başlarken (NetworkOpJournal.begin) önbelleğin kopyasını günlüğe yazar; daha eski günlüklerin kopyasını bırakır.
+static func remember(net: WorldNetwork, journal: NetworkOpJournal) -> void:
+	var stack: Array[NetworkOpJournal] = net._undo_stack
+	if stack.size() >= UNDO_SNAPSHOTS:
+		stack[stack.size() - UNDO_SNAPSHOTS].components = {}
+	var saved := {}
+	for mode: StringName in net._component_cache:
+		var cur: Dictionary = net._component_cache[mode]
+		saved[mode] = {"of": (cur["of"] as PackedInt32Array).duplicate(), "list": cur["list"],
+				"memo": (cur["memo"] as PackedInt32Array).duplicate(), "pe": (cur["pe"] as Dictionary).duplicate(),
+				"pn": (cur["pn"] as Dictionary).duplicate()}
+	journal.components = saved
+
+
+## Geri almadan sonra (ağ işlemden önceki ile aynı) önbelleği işlem öncesi kopyaya döndürür. Kopya yoksa dokunmaz
+## (çağıran zaten temizlemiş olmalı). Sözlük YERİNDE doldurulur: NetworkHashCache aynı nesneyi tutar.
+static func restore(net: WorldNetwork, saved: Dictionary) -> void:
+	if saved.is_empty():
+		return
+	var cache: Dictionary = net._component_cache
+	cache.clear()
+	for mode: StringName in saved:
+		cache[mode] = saved[mode]
+	restored += 1
+
+
 ## Tam hesap (referans): kenarlar üzerinden birleşim-bulma (düğüm kimliği indeksli dizi); bileşenler kimliğe göre sıralı
 ## düğümlerden ilk görülme sırasıyla numaralanır (= en küçük üye sırası), üyeler zaten artan sıralıdır.
 static func build(net: WorldNetwork, mode: StringName) -> Dictionary:
@@ -51,12 +96,13 @@ static func build(net: WorldNetwork, mode: StringName) -> Dictionary:
 	var parent := PackedInt32Array()
 	parent.resize((int(ids[-1]) if not ids.is_empty() else 0) + 1)
 	parent.fill(-1)  # -1 = kipte kenarı yok (bileşen üyesi değil)
-	var memo := {}
+	var memo := PackedInt32Array()
+	_fit(memo, 3 * net._next_edge_id, -1)
 	for eid: int in net.edges:
 		var e: WorldRoadEdge = net.edges[eid]
 		if WorldRoadEdge.mode_of(e.road_class) != mode:
 			continue
-		memo[eid] = Vector3i(e.a, e.b, 1 if e.open else 0)
+		_memo_put(memo, eid, e.a, e.b, e.open)
 		if parent[e.a] < 0:
 			parent[e.a] = e.a
 		if parent[e.b] < 0:
@@ -66,7 +112,9 @@ static func build(net: WorldNetwork, mode: StringName) -> Dictionary:
 			var rb := _root(parent, e.b)
 			if ra != rb:
 				parent[maxi(ra, rb)] = mini(ra, rb)
-	var of := {}
+	var of := PackedInt32Array()
+	of.resize(parent.size())
+	of.fill(-1)
 	var list: Array[PackedInt32Array] = []
 	var index_of_root := {}
 	for nid: int in ids:
@@ -84,6 +132,22 @@ static func build(net: WorldNetwork, mode: StringName) -> Dictionary:
 	return {"of": of, "list": list, "memo": memo, "pe": {}, "pn": {}}
 
 
+## `arr`yi en az `size` uzunluğa getirir; yeni yuvalar `fill` ile dolar (resize 0 doldurur).
+static func _fit(arr: PackedInt32Array, size: int, fill: int) -> void:
+	var old := arr.size()
+	if size > old:
+		arr.resize(size)
+		for i in range(old, size):
+			arr[i] = fill
+
+
+static func _memo_put(memo: PackedInt32Array, eid: int, a: int, b: int, is_open: bool) -> void:
+	_fit(memo, 3 * eid + 3, -1)
+	memo[3 * eid] = a
+	memo[3 * eid + 1] = b
+	memo[3 * eid + 2] = 1 if is_open else 0
+
+
 static func _root(parent: PackedInt32Array, nid: int) -> int:
 	var cur := nid
 	while parent[cur] != cur:
@@ -94,9 +158,9 @@ static func _root(parent: PackedInt32Array, nid: int) -> int:
 
 ## Yama; false = uygulanamaz (çağıran tam hesaba düşer).
 static func _patch(net: WorldNetwork, mode: StringName, info_dict: Dictionary) -> bool:
-	var of: Dictionary = info_dict["of"]
+	var of: PackedInt32Array = info_dict["of"]
 	for nid: int in info_dict["pn"]:
-		if of.has(nid) and not net.nodes.has(nid):
+		if _has(of, nid) and not net.nodes.has(nid):
 			return false
 	var scan := _scan(net, mode, info_dict)
 	if scan.is_empty():
@@ -132,8 +196,8 @@ static func _patch(net: WorldNetwork, mode: StringName, info_dict: Dictionary) -
 ## İşaretli kenarları şimdiki hâliyle tarar. Dönüş: {} = yama uygulanamaz; aksi halde {nodes: düğüm DSU'su (köprü
 ## denetimi), keys: bileşen/yeni-düğüm DSU'su (birleşme), removed: birleşen eski bileşen indeksleri}.
 static func _scan(net: WorldNetwork, mode: StringName, info_dict: Dictionary) -> Dictionary:
-	var of: Dictionary = info_dict["of"]
-	var memo: Dictionary = info_dict["memo"]
+	var of: PackedInt32Array = info_dict["of"]
+	var memo: PackedInt32Array = info_dict["memo"]
 	var nodes_dsu := {}
 	var keys_dsu := {}
 	var lost: Array[Vector2i] = []
@@ -141,19 +205,20 @@ static func _scan(net: WorldNetwork, mode: StringName, info_dict: Dictionary) ->
 	for eid: int in info_dict["pe"]:
 		var cur: WorldRoadEdge = net.edges.get(eid, null)
 		var valid := cur != null and cur.mode() == mode
-		var old: Variant = memo.get(eid, null)
-		if old != null:
-			var o: Vector3i = old
-			var same_ends := valid and ((cur.a == o.x and cur.b == o.y) or (cur.a == o.y and cur.b == o.x))
+		if 3 * eid + 2 < memo.size() and memo[3 * eid] >= 0:
+			var oa := memo[3 * eid]
+			var ob := memo[3 * eid + 1]
+			var same_ends := valid and ((cur.a == oa and cur.b == ob) or (cur.a == ob and cur.b == oa))
 			if not same_ends:
-				orphans.append(o.x)
-				orphans.append(o.y)
-			if o.z == 1 and not (same_ends and cur.open):
-				lost.append(Vector2i(o.x, o.y))
+				orphans.append(oa)
+				orphans.append(ob)
+			if memo[3 * eid + 2] == 1 and not (same_ends and cur.open):
+				lost.append(Vector2i(oa, ob))
 		if not valid:
-			memo.erase(eid)
+			if 3 * eid + 2 < memo.size():
+				memo[3 * eid] = -1
 			continue
-		memo[eid] = Vector3i(cur.a, cur.b, 1 if cur.open else 0)
+		_memo_put(memo, eid, cur.a, cur.b, cur.open)
 		_reg(keys_dsu, _key(of, cur.a))
 		_reg(keys_dsu, _key(of, cur.b))
 		if cur.open:
@@ -202,7 +267,7 @@ static func _groups(info_dict: Dictionary, scan: Dictionary) -> Dictionary:
 
 
 ## `of` indekslerini yeni sıraya göre günceller: yeni/birleşen gruplar ve kayan eski bileşenler yazılır.
-static func _reindex(of: Dictionary, old_list: Array[PackedInt32Array], out: Array[PackedInt32Array],
+static func _reindex(of: PackedInt32Array, old_list: Array[PackedInt32Array], out: Array[PackedInt32Array],
 		out_groups: Array) -> void:
 	var old_at := {}  # eski bileşenin ilk üyesi -> eski indeks (değişmemiş bileşenleri tanımak için)
 	for k in old_list.size():
@@ -220,12 +285,17 @@ static func _reindex(of: Dictionary, old_list: Array[PackedInt32Array], out: Arr
 				for nid in old_list[old_index]:
 					of[nid] = idx
 		for nid: int in g["fresh"]:
+			_fit(of, nid + 1, -1)
 			of[nid] = idx
 
 
 # Bileşen anahtarı: eski üye -> bileşen indeksi (>= 0); yeni üye -> -düğüm kimliği.
-static func _key(of: Dictionary, nid: int) -> int:
-	return int(of[nid]) if of.has(nid) else -nid
+static func _key(of: PackedInt32Array, nid: int) -> int:
+	return of[nid] if _has(of, nid) else -nid
+
+
+static func _has(of: PackedInt32Array, nid: int) -> bool:
+	return nid >= 0 and nid < of.size() and of[nid] >= 0
 
 
 static func _reg(dsu: Dictionary, key: int) -> void:
