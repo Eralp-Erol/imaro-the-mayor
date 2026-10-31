@@ -301,8 +301,18 @@ func test_the_playable_politics_config_reads_the_reactions_data_file() -> void:
 	assert_object(playable).is_not_null()
 	var signals: Array = playable.cohort("housed")["grievance_rules"].map(
 		func(rule: Dictionary) -> String: return String(rule["signal"]))
-	assert_bool(signals.has("displacement")).override_failure_message("reactions.json kesim kuralları yüklenmedi").is_true()
+	assert_bool(signals.has("displacement")).override_failure_message(
+		"reactions.json kesim kuralları yüklenmedi").is_true()
 	var raw: Dictionary = _raw_reactions()["local"]
 	for k: String in ["neighborhood_households", "min_displacement_pm", "full_displacement_pm", "proximity_share_pm"]:
 		assert_int(int(playable.reactions["local"][k])).is_equal(int(raw[k]))
-	assert_str(playable.digest).is_equal(politics_config().digest)  # digest dışı: kamulaştırmasız hash'ler değişmez
+	assert_bool(bool(playable.reactions["local"]["enabled"])).is_true()
+	# digest dışılığı: test_the_local_section_lives_outside_the_config_digest (aynı from_files yolu)
+
+
+func test_without_a_reactions_file_the_local_reading_is_off_by_code_default() -> void:
+	# Bayrak: kod varsayılanı KAPALI; yalnız `reactions.json` açar (dosyasız koşular ve GOLDEN A/B etkilenmez).
+	assert_bool(bool(ReactionConfig.defaults()["local"]["enabled"])).is_false()
+	var cfg := PoliticsConfig.from_files(raw_politics(), config())
+	assert_bool(cfg.is_valid()).override_failure_message(cfg.error).is_true()
+	assert_bool(bool(cfg.reactions["local"]["enabled"])).is_false()

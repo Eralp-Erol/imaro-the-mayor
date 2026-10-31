@@ -15,7 +15,9 @@ extends RefCounted
 ##          `min_displacement_pm` ve üstündeyse komut başına BİR gündem öğesi açılır (bölge payı kapıları aranmaz).
 ##          `full_displacement_pm`: baskının tavana (1000) çıktığı seviye. `proximity_share_pm`: yakındaki (yerinden
 ##          edilmeyen) hanelerin baskıya katkı payı (binde; yerinden edilenden hafif). `cohort`: öğeyi taşıyan kesimin
-##          kohortu (blocs.json kimliği; yerinden edilenler barınan hanelerdi). `enabled` false ise yol kapalıdır.
+##          kohortu (blocs.json kimliği; yerinden edilenler barınan hanelerdi). `enabled` false ise yol kapalıdır;
+##          KOD varsayılanı kapalıdır (bayrak: yalnız `reactions.json` açar), böylece dosyasız koşular ve GOLDEN A/B
+##          etkilenmez.
 
 const KEYS: Array[String] = ["schema", "window_days", "cohorts", "cause", "agenda", "local"]
 const LOCAL_KEYS: Array[String] = ["enabled", "cohort", "neighborhood_households", "min_displacement_pm",
@@ -28,7 +30,7 @@ static func defaults() -> Dictionary:
 		"cause": {"decision": "decision.bloc.expropriation_cause", "threshold": 10,
 			"weights": {"displaced_households": 700, "road_proximity": 300}},
 		"agenda": {"template": "PE-01", "min_displacement_pm": 20, "full_displacement_pm": 100},
-		"local": {"enabled": true, "cohort": "housed", "neighborhood_households": 200, "min_displacement_pm": 20,
+		"local": {"enabled": false, "cohort": "housed", "neighborhood_households": 200, "min_displacement_pm": 20,
 			"full_displacement_pm": 200, "proximity_share_pm": 250},
 	}
 
