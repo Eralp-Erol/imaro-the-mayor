@@ -8,6 +8,10 @@ const DEFAULT_PATH := "res://data/world/ismeral/network.json"
 const CROSSING_REJECT := &"reject"
 ## Aşama 2 (kamulaştırma, T-042b; Q-017 AÇIK): parselli bloğa girişe izin verir. v0'da KULLANILMAZ.
 const CROSSING_ALLOW := &"allow"
+## T-042b kamulaştırma kipi: DÜZ taslak (`RoadDraftCheck.check`) yine `crosses_parcels` ile reddedilir (davranış
+## `reject` ile AYNI); kamulaştırma bağdaştırıcısı (`NetworkExpropriationPort`) bu kipte kullanılabilir ve parselli
+## bloktan geçen yolu, parselleri BÜTÜNÜYLE alarak ekler. `keep_parcels` açık olmalıdır.
+const CROSSING_EXPROPRIATE := &"expropriate"
 
 ## Oyuncunun çizebileceği yol sınıfları (sim'in `road_works.json` listesi bunun alt kümesi olmalı).
 var allowed_classes: Array[StringName] = [WorldRoadEdge.CLASS_LOCAL]
@@ -15,7 +19,8 @@ var min_length_m: float = 12.0
 var max_length_m: float = 400.0
 ## Örnek noktalarında arazi eğimi bunu aşarsa `slope` reddi (WorldData.slope_degrees_at).
 var max_slope_deg: float = 11.0
-## Parselli bloğun içine giriş kuralı: CROSSING_REJECT (v0) | CROSSING_ALLOW (aşama 2).
+## Parselli bloğun içine giriş kuralı: CROSSING_REJECT (v0) | CROSSING_EXPROPRIATE (T-042b) | CROSSING_ALLOW (düz
+## denetim hiç sormaz).
 var crossing_parcels: StringName = CROSSING_REJECT
 ## Tüm örnekler mevcut yola bu kadar yakınsa taslak `duplicate` sayılır (m).
 var duplicate_tolerance_m: float = 3.0
@@ -47,6 +52,12 @@ static func from_control(net_control: Dictionary) -> RoadDraftRules:
 static func load_path(path: String = DEFAULT_PATH) -> RoadDraftRules:
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	return from_control(parsed if parsed is Dictionary else {})
+
+
+## Dünya kamulaştırma kipi veride açık mı? (Bağdaştırıcının `available()` koşulu; ağ tarafı `keep_parcels` ayrıca
+## denetlenir.)
+func expropriation_enabled() -> bool:
+	return crossing_parcels == CROSSING_EXPROPRIATE
 
 
 func allows_region(code: StringName) -> bool:

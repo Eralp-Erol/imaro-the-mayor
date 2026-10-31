@@ -43,6 +43,15 @@ var edge_parcels_before: Dictionary = {}
 var change: NetworkChange = null
 ## Yol dışı kenar özellikleri bu işlemde değişti mi (yalnız set_open): bloklar etkilenmez.
 var geometry_changed: bool = false
+## T-042b kamulaştırmalı işlem: alınan parsel kimlikleri (artan) ve kümesi; havuza alınıp yeni bloklara KİMLİKLERİYLE
+## taşınan parseller [parsel, önceki blok, önceki cephe kenarı]; bloğu korunup tek tek alınan parseller; o blokların
+## önceki parsel listeleri (blok kimliği -> PackedInt32Array, ilk dokunuştan önce).
+var expropriating: bool = false
+var taken: PackedInt64Array = PackedInt64Array()
+var taken_set: Dictionary = {}
+var parcels_moved: Array = []
+var parcels_retired: Array[WorldParcel] = []
+var block_parcels_before: Dictionary = {}
 ## İşlemden ÖNCEki bileşen önbelleği kopyası (NetworkComponents.remember; geri alınca geri konur; boş = kopya yok).
 var components: Dictionary = {}
 
@@ -113,6 +122,11 @@ func on_block_updated(block: WorldBlock, frontage: Dictionary) -> void:
 			"signature": block.signature, "frontage": frontage})
 
 
+func on_block_parcels(block: WorldBlock) -> void:
+	if not block_parcels_before.has(block.id):
+		block_parcels_before[block.id] = block.parcel_ids.duplicate()
+
+
 func on_edge_parcels(edge_id: int, current: Variant) -> void:
 	if not edge_parcels_before.has(edge_id):
 		edge_parcels_before[edge_id] = null if current == null else (current as PackedInt32Array).duplicate()
@@ -166,10 +180,15 @@ func extends_existing_graph(net: WorldNetwork) -> bool:
 ## (kimlik listeleri: "removed" = işlemin YARATTIĞI ve şimdi silinenler, "restored" = geri gelenler).
 func undo(net: WorldNetwork) -> Dictionary:
 	var report := {"removed_blocks": [], "restored_blocks": [], "removed_parcels": [], "restored_parcels": []}
+	var moved := {}  # kamulaştırma: yeni bloklara taşınan parseller geri alınca "silindi" sayılmaz (geri konur)
+	for rec: Array in parcels_moved:
+		moved[(rec[0] as WorldParcel).id] = true
 	for bid in blocks_added:
 		if net.blocks.has(bid):
 			var block: WorldBlock = net.blocks[bid]
-			report["removed_parcels"].append_array(Array(block.parcel_ids))
+			for pid in block.parcel_ids:
+				if not moved.has(pid):
+					report["removed_parcels"].append(pid)
 			NetworkRestore.drop_block(net, bid)
 			report["removed_blocks"].append(bid)
 	var at := events.size() - 1
@@ -182,6 +201,17 @@ func undo(net: WorldNetwork) -> Dictionary:
 	for parcel in parcels_removed:
 		NetworkRestore.reinstate_parcel(net, parcel)
 		report["restored_parcels"].append(parcel.id)
+	for rec: Array in parcels_moved:  # aynı nesne, önceki blok ve cephe
+		var kept: WorldParcel = rec[0]
+		NetworkRestore.reinstate_parcel(net, kept)
+		kept.block_id = int(rec[1])
+		kept.frontage_edge = int(rec[2])
+	for parcel in parcels_retired:
+		NetworkRestore.reinstate_parcel(net, parcel)
+		report["restored_parcels"].append(parcel.id)
+	for bid: int in block_parcels_before:
+		if net.blocks.has(bid):
+			(net.blocks[bid] as WorldBlock).parcel_ids = block_parcels_before[bid]
 	for upd in blocks_updated:
 		var block: WorldBlock = upd["block"]
 		NetworkRestore.restore_block_geometry(net, block, upd["outline"], upd["edge_ids"], upd["signature"])

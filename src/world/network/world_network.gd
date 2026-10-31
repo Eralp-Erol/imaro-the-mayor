@@ -260,6 +260,14 @@ func add_road(points: PackedVector2Array, road_class: StringName, width_m: float
 	return _apply_op(op, true)
 
 
+## T-042b: parselli bloktan geçen yol; geçtiği parseller BÜTÜNÜYLE alınır (emekliye ayrılır, yeni parsel YOK). Rapor:
+## `added_parcels` boş, `removed_parcels` == `RoadDraftCheck.taken_parcels`. `keep_parcels` açık olmalı. `saved_taken`
+## (yeniden oynatma): kayıttaki alınan kimlikler; yeniden hesaplananla aynı değilse ağa dokunmadan hata.
+func add_road_expropriating(points: PackedVector2Array, road_class: StringName, width_m: float = -1.0,
+		saved_taken: Variant = null) -> Dictionary:
+	return _apply_op(NetworkExpropriation.road_op(self, points, road_class, width_m, saved_taken), true)
+
+
 func remove_edge(edge_id: int) -> Dictionary:
 	return _apply_op({"op": "remove_edge", "edge": edge_id}, true)
 
@@ -415,6 +423,11 @@ func _op_add_road(op: Dictionary, report: Dictionary) -> void:
 		report["ok"] = false
 		report["error"] = "yol çok kısa"
 		return
+	var x_error := NetworkExpropriation.begin(self, op, _journal)
+	if not x_error.is_empty():
+		report["ok"] = false
+		report["error"] = x_error
+		return
 	var drawn := NetworkPlanarizer.draw(self, points, cls, float(op.get("width_dm", 100)) * 0.1,
 			WorldRoadEdge.LAYER_DELTA)
 	report["added_edges"] = Array(drawn["edges"])
@@ -525,7 +538,11 @@ func refresh_blocks() -> Dictionary:
 	var candidates := {}
 	for old_id: int in blocks:
 		candidates[old_id] = true
-	for face in NetworkBlockMatch.match_faces(self, NetworkBlocks.extract(self), matched, candidates):
+	var pending := NetworkBlockMatch.match_faces(self, NetworkBlocks.extract(self), matched, candidates)
+	if NetworkExpropriation.active(self):  # tam ve yerel yenileme AYNI havuzlu yeniden kurma işlevini kullanır
+		NetworkExpropriation.rebuild(self, pending, matched, report, blocks.keys())
+		pending.clear()
+	for face in pending:
 		var block := _build_block(face, report)
 		matched[block.id] = true
 		WorldNetwork.report_add(report, "added_blocks", block.id)
@@ -685,16 +702,20 @@ func _set_frontage(parcel: WorldParcel, edge_id: int) -> void:
 	_edge_parcels[edge_id] = list
 
 
-func _remove_block(block_id: int, report: Dictionary) -> void:
+## `keep`: yeni bloğa taşınan (kamulaştırma, T-042b) parsel kimlikleri; silinmez, rapora girmez.
+func _remove_block(block_id: int, report: Dictionary, keep: Dictionary = {}) -> void:
 	var block: WorldBlock = blocks[block_id]
 	if _journal != null:
 		var gone: Array[WorldParcel] = []
 		for pid in block.parcel_ids:
 			var p: WorldParcel = parcels[pid]
-			gone.append(p)
-			_journal.on_edge_parcels(p.frontage_edge, _edge_parcels.get(p.frontage_edge))
+			if not keep.has(pid):
+				gone.append(p)
+				_journal.on_edge_parcels(p.frontage_edge, _edge_parcels.get(p.frontage_edge))
 		_journal.on_block_removed(block, gone)
 	for pid in block.parcel_ids:
+		if keep.has(pid):
+			continue
 		var parcel: WorldParcel = parcels[pid]
 		if _edge_parcels.has(parcel.frontage_edge):
 			var list: PackedInt32Array = _edge_parcels[parcel.frontage_edge]

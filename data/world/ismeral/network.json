@@ -9,7 +9,7 @@
 		"rail: ray hatları (liman limanından D4'e vb.); 'port' = T0 liman düğümü. ferries: D1 <-> D6 feribot hattı; iki iskele kıyıdan kurulur, hat suyun üstünden geçer, doldurma yoktur (WLD-05).",
 		"connectors: ana ağdan kopuk kalan parçalar (örn. tarla yolları) en yakın düğüme toplayıcıyla bağlanır; enabled=false testlerde bozulmuş varyant içindir.",
 		"organic (T-049 A, ÇM): her elips ayak izinin sınırı saf elips değil `warp` ölçek alanıdır: warp = 1 + noise (tohum = layout_seed + ayak izi kimliği; cell_m = özellik boyu m, amp = genlik) + terrain (eğim slope_lo_deg altında flat_gain kadar yayılır, slope_hi_deg üstünde steep_cut kadar çekilir) + shore (kıyıdan near_m..far_m şeridinde gain kadar: kıyı boyu uzama) + ribbon (`links` ile bağlı komşu merkeze doğru şerit/lob: gain = ek ölçek, sigma_m = lob genişliği, start_norm = merkezden başlama oranı). scale_min/scale_max kelepçe, cell_m raster adımı. defaults tüm dokulara; fabrics[kod] kısmi geçersiz kılma (WLD-04: D1+D6 kompakt çekirdek = düşük oynaklık/lob, D2-D5 daha oynak). Koordinat YOK; enabled=false saf elips verir.",
-		"player_roads: oyuncunun çizdiği yol (T-042 aşama 1, D-009; hepsi ÇM). keep_parcels=true: oyuncu yolu parsel kümesini değiştirmez (çevirdiği yeni yüzler parsellenmez, mevcut kenarın sınıfı yükseltilmez); sim parsel kümesi sabit. crossing_parcels: 'reject' = yol parselli bloğun içine giremez (aşama 1); 'allow' aşama 2'de (kamulaştırma, Q-017 AÇIK) açılır, şimdi KULLANILMAZ. allowed_classes/min_length_m/max_length_m/max_slope_deg/duplicate_tolerance_m/parcel_sample_step_m: taslak denetimi (RoadDraftCheck). jurisdiction_regions: yetki alanı bölge kodları (boş = tüm bölgeler); D2 yalnız stüdyo TEST ALANI önerisidir, başlangıç bölgesini oyuncu seçer (CAN-08, D-002).",
+		"player_roads: oyuncunun çizdiği yol (T-042 aşama 1, D-009; hepsi ÇM). keep_parcels=true: oyuncu yolu parsel kümesini değiştirmez (çevirdiği yeni yüzler parsellenmez, mevcut kenarın sınıfı yükseltilmez); sim parsel kümesi sabit. crossing_parcels: 'reject' = yol parselli bloğun içine giremez (aşama 1, kamulaştırma kapalı); 'expropriate' = DÜZ taslak yine reddedilir (davranış 'reject' ile aynı), ama kamulaştırma köprüsü (NetworkExpropriationPort, T-042b) kullanılabilir: yol parselli bloktan geçer, geçtiği parseller BÜTÜNÜYLE alınır (yeni parsel yok, geri alınabilir, D-011); 'allow' düz denetimi parsele hiç sordurmaz (yalnız test). expropriation_margin_m: alınan parsel koridorunun yarı genişliğine pay (m; yoksa geometry.snap_m). allowed_classes/min_length_m/max_length_m/max_slope_deg/duplicate_tolerance_m/parcel_sample_step_m: taslak denetimi (RoadDraftCheck). jurisdiction_regions: yetki alanı bölge kodları (boş = tüm bölgeler); D2 yalnız stüdyo TEST ALANI önerisidir, başlangıç bölgesini oyuncu seçer (CAN-08, D-002).",
 		"parcel_templates: lot_width_m/jitter = cephe genişliği, max_depth_m = tek sıra lot derinliği, min_area_m2/min_frontage_m = alt eşikler, max_block_area_m2 = bundan büyük yüz parselsiz AÇIK arazi (kama/yeşil kuşak) sayılır. Kentsel şablonlar (core/compact/mixed) T-005 yerleşimi içindir; 'industrial' T0 liman/sanayi sahası; 'rural' tarla parselleri. Bunlar arazi KULLANIMI değil, parsel geometrisidir (imar/yapı: sim/T-005)."
 	],
 	"schema_version": 1,
@@ -60,7 +60,8 @@
 	},
 	"player_roads": {
 		"keep_parcels": true,
-		"crossing_parcels": "reject",
+		"crossing_parcels": "expropriate",
+		"expropriation_margin_m": 3.0,
 		"allowed_classes": ["local"],
 		"min_length_m": 12.0,
 		"max_length_m": 400.0,

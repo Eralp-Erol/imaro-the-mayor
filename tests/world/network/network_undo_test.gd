@@ -371,7 +371,7 @@ func test_player_road_rules_live_in_the_network_data_file() -> void:
 	assert_bool(control.has("player_roads")).is_true()
 	var data: Dictionary = control["player_roads"]
 	assert_bool(data["keep_parcels"]).is_true()
-	assert_str(data["crossing_parcels"]).is_equal("reject")
+	assert_str(data["crossing_parcels"]).is_equal("expropriate")  # T-042b: köprü açık, DÜZ taslak yine ret
 	var rules := RoadDraftRules.from_control(control)
 	assert_array(rules.allowed_classes).is_equal([LOCAL])
 	assert_float(rules.max_length_m).is_greater(rules.min_length_m)
