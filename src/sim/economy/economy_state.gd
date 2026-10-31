@@ -21,6 +21,9 @@ const STAGE_PLANNED := 1
 const STAGE_UNDER_CONSTRUCTION := 2
 const STAGE_BUILT := 3
 const STAGE_STALLED := 4
+## T-042b (D-011): parsel bir yol tarafından ALINDI (bina yıkıldı). YALNIZ kamulaştırmada yazılır (yolsuz koşuların
+## durumu/hash'i değişmez); kimlik silinmez. Boş sayılmaz: yatırımcı bakışı, imar ve kira bu parsele işlemez.
+const STAGE_TAKEN := 5
 
 ## Karar sonuç kodu (`last_code` baytı ve gerekçe `code` alanı).
 const CODE_NONE := 0
@@ -86,6 +89,8 @@ static func stage_name(stage: int) -> StringName:
 			return ParcelView.DEVELOPMENT_BUILT
 		STAGE_STALLED:
 			return ParcelView.DEVELOPMENT_STALLED
+		STAGE_TAKEN:
+			return ParcelView.DEVELOPMENT_TAKEN
 	return ParcelView.DEVELOPMENT_VACANT
 
 
@@ -124,6 +129,8 @@ static func decorate_view(state: GameState, view: ParcelView, cfg: EconomyConfig
 	if i < 0:
 		return
 	view.development = stage_name((d["stage"] as PackedByteArray)[i])
+	if view.development == ParcelView.DEVELOPMENT_TAKEN:  # v1.5: parseli alan yol (gerekçe/iş kaydına çözülür)
+		view.taken_by_command = PublicWorksState.taken_command(state, view.id)
 	view.land_value = (d["land_value"] as PackedInt64Array)[i]
 	var owner_id: int = (d["owner_id"] as PackedInt32Array)[i]
 	if owner_id > 0:

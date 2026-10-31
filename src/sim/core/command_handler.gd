@@ -51,3 +51,11 @@ func subjects(_params: Dictionary) -> PackedStringArray:
 ## komut kimliğiyle ilişkilendirmesi (olay `command_id`) gereken işleyiciler bunu geçersiz kılar.
 func apply_with_id(state: GameState, params: Dictionary, _command_id: int) -> void:
 	apply(state, params)
+
+
+## Uygulama: `validate` geçtikten sonra çağrılır. Varsayılan `apply_with_id` + boş kod. Uygulama ANINDA ancak
+## öğrenilebilen bir ret varsa (örn. dünya raporu önizlemeden farklı) işleyici durumu DEĞİŞTİRMEDEN ret kodu döner
+## (komut `rejected` olur, durum bozulmaz). Dönüş: &"" = uygulandı.
+func try_apply(state: GameState, params: Dictionary, command_id: int) -> StringName:
+	apply_with_id(state, params, command_id)
+	return &""

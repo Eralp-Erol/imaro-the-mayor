@@ -6,9 +6,9 @@ extends GdUnitTestSuite
 const S := preload("res://tests/contracts/contract_test_support.gd")
 
 
-func test_contract_version_is_1_4_and_old_documents_stay_compatible() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.4")
-	for older in ["1.0", "1.1", "1.2", "1.3", "1.4"]:
+func test_contract_version_has_the_1_4_plan_queries_and_old_documents_stay_compatible() -> void:
+	assert_int(SimContract.VERSION_MINOR).is_greater_equal(4)  # 1.4 (T-043A) plan sorguları; 1.5 (T-042b) kamulaştırma
+	for older in ["1.0", "1.1", "1.2", "1.3", "1.4", "1.5"]:
 		assert_bool(SimContract.is_compatible(older)).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()
 

@@ -24,6 +24,8 @@ func validate(state: GameState, params: Dictionary) -> StringName:
 		return StringName(String(shape["reason_key"]).trim_prefix(_SHAPE_PREFIX))
 	if PublicWorksState.work_count(state) == 0 or not _ctx.tracks(state) or not _ctx.net.can_undo():
 		return StringName(RoadDraftCheck.key_of(RoadDraftCheck.REASON_NOTHING_TO_UNDO))
+	if _last_work(state).has("expropriation") and (_ctx.expropriation == null or not _ctx.expropriation.available()):
+		return ExpropriationFlow.CODE_DISABLED  # alınan parselleri geri verecek dünya köprüsü yok
 	return &""
 
 
@@ -31,17 +33,33 @@ func preview_args(state: GameState, _params: Dictionary) -> Dictionary:
 	var d := PublicWorksState.data(state)
 	if d.is_empty() or (d["works"] as Array).is_empty():
 		return {}
-	var last: Dictionary = (d["works"] as Array)[(d["works"] as Array).size() - 1]
+	var last := _last_work(state)
 	var units: Dictionary = last["region_units"]
-	return {"removed_command_id": last["command_id"], "length_cm": last["length_cm"], "regions": units.duplicate()}
+	var args := {"removed_command_id": last["command_id"], "length_cm": last["length_cm"], "regions": units.duplicate()}
+	if last.has("expropriation"):  # geri alınca binalar geri gelir, halk tepkisi geri GELMEZ (D-011)
+		var record: Dictionary = last["expropriation"]
+		args["restored_parcels"] = (record["parcel_ids"] as Array).size()
+		args["restored_built_parcels"] = record["built_parcels"]
+		args["restored_res_units"] = record["res_units"]
+		args["restored_com_units"] = record["com_units"]
+	return args
+
+
+static func _last_work(state: GameState) -> Dictionary:
+	var d := PublicWorksState.data(state)
+	if d.is_empty() or (d["works"] as Array).is_empty():
+		return {}
+	return (d["works"] as Array)[(d["works"] as Array).size() - 1]
 
 
 func apply_with_id(state: GameState, _params: Dictionary, command_id: int) -> void:
-	var undone := RoadDraftCheck.undo(_ctx.net)
+	var undone := _ctx.undo_live_op()  # kamulaştırmalı op'u dünya köprüsü geri alır (parselleri geri koyar)
 	if not bool(undone["ok"]):
 		push_error("PublicWorkUndoHandler: doğrulanan geri alma uygulanamadı; durum değişmedi")
 		return
 	var work := PublicWorksState.pop_work(state)
+	if work.has("expropriation"):
+		ExpropriationFlow.revert(_ctx, state, work, command_id)  # restored olayı removed'dan ÖNCE
 	var units: Dictionary = work["region_units"]
 	var subjects_out := PackedStringArray([String(SimContract.ref(SimContract.REF_COMMAND, command_id))])
 	var args := {"removed_command_id": work["command_id"], "road_class": work["road_class"],

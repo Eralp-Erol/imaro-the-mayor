@@ -36,6 +36,8 @@ static func load_default(actors: ActorConfig) -> PoliticsConfig:
 	var files := {}
 	for file_name in FILE_NAMES:
 		files[file_name] = _load_json(DIR + file_name + ".json")
+	if ResourceLoader.exists(DIR + "reactions.json"):  # T-042b: isteğe bağlı, digest dışı
+		files["reactions"] = _load_json(DIR + "reactions.json")
 	var found := {}
 	var index: Variant = files["events"]
 	if index is Dictionary and index.get("templates", null) is Array:
@@ -112,6 +114,7 @@ func _build(files: Dictionary) -> void:
 	_parse_events_index(data["events"])
 	_parse_authority(data["authority"])
 	_parse_blocs(data["blocs"])
+	_parse_reactions(files.get("reactions", null))
 	_parse_council(data["council"])
 	_parse_media(data["media"])
 	_parse_templates(files.get("templates", {}), data["events"])
@@ -265,6 +268,7 @@ func _parse_blocs(section: Dictionary) -> void:
 		blend = {}
 	var react_id := _table_id(section.get("react_decision", null), path + ".react_decision", "bloc", true)
 	blocs = {
+		"reaction_window": BlocSignals.DEFAULT_WINDOW_DAYS,
 		"decay_grievance": ActorSchema.required_int(decay, "grievance", 0, 1000, path + ".decay_pm", errors),
 		"decay_satisfaction": ActorSchema.required_int(decay, "satisfaction", 0, 1000, path + ".decay_pm", errors),
 		"attribution": ActorSchema.required_int(section, "attribution_pm", 0, 1000, path, errors),
@@ -372,7 +376,7 @@ func _derive_rules(value: Variant, id_field: String, allowed: Array[String], low
 		if not allowed.has(rule.get(id_field, null)):
 			errors.append("%s.%s: bilinmeyen kimlik '%s'" % [rpath, id_field, str(rule.get(id_field, null))])
 		var source := str(rule.get("source", ""))
-		if not source.is_empty() and not BlocSignals.NAMES.has(source):
+		if not source.is_empty() and not BlocSignals.ALL_NAMES.has(source):
 			errors.append("%s.source: bilinmeyen sinyal '%s'" % [rpath, source])
 		out.append({
 			"id": str(rule.get(id_field, "")),
@@ -394,7 +398,7 @@ func _impact_rules(value: Variant, path: String) -> Array[Dictionary]:
 			errors.append("%s: sözlük olmalı" % rpath)
 			continue
 		ActorSchema.check_unknown(rule, ["signal", "topic", "lo", "hi", "gain"], rpath, errors)
-		if not BlocSignals.NAMES.has(rule.get("signal", null)):
+		if not BlocSignals.ALL_NAMES.has(rule.get("signal", null)):
 			errors.append("%s.signal: bilinmeyen sinyal '%s'" % [rpath, str(rule.get("signal", null))])
 		if not _actors.topic_ids.has(rule.get("topic", null)):
 			errors.append("%s.topic: bilinmeyen konu '%s'" % [rpath, str(rule.get("topic", null))])
@@ -405,6 +409,43 @@ func _impact_rules(value: Variant, path: String) -> Array[Dictionary]:
 		out.append({"signal": str(rule.get("signal", "")), "topic": str(rule.get("topic", "")), "lo": lo, "hi": hi,
 			"gain": ActorSchema.required_int(rule, "gain", 0, 1000, rpath, errors)})
 	return out
+
+
+# --- Yerinden edilme / yakınlık tepkisi (T-042b, D-011) ---
+
+## İSTEĞE BAĞLI `reactions.json`: kamulaştırma tepkisinin kesim kuralları (`FILE_NAMES` DIŞINDA: `digest` ve dolayısıyla
+## kamulaştırmasız koşuların durum hash'i, GOLDEN A/B, değişmez). Kurallar kesim kurallarının SONUNA eklenir; sinyal
+## (`displacement`/`proximity`) yokken çalışmazlar (`BlocEngine`). Dosya yoksa tepki kuralı yoktur.
+func _parse_reactions(raw: Variant) -> void:
+	if raw == null:
+		return
+	if not (raw is Dictionary):
+		errors.append("reactions: dosya JSON nesnesi değil")
+		return
+	var section := _prepare(raw, "reactions")
+	ActorSchema.check_unknown(section, ["schema", "window_days", "cohorts"], "reactions", errors)
+	blocs["reaction_window"] = ActorSchema.optional_int(section, "window_days", BlocSignals.DEFAULT_WINDOW_DAYS, 1, 3650,
+		"reactions", errors)
+	var cohorts: Variant = section.get("cohorts", {})
+	if not (cohorts is Dictionary):
+		errors.append("reactions.cohorts: sözlük olmalı")
+		return
+	var ids: Array = (cohorts as Dictionary).keys()
+	ids.sort()
+	for cohort_id: String in ids:
+		var path := "reactions.cohorts.%s" % cohort_id
+		var target := cohort(cohort_id)
+		var entry: Variant = cohorts[cohort_id]
+		if target.is_empty() or not (entry is Dictionary):
+			errors.append("%s: blocs.json'da olmayan kohort ya da sözlük değil" % path)
+			continue
+		ActorSchema.check_unknown(entry, ["priorities", "grievance_rules", "satisfaction_rules"], path, errors)
+		if entry.has("priorities"):
+			target["priorities"].append_array(_derive_rules(entry["priorities"], "topic", _actors.topic_ids, 0, 1000,
+				path + ".priorities"))
+		for book in ["grievance_rules", "satisfaction_rules"]:
+			if entry.has(book):
+				target[book].append_array(_impact_rules(entry[book], "%s.%s" % [path, book]))
 
 
 # --- Meclis ---

@@ -1,0 +1,21 @@
+{
+	"schema": 1,
+	"_notes": "T-042b / D-011 (halk tepkisi): kamulastirmanin secmen kesimi kurallari. Sinyaller (BlocSignals, yol kamulastirma yaptiysa hesaplanir ve kesim durumuna YALNIZ o zaman yazilir): displacement = yolun yerinden ettigi hane x 1000 / bolge hanesi (esas tepki); proximity = yola yakin, yerinden edilmeyen hane x mesafe agirligi (binde) / bolge hanesi (daha hafif, mesafeye bagli; yaricap data/sim/public_works/road_works.json expropriation.proximity_radius_m). Ikisi de window_days boyunca dogrusal soner; geri alinan yolun tepkisi GERI ALINMAZ. Bu dosya blocs.json'dan AYRIDIR ve politika yapilandirma ozetine (digest) girmez: kamulastirmasiz kosularin durum hash'i (GOLDEN A/B) degismez. Kurallar blocs.json'daki kesim kurallarinin SONUNA eklenir; sinyal yokken calismazlar. Tum sayilar CALISMA MODELI (F05-C), kanon degil; systems-designer onayina kadar tahmin.",
+	"window_days": 360,
+	"cohorts": {
+		"housed": {
+			"priorities": [
+				{"topic": "housing_cost", "base": 500, "source": "displacement", "k": 0}
+			],
+			"grievance_rules": [
+				{"signal": "displacement", "topic": "housing_cost", "lo": 10, "hi": 150, "gain": 400},
+				{"signal": "proximity", "topic": "environment_health", "lo": 5, "hi": 100, "gain": 200}
+			]
+		},
+		"seeking": {
+			"grievance_rules": [
+				{"signal": "displacement", "topic": "housing_cost", "lo": 10, "hi": 150, "gain": 300}
+			]
+		}
+	}
+}

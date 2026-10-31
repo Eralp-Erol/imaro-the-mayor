@@ -16,6 +16,11 @@ const KIND_COUNCIL_VOTE_RESOLVED := &"council.vote_resolved"
 ## v1.3 (T-042): oyuncu yolu ağa eklendi / son yol geri alındı. `subjects`: `command.N`, `region.<kod>`…
 const KIND_PUBLIC_WORK_BUILT := &"public_work.built"
 const KIND_PUBLIC_WORK_REMOVED := &"public_work.removed"
+## v1.5 (T-042b, D-011): yol parselleri aldı (bina yıkıldı; `public_work.built`tan ÖNCE) / geri alma parselleri geri
+## verdi
+## (`public_work.removed`tan ÖNCE). `subjects`: `command.N`, `region.<kod>`…, `parcel.<id>`… (kod ve kimlik sıralı).
+const KIND_PUBLIC_WORK_EXPROPRIATED := &"public_work.expropriated"
+const KIND_PUBLIC_WORK_RESTORED := &"public_work.restored"
 
 var seq: int = SimContract.NO_ID
 var tick: int = 0

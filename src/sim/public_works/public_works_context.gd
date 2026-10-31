@@ -16,6 +16,21 @@ var busy_probe: Callable = Callable()
 var net: WorldNetwork
 var rules: RoadDraftRules
 var config: PublicWorksConfig
+## T-042b · Kamulaştırma: dünya köprüsü (yoksa/desteklemiyorsa kamulaştırma KAPALI), ekonomi (statik sütunlar), korunan
+## parsel kimlikleri (oyun katmanı T0 bayraklarından kurar; `set_protected`) ve değişim halkasına tick içinde
+## yazılacak parseller (`ExpropriationFlushSystem` boşaltır: halka yalnız günlük tick başında başlar).
+var expropriation: ExpropriationPort
+var economy: EconomySystem
+var protected_ids: Dictionary = {}
+var pending_notes: PackedInt64Array = PackedInt64Array()
+## Kamulaştırma doğrulama sonucunun SON hesabı (aynı durum + ağ sürümü + komut için tekrar hesaplanmaz; yakınlık
+## taraması O(parsel)). Anahtar durum NESNESİNİ içerir (kayıt yükleme yeni nesne getirir), tick ve alınan sayısını.
+var problem_memo_key: String = ""
+var problem_memo: Dictionary = {}
+var _x_memo: Dictionary = {}
+var _x_memo_version: int = -1
+var _x_memo_class: StringName = &""
+var _x_memo_points := PackedInt64Array()
 var _memo: Dictionary = {}
 var _memo_version: int = -1
 var _memo_class: StringName = &""
@@ -50,6 +65,48 @@ static func setup_problem(p_net: WorldNetwork, p_rules: RoadDraftRules, p_config
 
 func is_busy() -> bool:
 	return busy_probe.is_valid() and bool(busy_probe.call())
+
+
+## T-042b · Kamulaştırma köprüsünü takar (dünya adımı gerçek bağdaştırıcıyı, testler kendi ikizini verir).
+func set_expropriation(port: ExpropriationPort) -> void:
+	expropriation = port
+	_x_memo_version = -1
+	problem_memo_key = ""
+
+
+## Korunan (kamulaştırılamaz: tarihî/simge/kamu) parsel kimlikleri. Oyun katmanı T0 bayraklarından türetir.
+func set_protected(ids: PackedInt64Array) -> void:
+	protected_ids = {}
+	for id in ids:
+		protected_ids[id] = true
+	problem_memo_key = ""
+
+
+## Kamulaştırma yapılabilir mi? Veri bayrağı açık + dünya destekliyor + ekonomi kurulu (alınan parselin sütunları
+## orada).
+func expropriation_available() -> bool:
+	return config.expropriation_enabled and expropriation != null and expropriation.available() and economy != null
+
+
+## Kamulaştırma kipinde taslak: `ExpropriationPort.check` + sim'in kapasite planı + `taken`. `draft` ile aynı önbellek
+## kuralı (ağ sürümü + noktalar + sınıf). Port yoksa/desteklemiyorsa ret.
+func draft_expropriating(points_cm: PackedInt64Array, road_class: StringName, busy: bool = false) -> Dictionary:
+	if not busy and _x_memo_version == net.graph_version and _x_memo_class == road_class \
+			and _x_memo_points == points_cm:
+		return _x_memo.duplicate()
+	var result := expropriation.check(points_cm, road_class, busy)
+	if bool(result["ok"]) and not config.has_class(road_class):
+		result["ok"] = false
+		result["reason"] = RoadDraftCheck.REASON_BAD_CLASS
+		result["key"] = RoadDraftCheck.key_of(RoadDraftCheck.REASON_BAD_CLASS)
+	result = _with_plan(result, road_class)
+	if not busy:
+		_x_memo = result
+		_x_memo_version = net.graph_version
+		_x_memo_class = road_class
+		_x_memo_points = points_cm.duplicate()
+		return result.duplicate()
+	return result
 
 
 ## Komut kuyruğuna girecek işleyiciler (facade `attach_public_works` kaydeder).
@@ -116,10 +173,14 @@ func sync_to(target: GameState) -> String:
 		return "kayıt başka bir taban yol ağına ait (taban özeti uyuşmuyor)"
 	var current: Array = net.delta.ops.duplicate(true)
 	var original_hash := net.graph_hash()
-	var problem := _move_to(ops, hashes)
+	var takens: Array = []
+	if not section.is_empty():
+		for work: Dictionary in section["works"]:
+			takens.append(work["expropriation"]["parcel_ids"] if work.has("expropriation") else null)
+	var problem := _move_to(ops, hashes, takens)
 	if problem.is_empty():
 		return ""
-	var restore := _move_to(current, [])  # geri getirme: özet karşılaştırması aşağıda tek sefer
+	var restore := _move_to(current, [], [])  # geri getirme: özet karşılaştırması aşağıda tek sefer
 	if not restore.is_empty() or net.graph_hash() != original_hash:
 		return "AĞ BOZULDU: %s; eski ağ geri getirilemedi (%s)" % [problem, restore]
 	return problem
@@ -128,13 +189,13 @@ func sync_to(target: GameState) -> String:
 # `net.delta.ops`u `target`a getirir: ortak önek, fazlası geri al, eksiği uygula. `hashes` (boş olabilir) i. op'tan
 # sonraki
 # graf özetleridir. Hata metni ya da "".
-func _move_to(target: Array, hashes: Array) -> String:
+func _move_to(target: Array, hashes: Array, takens: Array) -> String:
 	var common := 0
 	var live := net.delta.ops
 	while common < live.size() and common < target.size() and _same_op(live[common], target[common]):
 		common += 1
 	while net.delta.ops.size() > common:
-		var undone := net.undo_last_op()
+		var undone := undo_live_op()
 		if not bool(undone["ok"]):
 			return "yol geri alınamadı (%s)" % undone["error"]
 	if not hashes.is_empty():
@@ -143,15 +204,53 @@ func _move_to(target: Array, hashes: Array) -> String:
 			return "ortak önek sonrası graf özeti kayıttakiyle uyuşmuyor"
 	for i in range(common, target.size()):
 		var op: Dictionary = target[i]
-		var report := net.add_road(NetworkDelta.decode_points(op["pts_cm"]), StringName(str(op["class"])),
-			float(int(op["width_dm"])) * 0.1)
-		if not bool(report["ok"]):
-			return "%d. yol uygulanamadı (%s)" % [i + 1, str(report["error"])]
-		if not _same_op(net.peek_last_op(), op):
-			return "%d. yol uygulandıktan sonra op kayıttakinden farklı" % [i + 1]
-		if not hashes.is_empty() and net.graph_hash() != str(hashes[i]):
-			return "%d. yol sonrası graf özeti kayıttakiyle uyuşmuyor" % [i + 1]
+		var problem := _applied_problem(i, op, _replay_op(op), hashes, takens)
+		if not problem.is_empty():
+			return problem
 	return ""
+
+
+# Yeniden oynatılan i. yolun sonucu kayıtla uyuşuyor mu? Sorun metni ya da "".
+func _applied_problem(i: int, op: Dictionary, report: Dictionary, hashes: Array, takens: Array) -> String:
+	if not bool(report["ok"]):
+		return "%d. yol uygulanamadı (%s)" % [i + 1, str(report["error"])]
+	if not _same_op(net.peek_last_op(), op):
+		return "%d. yol uygulandıktan sonra op kayıttakinden farklı" % [i + 1]
+	if i < takens.size() and takens[i] != null and not _same_taken(report.get("removed_parcels", null), takens[i]):
+		return "%d. yolun aldığı parseller kayıttakinden farklı (network_mismatch)" % [i + 1]
+	if not hashes.is_empty() and net.graph_hash() != str(hashes[i]):
+		return "%d. yol sonrası graf özeti kayıttakiyle uyuşmuyor" % [i + 1]
+	return ""
+
+
+## Canlı son op kamulaştırmalıysa geri alma dünya köprüsünden geçer (alınan parselleri dünya geri koyar).
+func undo_live_op() -> Dictionary:
+	var ops := net.delta.ops
+	if not ops.is_empty() and bool((ops[ops.size() - 1] as Dictionary).get("expropriate", false)) \
+			and expropriation != null:
+		var undone := expropriation.undo()
+		return {"ok": bool(undone["ok"]), "error": undone.get("error", "")}
+	return net.undo_last_op()
+
+
+# `add_road` biçiminde rapor: kamulaştırmalı op köprüden (`removed_parcels` = alınan kimlikler), diğeri ağdan.
+func _replay_op(op: Dictionary) -> Dictionary:
+	if bool(op.get("expropriate", false)):
+		if expropriation == null or not expropriation.available():
+			return {"ok": false, "error": "kayıtta kamulaştırmalı yol var ama dünya köprüsü yok"}
+		var replayed := expropriation.replay(op)
+		return {"ok": bool(replayed["ok"]), "error": replayed.get("error", ""),
+			"removed_parcels": replayed.get("removed", PackedInt64Array())}
+	return net.add_road(NetworkDelta.decode_points(op["pts_cm"]), StringName(str(op["class"])),
+		float(int(op["width_dm"])) * 0.1)
+
+
+static func _same_taken(reported: Variant, saved: Variant) -> bool:
+	if reported == null:
+		return false
+	var a := ExpropriationSummary.sorted_ids({"parcel_ids": reported})
+	var b := ExpropriationSummary.sorted_ids({"parcel_ids": saved})
+	return a == b
 
 
 func _same_op(a: Dictionary, b: Dictionary) -> bool:

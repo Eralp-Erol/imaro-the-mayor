@@ -31,6 +31,8 @@ var _next_command_id: int = 1
 ## v1.3 · Uygulanmış oyuncu yolları (LIFO): {"work": PublicWorkView}. Mock geometri hesaplamaz; bölge birimleri senaryo
 ## kuralının `preview.regions` verisidir.
 var _roads: Array[PublicWorkView] = []
+## v1.5 · Kamulaştırmada alınan parsellerin önceki hali: komut kimliği -> {parsel kimliği -> ParcelView.to_dict()}.
+var _taken_saved: Dictionary = {}
 var _order: int = 0
 var _global_ctx: Dictionary = {"command_id": SimContract.NO_ID, "labels": {}}
 ## v1.2 · Parsel değişim günlüğü (mock: sınırsız, kayıt yüklemesi yok): tick ve kimlik paralel, tick artan.
@@ -256,10 +258,13 @@ func _public_work_problem(command: SimCommand) -> Dictionary:
 		if _roads.is_empty():
 			return _problem(CommandResult.REJECT_NOTHING_TO_UNDO, {})
 		return {}
-	var reject: Variant = _match_rule(command).get("reject")
+	var rule := _match_rule(command)
+	var reject: Variant = rule.get("reject")
 	if reject is Dictionary and String(SimContract.to_name(reject.get("reason_key"))).begins_with(
 			CommandResult.REJECT_PUBLIC_WORK_PREFIX):
 		return _problem(SimContract.to_name(reject["reason_key"]), (reject.get("args", {}) as Dictionary).duplicate(true))
+	if _expropriates(command) and _expropriation_of(rule).is_empty():  # v1.5: senaryo kamulaştırma sunmuyor
+		return _problem(CommandResult.REJECT_EXPROPRIATION_DISABLED, {})
 	return {}
 
 
@@ -273,6 +278,9 @@ func _accepted(command: SimCommand, status: StringName, id: int) -> CommandResul
 		result.args = {"length_cm": length_cm, "length_m": roundi(length_cm * 0.01),
 			"regions": SimContract.to_args(regions), "units_total": _sum(regions),
 			"cost_available": false, "cost_reason_key": "public_work.cost.not_built"}
+		if _expropriates(command):  # v1.5: sayılar senaryo verisi, anahtarlar gerçek sim ile aynı yardımcıdan
+			result.args.merge(SimContract.to_args(ExpropriationSummary.preview_args(
+				_expropriation_of(_match_rule(command)))))
 	elif command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and not _roads.is_empty():
 		var last := _roads[_roads.size() - 1]
 		result.args = {"removed_command_id": last.command_id, "length_cm": last.length_cm,
@@ -335,13 +343,89 @@ func _apply_public_work(id: int, command: SimCommand, ctx: Dictionary) -> void:
 		w.tick = _tick
 		w.road_class = command.params["road_class"]
 		w.length_cm = _length_cm(command.params["points_cm"])
-		w.region_units = SimContract.to_args((_match_rule(command).get("preview", {}) as Dictionary).get("regions", {}))
+		var rule := _match_rule(command)
+		w.region_units = SimContract.to_args((rule.get("preview", {}) as Dictionary).get("regions", {}))
+		if _expropriates(command):
+			_take_parcels(id, w, _expropriation_of(rule), ctx)
 		_roads.append(w)
 		_emit_road_event(SimEvent.KIND_PUBLIC_WORK_BUILT, &"event.road.built", command_ref, w, {}, ctx)
 	elif command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and not _roads.is_empty():
 		var removed: PublicWorkView = _roads.pop_back()
+		if removed.expropriated:
+			_restore_parcels(removed, ctx, id)
 		_emit_road_event(SimEvent.KIND_PUBLIC_WORK_REMOVED, &"event.road.removed", command_ref, removed,
 			{"removed_command_id": removed.command_id}, ctx)
+
+
+## v1.5 · Kamulaştırma bayrağı ve senaryonun kamulaştırma verisi (`preview.expropriation`, yoksa {}).
+static func _expropriates(command: SimCommand) -> bool:
+	return command.kind == SimCommand.KIND_PUBLIC_WORK_ROAD and bool(command.params.get("expropriate", false))
+
+
+static func _expropriation_of(rule: Dictionary) -> Dictionary:
+	var preview: Variant = rule.get("preview", {})
+	var data: Variant = preview.get("expropriation", {}) if preview is Dictionary else {}
+	return data if data is Dictionary else {}
+
+
+## Senaryodaki parselleri `taken` yapar (önceki hali saklanır), `public_work.expropriated` olayını yayımlar.
+func _take_parcels(id: int, w: PublicWorkView, data: Dictionary, ctx: Dictionary) -> void:
+	var saved := {}
+	for pid in ExpropriationSummary.sorted_ids(data):
+		if not _parcels.has(pid):
+			continue
+		var p: ParcelView = _parcels[pid]
+		saved[pid] = p.to_dict()
+		p.development = ParcelView.DEVELOPMENT_TAKEN
+		p.use = ParcelView.USE_NONE
+		p.units = 0
+		p.progress_pm = 0
+		p.developed_by_sim = false
+		p.decision = ParcelView.DECISION_NONE
+		p.decision_code = &""
+		p.decision_tick = -1
+		p.decision_reason_id = SimContract.NO_ID
+		p.taken_by_command = id
+		_change_ticks.append(_tick)
+		_change_ids.append(pid)
+	_taken_saved[id] = saved
+	w.expropriated = true
+	w.taken_parcel_ids = ExpropriationSummary.sorted_ids(data)
+	w.taken_built_parcels = SimContract.to_int(data.get("built_parcels"))
+	w.taken_res_units = SimContract.to_int(data.get("res_units"))
+	w.taken_com_units = SimContract.to_int(data.get("com_units"))
+	w.displaced_households = SimContract.to_int(data.get("households"))
+	_emit({"kind": SimEvent.KIND_PUBLIC_WORK_EXPROPRIATED, "message_key": &"event.road.expropriated",
+		"args": ExpropriationSummary.event_args(data),
+		"subjects": ExpropriationSummary.subjects(id, data)}, ctx)
+
+
+## Geri alma: parseller önceki haline döner; halk tepkisi (grup durumu) GERİ ALINMAZ.
+func _restore_parcels(removed: PublicWorkView, ctx: Dictionary, undo_id: int) -> void:
+	var saved: Dictionary = _taken_saved.get(removed.command_id, {})
+	for pid: int in saved:
+		var p := ParcelView.from_dict(saved[pid])
+		p.provenance = provenance()
+		_parcels[pid] = p
+		_change_ticks.append(_tick)
+		_change_ids.append(pid)
+	_taken_saved.erase(removed.command_id)
+	var data := {"parcel_ids": removed.taken_parcel_ids, "built_parcels": removed.taken_built_parcels,
+		"res_units": removed.taken_res_units, "com_units": removed.taken_com_units,
+		"households": removed.displaced_households, "regions": _regions_of(removed.taken_parcel_ids)}
+	var args := ExpropriationSummary.event_args(data)
+	args["removed_command_id"] = removed.command_id
+	_emit({"kind": SimEvent.KIND_PUBLIC_WORK_RESTORED, "message_key": &"event.road.restored", "args": args,
+		"subjects": ExpropriationSummary.subjects(undo_id, data)}, ctx)
+
+
+func _regions_of(parcel_ids: PackedInt64Array) -> Dictionary:
+	var out := {}
+	for pid in parcel_ids:
+		if _parcels.has(pid):
+			var code := String((_parcels[pid] as ParcelView).region_code)
+			out[code] = int(out.get(code, 0)) + 1
+	return out
 
 
 func _emit_road_event(kind: StringName, message_key: StringName, command_ref: String, w: PublicWorkView,
@@ -386,6 +470,10 @@ func _match_rule(command: SimCommand) -> Dictionary:
 		for p: String in wanted:
 			if not command.params.has(p) or command.params[p] != wanted[p]:
 				matches = false
+		# v1.5: kuralda `expropriate` yazmıyorsa false demektir (kamulaştırmalı komut kamulaştırmasız kurala düşmez)
+		if matches and command.kind == SimCommand.KIND_PUBLIC_WORK_ROAD \
+				and bool(wanted.get("expropriate", false)) != _expropriates(command):
+			matches = false
 		if matches:
 			return rule
 	return {}
