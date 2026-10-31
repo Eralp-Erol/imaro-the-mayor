@@ -29,7 +29,7 @@ static func _columns_bytes(cols: BuildingColumns) -> Array[PackedByteArray]:
 func test_settlement_control_data_names_no_rejected_or_unapproved_identity() -> void:
 	var text := FileAccess.get_file_as_string(SettlementTestSupport.CONTROL_PATH)
 	var ids := SCAN.non_approved_ids()
-	assert_int(ids.size()).is_equal(45)
+	assert_int(ids.size()).is_equal(44)  # D-005: 45 rejected; D-012: veh_car onaylandi -> 44
 	var hits := SCAN.find_tokens(text, ids)
 	assert_array(Array(hits)).override_failure_message("settlement.json reddedilmiş kimlik: %s" % str(hits)).is_empty()
 
