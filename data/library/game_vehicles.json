@@ -1,0 +1,94 @@
+{
+ "format": "imaro-game-set/1",
+ "table": "vehicles",
+ "source_catalog": "data/library/catalog.json",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
+ "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+ "included_count": 1,
+ "unapproved": {
+  "count": 0,
+  "by_reason": {},
+  "entries": []
+ },
+ "items": [
+  {
+   "id": "veh_car",
+   "kind": "vehicle",
+   "family": "veh_car",
+   "variant": "a",
+   "generator": "art/blender/generators/kit_props.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/models/vehicles/veh_car.glb",
+     "sha256": "c6162a318c0759d825980c39596550cd0c49de548f63da5ad1133e78b246bf22",
+     "tris": 28,
+     "aabb_m": {
+      "min": [
+       -0.92,
+       0.02,
+       -2.2
+      ],
+      "max": [
+       0.92,
+       1.5,
+       2.2
+      ]
+     },
+     "materials": [
+      "mat_kit"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 28
+   },
+   "material": {
+    "kind": "kit_palette",
+    "name": "mat_kit",
+    "note": "kit palette ShaderMaterial (KitMaterial); per-instance rows come from palette.* below"
+   },
+   "palette": {
+    "wall_rows": [
+     "W5",
+     "W7",
+     "W9",
+     "W2",
+     "W6",
+     "W1",
+     "W12"
+    ],
+    "roof_rows": [
+     "R2"
+    ],
+    "accent_rows": [
+     "A1",
+     "A2",
+     "A3"
+    ]
+   },
+   "known_constraints": [
+    "single LOD (no LOD1/PROXY/atlas in the catalog): far representation is distance culling",
+    "colour identity and number of vehicle types are OPEN (D-012, Q-018)"
+   ],
+   "footprint_m": [
+    1.84,
+    4.4
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 2.2,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 1.5,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: GLB origin = vehicle centre on the ground (bbox y from ~0); length along Z"
+  }
+ ]
+}

@@ -1,6 +1,10 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/game/playable.gd" id="1"]
+[ext_resource type="Script" path="res://src/view/life/life_host.gd" id="2"]
 
 [node name="Playable" type="Node3D"]
 script = ExtResource("1")
+
+[node name="Life" type="Node" parent="."]
+script = ExtResource("2")

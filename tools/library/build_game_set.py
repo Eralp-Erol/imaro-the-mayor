@@ -15,6 +15,11 @@ Floors / eave / roof / ground-floor fields are read from the Blender generator p
 Pivot: the game table pivot is the footprint centre; hero GLBs are authored with the pivot on the facade line, so
 `pivot_offset_m` (to ADD to every vertex of every LOD) = -(LOD0 bbox XZ centre).
 
+Vehicles / humans (T-050, D-012/D-013): same gate. `game_vehicles.json` holds the approved kit car (`veh_car`, single
+LOD0, kit GLB, kit palette material: there is no LOD chain / atlas for it, reported in `known_constraints`);
+`game_humans.json` holds ONLY the user-selected human style (HUMAN_GAME_STYLE = "block", D-013); the other approved
+human styles stay listed as `style_not_selected` and never reach the game table.
+
 Plants / street furniture (T-062 B0): same gate. Their GLBs are authored with the origin at the trunk / object base
 (y = 0 ground contact), so NO pivot shift is written; `reach_m` (largest XZ extent from the origin) and `footprint_m`
 (LOD0 bbox XZ) are measured from the GLB for placement clearance. The kit `veg_plane` is approved but is NOT a game
@@ -49,6 +54,10 @@ PLANT_LEVELS = ("LOD0", "LOD1", "PROXY")  # PROXY only where the catalog chain h
 FURNITURE_LEVELS = ("LOD0", "LOD1")
 PLANT_KIND = "hero_vegetation"
 FURNITURE_KIND = "hero_furniture"
+HUMAN_KIND = "hero_human"
+VEHICLE_IDS = ("veh_car",)  # D-012: the only approved vehicle template
+HUMAN_GAME_STYLE = "block"  # D-013 (user decision): block figure; pawn/facet stay approved in the catalog, unused in game
+HUMAN_LEVELS = ("LOD0", "LOD1")
 # Origin must sit inside the LOD0 XZ bbox and ground contact near y = 0 (hero plants/furniture authoring contract).
 GROUND_TOL_M = 0.15
 
@@ -334,6 +343,61 @@ def build_furniture(entry, root, contract_errors):
     return rec
 
 
+def build_vehicle(entry, root, contract_errors):
+    """Kit vehicle (veh_car): one GLB, no LOD chain / atlas. Material = kit palette (mat_kit via KitMaterial)."""
+    glb = entry["glb"]
+    tris, lo, hi, mats = _measure(root, glb)
+    imp = import_params(root, glb)
+    if imp.get("meshes/generate_lods") != "false":
+        contract_errors.append("%s: meshes/generate_lods must be false (got %s)" % (entry["id"], imp.get("meshes/generate_lods")))
+    lods = {"LOD0": {"glb": glb, "sha256": entry["glb_sha256"], "tris": tris,
+                     "aabb_m": {"min": [_r(v) for v in lo], "max": [_r(v) for v in hi]}, "materials": sorted(mats),
+                     "import": {"generate_lods": False}}}
+    b0 = lods["LOD0"]["aabb_m"]
+    if not (b0["min"][0] <= 0.0 <= b0["max"][0] and b0["min"][2] <= 0.0 <= b0["max"][2]):
+        contract_errors.append("%s: origin is outside the LOD0 XZ bbox (pivot contract)" % entry["id"])
+    if b0["min"][1] < -GROUND_TOL_M or b0["min"][1] > GROUND_TOL_M:
+        contract_errors.append("%s: LOD0 bbox min y %.3f not near ground (pivot contract)" % (entry["id"], b0["min"][1]))
+    pal = entry.get("palette_rows") or {}
+    rec = {
+        "id": entry["id"], "kind": "vehicle", "family": entry["family"], "variant": entry["variant"],
+        "generator": entry["source"]["generator"], "lods": lods, "triangles": {"LOD0": tris},
+        "material": {"kind": "kit_palette", "name": "mat_kit",
+                     "note": "kit palette ShaderMaterial (KitMaterial); per-instance rows come from palette.* below"},
+        "palette": {"wall_rows": list(pal.get("wall_rows", [])), "roof_rows": list(pal.get("roof_rows", [])),
+                    "accent_rows": list(pal.get("accent_rows", []))},
+        "known_constraints": ["single LOD (no LOD1/PROXY/atlas in the catalog): far representation is distance culling",
+                              "colour identity and number of vehicle types are OPEN (D-012, Q-018)"],
+    }
+    rec.update(_object_geometry(lods))
+    rec["pivot_note"] = "no shift: GLB origin = vehicle centre on the ground (bbox y from ~0); length along Z"
+    return rec
+
+
+def build_human(entry, root, contract_errors):
+    chain = entry["lod_chain"]
+    lods = _lod_records(entry, root, HUMAN_LEVELS, contract_errors)
+    style = [t.split(":", 1)[1] for t in entry.get("tags", []) if t.startswith("style:")]
+    ratio = [t.split(":", 1)[1] for t in entry.get("tags", []) if t.startswith("ratio:")]
+    rec = {
+        "id": entry["id"], "kind": "human", "style": style[0] if style else UNKNOWN,
+        "ratio": ratio[0] if ratio else UNKNOWN, "family": entry["family"], "variant": entry["variant"],
+        "label_tr": entry.get("label_tr", ""), "generator": entry["source"]["generator"], "lods": lods,
+        "triangles": {l: lods[l]["tris"] for l in lods},
+    }
+    rec.update(_object_geometry(lods))
+    dist = chain.get("distances_m") or {}
+    rec.update({
+        "atlas": _atlas_record(chain, root, "mat_human_atlas"),
+        "material_policy": chain.get("material_policy", {}),
+        "lod_distances_m": {"LOD0_max": dist.get("LOD0_max"), "LOD1_max": dist.get("LOD1_max"),
+                            "beyond_lod1": dist.get("beyond_lod1"), "status": dist.get("status"),
+                            "note": "working value, not an integration decision"},
+        "q018": "open: body-type count, clothing variety, uniformed staff and named characters (D-013 scope note)",
+    })
+    return rec
+
+
 def add_constraints(modules):
     """Known limits derived from the data itself (no prose guesses)."""
     by_fam = {}
@@ -377,7 +441,7 @@ def build_ground(entry, root, layers, contract_errors):
     return rec
 
 
-def exclusions(entries, category, included_ids, root):
+def exclusions(entries, category, included_ids, root, ok_reason=None):
     out = []
     for e in entries:
         if e.get("category") != category or e["id"] in included_ids:
@@ -385,6 +449,8 @@ def exclusions(entries, category, included_ids, root):
         ok, reason, detail = gate(e, root)
         if ok:  # approved + current but not a game kind handled by this table (e.g. old kit): report as such
             reason, detail = "not_in_this_table", e.get("source", {}).get("kind", "")
+            if ok_reason is not None:
+                reason, detail = ok_reason
         out.append({"id": e["id"], "reason": reason, "detail": detail})
     out.sort(key=lambda x: x["id"])
     by = {}
@@ -408,14 +474,17 @@ def build_sets(catalog_path, root):
         with open(lp, "r", encoding="utf-8") as fh:
             layers = {l["file"]: l for l in json.load(fh)["layers"]}
 
-    bld, gnd, veg, fur = [], [], [], []
+    bld, gnd, veg, fur, veh, hum = [], [], [], [], [], []
     for e in sorted(entries, key=lambda x: x["id"]):
         kind = (e.get("source") or {}).get("kind")
         is_hero = e.get("category") == "building" and e.get("family") in FAMILY_MAP and kind == "hero"
         is_gnd = e.get("category") == "ground" and e.get("png")
         is_veg = e.get("category") == "vegetation" and kind == PLANT_KIND
         is_fur = e.get("category") == "street_furniture" and kind == FURNITURE_KIND
-        if not (is_hero or is_gnd or is_veg or is_fur):
+        is_veh = e.get("category") == "vehicle" and e["id"] in VEHICLE_IDS and e.get("glb")
+        is_hum = (e.get("category") == "human" and kind == HUMAN_KIND
+                  and ("style:" + HUMAN_GAME_STYLE) in e.get("tags", []))
+        if not (is_hero or is_gnd or is_veg or is_fur or is_veh or is_hum):
             continue
         ok, _r1, _d = gate(e, root)
         if not ok:
@@ -429,13 +498,20 @@ def build_sets(catalog_path, root):
             veg.append(build_plant(e, root, errors))
         elif is_fur and "LOD0" in levels and "LOD1" in levels:
             fur.append(build_furniture(e, root, errors))
+        elif is_veh:
+            veh.append(build_vehicle(e, root, errors))
+        elif is_hum and all(l in levels for l in HUMAN_LEVELS):
+            hum.append(build_human(e, root, errors))
     add_constraints(bld)
 
-    record_keys = {"building": "modules", "ground": "layers", "vegetation": "plants", "street_furniture": "items"}
+    record_keys = {"building": "modules", "ground": "layers", "vegetation": "plants", "street_furniture": "items",
+                   "vehicle": "items", "human": "items"}
 
     def doc(table, items, category):
         ids = {m["id"] for m in items}
-        ex = exclusions(entries, category, ids, root)
+        ok_reason = ("style_not_selected", "D-013: only style:%s is used in game" % HUMAN_GAME_STYLE) \
+            if category == "human" else None
+        ex = exclusions(entries, category, ids, root, ok_reason)
         d = {"format": FORMAT, "table": table, "source_catalog": CATALOG, "source_catalog_sha256": digest,
              "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
              "included_count": len(items), "unapproved": ex, record_keys[category]: items}
@@ -449,6 +525,8 @@ def build_sets(catalog_path, root):
         "game_ground.json": doc("ground", gnd, "ground"),
         "game_plants.json": doc("vegetation", veg, "vegetation"),
         "game_furniture.json": doc("furniture", fur, "street_furniture"),
+        "game_vehicles.json": doc("vehicles", veh, "vehicle"),
+        "game_humans.json": doc("humans", hum, "human"),
     }
     texts = {k: json.dumps(v, indent=1, ensure_ascii=False) + "\n" for k, v in out.items()}
     return texts, errors
