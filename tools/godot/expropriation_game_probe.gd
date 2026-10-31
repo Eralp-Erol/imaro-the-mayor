@@ -79,6 +79,8 @@ func run() -> void:
 	else:
 		await _drive_road(facade, cand)
 	await _shot("2-after-road")
+	if _args.has("ui") and _args.has("reopen"):
+		await _reopen_tool()
 	if _args.has("ui"):
 		await _undo_ui(facade)
 	else:
@@ -131,7 +133,8 @@ func _print_trace() -> void:
 			print("XPROBE_TRACE %s#%d proc=%.1f input=%.1f wall=%.1f" % [st, int(rec["i"]), float(rec["proc"]),
 					float(rec["input"]), float(rec["wall"])])
 	for st in stages:
-		print("XPROBE_STAGE %s frames=%d peak_step_ms=%.1f over16=%d" % [st, int(count[st]), float(peak[st]), int(over16[st])])
+		print("XPROBE_STAGE %s frames=%d peak_step_ms=%.1f over16=%d" % [st, int(count[st]), float(peak[st]),
+				int(over16[st])])
 
 
 func _find_candidate(facade: SimFacadeImpl) -> Dictionary:
@@ -314,6 +317,22 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 			str((_scene._net as WorldNetwork).graph_hash() != graph_before), facade.public_works().size(), tool.step])
 	for _i in 10:
 		await _frame()
+
+
+## Yol yapıldıktan sonra aracı kapatıp yeniden açar (kare izi aşamaları `reopen_close`, `reopen_open`): "yeni
+## yol çiz" ilk
+## karesi, sim'de yol komutu geçmişi varken (plan ipucu taraması + panel kurulumu).
+func _reopen_tool() -> void:
+	var ctrl: RoadDrawController = _scene._pr.ctrl
+	_set_stage("reopen_close")
+	_key(KEY_Y)
+	for _i in 8:
+		await _frame()
+	_set_stage("reopen_open")
+	_key(KEY_Y)
+	for _i in 30:
+		await _frame()
+	print("XPROBE_REOPEN tool_active=%s" % str(ctrl.is_active()))
 
 
 ## Geri al: "Son yolu geri al" -> "Evet, geri al" -> tick.

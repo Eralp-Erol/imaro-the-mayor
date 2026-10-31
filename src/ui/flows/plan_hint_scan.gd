@@ -2,10 +2,12 @@ class_name PlanHintScan
 extends RefCounted
 ## Yol sonrası "imar planı yok" ipucu taraması, KARE DİLİMLİ (saf mantık; facade bilmez, Callable alır).
 ## Eski tek seferlik tarama: bölge kodları sırasıyla `ids_of(kod)` listesinin ilk `limit` parselinde `needs(id)` ilk
-## doğruda durur. Ölçüm (Intel Mac, pencereli): `parcel_ids(bölge)` 40 bin parselde ~40 ms, 600 `plan_state` ~5-8 ms; ikisi
+## doğruda durur. Ölçüm (Intel Mac, pencereli): `parcel_ids(bölge)` 40 bin parselde ~40 ms, 600 `plan_state`
+## ~5-8 ms; ikisi
 ## de yol onayından sonraki ilk karede panel imzasında yapılıyordu. Burada: (1) bölge kimlik listeleri işçi iş
 ## parçacığında hazırlanır (`ids_of` iş parçacığı güvenli OLMALI: salt okur, çağıran durumu değiştirmez), (2) `needs`
-## çağrıları `step(budget_us)` ile kare dilimlerine bölünür. Sıra ve üst sınır eskisiyle AYNIDIR: aynı girdi -> aynı `found`.
+## çağrıları `step(budget_us)` ile kare dilimlerine bölünür. Sıra ve üst sınır eskisiyle AYNIDIR: aynı girdi ->
+## aynı `found`.
 
 var found: bool = false
 var done: bool = false

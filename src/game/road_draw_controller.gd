@@ -49,7 +49,8 @@ var _have_cursor: bool = false
 var _last_panel_msec: int = -PANEL_HOVER_INTERVAL_MSEC
 var _panel_pending: bool = false
 var _click_in_progress: bool = false
-## Sim olayı (yol yapıldı/geri alındı) panel yenilemesini SONRAKİ kareye bırakır: HUD yoklama karesi (tick'li kare) zaten
+## Sim olayı (yol yapıldı/geri alındı) panel yenilemesini SONRAKİ kareye bırakır: HUD yoklama karesi (tick'li
+## kare) zaten
 ## sim + şerit + ipucu içerir; panelin düğüm kurulumu (~9 ms ölçüldü) aynı kareye binmesin.
 var _panel_due: bool = false
 var _in_events: bool = false

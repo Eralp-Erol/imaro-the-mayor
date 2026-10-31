@@ -22,10 +22,10 @@ signal cells_rebuilt(keys: Array)
 
 const SUPER_PREFIX := "Super_"
 ## Gizleme/geri koymada eşzamanlı arka plan mesh işi sayısı (`pump_pending`).
-## Dilimli kurulumda HLOD1 mesh'inin tek yüzeyi en çok bu kadar köşe (~3 ms); büyük hücrede birden çok yüzey = birden çok
-## draw call (yalnız artımlı yeniden kurulan hücrelerde; ilk kurulum/`set_columns` tek yüzeydir).
-const HLOD1_SLICE_VERTS := 30000
 const MAX_TASKS := 2
+## Dilimli kurulumda HLOD1 mesh'inin tek yüzeyi en çok bu kadar köşe (~3 ms); büyük hücrede birden çok yüzey = birden
+## çok draw call (yalnız artımlı yeniden kurulan hücrelerde; ilk kurulum/`set_columns` tek yüzeydir).
+const HLOD1_SLICE_VERTS := 30000
 const TRIS_META := &"tris"
 ## MultiMeshInstance3D üstünde modül kimliği (onaylı kimlik denetimi/test için; `drawn_module_ids`).
 const MODULE_META := &"module_id"
@@ -35,6 +35,8 @@ const ROOF_SOURCE_GROUP := &"eye_roof_clearance_source"
 ## Son kurulumun ölçümleri (perf_probe / world_preview okur).
 var stats: Dictionary = {}
 var config: BuildingViewConfig = BuildingViewConfig.new()
+## Dilimli kurulumda HLOD1 yüzey boyu (testler küçültür; varsayılan `HLOD1_SLICE_VERTS`; 3'ün katı olmalı).
+var hlod1_slice_verts: int = HLOD1_SLICE_VERTS
 
 var _world: WorldData = null
 var _kit: BuildingKit = null
@@ -57,8 +59,6 @@ var _tasks: Array[Dictionary] = []
 ## sliced: HLOD1 yüzeylere bölünür mü, hl_mesh}. Birimler: önce modüller, sonra HLOD1 yüzey dilimleri. Eski hücre yalnız
 ## BİTİŞTE yer değiştirir (görünüm kareler arasında yarım kalmaz); boşsa iş yok.
 var _cell_partial: Dictionary = {}
-## Dilimli kurulumda HLOD1 yüzey boyu (testler küçültür; varsayılan `HLOD1_SLICE_VERTS`; 3'ün katı olmalı).
-var hlod1_slice_verts: int = HLOD1_SLICE_VERTS
 ## `pump_pending` çağrısında ilerleyen iş birimi sayısı (modül, HLOD1 dilimi, süper-chunk, boş hücre).
 var _units: int = 0
 ## Kameranın göz açıklığı için çatı yükseklik dizini (aynı sütunlardan; `set_columns` yeniler, aynı nesne kalır).
@@ -281,7 +281,8 @@ func pending_work() -> int:
 ## parçacığında (en çok `MAX_TASKS`) hesaplanır, ana iş parçacığı yalnız biten işin düğümlerini kurar. Her kurulum
 ## sonrası
 ## `budget_us` aşıldıysa durur (en az bir kurulum ilerler). Süper-chunk işi, hücre işi bitince başlar (hücre verisini
-## okur). `use_threads = false` ise satır içi çalışır (testler). Dönüş: {done: biten hücre/süper-chunk, units: ilerleyen iş birimi (modül/HLOD1 dilimi dahil), left: kalan, ms}.
+## okur). `use_threads = false` ise satır içi çalışır (testler). Dönüş: {done: biten hücre/süper-chunk, units:
+## ilerleyen iş birimi (modül/HLOD1 dilimi dahil), left: kalan, ms}.
 func pump_pending(budget_us: int) -> Dictionary:
 	var t0 := Time.get_ticks_usec()
 	var done := 0
@@ -513,7 +514,8 @@ func _begin_cell(data: BuildingCellData, sliced: bool = false) -> Dictionary:
 	return {"data": data, "cell": cell, "n": 0, "sliced": sliced, "hl_mesh": null}
 
 
-## Yarım hücreyi ilerletir (birim başına bütçe denetimi, en az bir birim); true = hücre kuruldu ve eskisinin yerine geçti.
+## Yarım hücreyi ilerletir (birim başına bütçe denetimi, en az bir birim); true = hücre kuruldu ve eskisinin
+## yerine geçti.
 func _step_cell(part: Dictionary, budget_us: int, t0: int) -> bool:
 	var data: BuildingCellData = part["data"]
 	var cell: Node3D = part["cell"]

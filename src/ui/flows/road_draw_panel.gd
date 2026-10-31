@@ -148,7 +148,8 @@ func _render() -> void:
 
 ## Yol çizildikten sonra ipucu: YALNIZ son yolun değdiği bölgede sim `plan_state` gerçekten `unplanned`/`plan_rejected`
 ## parsel varsa (plan durumu yoksa/mock ise ya da hepsi planlıysa ipucu yok). Sonuç önbelleklenir (yol, 10 gün).
-## Önbellek anahtarı değişince tarama KARE DİLİMLERİNDE yapılır (`PlanHintScan`, `pump_hint`); bitene kadar ipucu görünmez,
+## Önbellek anahtarı değişince tarama KARE DİLİMLERİNDE yapılır (`PlanHintScan`, `pump_hint`); bitene kadar
+## ipucu görünmez,
 ## biten sonuç eski tek seferlik taramayla AYNIDIR (aynı sıra, aynı üst sınır).
 func _plan_hint_needed() -> bool:
 	var works := _facade.public_works()

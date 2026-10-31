@@ -1,5 +1,6 @@
 extends GdUnitTestSuite
-## Yol onayı sonrası kare sivrilmesi düzeltmesi (WLD-01/TEK-03; görünüm yalnız temsil): dilimli kurulum (`begin_install`/
+## Yol onayı sonrası kare sivrilmesi düzeltmesi (WLD-01/TEK-03; görünüm yalnız temsil): dilimli kurulum
+## (`begin_install`/
 ## `step_install`/`step_far`) SENKRON kurulumla BİT-EŞİT sonuç verir; dilim bütçesi mantık olarak denetlenir (sabit kare
 ## ya da duvar saati yok: bütçe 0 -> çağrı başına tam bir chunk). Sentetik ızgara ağı (gerçek Ismeral değil).
 

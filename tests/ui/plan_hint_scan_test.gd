@@ -1,6 +1,7 @@
 extends GdUnitTestSuite
 ## Yol sonrası "imar planı yok" ipucu taraması kare dilimli (`PlanHintScan`): sonuç eski tek seferlik taramayla AYNI
-## (aynı sıra, aynı bölge başına üst sınır, ilk doğruda durma); dilimleme yalnız işi karelere böler. Sabit kare/süre yok:
+## (aynı sıra, aynı bölge başına üst sınır, ilk doğruda durma); dilimleme yalnız işi karelere böler. Sabit
+## kare/süre yok:
 ## bütçe 0 -> çağrı başına en çok bir parsel denetimi.
 
 const LIMIT := 5

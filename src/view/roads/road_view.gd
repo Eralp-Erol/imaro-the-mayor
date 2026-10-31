@@ -261,8 +261,10 @@ func _finish_install(unique: Array[Vector2i], started: int) -> void:
 
 
 ## KARE DİLİMLİ kurulum (yol onayı sonrası ana iş parçacığı sıçramasını önlemek için): `begin_install` planı alır ve işi
-## sıraya koyar, `step_install` her çağrıda bütçe dolana kadar chunk kurar (en az bir). Kurulan chunk'lar eskisinin yerine
-## geçer; henüz sırası gelmeyenler birkaç kare eski görünümde kalır. Biten iş `install_chunks` ile AYNI düğümleri/istatistiği
+## sıraya koyar, `step_install` her çağrıda bütçe dolana kadar chunk kurar (en az bir). Kurulan chunk'lar
+## eskisinin yerine
+## geçer; henüz sırası gelmeyenler birkaç kare eski görünümde kalır. Biten iş `install_chunks` ile AYNI
+## düğümleri/istatistiği
 ## üretir. Uzak mesh (`build_far_mesh`) ayrıca `step_far` ile dilimli yenilenir.
 func begin_install(keys: Array[Vector2i], plan_in: RoadChunkPlan, meshes: Dictionary, started: int = -1) -> void:
 	if _net == null:
