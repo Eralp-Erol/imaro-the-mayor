@@ -46,7 +46,7 @@ func _spawn(code: Variant) -> void:
 		return
 	var box: Array = [PackedInt64Array()]
 	var ids_of := _ids_of
-	var task := WorkerThreadPool.add_task(func() -> void: box[0] = ids_of.call(code), false, "PlanHintScan ids")
+	var task := WorkerThreadPool.add_task(func() -> void: box[0] = ids_of.call(code), false, String(&"plan_hint_scan.ids"))
 	_tasks[code] = {"task": task, "box": box}
 
 
