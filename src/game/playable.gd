@@ -733,7 +733,7 @@ func _process(delta: float) -> void:
 	if _pr != null:
 		var road_rep := _pr.pump()
 		_pr.note_report(road_rep, sim_stats, _facade.current_tick())
-		if not road_rep.is_empty():
+		if _pr.corridors_due():
 			_refresh_vegetation_corridors()
 	_maybe_start_warmup()
 	_acc_ms += delta * 1000.0

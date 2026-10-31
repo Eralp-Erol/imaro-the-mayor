@@ -22,6 +22,8 @@ var _roads: RoadView = null
 var _seen_version: int = 0
 var _task: int = -1
 var _job: Dictionary = {}
+## true: işçi bitti, düğümler `RoadView.step_install` ile kare dilimlerinde kuruluyor (`poll`).
+var _installing: bool = false
 
 
 static func create(net: WorldNetwork, roads: RoadView) -> RoadEditSync:
@@ -37,9 +39,9 @@ func pending() -> bool:
 	return _net != null and _roads != null and _net.graph_version != _seen_version
 
 
-## Arka plan işi sürüyor mu?
+## Arka plan işi sürüyor mu (işçi hesabı ya da dilimli düğüm kurulumu)?
 func is_busy() -> bool:
-	return _task >= 0
+	return _task >= 0 or _installing
 
 
 ## Ağ, yol görünümü işi yüzünden DEĞİŞTİRİLMEMELİ mi (iş sürüyor ya da başlamayı bekliyor)?
@@ -83,29 +85,40 @@ func begin_async() -> bool:
 	return true
 
 
-## Her kare: iş bittiyse düğümleri ana iş parçacığında kurar ve raporu döner (bitmediyse/iş yoksa boş).
-func poll() -> Dictionary:
+## Her kare: iş bittiyse düğümleri ana iş parçacığında KARE DİLİMLERİNDE kurar (`RoadView.step_install`, her çağrıda en
+## çok `budget_us` + bir chunk) ve kurulum bitince raporu döner (bitmediyse/iş yoksa boş). Kurulum biterken sonraki
+## karelerde uzak mesh de dilimli yenilenir (`step_far`; ölçüm: tek yüzeyli tam yenileme ~40 ms tek karede).
+## Kurulum sürerken `world_busy()` true kalır (yeni yol komutu `busy` ile reddedilir).
+func poll(budget_us: int = RoadView.INSTALL_BUDGET_US) -> Dictionary:
 	if _job.has("report"):
 		var report: Dictionary = _job["report"]
 		_job = {}
 		return report
-	if _task < 0 or not WorkerThreadPool.is_task_completed(_task):
+	if not _installing:
+		if _task < 0 or not WorkerThreadPool.is_task_completed(_task):
+			_roads.step_far(budget_us)
+			return {}
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_task = -1
+		_roads.begin_install(_job["keys"], _job["plan"], _job["meshes"], int(_job["started"]))
+		_installing = true
+	if not _roads.step_install(budget_us):
 		return {}
-	WorkerThreadPool.wait_for_task_completion(_task)
-	_task = -1
 	var job := _job
 	_job = {}
-	_roads.install_chunks(job["keys"], job["plan"], job["meshes"], int(job["started"]))
+	_installing = false
 	_seen_version = int(job["version"])
 	return _report(job["keys"], false, int(job["started"]))
 
 
-## Tamamlanmasını bekler (testler/kapanış). İş yoksa boş.
+## Tamamlanmasını bekler (testler/kapanış/dev döngüsü): kurulum ve uzak mesh sonuna kadar yürür. İş yoksa boş.
 func wait() -> Dictionary:
 	# `wait_for_task_completion` görev kimliğini serbest bırakır; sonra `poll`un `is_task_completed`i yanlış okurdu.
 	while _task >= 0 and not WorkerThreadPool.is_task_completed(_task):
 		OS.delay_msec(1)
-	return poll()
+	var report := poll(1 << 40)
+	_roads.settle_far()
+	return report
 
 
 ## Saf birleşim: planın dokunduğu hücreler + değişimlerin `chunk_keys`i (sıralı, tekil).

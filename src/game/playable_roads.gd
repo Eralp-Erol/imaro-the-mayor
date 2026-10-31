@@ -19,6 +19,9 @@ var _net: WorldNetwork = null
 var _facade: SimFacade = null
 var _other_busy: Callable = Callable()
 var _cols: BuildingColumns = null
+## Yol görünümü kurulduktan sonra bitki koridoru yenilemesi BİR KARE ertelenir (ayrı kare dilimi): 7-30 ms'lik koridor
+## hesabı chunk kurulumuyla aynı kareye binmesin. 0 = bekleyen yok, 1 = bu karede bekle, 2 = sonraki karede yap.
+var _corridor_wait: int = 0
 
 
 ## `other_busy`: dünya başka bir nedenle meşgul mü (bitki yerleşimi)? Yol komutları bağlanamazsa araç görünmez.
@@ -87,6 +90,14 @@ func pump() -> Dictionary:
 	return sync.poll()
 
 
+## Bitki koridoru yenilemesi zamanı mı? Yol raporundan BİR kare sonra true döner (bir kez); sonra tekrar false.
+func corridors_due() -> bool:
+	if _corridor_wait == 0:
+		return false
+	_corridor_wait -= 1
+	return _corridor_wait == 0
+
+
 ## Senkron yenileme (dev `--m2-advance` / `--draw-road` döngüleri).
 func sync_now() -> Dictionary:
 	if follow != null:
@@ -102,6 +113,7 @@ func note_report(rep: Dictionary, stats: Dictionary, tick: int) -> void:
 		stats["expropriation"] = follow.stats
 	if rep.is_empty():
 		return
+	_corridor_wait = 2
 	var ms := float(rep["ms"])
 	stats["road_sync_n"] = int(stats.get("road_sync_n", 0)) + 1
 	stats["road_sync_ms_last"] = snappedf(ms, 0.1)

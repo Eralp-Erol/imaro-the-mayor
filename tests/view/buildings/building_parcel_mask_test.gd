@@ -121,8 +121,8 @@ func test_pump_respects_the_budget_but_always_makes_progress() -> void:
 	view.set_parcels_hidden(PackedInt32Array([1, 300, 301]), true)   # üç hücre
 	var rounds := 0
 	while view.pending_work() > 0 and rounds < 100:
-		var rep := view.pump_pending(0)   # bütçe 0: tur başına en az bir birim
-		assert_int(rep["done"]).is_greater(0)
+		var rep := view.pump_pending(0)   # bütçe 0: tur başına en az bir iş birimi (hücre kurulumu birim birim yürür)
+		assert_int(rep["units"]).is_greater(0)
 		rounds += 1
 	assert_int(view.pending_work()).is_equal(0)
 	assert_int(rounds).is_greater(1)   # tek turda bitmedi: dilimlendi
