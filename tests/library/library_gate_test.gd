@@ -70,9 +70,9 @@ func test_rejected_and_unknown_ids_are_refused_counted_and_logged() -> void:
 	assert_dict(gate.request("prop_human")).is_empty()             # rejected
 	assert_dict(gate.request("yok_boyle_bir_kimlik")).is_empty()   # bilinmeyen
 	assert_dict(gate.request("")).is_empty()                       # boş
-	assert_array(Array(gate.request_paths("veh_car"))).is_empty()
+	assert_array(Array(gate.request_paths("bld_res_old_a"))).is_empty()
 	assert_array(Array(gate.unapproved_ids)).contains_exactly(
-		["bld_res_mid_a", "prop_human", "yok_boyle_bir_kimlik", "", "veh_car"])
+		["bld_res_mid_a", "prop_human", "yok_boyle_bir_kimlik", "", "bld_res_old_a"])
 	assert_int(gate.denied_requests).is_equal(5)
 	assert_array(gate.denial_log.map(func(d: Dictionary) -> String: return str(d["reason"]))).contains_exactly(
 		["rejected", "rejected", "unknown_id", "empty_id", "rejected"])

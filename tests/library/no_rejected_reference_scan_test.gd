@@ -34,15 +34,15 @@ const KIT_PATH_TOKEN := "assets/models/buildings/"
 ## gerekir; üretim kökleri (PRODUCTION_PREFIXES) altında girdi OLAMAZ.
 const KNOWN_REMAINING := {
 	"res://assets/kit/kit_library.gd": ["assets/models/buildings/"],
-	"res://assets/kit/kit_validator.gd": ["prop_chimney", "prop_human", "veh_car"],
+	"res://assets/kit/kit_validator.gd": ["prop_chimney", "prop_human"],
 	"res://scenes/dev/kit_lab.gd": [
 		"bld_civ_hall_a", "bld_ind_heritage_a", "bld_ind_shed_a", "bld_lmk_clocktower", "bld_res_house_a",
 		"bld_res_late_a", "bld_res_late_a_gf", "bld_res_mid_a", "bld_res_mid_a_gf", "bld_res_old_a",
-		"bld_res_old_a_gf", "prop_chimney", "prop_human", "veh_car",
+		"bld_res_old_a_gf", "prop_chimney", "prop_human",
 	],
 	"res://scenes/dev/kit_lab_layout.gd": [
 		"bld_civ_hall_b", "bld_ind_heritage_b", "bld_ind_shed_b", "bld_lmk_clocktower", "bld_res_old_c",
-		"bld_res_old_c_gf", "prop_human", "veh_car",
+		"bld_res_old_c_gf", "prop_human",
 	],
 	"res://scenes/dev/kit_lab_metrics.gd": ["bld_lmk_clocktower"],
 }
@@ -188,9 +188,9 @@ func test_unapproved_audit_ids_never_leak_into_loaded_records() -> void:
 
 func test_scanner_detects_a_planted_rejected_reference_and_ignores_lookalikes() -> void:
 	var ids := non_approved_ids()
-	assert_int(ids.size()).is_equal(45)   # D-005: 45 rejected; proposed da kapsanır
+	assert_int(ids.size()).is_equal(44)   # D-005: 45 rejected, D-012: veh_car onaylandı -> 44; proposed da kapsanır
 	assert_array(Array(find_tokens('var m := "bld_res_mid_a"', ids))).contains_exactly(["bld_res_mid_a"])
-	assert_array(Array(find_tokens("veh_car,prop_human", ids))).contains_exactly(["prop_human", "veh_car"])
+	assert_array(Array(find_tokens("prop_chimney,prop_human", ids))).contains_exactly(["prop_chimney", "prop_human"])
 	assert_array(Array(find_tokens('"bld_res_mid_a_gf"', ids))).contains_exactly(["bld_res_mid_a_gf"])
 	assert_array(Array(find_tokens('load("res://assets/models/buildings/x.glb")', ids))).contains_exactly([KIT_PATH_TOKEN])
 	# Yan şeyler: onaylı hero kimliği, bitişik kimlik karakteri, ek.
