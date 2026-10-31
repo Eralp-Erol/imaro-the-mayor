@@ -299,6 +299,7 @@ func _place_chip() -> void:
 		chip.visible = false
 		return
 	chip.theme = _hud.theme
+	chip.set_demolition(tool.demolishes())
 	var o := _camera.rebase_origin
 	var screen := _camera.camera.unproject_position(Vector3(tool.end.x - o.x, 0.0, tool.end.y - o.y))
 	chip.visible = true
@@ -368,7 +369,9 @@ func _show_tip() -> void:
 		tip.hide_tip()
 		return
 	var step_line := _step_line(3) if tool.step == RoadDrawTool.Step.REVIEW and tool.is_valid() else _step_line(2)
-	if tool.is_valid():
+	if tool.is_valid() and tool.demolishes():   # T-042b: yıkım sayıları sim önizlemesinden
+		tip.show_text(ExpropriationText.tip_line(tool.preview_args()), true, step_line)
+	elif tool.is_valid():
 		var args := tool.preview_args()
 		var tip_key := &"road.tip_valid_cost" if bool(args.get("cost_available", false)) else &"road.tip_valid"
 		tip.show_text(UiText.t(tip_key, {"length": int(args.get("length_m", 0)),

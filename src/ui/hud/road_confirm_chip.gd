@@ -13,6 +13,7 @@ const MIN_HEIGHT_DESKTOP := 48.0
 const MAX_WIDTH := 360.0
 
 var _touch: bool = false
+var _demolition: bool = false
 
 
 static func create(ctx: UiContext) -> RoadConfirmChip:
@@ -32,6 +33,18 @@ static func create(ctx: UiContext) -> RoadConfirmChip:
 	chip.custom_minimum_size = Vector2(MAX_WIDTH if not chip._touch else 260.0, min_h)
 	chip.pressed.connect(chip.confirm_requested.emit)
 	return chip
+
+
+## T-042b · Yıkım içeren yolda işaretin metni açıkça "Yıkımı onaylamak için ..." der (kazara onay olmasın).
+func set_demolition(on: bool) -> void:
+	if on == _demolition:
+		return
+	_demolition = on
+	var key := &"road.chip_demolish" if on else &"road.chip"
+	if _touch:
+		key = &"road.chip_demolish_touch" if on else &"road.chip_touch"
+	text = UiText.t(key)
+	tooltip_text = text
 
 
 ## Bitiş ucunun ekran konumuna oturur (sağ-üst), `area` (HUD'un boş harita dikdörtgeni) içinde tutulur.

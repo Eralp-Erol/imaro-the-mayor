@@ -154,6 +154,9 @@ func _add_outcome_lines(inner: VBoxContainer, row: M2ResultModel.ParcelRow, prio
 
 func _add_stage(inner: VBoxContainer, v: ParcelView) -> void:
 	var stage := UiText.t(M2ResultModel.stage_key(v.development))
+	if v.development == ParcelView.DEVELOPMENT_TAKEN:   # T-042b: alınan parselde "Yapı yok" demek yerine durumu söyle
+		inner.add_child(UiFactory.label(stage, UiTheme.V_LABEL_DANGER, true))
+		return
 	if v.development == ParcelView.DEVELOPMENT_VACANT or v.use == ParcelView.USE_NONE:
 		inner.add_child(UiFactory.label("%s · %s" % [stage, UiText.t(&"m2.stage.none")], &"", true))
 		return

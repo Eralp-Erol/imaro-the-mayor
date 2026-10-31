@@ -27,6 +27,9 @@ var _summary: PanelContainer = null
 ## Altyapı yetmediği için vazgeçilen parseller: tek özet satırı ("yol eklemek kapasiteyi artırır"); gerçek sayı.
 var _infra: Dictionary = {}
 var _infra_summary: PanelContainer = null
+## T-042b · Aynı komutun `public_work.expropriated` olayı: "Yol yapıldı" satırına yıkım özeti olarak eklenir (iki satır
+## yerine tek; komut kimliği -> olay). Yalnız şerit sunumudur; olay günlüğü ikisini de tutar.
+var _demolition: Dictionary = {}
 
 
 static func create(ctx: UiContext) -> NotificationStrip:
@@ -54,8 +57,28 @@ func push_events(events: Array[SimEvent]) -> void:
 		_track_unplanned(e)
 		if is_unplanned_decline(e) or is_infra_decline(e):
 			continue
+		_track_demolition(e)
 		_add(e)
 	_rebuild()
+
+
+## `public_work.built` aynı komutun kamulaştırma olayını bulursa o olayın satırını çıkarır (özeti `built` satırına
+## `_row_text` ekler). Sıra tersse ya da built hiç gelmezse kamulaştırma olayı kendi satırında kalır.
+func _track_demolition(e: SimEvent) -> void:
+	if e.kind == SimEvent.KIND_PUBLIC_WORK_EXPROPRIATED and e.command_id != SimContract.NO_ID:
+		_demolition[e.command_id] = e
+	elif e.kind == SimEvent.KIND_PUBLIC_WORK_BUILT and _demolition.has(e.command_id):
+		var at := _events.find(_demolition[e.command_id])
+		if at >= 0:
+			_events.remove_at(at)
+
+
+## Satır metni: yol yapıldı satırına (varsa) aynı komutun yıkım özeti eklenir.
+func _row_text(e: SimEvent) -> String:
+	var text := strip_text(e)
+	if e.kind == SimEvent.KIND_PUBLIC_WORK_BUILT and _demolition.has(e.command_id):
+		text += " · " + ExpropriationText.strip_suffix(_demolition[e.command_id])
+	return text
 
 
 ## Plansız arazi yüzünden toplu vazgeçme mi (`event.investor.declined`, kod `zoning_unplanned`)?
@@ -163,6 +186,7 @@ func clear() -> void:
 	_events.clear()
 	_unplanned.clear()
 	_infra.clear()
+	_demolition.clear()
 	_rebuild()
 
 
@@ -173,7 +197,7 @@ func row_count() -> int:
 func row_texts() -> PackedStringArray:
 	var out := PackedStringArray()
 	for e in _events:
-		out.append(strip_text(e))
+		out.append(_row_text(e))
 	return out
 
 
@@ -226,7 +250,7 @@ func _make_row() -> PanelContainer:
 
 func _fill_row(row: PanelContainer, event: SimEvent) -> void:
 	var box := row.get_child(0) as HBoxContainer
-	(box.get_child(0) as Label).text = strip_text(event)
+	(box.get_child(0) as Label).text = _row_text(event)
 	# Gerekçe kaydı olan olay, reddedilen komut ("neden kabul edilmedi", SIM-12) ya da yapılan oyuncu yolu (ayrıntı).
 	var is_work := event.kind == SimEvent.KIND_PUBLIC_WORK_BUILT
 	var why := box.get_child(1) as Button

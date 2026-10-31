@@ -18,6 +18,7 @@ const ROW_REACTION := "reaction"
 const ROW_FACTOR := "factor"
 const ROW_SELECTED := "selected"
 const ROW_PLAN := "plan"
+const ROW_TAKEN := "taken"
 
 var model: InspectorModel = null
 
@@ -100,7 +101,9 @@ func _add_facts() -> void:
 			ROW_FACT))
 	inner.add_child(_named(_pair(UiText.t(&"inspector.area"),
 			UiText.t(&"format.area_m2", {"value": UiText.number(v.area_m2)})), ROW_FACT))
-	inner.add_child(_named(_pair(UiText.t(&"inspector.owner"), UiText.actor_name(v.owner)), ROW_FACT))
+	var owner_text := UiText.t(&"inspector.taken_owner") if v.development == ParcelView.DEVELOPMENT_TAKEN \
+			else UiText.actor_name(v.owner)
+	inner.add_child(_named(_pair(UiText.t(&"inspector.owner"), owner_text), ROW_FACT))
 	# Sim arsa değerini 0 verdiyse değer henüz belirlenmemiştir; "0 ¤" yazmak parselin bedava olduğunu söylerdi.
 	var land := UiText.money(v.land_value) if v.land_value > 0 else UiText.t(&"inspector.land_value.unset")
 	inner.add_child(_named(_pair(UiText.t(&"inspector.land_value"), land), ROW_FACT))
@@ -197,7 +200,32 @@ func _factor_row(fr: ReasonModel.Row) -> Control:
 	return row
 
 
+## T-042b · Alınan parsel: "Kamulaştırıldı ← Yol (tarih)". Tarih = parseli alan yolun sim kaydındaki uygulama günü
+## (`taken_by_command` -> `public_works()`); kayıt yoksa komut etiketi. Gerekçe kaydı varsa "Nedenini gör".
+func _add_taken(inner: VBoxContainer, v: ParcelView) -> void:
+	var line := ""
+	for w in _facade.public_works():
+		if w.command_id == v.taken_by_command:
+			line = UiText.t(&"inspector.taken_line", {"date": UiText.tick_date(w.tick)})
+			break
+	if line == "":
+		line = UiText.t(&"inspector.taken_line_nodate", {"command": UiText.humanize(
+				String(SimContract.ref(SimContract.REF_COMMAND, v.taken_by_command)))})
+	var label := UiFactory.label(line, UiTheme.V_LABEL_DANGER, true)
+	_named(label, ROW_TAKEN)
+	inner.add_child(label)
+	if not v.reason_ids.is_empty():
+		var ids := v.reason_ids
+		var why := UiFactory.button(_ctx, UiText.t(&"m2.why"), false)
+		_tag(why, "why_taken")
+		why.pressed.connect(func() -> void: _request_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(ids)))
+		inner.add_child(why)
+
+
 func _add_stage(inner: VBoxContainer, v: ParcelView) -> void:
+	if v.development == ParcelView.DEVELOPMENT_TAKEN:
+		_add_taken(inner, v)
+		return
 	var stage := UiText.t(M2ResultModel.stage_key(v.development))
 	if v.development == ParcelView.DEVELOPMENT_VACANT or v.use == ParcelView.USE_NONE:
 		inner.add_child(UiFactory.label("%s · %s" % [stage, UiText.t(&"m2.stage.none")], &"", true))

@@ -293,7 +293,9 @@ func structure_parcels() -> PackedInt64Array:
 		by_id[v.id] = v
 	for id in parcel_ids:
 		var v := by_id.get(id) as ParcelView
-		var built := v != null and v.development != ParcelView.DEVELOPMENT_VACANT
+		# T-042b: kamulaştırılmış (yıkılmış) parselde yapı yoktur.
+		var built := v != null and v.development != ParcelView.DEVELOPMENT_VACANT \
+				and v.development != ParcelView.DEVELOPMENT_TAKEN
 		if not built and structure_probe.is_valid():
 			built = bool(structure_probe.call(id))
 		if built:

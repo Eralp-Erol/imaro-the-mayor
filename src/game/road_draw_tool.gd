@@ -1,3 +1,4 @@
+# gdlint:disable=max-public-methods
 class_name RoadDrawTool
 extends RefCounted
 ## Yol çizim aracının DURUM MAKİNESİ (T-042 adım 3; CAN-04, D-008/D-009). Düğüm/ekran yok: dünya koordinatı (m) alır,
@@ -26,6 +27,9 @@ const MSG_START_NOT_ON_ROAD := &"road.start_not_on_road"
 const MSG_DONE := &"road.step.done"
 const MSG_FAILED := &"road.step.failed"
 const MSG_UNDONE := &"road.undo_done"
+## T-042b (D-011): sim'in `crosses_parcels` retti kamulaştırma teklifini (`taken_parcels` > 0) taşıyorsa teklif vardır.
+const REJECT_CROSSES_PARCELS := &"public_work.reject.crosses_parcels"
+const REJECT_EXPROPRIATION_CHANGED := &"public_work.reject.expropriation_changed"
 
 var step: Step = Step.OFF
 var band_active: bool = true
@@ -41,6 +45,9 @@ var verdict: CommandResult = null
 var message: StringName = MSG_NONE
 var message_args: Dictionary = {}
 var sending_command_id: int = SimContract.NO_ID
+## T-042b · Oyuncu sim'in kamulaştırma teklifini kabul etti (`accept_offer`): komut `expropriate: true` ile sorulur ve
+## gönderilir. Bitiş değişince/taslak sıfırlanınca düşer (teklif her taslak için yeniden okunur).
+var expropriate: bool = false
 
 var _net: WorldNetwork = null
 var _facade: SimFacade = null
@@ -126,6 +133,8 @@ func hover_at(p: Vector2, radius_m: float) -> void:
 		Step.PICK_B:
 			var target := _end_target(p, radius_m)
 			if target.distance_to(end) >= HOVER_EPSILON_M or verdict == null:
+				if target.distance_to(end) >= HOVER_EPSILON_M:
+					expropriate = false
 				end = target
 				_revalidate()
 				changed.emit()
@@ -153,9 +162,12 @@ func tap_at(p: Vector2, radius_m: float) -> void:
 			var target := _end_target(p, radius_m)
 			# Aynı noktaya (yapışma yarıçapı içinde) yeniden tıklamak/dokunmak yolu onaylar; başka bir yere tıklamak bitişi
 			# değiştirir. Yalnız yapılabilir taslakta (ret varken yeniden tıklama hiçbir şey göndermez).
-			if step == Step.REVIEW and can_confirm() and target.distance_to(end) <= radius_m:
+			# Yıkım içeren yol yeniden dokunuşla ONAYLANMAZ (kazara dokunuş bina yıkmasın): onay panelden/Enter/işaretten.
+			if step == Step.REVIEW and can_confirm() and not demolishes() and target.distance_to(end) <= radius_m:
 				confirm()
 				return
+			if target.distance_to(end) >= HOVER_EPSILON_M:
+				expropriate = false
 			end = target
 			_revalidate()
 			step = Step.REVIEW
@@ -199,6 +211,52 @@ func confirm() -> CommandResult:
 	return result
 
 
+## T-042b · Sim'in kamulaştırma teklifi: taslak `crosses_parcels` ile reddedildiyse ve ret args'ı alınacak arsa sayısını
+## (sim hesabı) taşıyorsa o args; teklif yoksa (kamulaştırma kapalı / korunan yapı / başka ret) boş.
+func offer() -> Dictionary:
+	if verdict == null or not verdict.is_rejected() or expropriate:
+		return {}
+	if verdict.reason_key != REJECT_CROSSES_PARCELS or int(verdict.args.get("taken_parcels", 0)) <= 0:
+		return {}
+	return verdict.args
+
+
+## Teklifi kabul eder: taslak `expropriate: true` ile sim'e yeniden sordurulur (önizleme sayıları sim'den). Sonuç hâlâ
+## ret ise (örn. korunan yapı) kabul düşer. Dönüş: kabul edilen taslak geçerli mi.
+func accept_offer() -> bool:
+	if offer().is_empty() or step != Step.REVIEW:
+		return false
+	expropriate = true
+	_verdict_key = ""
+	_revalidate()
+	if not is_valid():
+		expropriate = false
+	changed.emit()
+	return is_valid()
+
+
+## Kabul edilen teklifi geri çeker (taslak kamulaştırmasız yeniden sorulur; teklif tekrar görünür).
+func withdraw_offer() -> void:
+	if not expropriate:
+		return
+	expropriate = false
+	_verdict_key = ""
+	_revalidate()
+	changed.emit()
+
+
+## Geçerli taslak yıkım/yerinden edilme/proje kaybı içeriyor mu (sim önizlemesi)? Onay metni ve tek-dokunuş onayı
+## buna bağlı.
+func demolishes() -> bool:
+	return expropriate and is_valid() and ExpropriationText.demolishes(verdict.args)
+
+
+## Son yol kamulaştırmalı mı (sim `public_works()` kaydı)? Geri alma onayı buna bağlı.
+func last_road() -> PublicWorkView:
+	var works := _facade.public_works()
+	return works[works.size() - 1] if not works.is_empty() else null
+
+
 ## Son oyuncu yolunu geri alma komutu (LIFO). Dönüş: sim sonucu.
 func undo_last() -> CommandResult:
 	var result := _facade.submit_command(SimCommand.public_work_undo_last())
@@ -227,6 +285,9 @@ func on_events(events: Array[SimEvent]) -> void:
 				message_args = {}
 				changed.emit()
 			elif e.kind == SimEvent.KIND_COMMAND_REJECTED:
+				if e.message_key == REJECT_EXPROPRIATION_CHANGED:
+					expropriate = false  # etki onay anında değişti: teklif yeni sayılarla yeniden gösterilir
+				_verdict_key = ""
 				step = Step.REVIEW
 				message = MSG_FAILED
 				message_args = {"reason_key": e.message_key, "args": e.args}
@@ -272,12 +333,12 @@ func _end_target(p: Vector2, radius_m: float) -> Vector2:
 
 
 func _command() -> SimCommand:
-	return SimCommand.public_work_road(points_cm(), ROAD_CLASS)
+	return SimCommand.public_work_road(points_cm(), ROAD_CLASS, expropriate)
 
 
 func _revalidate() -> void:
 	var cmd := _command()
-	var key := str(cmd.params["points_cm"])
+	var key := "%s|%s" % [str(cmd.params["points_cm"]), expropriate]
 	if key == _verdict_key and _net.graph_version == _verdict_version and verdict != null:
 		return
 	verdict = _facade.validate_command(cmd)
@@ -289,6 +350,7 @@ func _reset_draft() -> void:
 	start = Vector2.ZERO
 	end = Vector2.ZERO
 	verdict = null
+	expropriate = false
 	_verdict_key = ""
 	_verdict_version = -1
 	sending_command_id = SimContract.NO_ID
