@@ -36,6 +36,16 @@ var _land_data: Array = []
 var _water_data: Array = []
 var _far_nodes: Array[MeshInstance3D] = []
 var _far_mode: bool = false
+## T-042b: kent zemini maskesi yerel yenilenebilsin diye görüntü, doku, bilgi ve doluluk saklanır.
+var _urban_image: Image = null
+var _urban_tex: ImageTexture = null
+var _urban_info: Dictionary = {}
+var _urban_occ: Dictionary = {}
+var _urban_job: Dictionary = {}
+var _urban_job_rect: Rect2 = Rect2()
+var _urban_t0: int = 0
+var _urban_task: int = -1
+var _urban_up: Image = null
 
 
 ## Eski çocukları siler, WorldData'dan tüm chunk'ları kurar.
@@ -107,14 +117,102 @@ func apply_urban_ground(net: WorldNetwork, cols: BuildingColumns) -> Dictionary:
 	if mask.is_empty():
 		return {}
 	var image: Image = mask["image"]
+	# Çalışma kopyası (mip'siz, sunucuyla PAYLAŞILMAZ): paylaşılan tamponu yazmak 16 MB'lık kopya (~18 ms) tetiklerdi.
+	_urban_image = Image.new()
+	_urban_image.copy_from(image)
 	image.generate_mipmaps()
 	var tex := ImageTexture.create_from_image(image)
+	_urban_tex = tex
+	_urban_info = {"origin": mask["origin"], "cell_m": mask["cell_m"]}
+	_urban_occ = {}
 	var origin: Vector2 = mask["origin"]
 	var size: Vector2 = mask["size"]
 	_material.set_shader_parameter("urban_tex", tex)
 	_material.set_shader_parameter("urban_rect", Vector4(origin.x, origin.y, size.x, size.y))
 	stats["urban_mask"] = {"px": image.get_size(), "cell_m": mask["cell_m"], "parcels": mask["parcels"], "ms": mask["ms"]}
 	return stats["urban_mask"]
+
+
+## T-042b · Kamulaştırma / geri alma: kent zemini maskesini `world_rect` çevresinde ağın güncel durumuyla YENİDEN boyar
+## (alınan parsel boyanmaz; bölünen blokların doluluk oranı yeniden değerlendirilir), mip zincirini yeniler ve dokuyu
+## günceller. Maske yoksa boş döner. `cols`: T0 sütunları (doluluk bir kez hesaplanır). Senkron sürüm (testler/dev);
+## oyun kareleri `begin_urban_update` + `step_urban_update` ile dilimler.
+func update_urban_ground(net: WorldNetwork, cols: BuildingColumns, world_rect: Rect2) -> Dictionary:
+	if not begin_urban_update(net, cols, world_rect):
+		return {}
+	var rep := {}
+	while rep.is_empty():
+		rep = step_urban_update(net, 1 << 40)
+	return rep
+
+
+## Doluluk sözlüklerini önceden kurar (ilk yenilemede ~25 ms takılma olmasın).
+func prepare_urban_update(cols: BuildingColumns) -> void:
+	if _urban_image != null and _urban_occ.is_empty():
+		_urban_occ = UrbanGroundMask.occupancy(cols)
+
+
+## Yerel kent zemini yenilemesini başlatır (pencere silinir, boyanacak parseller listelenir). Önceki iş bitmediyse
+## pencereler birleşir. false: maske yok.
+func begin_urban_update(net: WorldNetwork, cols: BuildingColumns, world_rect: Rect2) -> bool:
+	if _urban_image == null or _urban_tex == null or _look == null:
+		return false
+	if _urban_occ.is_empty():
+		_urban_occ = UrbanGroundMask.occupancy(cols)
+	if _urban_task >= 0:
+		WorkerThreadPool.wait_for_task_completion(_urban_task)   # çalışma kopyasını okuyan iş bitsin
+		_urban_task = -1
+	if not _urban_job.is_empty():
+		world_rect = world_rect.merge(_urban_job_rect)
+	_urban_job_rect = world_rect
+	_urban_job = UrbanGroundMask.repaint_begin(_urban_image, _urban_info, net, _look.urban_mask_params(), world_rect)
+	_urban_t0 = Time.get_ticks_usec()
+	return true
+
+
+## Bir dilim: boyama bütçe (µs) dolana dek; boyama bitince mip zinciri ARKA PLANDA hazırlanır (çalışma kopyasının
+## kopyası; ana iş parçacığı yazmaz) ve hazır olunca doku yüklenir. Biten işte rapor {px, parcels, paint_ms, upload_ms,
+## ms}, sürüyorsa boş.
+func step_urban_update(net: WorldNetwork, budget_us: int) -> Dictionary:
+	if _urban_job.is_empty():
+		return {}
+	if _urban_task < 0 and not bool(_urban_job.get("painted_all", false)):
+		if UrbanGroundMask.repaint_step(_urban_job, _urban_image, net, _urban_occ, budget_us):
+			_urban_job["painted_all"] = true
+			_urban_up = Image.new()
+			var up := _urban_up
+			var work := _urban_image
+			var run := func() -> void:
+				up.copy_from(work)
+				up.generate_mipmaps()
+			if use_threads:
+				_urban_task = WorkerThreadPool.add_task(run, false, "urban ground mips")
+			else:
+				run.call()
+		return {}
+	if _urban_task >= 0:
+		if not WorkerThreadPool.is_task_completed(_urban_task):
+			return {}
+		WorkerThreadPool.wait_for_task_completion(_urban_task)
+		_urban_task = -1
+	var t0 := Time.get_ticks_usec()
+	_urban_tex.update(_urban_up)
+	var rep := UrbanGroundMask.repaint_report(_urban_job, Time.get_ticks_usec() - _urban_t0)
+	rep["upload_ms"] = snappedf((Time.get_ticks_usec() - t0) / 1000.0, 0.1)
+	_urban_job = {}
+	_urban_up = null
+	stats["urban_repaint"] = rep
+	return rep
+
+
+## Doluluk önceden kurulu mu?
+func urban_ready() -> bool:
+	return not _urban_occ.is_empty()
+
+
+## Yerel kent zemini yenilemesi sürüyor mu?
+func urban_update_pending() -> bool:
+	return not _urban_job.is_empty()
 
 
 ## Ortak arazi malzemesi (testler/ölçüm).

@@ -20,6 +20,10 @@ const SNAP_MAX_M := 150.0
 ## ağı kurar (ölçüm: tools/godot/road_ux_probe.gd, ~12 ms/adım); fare olayı başına değil ~20 Hz'de çalışır, aradaki
 ## hareketler birleştirilir (son konum `process`te uygulanır).
 const HOVER_INTERVAL_MSEC := 50
+## T-042b: kamulaştırma teklifi hesabı pahalıdır (~10 ms; sim `nearby` O(parsel)). Aralık son `hover_at` süresinin bu
+## katı
+## kadar uzar (görev döngüsü <= ~%15); ucuz denetimde (<~8 ms) aralık HOVER_INTERVAL_MSEC'te kalır.
+const HOVER_COST_FACTOR := 7.0
 ## İmleç önizlemesinde yan panelin en sık yeniden çizilme aralığı (ms): panel düğüm kurar (~6,6 ms/çizim); imleçle aynı
 ## hızda gerekmez.
 const PANEL_HOVER_INTERVAL_MSEC := 250
@@ -39,6 +43,7 @@ var _panel: RoadDrawPanel = null
 var _cursor: Vector2 = Vector2.ZERO
 var _touch: bool = false
 var _last_hover_msec: int = -HOVER_INTERVAL_MSEC
+var _hover_cost_msec: float = 0.0
 var _hover_pending: bool = false
 var _have_cursor: bool = false
 var _last_panel_msec: int = -PANEL_HOVER_INTERVAL_MSEC
@@ -148,7 +153,7 @@ func process() -> void:
 	if tool.is_active():
 		tool.refresh_if_graph_changed()
 		_place_chip()
-		if _hover_pending and Time.get_ticks_msec() - _last_hover_msec >= HOVER_INTERVAL_MSEC:
+		if _hover_pending and Time.get_ticks_msec() - _last_hover_msec >= hover_interval_msec():
 			_apply_hover()
 		if _panel_pending and Time.get_ticks_msec() - _last_panel_msec >= PANEL_HOVER_INTERVAL_MSEC:
 			_refresh_panel()
@@ -164,13 +169,18 @@ func handle_motion(event: InputEventMouseMotion) -> void:
 		return
 	_cursor = event.position
 	_have_cursor = true
-	if Time.get_ticks_msec() - _last_hover_msec < HOVER_INTERVAL_MSEC:
+	if Time.get_ticks_msec() - _last_hover_msec < hover_interval_msec():
 		_hover_pending = true   # son konum bir sonraki `process`te uygulanır
 		return
 	_apply_hover()
 
 
-## Bekleyen/yeni imleç konumunu araca uygular (en çok `HOVER_INTERVAL_MSEC`te bir).
+## Güncel imleç önizleme aralığı (ms): son denetim pahalıysa uzar (`HOVER_COST_FACTOR`).
+func hover_interval_msec() -> int:
+	return maxi(HOVER_INTERVAL_MSEC, int(_hover_cost_msec * HOVER_COST_FACTOR))
+
+
+## Bekleyen/yeni imleç konumunu araca uygular (en çok `hover_interval_msec`te bir).
 func _apply_hover() -> void:
 	_hover_pending = false
 	_last_hover_msec = Time.get_ticks_msec()
@@ -181,7 +191,9 @@ func _apply_hover() -> void:
 	var world := _ground_xz(_cursor)
 	if world.is_empty():
 		return
+	var t_cost := Time.get_ticks_usec()
 	tool.hover_at(world["p"], _snap_radius_m(_cursor))
+	_hover_cost_msec = (Time.get_ticks_usec() - t_cost) / 1000.0
 	if not tip.visible:
 		_sync_visuals()   # ilk imleç hareketi: adım yönergesi görünür
 	_place_tip()

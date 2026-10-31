@@ -12,20 +12,29 @@ var sync: RoadEditSync = null
 var ctrl: RoadDrawController = null
 ## true: kullanıcı yolu bu tick'te değişti, görünüm işi bir sonraki karede başlar.
 var due: bool = false
+## T-042b: kamulaştırma takipçisi (alınan T0 parselleri görünümden süzülür, geri alınca döner); host verilmediyse null.
+var follow: PlayableExpropriation = null
 
 var _net: WorldNetwork = null
 var _facade: SimFacade = null
 var _other_busy: Callable = Callable()
+var _cols: BuildingColumns = null
 
 
 ## `other_busy`: dünya başka bir nedenle meşgul mü (bitki yerleşimi)? Yol komutları bağlanamazsa araç görünmez.
-static func create(net: WorldNetwork, roads: RoadView, facade: SimFacade, other_busy: Callable) -> PlayableRoads:
+## `host`: playable (T0 sütunları `_t0_columns`, görünüm `_buildings`, `_t0_occupied`, `_terrain`, `_selection_ring`).
+static func create(net: WorldNetwork, roads: RoadView, facade: SimFacade, other_busy: Callable,
+		host: Object = null) -> PlayableRoads:
 	var r := PlayableRoads.new()
 	r._net = net
 	r._facade = facade
 	r._other_busy = other_busy
 	if roads != null:
 		r.sync = RoadEditSync.create(net, roads)
+	if host != null and host.get(&"_t0_columns") != null and host.get(&"_buildings") != null:
+		r._cols = host.get(&"_t0_columns")
+		r.follow = PlayableExpropriation.create(net, r._cols, host.get(&"_buildings"), host.get(&"_t0_occupied"),
+				host.get(&"_terrain"), func() -> Object: return host.get(&"_selection_ring"))
 	return r
 
 
@@ -34,11 +43,14 @@ func attach_commands() -> bool:
 	var impl := _facade as SimFacadeImpl
 	if impl == null or _net == null:
 		return false
-	var ctx := PublicWorksContext.create(_net, RoadDraftRules.load_path(NETWORK_PATH), PublicWorksConfig.load_default())
+	var rules := RoadDraftRules.load_path(NETWORK_PATH)
+	var ctx := PublicWorksContext.create(_net, rules, PublicWorksConfig.load_default())
 	if ctx == null:
 		push_error("playable: yol komutları bağlanamadı; 'Yol çiz' aracı görünmeyecek")
 		return false
 	ctx.busy_probe = world_busy
+	if _cols != null:
+		PlayableExpropriation.attach_port(ctx, _net, rules, _cols)  # T-042b: köprü + korunan T0 parselleri
 	if not impl.attach_public_works(ctx):
 		push_error("playable: attach_public_works reddedildi; 'Yol çiz' aracı görünmeyecek")
 		return false
@@ -65,6 +77,8 @@ func note_tick() -> void:
 
 ## Kare başı: bekleyen iş başlar, biten iş düğümlere kurulur. Rapor (boş = bir şey olmadı).
 func pump() -> Dictionary:
+	if follow != null:
+		follow.poll()
 	if sync == null:
 		return {}
 	if due and not sync.is_busy():
@@ -75,6 +89,8 @@ func pump() -> Dictionary:
 
 ## Senkron yenileme (dev `--m2-advance` / `--draw-road` döngüleri).
 func sync_now() -> Dictionary:
+	if follow != null:
+		follow.settle()
 	if sync == null:
 		return {}
 	return sync.wait() if sync.is_busy() else sync.sync()
@@ -82,6 +98,8 @@ func sync_now() -> Dictionary:
 
 ## Rapor satırı + istatistik (`stats`: playable `sim_stats`).
 func note_report(rep: Dictionary, stats: Dictionary, tick: int) -> void:
+	if follow != null and not follow.stats.is_empty():
+		stats["expropriation"] = follow.stats
 	if rep.is_empty():
 		return
 	var ms := float(rep["ms"])
