@@ -2,7 +2,8 @@ class_name PlayablePolitics
 extends RefCounted
 ## Oynanabilir sahnenin siyaset YAPILANDIRMASI (T-043A, D-010, Q-014 AÇIK): sim varsayılan siyaset verisi
 ## (`data/politics/*.json`) + `data/game/playable_politics.json` yaması. Şimdilik tek yama: `requires_council` girdileri
-## (oynanabilir varsayılan "meclis yok": imar planı teklifi oylamaya gitmeden `apply_delay_days` sonra yürürlüğe girer).
+## (oynanabilir varsayılan "meclis yok": imar planı teklifi oylamaya gitmeden `apply_delay_days` sonra yürürlüğe girer)
+## ve `blocs_grievance_rule_overrides` (altyapı baskısı şikâyetini yalnız gerçek aşımda başlatır; bölge ~%99,9 dolu).
 ## Sim varsayılanı (GOLDEN A/B) DEĞİŞMEZ: dosyalar kopyalanır ve yama kopyaya uygulanır. Sim bu sınıfı bilmez.
 
 const PATH := "res://data/game/playable_politics.json"
@@ -30,11 +31,24 @@ static func config(actors: ActorConfig = null) -> PoliticsConfig:
 	for kind: Variant in (patch as Dictionary)["requires_council"]:
 		required[kind] = (patch as Dictionary)["requires_council"][kind]
 	council["requires_council"] = required
+	_override_grievance_rules(files["blocs"], (patch as Dictionary).get("blocs_grievance_rule_overrides", []))
 	var cfg := PoliticsConfig.from_files(files, actor_cfg)
 	if not cfg.is_valid():
 		push_error("playable_politics: yamalı siyaset yapılandırması geçersiz: %s" % cfg.error)
 		return null
 	return cfg
+
+
+## Her kesimin aynı sinyalli şikâyet kuralına `lo`/`hi` yamasını uygular (kopya sözlük; sim varsayılanı değişmez).
+static func _override_grievance_rules(blocs: Variant, overrides: Variant) -> void:
+	if not (blocs is Dictionary and overrides is Array and (blocs as Dictionary).get("cohorts", null) is Dictionary):
+		return
+	for cohort: Variant in (blocs as Dictionary)["cohorts"].values():
+		for rule: Variant in (cohort as Dictionary).get("grievance_rules", []):
+			for override: Variant in overrides:
+				if (rule as Dictionary).get("signal", null) == (override as Dictionary).get("signal", ""):
+					rule["lo"] = (override as Dictionary)["lo"]
+					rule["hi"] = (override as Dictionary)["hi"]
 
 
 static func _read(path: String) -> Variant:

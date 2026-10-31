@@ -1,5 +1,9 @@
 {
 	"_header": "T-043A (D-010; CALISMA MODELI, kanon DEGIL): oynanabilir kurulumun siyaset yamasi. requires_council.zoning.propose=false -> oyuncunun imar plani teklifi MECLIS OYLAMASINA GITMEZ, apply_delay_days sonra dogrudan yururluge girer ('meclis yok'). Q-014 (meclis usulu gercek hali) ACIK kalir: ayni sim iki yolu da calistirir (tests/sim/politics/plan_council_test.gd), bu dosya yalniz oynanabilir varsayilani secer. Sim varsayilani (data/politics/council.json: true) DEGISMEZ; altin A/B onu kullanir. budget.propose yamasi YOK (butce onerisi T-043C'de gosterge).",
+	"_infra_pressure_note": "Altyapi baskisi (altyapi-siyaset yan etkisi olcumu, 2026-10-31; CALISMA MODELI): oynanabilir bolge yuk/kapasite orani basta ~%99,9'dur (playable_economy.json infra_free_units_max=0: bolge dolu ama SIGIYOR). Sim varsayilani blocs.json altyapi baskisi (infra_stress) sikayetini oran %50'yi gecince baslatir (lo 500, hi 900): dolu-ama-sigan bolge oyuncu hicbir sey yapmadan sikayeti ~50. gunde 1000'e doygunlastirip surekli oppose/protest + gundem urettiriyordu (eski %77 oranda da ayni, 400 gun: 4 tepki; yeni 6). Burada baski YALNIZ gercek asimda (yuk > kapasite, orn. yol geri alinmasi) baslar: lo 1000 (tam dolu = baski 0), hi 1300 (PE-07 'stress' surucusu ile ayni olcek). Kesim yaniti (insaat yuku = boru hatti/hane vb.) DEGISMEZ. Sim varsayilani blocs.json DEGISMEZ (GOLDEN A/B).",
 	"schema_version": 1,
-	"requires_council": {"zoning.propose": false}
+	"requires_council": {"zoning.propose": false},
+	"blocs_grievance_rule_overrides": [
+		{"signal": "infra_stress", "lo": 1000, "hi": 1300}
+	]
 }
