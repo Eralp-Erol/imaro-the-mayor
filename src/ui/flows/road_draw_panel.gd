@@ -13,6 +13,9 @@ const CONFIRM_MIN_WIDTH := 200.0
 const PLAN_HINT_DAYS := 10
 ## İpucu taramasında bölge başına en çok bakılan parsel (sınırlı iş; bulunamazsa ipucu GÖSTERİLMEZ).
 const PLAN_HINT_SCAN := 600
+## İpucu taraması KARE DİLİMLİDİR (`pump_hint`): bir karede en çok bu kadar (µs) + bir parsel. Ölçüm: tek seferlik 600
+## parsellik tarama yol onayından sonraki ilk karede ~45 ms tutuyordu (HUD yoklaması -> panel imzası).
+const PLAN_HINT_BUDGET_US := 2000
 
 var tool: RoadDrawTool = null
 
@@ -28,6 +31,7 @@ var _undo_pending: bool = false
 ## İpucu önbelleği: (son yol komutu, gün/PLAN_HINT_DAYS) -> bölgede plansız parsel var mı (ilk bulunanda durur).
 var _hint_key: String = ""
 var _hint_value: bool = false
+var _hint_scan: PlanHintScan = null
 
 
 static func create(ctx: UiContext, facade: SimFacade, draw_tool: RoadDrawTool) -> RoadDrawPanel:
@@ -144,9 +148,13 @@ func _render() -> void:
 
 ## Yol çizildikten sonra ipucu: YALNIZ son yolun değdiği bölgede sim `plan_state` gerçekten `unplanned`/`plan_rejected`
 ## parsel varsa (plan durumu yoksa/mock ise ya da hepsi planlıysa ipucu yok). Sonuç önbelleklenir (yol, 10 gün).
+## Önbellek anahtarı değişince tarama KARE DİLİMLERİNDE yapılır (`PlanHintScan`, `pump_hint`); bitene kadar
+## ipucu görünmez,
+## biten sonuç eski tek seferlik taramayla AYNIDIR (aynı sıra, aynı üst sınır).
 func _plan_hint_needed() -> bool:
 	var works := _facade.public_works()
 	if works.is_empty():
+		_hint_scan = null
 		return false
 	var last := works[works.size() - 1]
 	var key := "%d|%d" % [last.command_id, _facade.current_tick() / PLAN_HINT_DAYS]
@@ -154,12 +162,27 @@ func _plan_hint_needed() -> bool:
 		return _hint_value
 	_hint_key = key
 	_hint_value = false
-	for code: String in last.region_units.keys():
-		var ids := _facade.parcel_ids(StringName(code))
-		for i in mini(ids.size(), PLAN_HINT_SCAN):
-			if PlanStateText.needs_plan(_facade.plan_state(ids[i])):
-				_hint_value = true
-				return true
+	var facade := _facade
+	# `parcel_ids` yalnız değişmez parsel kaynağını okur (ListParcelSource salt okunur): işçi iş parçacığında güvenli.
+	_hint_scan = PlanHintScan.create(last.region_units.keys(),
+			func(code: Variant) -> PackedInt64Array: return facade.parcel_ids(StringName(code)),
+			func(id: int) -> bool: return PlanStateText.needs_plan(facade.plan_state(id)), PLAN_HINT_SCAN)
+	_hint_scan.start()
+	return false
+
+
+## Dilimli ipucu taraması (her kare, araç açıkken). Sonuç değişirse paneli tazeler. true = tarama sürüyor.
+func pump_hint(budget_us: int = PLAN_HINT_BUDGET_US) -> bool:
+	if _hint_scan == null:
+		return false
+	var finished := _hint_scan.step(budget_us)
+	if not finished:
+		return true
+	var found := _hint_scan.found
+	_hint_scan = null
+	if found:
+		_hint_value = true
+		refresh()
 	return false
 
 

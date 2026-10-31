@@ -23,6 +23,9 @@ signal cells_rebuilt(keys: Array)
 const SUPER_PREFIX := "Super_"
 ## Gizleme/geri koymada eşzamanlı arka plan mesh işi sayısı (`pump_pending`).
 const MAX_TASKS := 2
+## Dilimli kurulumda HLOD1 mesh'inin tek yüzeyi en çok bu kadar köşe (~3 ms); büyük hücrede birden çok yüzey = birden
+## çok draw call (yalnız artımlı yeniden kurulan hücrelerde; ilk kurulum/`set_columns` tek yüzeydir).
+const HLOD1_SLICE_VERTS := 30000
 const TRIS_META := &"tris"
 ## MultiMeshInstance3D üstünde modül kimliği (onaylı kimlik denetimi/test için; `drawn_module_ids`).
 const MODULE_META := &"module_id"
@@ -32,6 +35,8 @@ const ROOF_SOURCE_GROUP := &"eye_roof_clearance_source"
 ## Son kurulumun ölçümleri (perf_probe / world_preview okur).
 var stats: Dictionary = {}
 var config: BuildingViewConfig = BuildingViewConfig.new()
+## Dilimli kurulumda HLOD1 yüzey boyu (testler küçültür; varsayılan `HLOD1_SLICE_VERTS`; 3'ün katı olmalı).
+var hlod1_slice_verts: int = HLOD1_SLICE_VERTS
 
 var _world: WorldData = null
 var _kit: BuildingKit = null
@@ -49,6 +54,13 @@ var _mask: BuildingParcelMask = BuildingParcelMask.new()
 var _pend_cells: Dictionary = {}
 var _pend_supers: Dictionary = {}
 var _tasks: Array[Dictionary] = []
+## Kare dilimli hücre kurulumu (yol onayı sonrası ölçüm, Intel Mac: tek hücre kurulumu 12-19 ms; modül başına ~0,15 ms,
+## HLOD1 mesh'i ~0,1 ms/1000 köşe ve tek yüzeyde bölünmez): {data, cell: Node3D (henüz ağaçta DEĞİL), n: sıradaki birim,
+## sliced: HLOD1 yüzeylere bölünür mü, hl_mesh}. Birimler: önce modüller, sonra HLOD1 yüzey dilimleri. Eski hücre yalnız
+## BİTİŞTE yer değiştirir (görünüm kareler arasında yarım kalmaz); boşsa iş yok.
+var _cell_partial: Dictionary = {}
+## `pump_pending` çağrısında ilerleyen iş birimi sayısı (modül, HLOD1 dilimi, süper-chunk, boş hücre).
+var _units: int = 0
 ## Kameranın göz açıklığı için çatı yükseklik dizini (aynı sütunlardan; `set_columns` yeniler, aynı nesne kalır).
 var _roofs: RoofClearance = RoofClearance.new()
 # iş parçacığı görev girdileri (set_columns sırasında geçerli)
@@ -261,7 +273,7 @@ func prepare_parcel_index() -> void:
 
 ## Bekleyen (kuyrukta ya da arka planda hesaplanan) hücre/süper-chunk işi var mı (adet)?
 func pending_work() -> int:
-	return _pend_cells.size() + _pend_supers.size() + _tasks.size()
+	return _pend_cells.size() + _pend_supers.size() + _tasks.size() + (0 if _cell_partial.is_empty() else 1)
 
 
 ## Kuyruktaki hücre ve süper-chunk işini yürütür: mesh VERİSİ (`BuildingChunkBuilder`, `BuildingHlod2`; saf) arka plan
@@ -269,15 +281,23 @@ func pending_work() -> int:
 ## parçacığında (en çok `MAX_TASKS`) hesaplanır, ana iş parçacığı yalnız biten işin düğümlerini kurar. Her kurulum
 ## sonrası
 ## `budget_us` aşıldıysa durur (en az bir kurulum ilerler). Süper-chunk işi, hücre işi bitince başlar (hücre verisini
-## okur). `use_threads = false` ise satır içi çalışır (testler). Dönüş: {done: kurulan birim, left: kalan, ms}.
+## okur). `use_threads = false` ise satır içi çalışır (testler). Dönüş: {done: biten hücre/süper-chunk, units:
+## ilerleyen iş birimi (modül/HLOD1 dilimi dahil), left: kalan, ms}.
 func pump_pending(budget_us: int) -> Dictionary:
 	var t0 := Time.get_ticks_usec()
 	var done := 0
+	_units = 0
 	var keys: Array[Vector2i] = []
 	_start_tasks()
+	var worked := false
+	if not _cell_partial.is_empty():
+		worked = true
+		done += _advance_partial(budget_us, t0, keys)
 	var i := 0
 	while i < _tasks.size():
-		if done > 0 and Time.get_ticks_usec() - t0 >= budget_us:
+		if not _cell_partial.is_empty():
+			break   # bir hücre yarım: bu çağrıda yeni birim başlamaz
+		if worked and Time.get_ticks_usec() - t0 >= budget_us:
 			break
 		var job: Dictionary = _tasks[i]
 		if job["id"] >= 0 and not WorkerThreadPool.is_task_completed(job["id"]):
@@ -288,20 +308,38 @@ func pump_pending(budget_us: int) -> Dictionary:
 		_tasks.remove_at(i)
 		var t_inst := Time.get_ticks_usec()
 		if job["kind"] == "cell":
-			_install_cell(job["out"] as BuildingCellData)
-			keys.append(job["key"])
+			_cell_partial = _begin_cell(job["out"] as BuildingCellData, true)
+			if _cell_partial.is_empty():
+				keys.append(job["key"])   # hücredeki her yapı atıldı: düğüm yok, kurulum bitti
+				done += 1
+				_units += 1
+			else:
+				done += _advance_partial(budget_us, t0, keys)
 		else:
 			_install_super(job["key"], job["out"] as Dictionary)
+			done += 1
+			_units += 1
+		worked = true
 		var inst_ms := (Time.get_ticks_usec() - t_inst) / 1000.0
 		stats["mask_install_max_ms"] = snappedf(maxf(float(stats.get("mask_install_max_ms", 0.0)), inst_ms), 0.01)
 		stats["mask_build_max_ms"] = snappedf(maxf(float(stats.get("mask_build_max_ms", 0.0)), float(job["ms"])), 0.01)
-		done += 1
 		_start_tasks()
 	if done > 0:
 		if pending_work() == 0:
 			_refresh_stats()   # tüm hücreleri gezer (~3 ms): yalnız iş bitince, kare dilimini şişirmesin
 		cells_rebuilt.emit(keys)
-	return {"done": done, "left": pending_work(), "ms": (Time.get_ticks_usec() - t0) / 1000.0}
+	return {"done": done, "units": _units, "left": pending_work(), "ms": (Time.get_ticks_usec() - t0) / 1000.0}
+
+
+## Yarım hücreyi bütçe dolana kadar (en az bir modül) ilerletir; biterse 1, bitmezse 0 döner.
+func _advance_partial(budget_us: int, t0: int, keys: Array[Vector2i]) -> int:
+	var data: BuildingCellData = _cell_partial["data"]
+	var finished := _step_cell(_cell_partial, budget_us, t0)
+	if not finished:
+		return 0
+	keys.append(data.key)
+	_cell_partial = {}
+	return 1
 
 
 ## Boş kalan tüm işçi yuvalarını doldurur (önce hücreler; süper-chunk'lar hücre işi bitince).
@@ -323,7 +361,7 @@ func _start_tasks() -> void:
 		var world := _world
 		var cfg := config
 		_spawn(k, "cell", func() -> Variant: return BuildingChunkBuilder.build_cell(cols, one, k, kit, world, cfg))
-	if not _pend_cells.is_empty() or _has_task_kind("cell"):
+	if not _pend_cells.is_empty() or _has_task_kind("cell") or not _cell_partial.is_empty():
 		return
 	while _tasks.size() < MAX_TASKS and not _pend_supers.is_empty():
 		var sk: Vector2i = _pend_supers.keys()[0]
@@ -347,6 +385,13 @@ func _drain_tasks() -> void:
 		if job["id"] >= 0:
 			WorkerThreadPool.wait_for_task_completion(job["id"])
 	_tasks.clear()
+	_drop_partial()
+
+
+func _drop_partial() -> void:
+	if not _cell_partial.is_empty():
+		(_cell_partial["cell"] as Node).free()
+		_cell_partial = {}
 
 
 func _has_task_kind(kind: String) -> bool:
@@ -433,6 +478,8 @@ func _rebuild_supers(supers: Array[Vector2i]) -> void:
 
 
 func _remove_cell(key: Vector2i) -> void:
+	if not _cell_partial.is_empty() and (_cell_partial["data"] as BuildingCellData).key == key:
+		_drop_partial()   # yarım kurulan hücre artık gereksiz (içindeki her yapı gizlendi)
 	var node: Node = _cell_nodes.get(key)
 	if node != null:
 		remove_child(node)
@@ -442,69 +489,140 @@ func _remove_cell(key: Vector2i) -> void:
 	_dropped.erase(key)
 
 
+## Senkron hücre kurulumu (tam yeniden kurma yolu): dilimli sürümün tek çağrıda bitmişi.
 func _install_cell(data: BuildingCellData) -> void:
+	var part := _begin_cell(data)
+	if not part.is_empty():
+		_step_cell(part, 1 << 40, Time.get_ticks_usec())
+
+
+## Hücre kurulumunu başlatır: eski hücre YERİNDE kalır; yeni düğüm ağaç dışında modül modül kurulur. Her yapı atılmışsa
+## (su) eski düğüm hemen kalkar ve boş sözlük döner.
+func _begin_cell(data: BuildingCellData, sliced: bool = false) -> Dictionary:
 	_dropped[data.key] = data.dropped
+	if data.kept.is_empty():   # hücredeki her yapı atıldı (su): düğüm yok
+		var old: Node = _cell_nodes.get(data.key)
+		if old != null:
+			remove_child(old)
+			old.queue_free()
+			_cell_nodes.erase(data.key)
+		_cell_data.erase(data.key)
+		return {}
+	var cell := Node3D.new()
+	cell.name = "Cell_%d_%d" % [data.key.x, data.key.y]
+	cell.position = Vector3(data.origin.x, 0.0, data.origin.y)
+	return {"data": data, "cell": cell, "n": 0, "sliced": sliced, "hl_mesh": null}
+
+
+## Yarım hücreyi ilerletir (birim başına bütçe denetimi, en az bir birim); true = hücre kuruldu ve eskisinin
+## yerine geçti.
+func _step_cell(part: Dictionary, budget_us: int, t0: int) -> bool:
+	var data: BuildingCellData = part["data"]
+	var cell: Node3D = part["cell"]
+	var n: int = part["n"]
+	var modules := data.modules.size()
+	var units := modules + _hlod1_slices(data, bool(part["sliced"]))
+	var first := n
+	while n < units:
+		if n > first and Time.get_ticks_usec() - t0 >= budget_us:
+			part["n"] = n
+			_units += n - first
+			return false
+		if n < modules:
+			_add_cell_module(cell, data, n)
+		else:
+			_add_hlod1_slice(part, data, n - modules)
+		n += 1
+	part["n"] = n
+	_units += maxi(n - first, 1)
+	if part["hl_mesh"] != null:
+		var mi := _mesh_instance_of(part["hl_mesh"] as ArrayMesh, data.hlod1_vertices.size() / 3)
+		mi.name = "HLOD1"
+		config.lod.apply(mi, BuildingLod.Tier.HLOD1)
+		cell.add_child(mi)
 	var old: Node = _cell_nodes.get(data.key)
 	if old != null:
 		remove_child(old)
 		old.queue_free()
 		_cell_nodes.erase(data.key)
-	if data.kept.is_empty():   # hücredeki her yapı atıldı (su): düğüm yok
-		_cell_data.erase(data.key)
-		return
-	var cell := Node3D.new()
-	cell.name = "Cell_%d_%d" % [data.key.x, data.key.y]
-	cell.position = Vector3(data.origin.x, 0.0, data.origin.y)
 	add_child(cell)
-	for n in data.modules.size():
-		var m := data.modules[n]
-		var count := data.counts[n]
-		var casts := config.cast_shadows
-		var lod1_caster := casts and config.shadow_caster_lod == 1 and _kit.has_mid[m] == 1
-		if config.build_lod0:
-			var mesh0 := _kit.tier_mesh(m, BuildingLod.Tier.LOD0)
-			if mesh0 != null:
-				var mmi0 := _make_mmi(mesh0, count)
-				mmi0.set_meta(MODULE_META, _kit.ids[m])
-				mmi0.multimesh.buffer = data.buffers[n]
-				mmi0.name = "L0_%s" % _kit.ids[m]
-				mmi0.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts and not lod1_caster \
-						else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				config.lod.apply(mmi0, BuildingLod.Tier.LOD0)
-				cell.add_child(mmi0)
-		if (config.build_lod1 or lod1_caster) and _kit.has_mid[m] == 1:
-			var mesh1 := _kit.tier_mesh(m, BuildingLod.Tier.LOD1)
-			if mesh1 != null:
-				var mmi1 := _make_mmi(mesh1, count)
-				mmi1.set_meta(MODULE_META, _kit.ids[m])
-				mmi1.multimesh.buffer = data.buffers[n]
-				if config.build_lod1:
-					mmi1.name = "L1_%s" % _kit.ids[m]
-					mmi1.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON \
-							if casts and config.lod1_casts_shadow else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-					config.lod.apply(mmi1, BuildingLod.Tier.LOD1)
-					cell.add_child(mmi1)
-				if lod1_caster:
-					# yalnız-gölge: aynı MultiMesh (hero PROXY mesh'i), LOD0 menzilinde; görsel düğüm değil
-					var caster := MultiMeshInstance3D.new()
-					caster.multimesh = mmi1.multimesh
-					caster.set_meta(MODULE_META, _kit.ids[m])
-					caster.name = "S1_%s" % _kit.ids[m]
-					caster.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
-					# K8 görsel LOD0 menzilinden ayrı: gölgeler 700 m'de biter.
-					caster.visibility_range_end = config.shadow_end_m
-					caster.visibility_range_end_margin = config.lod.lod0_margin_m
-					cell.add_child(caster)
-				if not config.build_lod1:
-					mmi1.free()   # yalnız MultiMesh kaynağı lazımdı (caster tutuyor)
-	if config.build_hlod1 and data.hlod1_vertices.size() > 0:
-		var mi := _make_mesh_instance(data.hlod1_vertices, data.hlod1_normals, data.hlod1_colors)
-		mi.name = "HLOD1"
-		config.lod.apply(mi, BuildingLod.Tier.HLOD1)
-		cell.add_child(mi)
 	_cell_nodes[data.key] = cell
 	data.release_geometry()
 	_cell_data[data.key] = data
+	return true
+
+
+## HLOD1 mesh'i kaç yüzey dilimi (0 = HLOD1 yok). Bölünmeyen (senkron) kurulumda tek yüzey.
+func _hlod1_slices(data: BuildingCellData, sliced: bool) -> int:
+	if not config.build_hlod1 or data.hlod1_vertices.size() == 0:
+		return 0
+	return ceili(float(data.hlod1_vertices.size()) / float(_slice_size(data.hlod1_vertices.size()))) if sliced else 1
+
+
+## Dilim başına köşe: `hlod1_slice_verts`, ama bir mesh'te en çok 256 yüzey olabilir (200'le sınırlı), 3'ün katı.
+func _slice_size(total: int) -> int:
+	return maxi(hlod1_slice_verts, ceili(float(total) / 200.0 / 3.0) * 3)
+
+
+func _add_hlod1_slice(part: Dictionary, data: BuildingCellData, index: int) -> void:
+	if part["hl_mesh"] == null:
+		part["hl_mesh"] = ArrayMesh.new()
+	var verts := data.hlod1_vertices
+	var lo := 0
+	var hi := verts.size()
+	if bool(part["sliced"]):
+		var size := _slice_size(verts.size())
+		lo = index * size
+		hi = mini(lo + size, verts.size())
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts.slice(lo, hi)
+	arrays[Mesh.ARRAY_NORMAL] = data.hlod1_normals.slice(lo, hi)
+	arrays[Mesh.ARRAY_COLOR] = data.hlod1_colors.slice(lo, hi)
+	(part["hl_mesh"] as ArrayMesh).add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+
+
+func _add_cell_module(cell: Node3D, data: BuildingCellData, n: int) -> void:
+	var m := data.modules[n]
+	var count := data.counts[n]
+	var casts := config.cast_shadows
+	var lod1_caster := casts and config.shadow_caster_lod == 1 and _kit.has_mid[m] == 1
+	if config.build_lod0:
+		var mesh0 := _kit.tier_mesh(m, BuildingLod.Tier.LOD0)
+		if mesh0 != null:
+			var mmi0 := _make_mmi(mesh0, count)
+			mmi0.set_meta(MODULE_META, _kit.ids[m])
+			mmi0.multimesh.buffer = data.buffers[n]
+			mmi0.name = "L0_%s" % _kit.ids[m]
+			mmi0.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if casts and not lod1_caster \
+					else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			config.lod.apply(mmi0, BuildingLod.Tier.LOD0)
+			cell.add_child(mmi0)
+	if (config.build_lod1 or lod1_caster) and _kit.has_mid[m] == 1:
+		var mesh1 := _kit.tier_mesh(m, BuildingLod.Tier.LOD1)
+		if mesh1 != null:
+			var mmi1 := _make_mmi(mesh1, count)
+			mmi1.set_meta(MODULE_META, _kit.ids[m])
+			mmi1.multimesh.buffer = data.buffers[n]
+			if config.build_lod1:
+				mmi1.name = "L1_%s" % _kit.ids[m]
+				mmi1.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON \
+						if casts and config.lod1_casts_shadow else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				config.lod.apply(mmi1, BuildingLod.Tier.LOD1)
+				cell.add_child(mmi1)
+			if lod1_caster:
+				# yalnız-gölge: aynı MultiMesh (hero PROXY mesh'i), LOD0 menzilinde; görsel düğüm değil
+				var caster := MultiMeshInstance3D.new()
+				caster.multimesh = mmi1.multimesh
+				caster.set_meta(MODULE_META, _kit.ids[m])
+				caster.name = "S1_%s" % _kit.ids[m]
+				caster.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY
+				# K8 görsel LOD0 menzilinden ayrı: gölgeler 700 m'de biter.
+				caster.visibility_range_end = config.shadow_end_m
+				caster.visibility_range_end_margin = config.lod.lod0_margin_m
+				cell.add_child(caster)
+			if not config.build_lod1:
+				mmi1.free()   # yalnız MultiMesh kaynağı lazımdı (caster tutuyor)
 
 
 func _install_super(skey: Vector2i, result: Dictionary) -> void:
@@ -544,11 +662,15 @@ func _make_mesh_instance(verts: PackedVector3Array, normals: PackedVector3Array,
 	arrays[Mesh.ARRAY_COLOR] = colors
 	var mesh := ArrayMesh.new()
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return _mesh_instance_of(mesh, verts.size() / 3)
+
+
+func _mesh_instance_of(mesh: ArrayMesh, tris: int) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
 	mi.material_override = _proxy_mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.set_meta(TRIS_META, verts.size() / 3)
+	mi.set_meta(TRIS_META, tris)
 	return mi
 
 

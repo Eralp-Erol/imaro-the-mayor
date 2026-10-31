@@ -24,6 +24,12 @@ var _frame_ms: Array[float] = []
 var _shots_dir: String = ""
 var _prefix: String = "m2-t042b"
 var _windowed: bool = false
+## Kare izi (T-0xx yol onayı kare sivrilmeleri): her kare {stage, i, proc (sahne _process), input (bu kareden önce
+## push_input), wall (kare başı -> bir sonraki process_frame)}. `--trace`: sivrilen kareler + aşama özeti yazılır.
+var _stage: String = "setup"
+var _stage_i: int = 0
+var _trace: Array[Dictionary] = []
+var _input_ms: float = 0.0
 
 
 func _initialize() -> void:
@@ -64,18 +70,24 @@ func run() -> void:
 	print("XPROBE_CANDIDATE ", JSON.stringify(cand["info"]))
 	if _args.has("baseline"):
 		await _baseline(cand)
+	_set_stage("focus")
 	await _focus_on(cand["a"], cand["b"], float(_args.get("distance", "230")))
+	_set_stage("idle")
 	await _shot("1-before")
 	if _args.has("ui"):
 		await _drive_road_ui(facade, cand)
 	else:
 		await _drive_road(facade, cand)
 	await _shot("2-after-road")
+	if _args.has("ui") and _args.has("reopen"):
+		await _reopen_tool()
 	if _args.has("ui"):
 		await _undo_ui(facade)
 	else:
 		await _undo(facade)
 	await _shot("3-after-undo")
+	if _args.has("trace"):
+		_print_trace()
 	quit(0)
 
 
@@ -86,7 +98,43 @@ func _frame(dt: float = DT) -> float:
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
 	_frame_ms.append(ms)
 	await process_frame
+	_trace.append({"stage": _stage, "i": _stage_i, "proc": ms, "input": _input_ms,
+			"wall": (Time.get_ticks_usec() - t0) / 1000.0 + _input_ms})
+	_stage_i += 1
+	_input_ms = 0.0
 	return ms
+
+
+func _set_stage(name: String) -> void:
+	_stage = name
+	_stage_i = 0
+
+
+## Aşama başına özet + eşiği aşan kareler (XPROBE_TRACE satırları). Eşik `--trace=<ms>` (varsayılan 8).
+func _print_trace() -> void:
+	var limit := float(_args.get("trace", "8"))
+	var stages: Array[String] = []
+	var peak: Dictionary = {}
+	var count: Dictionary = {}
+	var over16: Dictionary = {}
+	for rec in _trace:
+		var st: String = rec["stage"]
+		if not peak.has(st):
+			stages.append(st)
+			peak[st] = 0.0
+			count[st] = 0
+			over16[st] = 0
+		var step: float = float(rec["proc"]) + float(rec["input"])
+		peak[st] = maxf(float(peak[st]), step)
+		count[st] = int(count[st]) + 1
+		if step > 16.0:
+			over16[st] = int(over16[st]) + 1
+		if step > limit:
+			print("XPROBE_TRACE %s#%d proc=%.1f input=%.1f wall=%.1f" % [st, int(rec["i"]), float(rec["proc"]),
+					float(rec["input"]), float(rec["wall"])])
+	for st in stages:
+		print("XPROBE_STAGE %s frames=%d peak_step_ms=%.1f over16=%d" % [st, int(count[st]), float(peak[st]),
+				int(over16[st])])
 
 
 func _find_candidate(facade: SimFacadeImpl) -> Dictionary:
@@ -200,8 +248,12 @@ func _drive_road(facade: SimFacadeImpl, cand: Dictionary) -> void:
 func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 	var ctrl: RoadDrawController = _scene._pr.ctrl
 	var tool: RoadDrawTool = ctrl.tool
+	_set_stage("tool_open")
 	_key(KEY_Y)
 	await _frame()
+	for _i in 6:
+		await _frame()
+	_set_stage("click_a")
 	print("XPROBE_UI tool_active=%s step=%d" % [str(ctrl.is_active()), tool.step])
 	_scene._facade.set_speed(SimFacade.SPEED_PAUSED)
 	var a: Vector2 = cand["a"]
@@ -209,12 +261,14 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 	_scene._camera.input_profile.select_requested.connect(func(p: Vector2) -> void: print("XPROBE_SELECT ", p))
 	await _click(_screen(a))
 	await _frame()
+	_set_stage("hover")
 	print("XPROBE_UI after A step=%d start=%s msg=%s screen=%s win=%s cam_band=%s" % [tool.step, str(tool.start),
 			String(tool.message), str(_screen(a)), str(root.size), String(_scene._camera.scale_band)])
 	for k in 5:
 		_move(_screen(a.lerp(b, float(k + 1) / 5.0)))
 		await _frame()
 		await _frame()
+	_set_stage("click_b")
 	await _click(_screen(b))
 	for _i in 4:
 		await _frame()
@@ -222,6 +276,7 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 	print("XPROBE_UI after B step=%d verdict=%s offer=%s" % [tool.step, verdict_key,
 			str(not tool.offer().is_empty())])
 	await _shot("1b-offer")
+	_set_stage("accept")
 	var accept := _find_button(UiText.t(&"expropriation.accept"))
 	if accept == null:
 		push_error("probe: 'Kamulaştırarak geç' düğmesi yok")
@@ -239,8 +294,10 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 		quit(5)
 		return
 	var graph_before := (_scene._net as WorldNetwork).graph_hash()
+	_set_stage("confirm")
 	await _click(confirm.get_global_rect().get_center())
 	await _frame()
+	_set_stage("after_tick")
 	print("XPROBE_UI after confirm step=%d" % tool.step)
 	var t0 := Time.get_ticks_usec()
 	facade.advance(1)
@@ -262,9 +319,26 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 		await _frame()
 
 
+## Yol yapıldıktan sonra aracı kapatıp yeniden açar (kare izi aşamaları `reopen_close`, `reopen_open`): "yeni
+## yol çiz" ilk
+## karesi, sim'de yol komutu geçmişi varken (plan ipucu taraması + panel kurulumu).
+func _reopen_tool() -> void:
+	var ctrl: RoadDrawController = _scene._pr.ctrl
+	_set_stage("reopen_close")
+	_key(KEY_Y)
+	for _i in 8:
+		await _frame()
+	_set_stage("reopen_open")
+	_key(KEY_Y)
+	for _i in 30:
+		await _frame()
+	print("XPROBE_REOPEN tool_active=%s" % str(ctrl.is_active()))
+
+
 ## Geri al: "Son yolu geri al" -> "Evet, geri al" -> tick.
 func _undo_ui(facade: SimFacadeImpl) -> void:
 	var tool: RoadDrawTool = _scene._pr.ctrl.tool
+	_set_stage("undo_open")
 	var undo := _find_button(UiText.t(&"road.undo_last"))
 	if undo == null:
 		push_error("probe: 'Son yolu geri al' düğmesi yok")
@@ -279,8 +353,10 @@ func _undo_ui(facade: SimFacadeImpl) -> void:
 		quit(7)
 		return
 	await _shot("2b-undo-confirm")
+	_set_stage("undo_confirm")
 	await _click(yes.get_global_rect().get_center())
 	await _frame()
+	_set_stage("after_undo")
 	facade.advance(1)
 	_frame_ms.clear()
 	var frames := 0
@@ -310,7 +386,9 @@ func _click(pos: Vector2) -> void:
 		e.pressed = pressed
 		e.position = pos
 		e.global_position = pos
+		var t0 := Time.get_ticks_usec()
 		root.push_input(e)
+		_input_ms += (Time.get_ticks_usec() - t0) / 1000.0
 		await _frame()
 
 
@@ -318,7 +396,9 @@ func _move(pos: Vector2) -> void:
 	var e := InputEventMouseMotion.new()
 	e.position = pos
 	e.global_position = pos
+	var t0 := Time.get_ticks_usec()
 	root.push_input(e)
+	_input_ms += (Time.get_ticks_usec() - t0) / 1000.0
 
 
 func _key(code: Key) -> void:
@@ -326,7 +406,9 @@ func _key(code: Key) -> void:
 		var e := InputEventKey.new()
 		e.keycode = code
 		e.pressed = pressed
+		var t0 := Time.get_ticks_usec()
 		root.push_input(e)
+		_input_ms += (Time.get_ticks_usec() - t0) / 1000.0
 
 
 func _find_button(text: String) -> Button:

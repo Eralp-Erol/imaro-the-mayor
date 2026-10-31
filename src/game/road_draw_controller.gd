@@ -49,6 +49,11 @@ var _have_cursor: bool = false
 var _last_panel_msec: int = -PANEL_HOVER_INTERVAL_MSEC
 var _panel_pending: bool = false
 var _click_in_progress: bool = false
+## Sim olayı (yol yapıldı/geri alındı) panel yenilemesini SONRAKİ kareye bırakır: HUD yoklama karesi (tick'li
+## kare) zaten
+## sim + şerit + ipucu içerir; panelin düğüm kurulumu (~9 ms ölçüldü) aynı kareye binmesin.
+var _panel_due: bool = false
+var _in_events: bool = false
 
 
 ## Yol komutları bağlı değilse (facade gerçek sim değil / `attach_public_works` yapılmadı) null: araç hiç görünmez.
@@ -157,6 +162,10 @@ func process() -> void:
 			_apply_hover()
 		if _panel_pending and Time.get_ticks_msec() - _last_panel_msec >= PANEL_HOVER_INTERVAL_MSEC:
 			_refresh_panel()
+		elif _panel_due:
+			_refresh_panel()
+		if panel() != null:
+			panel().pump_hint()   # plan ipucu taraması kare dilimli (yol onayından sonraki ilk karede ~45 ms'ydi)
 
 
 ## Masaüstü imleç önizlemesi: yalnız UI'nin tüketmediği fare hareketi (`_unhandled_input`) gelir, yani imleç panel/araç
@@ -230,9 +239,10 @@ func _on_panel_closed(panel_id: StringName) -> void:
 
 
 func _on_events(events: Array[SimEvent]) -> void:
+	_in_events = true
 	tool.on_events(events)
-	if panel() != null:
-		panel().refresh()
+	_in_events = false
+	_panel_due = panel() != null
 
 
 func _on_refreshed() -> void:
@@ -243,6 +253,9 @@ func _on_refreshed() -> void:
 func _on_tool_changed() -> void:
 	_sync_visuals()
 	if panel() == null:
+		return
+	if _in_events:
+		_panel_due = true   # olay kaynaklı değişim: panel sonraki karede çizilir (`process`)
 		return
 	# İmleç önizlemesinde panel her adımda yeniden kurulmaz (ölçüm: ~6,6 ms/adım); en çok PANEL_HOVER_INTERVAL_MSEC'te bir.
 	# Dokunuş/onay/iptal adımlarında (PICK_B dışı ya da tıklama) hemen çizilir.
@@ -255,6 +268,7 @@ func _on_tool_changed() -> void:
 
 func _refresh_panel() -> void:
 	_panel_pending = false
+	_panel_due = false
 	_last_panel_msec = Time.get_ticks_msec()
 	if panel() != null:
 		panel().refresh()
