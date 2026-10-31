@@ -8,12 +8,17 @@ extends RefCounted
 ## kirli kimlikler kaynak sözlükten yeniden okunup yerinde güncellenir (ekleme sona, ortaya ekleme/silme dilimle). Kirli
 ## yoksa o sütunun SHA-256'sı önbellekten gelir. Dışarıdan, `_touch`/`mark` kullanmadan düğüm/kenar alanı yazan kod
 ## önbelleği bayatlatır: mühürlü ağda bu yasaktır (sim yalnız WorldNetwork API'si ve geri alma ile değiştirir).
-## Saf: RefCounted, Node/Time/OS/global rastgelelik yok.
+## Aynı işaretler türev önbelleklere de iletilir (mühürlü ağda tek değişim kapısı): `rotations` (düğüm dönüş sırası,
+## NetworkRotationCache) ve ağın bileşen önbelleği (NetworkComponents.mark). Saf: RefCounted, Node/Time/OS/global
+## rastgelelik yok.
 
 const NODE := 1
 const EDGE := 2
 const _NODE_STRIDE := 3
 const _EDGE_STRIDE := 6
+
+## Türev önbellek: düğüm dönüş sırası / yüz yürüyüşü (NetworkBlocks.extract_local kullanır).
+var rotations := NetworkRotationCache.new()
 
 var _node_ids := PackedInt32Array()
 var _node_nums := PackedFloat64Array()
@@ -25,11 +30,13 @@ var _dirty_nodes: Dictionary = {}
 var _dirty_edges: Dictionary = {}
 var _node_sha: String = ""
 var _edge_sha: String = ""
+var _components: Dictionary = {}
 
 
 ## Tüm sütunları ağdan baştan kurar (mühürde bir kez).
 static func build(net: WorldNetwork) -> NetworkHashCache:
 	var cache := NetworkHashCache.new()
+	cache._components = net._component_cache
 	var ids: Array = net.nodes.keys()
 	ids.sort()
 	for nid: int in ids:
@@ -42,6 +49,8 @@ static func build(net: WorldNetwork) -> NetworkHashCache:
 		cache._edge_ids.append(eid)
 		cache._edge_nums.append_array(_edge_record(net.edges[eid]))
 		cache._edge_text.append(String((net.edges[eid] as WorldRoadEdge).road_class))
+	cache.rotations.warm(net)
+	net.components(WorldNetwork.MODE_ROAD)  # ilk yol denetimi soğuk bileşen hesabı ödemesin
 	return cache
 
 
@@ -52,6 +61,8 @@ static func mark_on(net: WorldNetwork, kind: int, id: int) -> void:
 
 
 func mark(kind: int, id: int) -> void:
+	rotations.mark(kind, id)
+	NetworkComponents.mark(_components, kind, id)
 	if kind == NODE:
 		_dirty_nodes[id] = true
 	else:

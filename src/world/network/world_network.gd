@@ -764,9 +764,10 @@ func _edge_rect(e: WorldRoadEdge) -> Rect2:
 ## `kind`/`id` (NetworkHashCache.NODE/EDGE): değişen düğüm/kenar; artımlı `graph_hash` önbelleğine kirli işaretlenir.
 func _touch(kind: int = 0, id: int = 0) -> void:
 	graph_version += 1
-	_component_cache.clear()
 	if _hash_cache != null and kind != 0:
-		_hash_cache.mark(kind, id)
+		_hash_cache.mark(kind, id)  # türev önbellekleri (bileşen, dönüş sırası) de buradan yamalanır
+	else:
+		_component_cache.clear()
 
 
 # ---------------------------------------------------------------- sorgu API'si (görünüm ve sim yalnız bunu okur)
@@ -913,35 +914,7 @@ func same_component(a: int, b: int, mode: StringName = MODE_ROAD) -> bool:
 
 
 func _component_info(mode: StringName) -> Dictionary:
-	if _component_cache.has(mode):
-		return _component_cache[mode]
-	var of := {}
-	var list: Array[PackedInt32Array] = []
-	var ids: Array = nodes.keys()
-	ids.sort()
-	for nid: int in ids:
-		if of.has(nid) or not _has_mode_edge(nid, mode):
-			continue
-		var comp_index := list.size()
-		var members := PackedInt32Array()
-		var stack: Array[int] = [nid]
-		of[nid] = comp_index
-		while not stack.is_empty():
-			var cur: int = stack.pop_back()
-			members.append(cur)
-			for eid in adjacency[cur]:
-				var e: WorldRoadEdge = edges[eid]
-				if not e.open or e.mode() != mode:
-					continue
-				var other := e.other(cur)
-				if not of.has(other):
-					of[other] = comp_index
-					stack.append(other)
-		members.sort()
-		list.append(members)
-	var info := {"of": of, "list": list}
-	_component_cache[mode] = info
-	return info
+	return NetworkComponents.info(self, mode)  # mühürlüyse artımlı yama (T-050)
 
 
 func counts() -> Dictionary:

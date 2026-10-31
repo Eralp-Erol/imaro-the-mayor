@@ -38,6 +38,7 @@ var _priority_radius2_cm: int = 0
 var _priority_max_parcels: int = 0
 var _center_x_cm: PackedInt64Array = PackedInt64Array()  # parsel indeksi -> merkez x (cm), kaynak şablonundan
 var _center_z_cm: PackedInt64Array = PackedInt64Array()
+var _stock_cols: Dictionary = {}  # T-050: T0 stok sütunları (EconomyStockColumns); stok statik, kurulumda türetilir
 
 
 ## Kurulum sorunu (Türkçe metin) ya da "". Kaynak, yapılandırma ve stok tutarlılığı.
@@ -76,6 +77,8 @@ static func create(parcels: ParcelSource, cfg: EconomyConfig, stock: ExistingSto
 	system._priority_max_parcels = cfg.p("priority_max_parcels")
 	system._stock = stock if stock != null else EmptyStockSource.new()
 	system._cache_static(parcels)
+	system._stock_cols = EconomyStockColumns.build(system._ids, system._region_of, system._region_codes.size(),
+			system._stock)
 	return system
 
 
@@ -334,29 +337,19 @@ func _initial_investors() -> Dictionary:
 
 
 ## T0 mevcut stok: parseller `built` doğar (karar kaydı yok; başlangıç durumu). Bölge arzı ve hane talebi buna göre
-## kurulur.
-## NOT: `(d["x"] as PackedXArray)[i] = v` yazımı kopyaya yazar (etkisiz); yazarken tipli yerel referans kullanılır.
+## kurulur. Sütunlar kurulumda önceden türetilir (`EconomyStockColumns`, T-050); burada yalnız kopyalanır.
 @warning_ignore("integer_division")
 func _apply_stock(d: Dictionary) -> void:
 	var regions: Dictionary = d["regions"]
-	var stage: PackedByteArray = d["stage"]
-	var use_col: PackedByteArray = d["use"]
-	var units_col: PackedInt32Array = d["units"]
-	var owner_col: PackedInt32Array = d["owner_id"]
-	var res_built: PackedInt64Array = regions["res_built"]
-	var com_built: PackedInt64Array = regions["com_built"]
-	for id in _stock.parcel_ids():
-		var i := EconomyState.index_of(d, id)
-		var use := EconomyState.use_id(_stock.use_of(id))
-		var units := _stock.units_of(id)
-		stage[i] = EconomyState.STAGE_BUILT
-		use_col[i] = use
-		units_col[i] = units
-		owner_col[i] = _stock.owner_of(id)
-		if use == EconomyConfig.USE_RESIDENTIAL:
-			res_built[_region_of[i]] += units
-		else:
-			com_built[_region_of[i]] += units
+	if _stock_cols.is_empty():
+		_stock_cols = EconomyStockColumns.build(_ids, _region_of, _region_codes.size(), _stock)
+	d["stage"] = (_stock_cols["stage"] as PackedByteArray).duplicate()
+	d["use"] = (_stock_cols["use"] as PackedByteArray).duplicate()
+	d["units"] = (_stock_cols["units"] as PackedInt32Array).duplicate()
+	d["owner_id"] = (_stock_cols["owner"] as PackedInt32Array).duplicate()
+	var res_built: PackedInt64Array = (_stock_cols["res_built"] as PackedInt64Array).duplicate()
+	regions["res_built"] = res_built
+	regions["com_built"] = (_stock_cols["com_built"] as PackedInt64Array).duplicate()
 	var latent: PackedInt64Array = regions["latent_hh"]
 	var occupancy := _cfg.p("initial_occupancy_pm")
 	for r in _region_codes.size():

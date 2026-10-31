@@ -73,11 +73,13 @@ static func _rotation_of(net: WorldNetwork, nid: int) -> PackedInt32Array:
 
 ## YEREL yüz çıkarımı (T-042): yalnız tohum kenarların iki yarım kenarından yürür; dönüş `extract` ile aynı yüz
 ## sözlükleri (yalnız pozitif alanlı). Bağlantılı tek bileşende (çağıran garanti eder) deliksiz; `holed` hep false.
-## Düğüm dönüş sıraları tembel hesaplanır.
+## Düğüm dönüş sıraları tembel hesaplanır; mühürlü ağda dönüş sırası ve ardıl yarım kenar tablosu işlemler arası
+## önbellekli (NetworkRotationCache, T-050; sonuç aynı).
 static func extract_local(net: WorldNetwork, seed_edges: PackedInt32Array) -> Array[Dictionary]:
 	var order := {}
 	var visited := {}
 	var faces: Array[Dictionary] = []
+	var cache: NetworkRotationCache = null if net._hash_cache == null else net._hash_cache.rotations
 	for eid in seed_edges:
 		if not net.edges.has(eid):
 			continue
@@ -87,7 +89,10 @@ static func extract_local(net: WorldNetwork, seed_edges: PackedInt32Array) -> Ar
 			var start: int = eid * 2 + dir
 			if visited.has(start):
 				continue
-			var face := _face_from_cycle(net, _walk(net, order, start, visited))
+			var cycle := _walk(net, order, start, visited) if cache == null else cache.walk(net, start, visited)
+			if cycle.is_empty():  # önbellekli yürüyüş: kesin dış yüz (işaretli alan < 0), çokgen kurmaya gerek yok
+				continue
+			var face := _face_from_cycle(net, cycle)
 			if face.is_empty() or float(face["area"]) <= 0.0:
 				continue
 			face["signature"] = _signature(net, face)
