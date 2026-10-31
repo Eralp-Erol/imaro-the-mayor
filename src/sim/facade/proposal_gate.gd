@@ -11,6 +11,12 @@ func requires_vote(_state: GameState, _command_kind: StringName) -> bool:
 	return false
 
 
+## D-011 Soru 4: BU öneri (parametreleriyle) meclis oylamasına gider mi? Varsayılan: tür kuralı (`requires_vote`).
+## Siyaset kapısı büyüklüğe (parsel sayısı/birim) bakarak daraltabilir: küçük plan doğrudan, büyük plan meclise.
+func requires_vote_for(state: GameState, command_kind: StringName, _params: Dictionary) -> bool:
+	return requires_vote(state, command_kind)
+
+
 ## Durum bağımlı ön denetim: {} geçerli; aksi halde {"code": ret kodu, "args": {...}}.
 func precheck(_state: GameState, _command_kind: StringName, _params: Dictionary) -> Dictionary:
 	return {}

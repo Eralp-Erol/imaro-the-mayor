@@ -27,7 +27,7 @@ static func create(world_seed: int, parcels: ParcelSource, economy_config: Econo
 	var systems: Array[SimSystem] = [handle.economy, handle.actors, handle.politics]
 	var handlers: Array[CommandHandler] = [AgendaRespondHandler.new(ctx)]
 	handle.facade = SimFacadeImpl.create(world_seed, parcels, sim_config, facade_config, systems, handlers,
-		PoliticsGate.new(ctx), PoliticsSnapshot.new(ctx))
+		PoliticsGate.new(ctx, handle.economy), PoliticsSnapshot.new(ctx))
 	if handle.facade == null:
 		return null
 	PoliticsState.ensure_initialized(handle.facade.game_state(), ctx)  # tick 0'dan itibaren grup/meclis görünür

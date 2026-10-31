@@ -40,7 +40,7 @@ func subjects(params: Dictionary) -> PackedStringArray:
 
 
 func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> void:
-	if _gate != null and _gate.requires_vote(state, command_type()):
+	if _gate != null and _gate.requires_vote_for(state, command_type(), params):
 		_gate.open(state, command_type(), params, command_id, _config.apply_delay_days)
 		return
 	var due := state.tick + _config.apply_delay_days

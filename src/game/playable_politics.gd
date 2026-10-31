@@ -1,12 +1,15 @@
 class_name PlayablePolitics
 extends RefCounted
 ## Oynanabilir sahnenin siyaset YAPILANDIRMASI (T-043A, D-010, Q-014 AÇIK): sim varsayılan siyaset verisi
-## (`data/politics/*.json`) + `data/game/playable_politics.json` yaması. Şimdilik tek yama: `requires_council` girdileri
-## (oynanabilir varsayılan "meclis yok": imar planı teklifi oylamaya gitmeden `apply_delay_days` sonra yürürlüğe girer)
+## (`data/politics/*.json`) + `data/game/playable_politics.json` yaması. Yamalar: `requires_council` girdileri,
+## D-011 Soru 4 imar planı büyüklük eşikleri (`plan_council_min_parcels` / `plan_council_min_units`; ÇALIŞMA DEĞERİ:
+## küçük plan oylamaya gitmeden `apply_delay_days` sonra yürürlüğe girer, BÜYÜK plan meclise gider)
 ## ve `blocs_grievance_rule_overrides` (altyapı baskısı şikâyetini yalnız gerçek aşımda başlatır; bölge ~%99,9 dolu).
 ## Sim varsayılanı (GOLDEN A/B) DEĞİŞMEZ: dosyalar kopyalanır ve yama kopyaya uygulanır. Sim bu sınıfı bilmez.
 
 const PATH := "res://data/game/playable_politics.json"
+## Meclis bölümüne kopyalanan, imar planı büyüklük eşiği yama anahtarları (D-011 Soru 4).
+const PLAN_COUNCIL_KEYS: Array[String] = ["plan_council_min_parcels", "plan_council_min_units"]
 
 
 ## Yamalı siyaset yapılandırması; okunamaz/geçersizse push_error + null (çağıran `PoliticsBootstrap` varsayılana düşer).
@@ -31,6 +34,9 @@ static func config(actors: ActorConfig = null) -> PoliticsConfig:
 	for kind: Variant in (patch as Dictionary)["requires_council"]:
 		required[kind] = (patch as Dictionary)["requires_council"][kind]
 	council["requires_council"] = required
+	for key in PLAN_COUNCIL_KEYS:  # D-011 Soru 4: yoksa sim varsayılanı (anahtar yok = eşik kapalı) korunur
+		if (patch as Dictionary).has(key):
+			council[key] = (patch as Dictionary)[key]
 	_override_grievance_rules(files["blocs"], (patch as Dictionary).get("blocs_grievance_rule_overrides", []))
 	var cfg := PoliticsConfig.from_files(files, actor_cfg)
 	if not cfg.is_valid():

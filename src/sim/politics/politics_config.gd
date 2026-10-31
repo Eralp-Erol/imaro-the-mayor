@@ -79,6 +79,11 @@ func requires_council(command_kind: String) -> bool:
 	return council.get("requires_council", {}).get(command_kind, false) == true
 
 
+## D-011 Soru 4 (CALISMA DEGERI): imar planı için büyüklük eşikleri etkin mi? (`plan_council_min_*` > 0)
+func plan_council_thresholds_active() -> bool:
+	return int(council.get("plan_council_min_parcels", 0)) > 0 or int(council.get("plan_council_min_units", 0)) > 0
+
+
 func is_granted(authority_key: String) -> bool:
 	return granted_authority.has(authority_key)
 
@@ -408,7 +413,8 @@ func _parse_council(section: Dictionary) -> void:
 	var path := "council"
 	ActorSchema.check_unknown(section, ["schema", "decision", "body", "requires_council", "session_days",
 		"min_lead_days", "tie_result", "abstain_band", "friction_days", "history_limit", "bloc_pressure", "titles",
-		"realism", "proposal_axes", "proposal_effects"], path, errors)
+		"realism", "proposal_axes", "proposal_effects", "plan_council_min_parcels", "plan_council_min_units"],
+		path, errors)
 	var pressure: Variant = section.get("bloc_pressure", {})
 	if not (pressure is Dictionary):
 		errors.append("council.bloc_pressure: sözlük olmalı")
@@ -420,6 +426,9 @@ func _parse_council(section: Dictionary) -> void:
 		"decision": _council_decision(section.get("decision", null)), "members": members,
 		"body": _actor_ref(section.get("body", null), path + ".body"),
 		"requires_council": _requires_council(section.get("requires_council", null)),
+		# D-011 Soru 4: büyük imar planı eşikleri (0/yok = ölçüt kapalı; ikisi de kapalıysa bayrak tek başına karar verir).
+		"plan_council_min_parcels": ActorSchema.optional_int(section, "plan_council_min_parcels", 0, 0, 100000, path, errors),
+		"plan_council_min_units": ActorSchema.optional_int(section, "plan_council_min_units", 0, 0, 1000000000, path, errors),
 		"session_days": ActorSchema.required_int(section, "session_days", 1, 365, path, errors),
 		"min_lead_days": ActorSchema.required_int(section, "min_lead_days", 0, 365, path, errors),
 		"tie_result": _choice(section.get("tie_result", null), ["fail", "pass"], path + ".tie_result"),

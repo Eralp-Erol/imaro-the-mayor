@@ -341,10 +341,11 @@ func plan_state(parcel_id: int) -> PlanStateView:
 
 ## T-043A (sözleşme 1.4) · İmar planı önizlemesi: sayılar `EconomySystem.plan_preview` çıktısıdır (yatırımcının
 ## kullandığı formül; ayrı hesap yok). `max_parcels` = teklif üst sınırı (sim yapılandırması), `council_required` =
-## GERÇEK `requires_council.zoning.propose` bayrağı (kapı yoksa false). SALT OKUNUR.
+## GERÇEK siyaset kapısı kararı (D-011 Soru 4: bayrak + bu planın büyüklüğü; kapı yoksa false). SALT OKUNUR.
 func plan_preview(parcel_ids: PackedInt64Array, land_use: StringName, density: int = -1,
 		max_height_m: int = -1) -> PlanPreviewView:
-	var council := _proposal_gate != null and _proposal_gate.requires_vote(_state, SimCommand.KIND_ZONING_PROPOSE)
+	var council := _proposal_gate != null and _proposal_gate.requires_vote_for(_state, SimCommand.KIND_ZONING_PROPOSE,
+		{"parcel_ids": parcel_ids, "land_use": land_use, "density": density, "max_height_m": max_height_m})
 	var limit := _facade_config.plan_max_parcels_per_proposal
 	if _economy == null:
 		var none := PlanPreviewView.new()
