@@ -1,8 +1,9 @@
 class_name PoliticsSnapshot
 extends SnapshotProvider
 ## Snapshot sağlayıcısı (T-017 ölçüt 5): `groups` ve `council` bölümlerini gerçek siyasi durumdan doldurur ve
-## `x.sim.available.<bölüm>` bayraklarını açar. Gündem öğeleri sözleşme v1.0'da tipli bölüm DEĞİLDİR (AgendaItemView
-## v1.1 isteği): açık öğe sayısı ve bekleyen oylama tahminleri `extensions` içinde ilkel değerlerle taşınır
+## `x.sim.available.<bölüm>` bayraklarını açar. Gündem öğeleri tipli snapshot bölümü DEĞİLDİR: `agenda_items` ile
+## `SimFacade.agenda_items()`e (v1.5 isteğe bağlı ek) beslenir; açık öğe sayısı ve bekleyen oylama tahminleri
+## `extensions` içinde ilkel değerlerle de taşınır
 ## (anahtar öneki `x.sim.`; "satisfaction/approval" gibi toplam-skor anahtarları kullanılmaz, SIM-09).
 
 const GROUPS_FLAG := "x.sim.available.groups"
@@ -16,6 +17,12 @@ var _ctx: PoliticsContext
 
 func _init(ctx: PoliticsContext) -> void:
 	_ctx = ctx
+
+
+func agenda_items(state: GameState) -> Array[AgendaItemView]:
+	if not PoliticsState.is_initialized(state):
+		return []
+	return PoliticsQuery.agenda_views(state, _ctx)
 
 
 func fill(state: GameState, snapshot: SimSnapshot) -> void:

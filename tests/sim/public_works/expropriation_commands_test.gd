@@ -168,13 +168,20 @@ func test_the_mock_scenarios_rejection_has_the_same_offer_keys_and_types_as_the_
 
 func test_the_mock_reaction_reason_uses_the_factor_names_the_real_cause_record_writes() -> void:
 	var raw := ContractTestSupport.scenario_dict(MOCK_SCENARIO)
-	var real: Array[String] = [String(ReactionCause.FACTOR_DISPLACED), String(ReactionCause.FACTOR_PROXIMITY)]
+	var real: Array[String] = [String(ReactionCause.FACTOR_DISPLACED), String(ReactionCause.FACTOR_PROXIMITY),
+		String(ReactionCause.FACTOR_COUNT)]
+	var checked := 0
 	for rule: Dictionary in raw["rules"]:
 		for effect: Dictionary in rule.get("effects", []):
-			if effect.get("type", "") == "reason":
+			# Yalnız neden kaydı (T-042b UI fixture'ı ayrıca `decision.bloc.react.*` kaydı da taşır; onun etkenleri
+			# BlocEngine'indir, `tests/ui/reaction_texts_test.gd` sınar).
+			if effect.get("type", "") == "reason" and \
+					effect["reason"]["decision_key"] == "decision.bloc.expropriation_cause":
+				checked += 1
 				for factor: Dictionary in effect["reason"]["factors"]:
 					assert_bool(real.has(String(factor["name_key"]))).override_failure_message(
 						"mock etkeni gerçek sim'de yok: %s" % factor["name_key"]).is_true()
+	assert_int(checked).override_failure_message("fixture'da neden kaydı yok").is_greater(0)
 
 
 func test_preview_counts_buildings_and_households_from_the_economy_not_from_the_world() -> void:

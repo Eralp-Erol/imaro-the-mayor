@@ -1,3 +1,4 @@
+# gdlint:disable=max-public-methods
 class_name MockSimFacade
 extends SimFacade
 ## MOCK SimFacade (ADR-0005 §mock): MockScenario verisini deterministik oynatır. Rastgelelik, zaman, OS yok.
@@ -33,6 +34,8 @@ var _next_command_id: int = 1
 var _roads: Array[PublicWorkView] = []
 ## v1.5 · Kamulaştırmada alınan parsellerin önceki hali: komut kimliği -> {parsel kimliği -> ParcelView.to_dict()}.
 var _taken_saved: Dictionary = {}
+## v1.5 · Senaryonun `agenda` etkisiyle açtığı gündem öğeleri (kimlik artan). Geri alma onları kaldırmaz (D-011).
+var _agenda: Array[AgendaItemView] = []
 var _order: int = 0
 var _global_ctx: Dictionary = {"command_id": SimContract.NO_ID, "labels": {}}
 ## v1.2 · Parsel değişim günlüğü (mock: sınırsız, kayıt yüklemesi yok): tick ve kimlik paralel, tick artan.
@@ -170,6 +173,15 @@ func public_works() -> Array[PublicWorkView]:
 	var out: Array[PublicWorkView] = []
 	for w in _roads:
 		out.append(PublicWorkView.from_dict(w.to_dict()))
+	return out
+
+
+## v1.5 (isteğe bağlı) · Senaryonun `agenda` etkisiyle açtığı AÇIK, süresi dolmamış öğeler (kimlik artan).
+func agenda_items() -> Array[AgendaItemView]:
+	var out: Array[AgendaItemView] = []
+	for it in _agenda:
+		if it.status == AgendaItemView.STATUS_OPEN and it.deadline_tick > _tick:
+			out.append(AgendaItemView.from_dict(it.to_dict()))
 	return out
 
 
@@ -526,6 +538,8 @@ func _run_effect(effect: Dictionary, ctx: Dictionary) -> void:
 			_patch_budget(effect, labels)
 		"council_vote":
 			_upsert_vote(effect.get("vote", {}), labels, ctx)
+		"agenda":
+			_open_agenda_item(effect.get("item", {}), labels)
 
 
 ## v1.2: `set` içinde `decision` varsa karar tick'i yoksa şimdiki tick olur; `decision_reason_label` (etiket) kararın
@@ -606,6 +620,27 @@ func _upsert_vote(vote_data: Dictionary, labels: PackedInt64Array, ctx: Dictiona
 	kept.append(v)
 	kept.sort_custom(func(a: CouncilVoteView, b: CouncilVoteView) -> bool: return a.vote_id < b.vote_id)
 	_council.votes = kept
+
+
+## Gündem öğesi açar: `opened_tick` yoksa şimdiki tick; `expires_after` varsa `deadline_tick = şimdi + expires_after`.
+## Etiketler (`reason_labels`) öğenin `reason_ids`ini çözer. Aynı kimlikli öğe değiştirilir.
+func _open_agenda_item(item_data: Dictionary, labels: PackedInt64Array) -> void:
+	var d := item_data.duplicate(true)
+	if not d.has("opened_tick"):
+		d["opened_tick"] = _tick
+	if d.has("expires_after"):
+		d["deadline_tick"] = _tick + SimContract.to_int(d["expires_after"])
+	var v := AgendaItemView.from_dict(d)
+	v.provenance = provenance()
+	if not labels.is_empty():
+		v.reason_ids = labels
+	var kept: Array[AgendaItemView] = []
+	for existing in _agenda:
+		if existing.item_id != v.item_id:
+			kept.append(existing)
+	kept.append(v)
+	kept.sort_custom(func(a: AgendaItemView, b: AgendaItemView) -> bool: return a.item_id < b.item_id)
+	_agenda = kept
 
 
 func _upsert_group(g: GroupReactionView) -> void:

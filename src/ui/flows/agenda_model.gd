@@ -1,13 +1,16 @@
 class_name AgendaModel
 extends RefCounted
-## Gündem modeli (ux-flows-v0 §I, T-022). `AgendaItemView` sözleşmede v1.0'da YOKTUR (v1.1 isteği); bu yüzden gündem
-## v1.0 alanlarından TÜRETİLİR: yanıt süresi olan tek şey açık meclis oylamalarıdır (`CouncilVoteView.closes_tick`).
+## Gündem modeli (ux-flows-v0 §I, T-022). İki kaynak: açık meclis oylamaları (`CouncilVoteView.closes_tick`, `derive`)
+## ve sim'in açık gündem öğeleri (`SimFacade.agenda_items`, v1.5 isteğe bağlı ek; `derive_all`).
 ## Türetilen öğede yanıt SEÇENEĞİ yoktur (oyuncu oylamaya komutla müdahale edemez); UI seçenek/ertele düğmesi
 ## uydurmaz. `Item.options` ve `can_defer`, v1.1 `AgendaItemView` geldiğinde aynı görünümün seçenek kartlarını
 ## göstermesi içindir; v1.0'da hep boştur/false'tur.
 ## Gündem kaynağı yoksa (meclis kurulmamış) liste boştur ve panel "kurulmadı" der.
 
 const KIND_COUNCIL_VOTE := &"council_vote"
+## Sim gündem öğesi (`AgendaItemView`); gerekçe zincirinde yerinden edilme hane sayısı varsa `displacement`.
+const KIND_EVENT := &"event"
+const KIND_DISPLACEMENT := &"displacement"
 ## Sim'in yerinden edilme neden kaydı: bu etken adı kayıtta hane SAYISI taşır (T-042b, ağırlık 0 = yalnız gösterim).
 const DISPLACED_COUNT_FACTOR := &"reason.factor.displaced_household_count"
 const CHAIN_DEPTH := 4
@@ -58,6 +61,28 @@ static func derive(snapshot: SimSnapshot) -> Array[Item]:
 		out.append(it)
 	out.sort_custom(func(a: Item, b: Item) -> bool:
 		return a.deadline_tick < b.deadline_tick or (a.deadline_tick == b.deadline_tick and a.vote_id < b.vote_id))
+	return out
+
+
+## Gündem = açık meclis oylamaları (`derive`) + sim'in açık gündem öğeleri (`SimFacade.agenda_items`, v1.5; PE-01
+## yerinden edilme dahil). İnce köprü: facade öğesi sözleşme alanlarını aynen taşır, yanıt seçeneği/erteleme UYDURMAZ
+## (`agenda.respond` komutu yok). Gerekçe zincirinde hane sayısı varsa tür `displacement`, yoksa `event`.
+static func derive_all(facade: SimFacade, snapshot: SimSnapshot) -> Array[Item]:
+	var out := derive(snapshot)
+	if facade != null:
+		for v in facade.agenda_items():
+			var it := Item.new()
+			it.id = v.ref()
+			it.kind = KIND_DISPLACEMENT if bool(displaced_cause(facade, v.reason_ids)["found"]) else KIND_EVENT
+			it.title_key = v.title_key
+			it.deadline_tick = v.deadline_tick
+			it.days_left = maxi(0, v.deadline_tick - snapshot.tick())
+			it.reason_ids = v.reason_ids
+			out.append(it)
+	out.sort_custom(func(a: Item, b: Item) -> bool:
+		if a.deadline_tick != b.deadline_tick:
+			return a.deadline_tick < b.deadline_tick
+		return a.vote_id < b.vote_id or (a.vote_id == b.vote_id and String(a.id) < String(b.id)))
 	return out
 
 

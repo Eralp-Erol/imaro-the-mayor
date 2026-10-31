@@ -22,6 +22,7 @@ static func check_facade(facade: SimFacade) -> PackedStringArray:
 	out.append_array(check_snapshot(facade, snap))
 	out.append_array(check_events(facade))
 	out.append_array(check_parcels(facade, snap))
+	out.append_array(check_agenda(facade))
 	return out
 
 
@@ -149,6 +150,39 @@ static func check_parcel_decisions(views: Array[ParcelView]) -> PackedStringArra
 	return out
 
 
+## v1.5 (isteğe bağlı ek): açık gündem öğeleri. Kimlik artan/yinelemesiz, şablon + başlık anahtarı dolu, durum açık,
+## süre açılıştan önce bitmiyor, `cause_refs` geçerli başvuru, `reason_ids` çözülebilir ve tutarlı (SIM-12).
+static func check_agenda(facade: SimFacade) -> PackedStringArray:
+	return check_agenda_items(facade, facade.agenda_items())
+
+
+static func check_agenda_items(facade: SimFacade, items: Array[AgendaItemView]) -> PackedStringArray:
+	var out := PackedStringArray()
+	var last_id := 0
+	for it in items:
+		var where := "agenda item %d" % it.item_id
+		if it.item_id <= last_id:
+			out.append("%s not strictly ascending after %d (or duplicate)" % [where, last_id])
+		last_id = maxi(last_id, it.item_id)
+		if it.template_id == &"" or it.title_key == &"":
+			out.append("%s without template_id/title_key" % where)
+		if it.status != AgendaItemView.STATUS_OPEN:
+			out.append("%s status '%s' in the open list" % [where, it.status])
+		if it.deadline_tick < it.opened_tick:
+			out.append("%s deadline %d before opened %d" % [where, it.deadline_tick, it.opened_tick])
+		if it.provenance != facade.provenance():
+			out.append("%s provenance %s" % [where, it.provenance])
+		if it.group != null and not it.group.is_valid():
+			out.append("%s has an invalid group ActorRef" % where)
+		for ref in it.cause_refs:
+			if String(SimContract.parse_ref(StringName(ref))["kind"]) == "":
+				out.append("%s cause_ref '%s' is not a <kind>.<id> reference" % [where, ref])
+		for rid in it.reason_ids:
+			out.append_array(check_reason_id(facade, rid, where))
+		out.append_array(check_no_aggregate_score(it.to_dict(), where))
+	return out
+
+
 static func check_reason_id(facade: SimFacade, reason_id: int, where: String) -> PackedStringArray:
 	var out := PackedStringArray()
 	var r := facade.reason(reason_id)
@@ -187,6 +221,10 @@ static func observable_state(facade: SimFacade) -> Dictionary:
 		for rid in e.reason_ids:
 			reason_ids[rid] = true
 	var parcels := facade.parcel_views(facade.parcel_ids())
+	var agenda := facade.agenda_items()
+	for a in agenda:
+		for rid in a.reason_ids:
+			reason_ids[rid] = true
 	for p in parcels:
 		for rid in p.reason_ids:
 			reason_ids[rid] = true
@@ -198,5 +236,5 @@ static func observable_state(facade: SimFacade) -> Dictionary:
 		reasons.append(null if r == null else r.to_dict())
 	return {
 		"snapshot": facade.snapshot().to_dict(), "parcels": SimDto.dicts_of(parcels),
-		"events": SimDto.dicts_of(events), "reasons": reasons,
+		"events": SimDto.dicts_of(events), "reasons": reasons, "agenda": SimDto.dicts_of(agenda),
 	}

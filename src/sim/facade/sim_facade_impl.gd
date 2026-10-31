@@ -251,6 +251,18 @@ func snapshot() -> SimSnapshot:
 	return s
 
 
+## v1.5 (isteğe bağlı) · Olay motorunun AÇIK gündem öğeleri (PE-01 yerinden edilme dahil); sim durumundan, değer
+## kopyası, salt okunur. Siyaset sağlayıcısı takılı değilse boş (uydurma yok).
+func agenda_items() -> Array[AgendaItemView]:
+	var out: Array[AgendaItemView] = []
+	if _snapshot_provider == null:
+		return out
+	for item in _snapshot_provider.agenda_items(_state):
+		item.provenance = provenance()
+		out.append(item)
+	return out
+
+
 func parcel_ids(region_code: StringName = &"") -> PackedInt64Array:
 	return _parcels.parcel_ids(region_code)
 
