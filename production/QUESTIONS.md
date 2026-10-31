@@ -2,6 +2,43 @@
 
 Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Gruplanmış tutulur; her biri için stüdyonun beklerken ne yaptığı yazılıdır. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
+## EN GÜNCEL: sahibe 4 kart (2026-10-31, ölçümlerden; hiçbiri engellemiyor)
+Bunlar karar DEĞİLDİR; yanıtlanınca kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Sayılar yalnız kayıtlardan; "ölçülmedi" yazan yerde ölçüm yok. Aşağıdaki eski "Kart 2 (Q-025)" ve "Kart 3 (Q-014)" bunlarla örtüşür: Kart B, Q-014'ün güncel hâlidir; Kart C, Q-025'in "yolun yıkımı" kısmını somutlar.
+
+**Kart A · "Kararı gözden geçir" seçeneği yolu geri almıyor (Q-027)**
+Gündem kartındaki bu seçenek adı yüzünden yolun geri alınacağını düşündürüyor; gerçekte yalnız yatırımcı riskini artırır ve destekleyen kesimlerin memnuniyetini düşürür, yol/parseller kalır. Şimdilik kartta "Yolu geri almaz..." açıklaması var.
+- A) Önerilen: Adı gerçeğe uydur (örn. "Tepkiyi kabul et, yatırımcı riskini göze al"). Oyuncu ne yaptığını yanlış anlamadan seçer; en ucuzu.
+- B) Gerçekten geri alsın (yolu söker). Oyuncu hatasını düzeltebilir ama "yıkımlı yol geri alınsın mı" sorusuyla (Kart 1 alt sorusu, Q-017) birlikte karar gerekir; halkın tepkisi geri gelmez.
+- C) Seçeneği kaldır. Kart sadeleşir; oyuncunun tepkiye "geri adım" diyecek yolu kalmaz.
+- Bekleyen: gündem kartı metni (`event.pe01.opt.reverse`), `agenda_model`/`agenda_panel`; şimdilik açıklama notu duruyor.
+- Kaynak: `production/log/2026-10-31-gundem-yanit-ui.md` "reverse / Kararı gözden geçir uyumsuzluğu".
+
+**Kart B · İlk büyük imar planı meclise gitsin mi? (Q-028, Q-014'ün güncel hâli)**
+Şimdi 10 parsel ya da 40 birim ve üstü plan meclise gidiyor. Gerçek Ismeral D2'de 12 parsel = 51 birim; meclis 18 oylamanın 18'ini kabul etti (13'ü 3-2) ama uygulama 3. gün yerine 17. güne kayıyor (ilk inşaat 15 yerine 29, ilk bina 69-72 yerine 83). 9 parsel (36 birim) doğrudan işleniyor; reddedilen oyuncu planı 9 parsele bölüp meclisi atlayabiliyor.
+- A) Önerilen: Eşikler olduğu gibi (10 parsel / 40 birim). Büyük plan siyasi bir an olur, birkaç gün bekler ve ince marjla geçer; hedef (ilk inşaat <=40, ilk bina <=100 gün) tutuyor (29 / 83).
+- B) Eşiği yükselt (daha büyük planlar meclise). İlk plan beklemeden başlar, meclis daha nadir görünür; yeni eşik ölçülmedi.
+- C) Meclis hiç olmasın. Her plan birkaç günde yürürlüğe girer; siyasi gerilim ve ret ihtimali yok olur (`requires_council` bayrağı zaten var).
+- Bekleyen: `plan_council_min_parcels` 10, `plan_council_min_units` 40 (`data/game/playable_politics.json`); T-043B/D-011 Soru 4 ayarı.
+- Kaynak: `2026-10-31-meclis-tepki-gercek-olcum.md` §0 madde 1, §2 tablo, §2.1, §3 (`small9`); `2026-10-31-plan-meclis-esigi.md`.
+
+**Kart C · Yıkım yapan yolun halk tepkisi ne kadar güçlü olsun? (Q-029)**
+Yıkımlı yol artık yerinden ettiği hane sayısına göre yol başına tek gündem öğesi açıyor (mahalle 200 hane varsayıldı; 20 pm = 4 hane'den itibaren tepki, 200 pm = 40 hane'de tavan). D2'de 150 yol denemesinden 127'si geçerli: yerinden edilen hane medyan 6, p90 38, en çok 72. Baskı: q50 = 170, q90 = 975, en büyük yol 1000 (tavan). Yani orta yol hafif, büyük yollar tavana sıkışıp birbirinden ayırt edilmiyor. Mahalle büyüklüğü bir tahmin (gerçek mahalle verisi yok).
+- A) Önerilen: Şimdiki ayar kalsın (200 hane, eşik 20 pm, tavan 200 pm). Küçük yol hafif, büyük yol (yaklaşık 40+ hane) en sert tepkiyi alır.
+- B) Daha yumuşak (tavan daha yüksek / mahalle daha büyük). Büyük yollar da kademeli ayırt edilir, ama tepki geç ve zayıf başlar; yeni değerler ölçülmedi.
+- C) Daha sert (mahalle daha küçük / eşik düşük). Orta yol bile belirgin tepki alır, oyuncu ilk yıkımda cezalandırılmış hisseder; yeni değerler ölçülmedi.
+- Bekleyen: `data/politics/reactions.json` `local.neighborhood_households` 200, `min_displacement_pm` 20, `full_displacement_pm` 200. Ayrıca oynanabilir oyunda yıkımlı yol çizilemiyor (`playable_roads.gd` köprüsü, "kamulaştırma henüz yok"); Kart 1 (yıkım kapsamı) cevabı gelmeden ölçek ayarı erken.
+- Kaynak: `2026-10-31-yerinden-edilme-mahalle-olcegi.md` (Önce/sonra tablosu, "Doğrulanmadı"); `2026-10-31-meclis-tepki-gercek-olcum.md` §0 madde 2-3, §4.
+
+**Kart D · Şehirde kaç araç/yaya görünsün? (Q-026, güncel)**
+Sayı gerçek faaliyetten türüyor (faaliyet yoksa araç/yaya yok). Şimdiki ayarda 100 m sokakta medyan araç: ana yol 1,2, toplayıcı/yerel 2,5; yaya 1,0 / 3,5 / 3,5 (p90 araç 4,3 / 5,7 / 5,6). Menzilde ~1000 araç, ~1400 yaya. Araçlar tek model, çoğu krem/bej; sanat kabulü yok. 2x için kare maliyeti ölçülmedi.
+- A) Önerilen: Şimdiki seyrek his ("yaşam belirtisi", okunaklı); mevcut ayar ölçülmüş.
+- B) 2x kalabalık. Şehir daha canlı görünür; kare maliyeti ve profil tavanı (araç 1600 / insan 1400) yeniden ölçülmeli.
+- C) Çok seyrek, yalnız ana yollarda. En hafif; sokaklar boş görünür.
+- Bekleyen: `data/view/life.json` yoğunluk/ağırlık; araç renk çeşitliliği ve tip Q-018 madde 3 ile.
+- Kaynak: `2026-10-31-T-050-yasam-belirtisi.md` Kalibrasyon ve Doğrulanmamış bölümleri.
+
+---
+
 ## Şimdi kullanıcıya sorulacaklar (2026-10-31; en fazla 3 karar; hiçbiri engellemiyor, stüdyo beklerken geri alınabilir varsayılanla ilerler)
 Sahip modu: seçenekli kart, öneri ilk. Bunlar karar DEĞİLDİR; kullanıcı yanıtlayınca kararlar klasörüne (D-NNN) kendi sözleriyle yazılır.
 
@@ -52,6 +89,9 @@ Durumlar:
 | Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
 | Q-025 | Halk neye tepki versin? (D-008 son adımı, bugün sessiz) | **open** | — (engellemiyor) |
 | Q-026 | Şehirde kaç araç/yaya görünsün? (T-050 yaşam belirtisi yoğunluğu, araç renk çeşitliliği) | **open** | — (engellemiyor) |
+| Q-027 | Gündem Kararı gözden geçir seçeneği yolu geri almıyor (etiket / gerçek geri alma / kaldır) | **open** | — (engellemiyor) |
+| Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | **open** | — (engellemiyor) |
+| Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | **open** | — (engellemiyor) |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
@@ -164,6 +204,6 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 
 ### Q-026 · Şehirde ne kadar araç ve yaya görünsün? (T-050; status: open — engellemiyor)
 - Context: araç/yaya sayısı gerçek sim verisinden türer (hane/işyeri/inşaat birimi x doluluk; aktivite yoksa sahte trafik yok). Ama "birim başına kaç araç/yaya" ve sınıf tavanları çalışma değeri (`data/view/life.json`). Ölçüm: `production/log/2026-10-31-T-050-yasam-belirtisi.md`.
-- Options: A) Mevcut seyrek his (sokakta 100 m'de ~2-3 araç, ~3 yaya; "yaşam belirtisi", okunaklı). B) Daha kalabalık (2x). C) Çok seyrek, yalnız ana yollarda.
+- Options: A) Mevcut seyrek his (100 m'de medyan araç ana 1,2 / toplayıcı-yerel 2,5, yaya 1,0 / 3,5 / 3,5; "yaşam belirtisi", okunaklı). B) Daha kalabalık (2x). C) Çok seyrek, yalnız ana yollarda.
 - Recommendation: A (kare süresi ve okunurluk dengeli); renk çeşitliliği/araç tipi (taksi, kamu aracı) Q-018 madde 3 ile birlikte.
 - Meanwhile: A; kullanıcı değiştirirse yalnız `life.json` yoğunluk/ağırlık değeri değişir.
