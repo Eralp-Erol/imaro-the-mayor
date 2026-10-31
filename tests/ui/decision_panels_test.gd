@@ -168,6 +168,86 @@ func test_council_panel_after_the_vote_shows_sim_result_and_links_the_reason_cha
 	assert_int(reason.find_roles("ListRow").size()).is_equal(2)  # oylamanın iki blok gerekçesi
 
 
+func _why_facade(advance: int = 6) -> MockSimFacade:
+	var f := FlowTestSupport.mock("ui_mock_council_why")
+	f.submit_command(SimCommand.budget_propose({&"budget.line.roads": 45000}))
+	f.advance(advance)
+	return f
+
+
+func test_council_resolved_vote_without_recorded_why_says_so_honestly() -> void:
+	var d := _setup(_council_facade(6))
+	d.open_council()
+	var text := _text(d)
+	assert_str(text).contains("Oylamanın nedeni")
+	assert_str(text).contains("Bu oylamanın nedeni kaydedilmedi")
+	assert_bool(text.contains("Hayıra çeken etkenler")).is_false()
+	assert_bool(text.contains("altyapı doluluğu")).is_false()
+
+
+func test_council_pending_vote_shows_no_why_section() -> void:
+	var d := _setup(_why_facade(1))
+	d.open_council()
+	assert_bool(_text(d).contains("Oylamanın nedeni")).is_false()
+
+
+func test_council_resolved_vote_shows_recorded_why_factors_members_and_infra() -> void:
+	var d := _setup(_why_facade())
+	d.open_council()
+	var text := _text(d)
+	assert_str(text).contains("Hayıra çeken etkenler")
+	assert_str(text).contains("Evete çeken etkenler")
+	assert_str(text).contains("Mali kaygı")
+	assert_str(text).contains("5 üye aleyhine, 1 üye lehine")
+	assert_str(text).contains("En yüklü bölge F1: altyapı doluluğu binde 940")
+	assert_bool(text.contains("kaydedilmedi")).is_false()
+	for word in FORBIDDEN:
+		assert_bool(text.to_lower().contains(word)).override_failure_message("yasak sözcük: " + word).is_false()
+
+
+func test_council_why_lists_only_the_top_three_per_side_most_influential_first() -> void:
+	var d := _setup(_why_facade())
+	d.open_council()
+	var text := _text(d)
+	# Aleyhine 4 etken kayıtlı (net -900/-300/-200/-50): en küçüğü ("Başkaya kırgınlık") görünmez.
+	assert_bool(text.contains("Başkaya kırgınlık")).is_false()
+	assert_int(text.find("Mali kaygı")).is_less(text.find("Çıkar çevrelerinin baskısı"))
+
+
+func test_council_why_split_model_cases() -> void:
+	var v := CouncilVoteView.new()
+	var empty := CouncilModel.why_split(v)
+	assert_bool(empty["recorded"]).is_false()
+	assert_bool(empty["has_infra"]).is_false()
+	v.why_factors.append(CouncilWhyFactor.make(&"reason.factor.a", 0, 2, 2))  # iki yöne eşit çeker: listelenmez
+	v.why_factors.append(CouncilWhyFactor.make(&"reason.factor.b", -5, 0, 1))
+	v.why_factors.append(CouncilWhyFactor.make(&"reason.factor.c", 9, 3, 0))
+	var split := CouncilModel.why_split(v)
+	assert_bool(split["recorded"]).is_true()
+	assert_int((split["against"] as Array).size()).is_equal(1)
+	assert_int((split["for"] as Array).size()).is_equal(1)
+	v.infra_load_pm = 0  # %0 yük de gerçek bir değerdir (yok = -1)
+	v.infra_region = &"F2"
+	assert_bool(CouncilModel.why_split(v)["has_infra"]).is_true()
+
+
+func test_council_why_fits_the_touch_profile_without_hover() -> void:
+	for window in [IPAD_PORTRAIT, IPAD_LANDSCAPE]:
+		var d := _setup(_why_facade(), &"touch", window)
+		d.open_council()
+		await await_idle_frame()
+		await await_idle_frame()
+		var panel := d.council_panel()
+		assert_str(_text(d)).contains("Hayıra çeken etkenler")
+		var panel_rect := d.hud.panel.get_global_rect()
+		for b in panel.buttons():
+			var hit := UiFactory.hit_size(b)
+			assert_float(minf(hit.x, hit.y)).override_failure_message("'%s' %s" % [b.text, hit]).is_greater_equal(44.0)
+			assert_bool(b.get_global_rect().end.x <= panel_rect.end.x + 1.0).is_true()
+		_assert_clean_text(" ".join(panel.texts()))
+		_assert_no_letter_wrap(panel, "touch %s" % window)
+
+
 func test_council_unbuilt_on_the_real_sim_says_so_and_shows_nothing_else() -> void:
 	var d := _setup(FlowTestSupport.real())
 	d.open_council()

@@ -174,6 +174,36 @@ func _add_result(inner: VBoxContainer, v: CouncilVoteView) -> void:
 	inner.add_child(_tally_row(&"council.vote.against", v.no, "danger"))
 	if v.abstain > 0:
 		inner.add_child(_tally_row(&"council.vote.abstain", v.abstain, "text_muted"))
+	_add_why(inner, v)
+
+
+## Oylamanın sim'de kayıtlı nedeni (SIM-12): hayıra / evete çeken en etkili etkenler, üye sayılarıyla.
+## Sıra etki büyüklüğünü anlatır; toplam puan ya da yüzde yoktur (SIM-09). Kayıt yoksa bunu dürüstçe söyler.
+## Okuduğu alanlar: `CouncilVoteView.why_factors[name_key, net, for_members, against_members]`,
+## `infra_load_pm`, `infra_region`.
+func _add_why(inner: VBoxContainer, v: CouncilVoteView) -> void:
+	var why := CouncilModel.why_split(v)
+	inner.add_child(UiFactory.label(UiText.t(&"council.why.title"), UiTheme.V_LABEL_TITLE, true))
+	if not why["recorded"]:
+		inner.add_child(_muted(UiText.t(&"council.why.none")))
+		return
+	_add_why_group(inner, &"council.why.against", why["against"], ReasonGlyph.Kind.DOWN, "danger",
+		UiTheme.V_LABEL_DANGER)
+	_add_why_group(inner, &"council.why.for", why["for"], ReasonGlyph.Kind.UP, "ok", UiTheme.V_LABEL_OK)
+	if why["has_infra"]:
+		inner.add_child(_muted(UiText.t(&"council.why.infra",
+			{"region": UiText.humanize(String(v.infra_region)), "load": v.infra_load_pm})))
+
+
+func _add_why_group(inner: VBoxContainer, caption: StringName, factors: Array, kind: int, token: String,
+		variation: StringName) -> void:
+	if factors.is_empty():
+		return
+	inner.add_child(UiFactory.label(UiText.t(caption), UiTheme.V_LABEL_MUTED, true))
+	for f: CouncilWhyFactor in factors:
+		inner.add_child(_direction_row(kind, token, variation, UiText.humanize(String(f.name_key))))
+		inner.add_child(_muted(UiText.t(&"council.why.members",
+			{"against_n": f.against_members, "for_n": f.for_members})))
 
 
 ## Etiket + koltuk payı çubuğu + sayı (sayı ve etiket anlamı taşır; renk yalnız vurgudur).

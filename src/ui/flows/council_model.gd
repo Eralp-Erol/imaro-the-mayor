@@ -120,6 +120,28 @@ func issues() -> PackedStringArray:
 	return out
 
 
+## Sonuçlanmış oylamanın sim'de kayıtlı nedeni (SIM-12): etkenler net işaretine göre ikiye ayrılır, her taraf |net|
+## azalan sırada ve en çok `limit` kadar. net == 0 olan etken iki yöne de çekmez, listelenmez. Tek toplam puan yoktur.
+## `recorded` false = sim neden kaydı yazmadı (why_factors boş ve altyapı yükü yok).
+static func why_split(vote: CouncilVoteView, limit: int = 3) -> Dictionary:
+	var against: Array[CouncilWhyFactor] = []
+	var supporting: Array[CouncilWhyFactor] = []
+	for f in vote.why_factors:
+		if f.net < 0:
+			against.append(f)
+		elif f.net > 0:
+			supporting.append(f)
+	var by_size := func(a: CouncilWhyFactor, b: CouncilWhyFactor) -> bool:
+		return absi(a.net) > absi(b.net) or (absi(a.net) == absi(b.net) and String(a.name_key) < String(b.name_key))
+	against.sort_custom(by_size)
+	supporting.sort_custom(by_size)
+	return {
+		"against": against.slice(0, limit), "for": supporting.slice(0, limit),
+		"recorded": not vote.why_factors.is_empty() or vote.infra_load_pm >= 0,
+		"has_infra": vote.infra_load_pm >= 0 and vote.infra_region != &"",
+	}
+
+
 func has_content() -> bool:
 	return not blocs.is_empty() or not pending.is_empty() or not resolved.is_empty()
 

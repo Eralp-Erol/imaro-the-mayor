@@ -6,7 +6,8 @@ extends Control
 ## Açma:   tools/godot.sh --path . res://scenes/dev/ui_lab.tscn -- [--imaro-input-profile=touch]
 ## [--ui-lab-scenario=NAME]
 ##                         [--ui-lab-safe=ÜST,SAĞ,ALT,SOL] [--ui-lab-demo=ADIM]
-## Senaryo: declined (varsayılan) | positive | groups | council | invalid | zoning_council
+## Senaryo: declined (varsayılan) | positive | groups | council | invalid | zoning_council | council_why
+## (council_why: `--ui-lab-demo=council_done` ile oylama nedeni)
 ## Alt sayfa (dikey dokunmatik) genişletilmiş başlasın: `--ui-lab-expand=1`
 ## Sim: `--ui-lab-sim=real` -> aynı senaryonun parselleriyle gerçek SimFacadeImpl (bütçe/meclis/gruplar KURULMAMIŞ)
 ## Demo adımları (capture için, tick sürücüsü kapalı): home | inspect | zoning | reject | done | protected |
@@ -28,6 +29,7 @@ const SCENARIO_FILES := {
 	"council": "res://tests/fixtures/mock_scenario_council_budget_vote.json",
 	"invalid": "res://tests/fixtures/mock_scenario_invalid_commands.json",
 	"zoning_council": "res://tests/ui/fixtures/ui_mock_zoning_council.json",
+	"council_why": "res://tests/ui/fixtures/ui_mock_council_why.json",
 	"expropriation": "res://tests/fixtures/mock_scenario_expropriation.json",
 }
 ## Dev tick sürücüsü: hız basamağı -> saniyedeki tick (gerçek eşleme sim sürücü yapılandırması, ÇM).
