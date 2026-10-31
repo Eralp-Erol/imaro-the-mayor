@@ -26,6 +26,8 @@ var media: Dictionary = {}
 var known_authority: Array[String] = []
 var granted_authority: Array[String] = []
 var events: Dictionary = {}
+## T-042b · `reactions.json` neden kaydı ve gündem bölümleri (digest dışı; bkz. ReactionConfig). Dosya yoksa varsayılan.
+var reactions: Dictionary = ReactionConfig.defaults()
 ## Olay şablonları, kimliğe göre sıralı (şablon kimliği tarama sırasıdır; sıra anlamı taşımaz).
 var templates: Array[Dictionary] = []
 
@@ -423,7 +425,8 @@ func _parse_reactions(raw: Variant) -> void:
 		errors.append("reactions: dosya JSON nesnesi değil")
 		return
 	var section := _prepare(raw, "reactions")
-	ActorSchema.check_unknown(section, ["schema", "window_days", "cohorts"], "reactions", errors)
+	ActorSchema.check_unknown(section, ReactionConfig.KEYS, "reactions", errors)
+	reactions = ReactionConfig.parse(section, events.get("templates", []), errors)
 	blocs["reaction_window"] = ActorSchema.optional_int(section, "window_days", BlocSignals.DEFAULT_WINDOW_DAYS, 1, 3650,
 		"reactions", errors)
 	var cohorts: Variant = section.get("cohorts", {})
