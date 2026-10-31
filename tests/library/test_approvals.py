@@ -247,6 +247,23 @@ class ApprovalTest(unittest.TestCase):
         self.assertNotEqual(rc, 0)
         self.assertIn("rejected", out)
 
+    def test_repeated_rejection_is_noop(self):
+        self.assertEqual(self.run_doc(self.doc(self.dec(self.a, "rejected")))[0], 0)
+        before = self.current()
+        rc, out = self.run_doc(self.doc(self.dec(self.a, "rejected")))
+        self.assertEqual(rc, 0)
+        self.assertEqual(self.current(), before)
+
+    def test_reversal_only_with_explicit_flag(self):
+        self.assertEqual(self.run_doc(self.doc(self.dec(self.a, "rejected")))[0], 0)
+        out = io.StringIO()
+        rc = aa.run(self.doc(self.dec(self.a, "approved")), self.cat, ROOT, True, out=out,
+                    allow_reverse=(self.a,))
+        self.assertEqual(rc, 0, out.getvalue())
+        e = {x["id"]: x for x in self.current()["entries"]}[self.a]
+        self.assertEqual(e["approval"], "approved")
+        self.assertEqual(e["approval_by"], "user")
+
     def test_cli_dry_run_exit_codes(self):
         p = os.path.join(self.tmp, "d.json")
         with open(p, "w") as fh:

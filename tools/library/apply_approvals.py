@@ -8,7 +8,7 @@ Only these fields of the targeted entry change: approval, approval_by, approval_
 user_approved_sha256 (content hashes the user actually reviewed; the "user_" prefix makes every catalog
 regenerator preserve it). 'hold' changes only user_note. Nothing is wired into the game.
 
-Usage: apply_approvals.py [decisions.json | -] [--write] [--catalog PATH] [--root PATH]
+Usage: apply_approvals.py [decisions.json | -] [--write] [--catalog PATH] [--root PATH] [--allow-reverse ID ...]
 """
 import argparse
 import json
@@ -46,8 +46,12 @@ def content_hashes(entry):
     return out
 
 
-def validate_input(doc, entries):
-    """Return (errors, plan). plan = list of (entry, decision dict)."""
+def validate_input(doc, entries, allow_reverse=()):
+    """Return (errors, plan). plan = list of (entry, decision dict).
+
+    allow_reverse: ids whose earlier rejection the user explicitly turned into an approval (same content
+    hash). Only the CLI flag --allow-reverse sets it; the decisions file alone can never reopen an identity.
+    A repeated rejection of an already-rejected entry (same hash) is a no-op, not an error."""
     errors, plan = [], []
     if not isinstance(doc, dict):
         return ["input is not a JSON object"], plan
@@ -99,8 +103,11 @@ def validate_input(doc, entries):
                 errors.append("%s: already approved with a different content hash; no silent re-approval" % tag)
                 continue
             if e.get("approval") == "rejected":
-                errors.append("%s: already rejected; identity is not reused (new proposal = new variant)" % tag)
-                continue
+                if d["decision"] == "rejected" and e.get(SHA_FIELD) == cur:
+                    continue
+                if not (d["decision"] == "approved" and ident in allow_reverse):
+                    errors.append("%s: already rejected; identity is not reused (new proposal = new variant)" % tag)
+                    continue
         plan.append((e, d))
     return errors, plan
 
@@ -125,10 +132,10 @@ def apply_plan(plan, date):
     return changes
 
 
-def run(doc, catalog_path, root, write, out=sys.stdout):
+def run(doc, catalog_path, root, write, out=sys.stdout, allow_reverse=()):
     with open(catalog_path, "r", encoding="utf-8") as fh:
         catalog = json.load(fh)
-    errors, plan = validate_input(doc, catalog.get("entries", []))
+    errors, plan = validate_input(doc, catalog.get("entries", []), allow_reverse)
     if errors:
         for x in errors:
             print("REJECT " + x, file=out)
@@ -177,6 +184,8 @@ def main(argv=None):
     ap.add_argument("--write", action="store_true")
     ap.add_argument("--root", default=bc.ROOT)
     ap.add_argument("--catalog", default=None)
+    ap.add_argument("--allow-reverse", action="append", default=[], metavar="ID",
+                    help="user explicitly reversed this earlier rejection to approved (same content hash)")
     args = ap.parse_args(argv)
     root = os.path.abspath(args.root)
     cpath = args.catalog or os.path.join(root, bc.CATALOG)
@@ -190,7 +199,7 @@ def main(argv=None):
     except (OSError, ValueError) as ex:
         print("REJECT cannot read decisions: %s" % ex)
         return 1
-    return run(doc, cpath, root, args.write)
+    return run(doc, cpath, root, args.write, allow_reverse=tuple(args.allow_reverse))
 
 
 if __name__ == "__main__":

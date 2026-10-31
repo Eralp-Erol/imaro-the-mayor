@@ -2,7 +2,7 @@
  "format": "imaro-game-set/1",
  "table": "furniture",
  "source_catalog": "data/library/catalog.json",
- "source_catalog_sha256": "b96523d5970f5cd4b3fc39067e4e13c4359d30a0acfdd201dd259f33a8d46ae0",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
  "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
  "included_count": 8,
  "unapproved": {

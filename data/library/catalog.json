@@ -6336,7 +6336,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -6476,7 +6476,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -6616,7 +6616,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -6756,7 +6756,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -6896,7 +6896,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -7037,7 +7037,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "proxy_runtime": null,
@@ -7200,7 +7200,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "proxy_runtime": null,
@@ -7362,7 +7362,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -7502,7 +7502,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -7642,7 +7642,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -7855,9 +7855,9 @@
         "spec": "design/specs/art/building-kit-v1.md"
       },
       "manifest_present": true,
-      "approval": "rejected",
+      "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "user_approved_sha256": {
         "glb": "c6162a318c0759d825980c39596550cd0c49de548f63da5ad1133e78b246bf22"
@@ -7947,7 +7947,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -8120,7 +8120,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -8292,7 +8292,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -8465,7 +8465,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -8810,7 +8810,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -9868,7 +9868,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -10025,7 +10025,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -10185,7 +10185,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -10346,7 +10346,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -10671,7 +10671,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -10832,7 +10832,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
@@ -10994,7 +10994,7 @@
       },
       "approval": "approved",
       "approval_by": "user",
-      "approval_date": "2026-10-27",
+      "approval_date": "2026-10-31",
       "user_note": "",
       "lod_chain": {
         "status": "proposed",
