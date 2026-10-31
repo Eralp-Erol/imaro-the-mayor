@@ -3,11 +3,13 @@
 Tek devam noktası. `CHECKPOINT` bloğu SessionStart hook'u ile her oturuma enjekte edilir; `handoff` skill'i günceller. Geçmiş: `production/log/`.
 
 <!-- CHECKPOINT:BEGIN -->
-- 2026-10-27 DEVAM (Claude devri): kullanıcı açık talimatıyla durmadan sürüyor; push/main/ana checkout yok. Kilit claude-t057-continue-20261027.
-- DONE (koşullu, proposed teslim): T-057 bitkiler (LOD0->LOD1, Karar 5), T-058 donatı (8), T-059 insan (6 model). Son tam doğrulama: `verify full` HEAD a8dbd41 PASS (1633 test, canon-guard 105, smoke 180 kare).
-- KULLANICI ONAYLARI (D-005, 2026-10-27): 60 approved (21 hero bina, 10 bitki, 8 donatı, 6 insan, 14 zemin, veg_plane), 45 rejected (eski kit). Onay sistemi: artifacts/library/approval.html + tools/library/apply_approvals.py (hash'e bağlı), design/library/approval-system.md.
-- T-062 (onaylı varlıkları oyun demosuna entegre): plan hazır docs/adr/ADR-0006-*.md; kararlar (Studio Director): saat kulesi yok (T0 landmarksız), hero tek boy inşaat, dükkânlı zemin yalnız bazaar, 7 aile x 3 stil, insan bu işte yok, rejected kit dosyaları silinmez. Sıra A0..A5 (bina+zemin) -> B (bitki) -> C (donatı). Perf tabanı street p95 16,43 ms (bütçe 16,6) — risk.
-- Açık (kullanıcı): Q-018 (insan stili, palmiye/mevsim), T-055 zemin değerlendirmesi hâlâ işaretli ama zeminler approved; Q-003..Q-017. T-060 araç, T-061 yol kesiti T-062'den sonra.
-- Ölçülmedi: şehir/iPad bütçesi, hareketli LOD geçişi, hücre lekesi (HLOD).
+- 2026-10-31 CHECKPOINT (oyun nerede): çekirdek döngü v0 çalışıyor: yol çiz -> bölge altyapı kapasitesi -> imar planı teklifi (oyuncu) -> yatırımcı -> iskeleli 3D bina -> hane/kira/arsa -> gösterge bütçe. Tasarım: `design/specs/core-loop-v0.md` (§9 "bugün ne var/yok"). Sahip kararları D-008..D-010 geçerli.
+- ÖLÇÜLDÜ (gerçek Ismeral D2, dünya tohumu 1467, başsız probe, i7-8850H; makineye bağlı): plan yürürlüğünden ilk inşaat 12 gün, ilk bina 66 gün (4 gün/sn'de 3,0 / 16,5 sn); 108 m yol + 12 parselik plan = 3 bina, 248 m yol = 7 bina; yalnız plan (yolsuz) = 0 bina, yalnız yol = 0 bina. Yol onay tick'i 9-12 ms (önce 62-88), ay sınırı <=8 ms, ilk tick 3,2 ms; demo karesi gerekçe panelinde 45,2 -> 14,6 ms.
+- SESSİZ / EKSİK: halk tepkisi adımı (D-008 sonu) bilerek sessiz: altyapı şikâyeti yalnız gerçek aşımda, yol+plan 400 günde grup tepkisi 0; neye tepki vereceği Q-025 (kullanıcı kararı). Bütçe yalnız gösterge (kısıt/tahsis yok, T-014 kalanı). Meclis yok (Q-014). Kamulaştırma/yıkım yok (T-042b, Q-017). PE-07 hiç tetiklenmiyor.
+- DOĞRULANMIŞ: `verify full` PASS @ b6fa635 (2225 test, 0 hata, canon-guard 105, smoke 180 kare). Sonrasında yalnız `verify quick` (kısmi): 913 (110aa93), 920 (b8a1f8c); tick maliyeti değişiklikleri bit-bit aynı durum hash'i ile ölçüldü.
+- VARSAYILAN (çalışma değeri, kanon değil): 100 birim/km, `infra_free_units_max` 0, eşik 300/bonus 0, `infra_stress` lo/hi 1000/1300, başlangıç hızı 4 gün/sn, bütçe 50000/100/100 yer tutucu, `max_reviews_per_tick` 8.
+- TEST EDİLMEDİ: D2 dışı bölgeler, başka dünya tohumları, çok yollu zincir, insanlarla his testi (core-loop §6), iPad/şehir bütçesi, pencereli kare süresinde yol çizim aracı, yol geri alma siyaset etkisi, `verify full` b6fa635 sonrası.
+- SIRADAKİ (kullanıcı kararı bekliyor): `production/QUESTIONS.md` en üstteki 3 kart (kamulaştırma ilk sürümü + yıkımın geri alınması / halk tepkisi / meclis). Onay gelmeden yeni özellik başlatılmaz. T-014 kalanı: `production/tasks/T-014.md`.
+- Önceki (2026-10-27/29): T-062 kapandı (koşullu), onaylı varlıklar oyunda, kamera 50 m-18 km. Açık: Q-003..Q-019 (Q-018 varlık stili). Ölçülmedi: hareketli LOD geçişi, hücre lekesi (HLOD).
 <!-- CHECKPOINT:END -->
-- 2026-10-29 DURAKLAMA (kullanıcı: "t-062den sonra pause"): T-062 kapandı (koşullu), verify full PASS 1856 test; kamera 50 m-18 km + eğim + çatı açıklığı. Yeni iş başlatılmadı; ayrıntı production/log/2026-10-29-T-062-kapanis-duraklama.md.
+- 2026-10-29 DURAKLAMA (kullanıcı: "t-062den sonra pause"): T-062 kapandı (koşullu), verify full PASS 1856 test; kamera 50 m-18 km + eğim + çatı açıklığı. Ayrıntı production/log/2026-10-29-T-062-kapanis-duraklama.md.

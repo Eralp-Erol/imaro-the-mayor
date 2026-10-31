@@ -2,6 +2,31 @@
 
 Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Gruplanmış tutulur; her biri için stüdyonun beklerken ne yaptığı yazılıdır. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
+## Şimdi kullanıcıya sorulacaklar (2026-10-31; en fazla 3 karar; hiçbiri engellemiyor, stüdyo beklerken geri alınabilir varsayılanla ilerler)
+Sahip modu: seçenekli kart, öneri ilk. Bunlar karar DEĞİLDİR; kullanıcı yanıtlayınca kararlar klasörüne (D-NNN) kendi sözleriyle yazılır.
+
+**Kart 1 · Yol binanın içinden geçerse ne olsun? (Q-017 + T-042b ilk sürüm; sorular `production/tasks/T-042b-PLAN.md`)**
+- A) Önerilen: yol geçtiği arsayı bütünüyle alır, bina yıkılır, sakinler yeniden ev arar, mahalle tepki verir; tarihî yapılar korunur; bedel yalnız gösterge (gerçek para yok). Yıkımlı yol onaydan sonra kalıcı (onaydan önce iptal edilir).
+- B) Önce yalnız boş arsalardan geçsin; binalı arsa sonra.
+- C) Bedel + süre + itirazla tam süreç (en uzun; bütçe kısıtı T-014 gerekir).
+- Alt soru: yıkımlı yol geri alınabilsin mi? Önerilen: hayır. Alternatif: evet, binalar geri gelir ama halk tepkisi geri gelmez.
+- Beklerken: kamulaştırma kurulmaz; ret metni "kamulaştırma henüz yok".
+
+**Kart 2 · Halk neye tepki versin? (Q-025)**
+- A) Önerilen: şimdilik sessiz kalsın, sahte tepki yok; "ne olunca tepki gelsin" kararını verince eklenir.
+- B) Yeni binalara tepki: çevrede yeni inşaat olunca komşu kesimler sesini duyurur (küçük bölgelerde de çalışsın diye eşik düşer).
+- C) Yol ve plan kararının kendisine tepki: yolun geçtiği mahalle ve plan komşuları onay/itiraz eder, kimin kazandığı görünür.
+- D) Eski hale dön: altyapı dolunca tepki gelsin (yanlış nedenli; önerilmez).
+- Beklerken: tepki yok; yalnız gerçek aşımda (yük > kapasite) altyapı şikâyeti çıkar.
+
+**Kart 3 · İmar planı meclisten geçsin mi? (Q-014; D-010'da "ya da daha doğrusu meclisin" dedin, zorunlu mu belli değil)**
+- A) Önerilen: şimdilik meclis yok, plan birkaç gün sonra yürürlüğe girer.
+- B) Meclis olsun: plan oylanır, reddedilebilir; ilk 5 dakika bir adım uzar, daha siyasi.
+- C) İkisi de: seçenek olarak (ör. büyük planlarda meclis).
+- Beklerken: kod iki yolu da destekliyor (`requires_council` bayrağı); oynanabilirde "meclis yok".
+
+Sonra (henüz sorulmaz): para birimi (Q-003); yol etkisi 100 mü 160 mı birim/km (ölçümle gelir, denge); bütçe kısıtı olsun mu (T-014).
+
 Durumlar:
 - **open** — çözülmemiş tasarım kararı; izlenir ama hiçbir görevi engellemez (stüdyo yapılandırılabilir/geri alınabilir biçimde ilerler).
 - **blocked** — en az bir görevi durduruyor; `Engellediği` satırında görev kimlikleri yazılır.
@@ -25,6 +50,7 @@ Durumlar:
 | Q-016 | Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları: ekonomi birimi↔kit katı oranı, inşaat kademesinin görünümü (iskele modülü var mı), başlangıç altyapı kapasitesi/hane talebi, otonom yatırımcı büyümesi oynanabilirde açık mı | **open** | — (engellemiyor) |
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 | Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
+| Q-025 | Halk neye tepki versin? (D-008 son adımı, bugün sessiz) | **open** | — (engellemiyor) |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
@@ -127,3 +153,9 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Recommendation: A (mevcut `zoning.propose` alanlarıyla uyumlu, sahte sayı yok; C sonra).
 - Meanwhile: v0 = A; sim'de karşılığı olmayan önizleme alanı "henüz kurulmadı".
 
+
+### Q-025 · Halk neye tepki versin? (D-008 "halk tepki versin" adımı; status: open — engellemiyor)
+- Context: ölçüm `production/log/2026-10-31-altyapi-siyaset-yan-etkisi.md`. Eski tepkinin gerçek nedeni "altyapı doluluğu %50'den itibaren şikâyet" idi (oyuncu hiçbir şey yapmasa da çıkıyordu; `cause_refs` yanlışlıkla plan parsellerini gösteriyordu: yanlış nedensellik). Oynanabilirde şikâyet artık yalnız yük > kapasite iken başlıyor; yol+plan sonrası 400 günde grup tepkisi ve gündem 0 (D2, tek tohum). İnşaat baskısı D2'de hiçbir kesime ulaşmıyor (kesim payı ~%7,5 < `min_share_pm` %10). Bkz. `design/specs/core-loop-v0.md` §9.
+- Options: bkz. "Şimdi kullanıcıya sorulacaklar" Kart 2 (A sessiz / B yeni bina tepkisi / C yol-plan kararına tepki / D eski hale).
+- Recommendation: A; kullanıcı B/C seçerse `construction_burden`, `min_share_pm` ya da olay kaynağı veri olarak ayarlanır; sahte tepki eklenmez (SIM-12).
+- Meanwhile: tepki yok; HUD yalnız gerçek veriyi gösterir; bina sayısı, ret ve gerekçeler yol+plan etkisini okunur kılar.

@@ -1,9 +1,10 @@
 # Çekirdek döngü v0: yol çiz, imar planı sun, yatırımcı inşa etsin, halk tepki versin
 
 Statü: **ÇALIŞMA MODELİ** (her bölüm). Sayılar kanon değil, tümü veridir. Para birimi yok (Q-003): "birim".
-REQ: CAN-03, CAN-04, CAN-05, CAN-06, SIM-02, SIM-04, SIM-05, SIM-07, SIM-08, SIM-09, SIM-10, SIM-12, TEK-01/02 · Kararlar: D-008, D-009, **D-010** · Bağlı: `economy-core-v0.md`, `political-events.md`, T-042-PLAN, T-042b-PLAN, T-043A/B/C · Sorular: Q-014 AÇIK, Q-017 AÇIK, Q-003 AÇIK, Q-023/Q-024 yeni.
+REQ: CAN-03, CAN-04, CAN-05, CAN-06, SIM-02, SIM-04, SIM-05, SIM-07, SIM-08, SIM-09, SIM-10, SIM-12, TEK-01/02 · Kararlar: D-008, D-009, **D-010** · Bağlı: `economy-core-v0.md`, `political-events.md`, T-042-PLAN, T-042b-PLAN, T-043A/B/C · Sorular: Q-014 AÇIK, Q-017 AÇIK, Q-003 AÇIK, Q-023/Q-024 yanıtlandı (D-010), Q-025 (halk tepkisi) yeni.
 Etiketler: [okundu] kodda/veride görüldü · [ölçülü] log'dan · [hesap] bu belgede · [tahmin] doğrulanmadı · [KARAR] kullanıcı kararı (D-010).
 Revizyon 2026-10-30: D-010 işlendi. Önceki "yol -> bina" akışı kaldırıldı; yol tek başına bina çıkarmaz.
+Revizyon 2026-10-31: T-043A/B/C uygulandı; §1-§7 gerçek Ismeral ölçümlerine (D2, dünya tohumu 1467, başsız probe; kaynak `production/log/2026-10-31-*.md`) göre uyumlandı. **Kullanıcı kararları (D-008..D-010) değişmedi.** Bu belgedeki her sayı **çalışma değeri, kanon değil**; `[ölçülü 10-31]` etiketi yalnız o tek bölge/tohum için geçerlidir. Bölüm sonunda §9: "bugün ne var / ne yok".
 
 ## 0. Akış (D-010 ile bağlayıcı yön; ayrıntılar ÇM)
 ```
@@ -26,6 +27,7 @@ Varsayım: oyun hızı "hızlı" (4 gün/sn); başlangıç Orven kenarı açık 
 | 2:30-3:30 | Zamanı izler | plan yürürlüğe girer; **o andan sonra** ≤40 gün: yakın parsellerde karar satırı "İmar planı ← teklif (gün N)", "Altyapı kapasitesi ← Yol"; bazısı onay, bazısı ret (getiri/talep) | onay/ret sayısı, planlı birim |
 | 3:30-4:30 | İskeleli kademe, sonra bina (≤100 gün) | gerçek 3D yapı | konut/dükkân birimi, hane, arsa değeri, kira endeksi |
 | 4:30-5:00 | Gündeme bakar | PE-01/PE-04/PE-07 tipi öğe, `cause_refs` zinciri yol/plan -> bina -> tepki | kesim şikâyeti (tek skor değil, SIM-09) |
+**Gerçek ölçüm [ölçülü 10-31, D2, 108 m yol, 12 parselik `zone.mixed` planı]:** plan yürürlüğünden ilk inşaat **12 gün**, ilk bina **66 gün**, 12 parselin sonuncusu 81-86 gün; 4 gün/sn'de 3,0 sn / 16,5 sn / ~21 sn. Yani tablodaki "≤40 / ≤100 gün" ölçütü tutuyor; ama "2:30-3:30" ve "3:30-4:30" satırları gerçekte ~20 sn'ye sıkışıyor (his testinde bu çok hızlı bulunabilir: tempo veri, ayarlanır). Yol 108 m'de yalnız **3 parsel** inşa edilir, 248 m'de **7**: geri kalanı altyapı kapasitesine sığmaz (ret `infrastructure_exhausted`, gerekçede yol komutu). "4:30-5:00 halk tepkisi" satırı bugün **sessiz** (§9).
 Not: bu akış eski akıştan **bir oyuncu adımı uzundur**; 5 dakikaya sığması B+C tempo ölçütlerine (§2) ve plan teklifinin 1-2 dokunuşta verilebilmesine bağlıdır [tahmin: his testi §5 gözlem 6 ile doğrulanır].
 Döngü (F03): oyuncu kararı (yol, plan) -> kapasite + izin -> yatırımcı kararı (gerekçe) -> bina -> hane/kira/arsa -> kesim tepkisi -> yeni gündem (2. yol, farklı plan, geri alma). Yanlış yolda ret gerekçesi görünür ve **hiçbir şey olmaz**; yanlış planda (talep/getiri yok) plan geçer ama yatırımcı gelmez (SIM-07); başarısızlık da oyundur. İki oyuncu farklı plan/yol seçebilir (SIM-10).
 
@@ -47,12 +49,12 @@ Kurallar:
 **Sonuçlar (bilinçli):**
 1. Başlangıçta oyuncu hiçbir şey yapmazsa (yol ve plan yok) **hiç bina çıkmaz**; bu bir başarısızlık değil, D-010'un doğrudan sonucudur. T0 yapıları kalır, ekonomi mevcut yapılarla işler.
 2. Yaşayan dünya hissi riski: bütün boş arazi donuk kalır; mevcut mahalleler çalışmaya devam eder (kira, hane). Bu risk his testi §5 gözlem 6 ile izlenir; çare "otomatik plan" olmaz (D-010'a aykırı), sunum/gündem ipuçları olur.
-3. Placeholder +%30 kapasite payı ile birlikte iki ayrı "neden" vardı; plan şartı geldikten sonra pay yol nedenselliğini hâlâ gizler. Payın oynanabilirde bölge bazında daraltılması (`--infra-free` benzeri) T-043A kapsamında **veri** olarak ele alınır, değer §7.
+3. ~~Placeholder +%30 kapasite payı yol nedenselliğini gizler.~~ **Çözüldü (veri, 2026-10-31):** oynanabilir başlangıç boş kapasite `min(yük x %30, infra_free_units_max=0) + 1` birim; yük/kapasite oranı ~%99,9 ve altyapı bonusu kapalı (`infra_bonus_max=0`, `base_threshold=300`: boş bölgede skor eskisiyle aynı). [ölçülü 10-31, D2] önce: boş kapasite ~2795, yolsuz plan 12 bina (yol hiçbir şeyi değiştirmiyordu); sonra: yolsuz plan **0 bina**, yol+plan **3 bina**. Kontrol (`-1` = sınırsız) eski davranışı verir; sim varsayılanı/GOLDEN değişmedi. Sayı çalışma değeri, kanon değil; "dar başlangıç" bir denge kararıdır (§7).
 4. Altın/hash etkisi: yalnız `unplanned_land.enabled=true` koşularda (oynanabilir config, kayıtlı yakalamalar) davranış değişir; kontrollü yeniden tabanlama T-043A içinde (görev dosyasında plan).
 5. T-041 / T-043 demo ve yakalamaları (ör. imar demosu) plan akışına göre yeniden çekilecek; "Konut yap" benzeri kısayol eklenmez.
 
 ## 3. Tempo (ÇM, [KARAR] B+C seçildi)
-Veri [okundu]: `core_config.json`: 1 tick = 1 sim günü; hızlar 1/4/16 tick/sn; demo `set_speed(3)` = en hızlı. Ekonomi: `plan_days` 10, inşaat 45 + 3·birim gün, `attention_delay_days` 2, tarama `review_period_days` 10, oynanabilir `max_reviews_per_tick` 8. [ölçülü] Q-016: zorunlu dikkat yolunda (imar önerisi) gün 40 inşaat, gün 100'de 7/8 bitmiş.
+Veri [okundu]: `core_config.json`: 1 tick = 1 sim günü; hızlar 1/4/16 tick/sn; demo `set_speed(3)` = en hızlı. Ekonomi: `plan_days` 10, inşaat 45 + 3·birim gün, `attention_delay_days` 2, tarama `review_period_days` 10, oynanabilir `max_reviews_per_tick` 8. [ölçülü] Q-016: zorunlu dikkat yolunda (imar önerisi) gün 40 inşaat, gün 100'de 7/8 bitmiş. **[ölçülü 10-31, gerçek dünya]** B kuyruğu açık: ilk inşaat 12 / ilk bina 66 gün (hedef 40/100 tutuyor). Ama kuyruk **bu veride hızı değiştirmiyor**: kuyruk kapalı da 12/66; fark yalnız başlangıçları 12-17. güne yaymak. Gerçek faydası "bekleme rastgele olmasın" garantisi ve plan->yol sıralamasında (sentetik testte kuyruksuz 161/215 gün); gerçek veride bu fark gözlenmedi. Tohum 1467/2/3 aynı günler. Sim maliyeti [ölçülü 10-31]: yol onay tick'i 9-12 ms (önce 62-88), ay sınırı <=8 ms, ilk tick 3,2 ms, ortalama tick ~3 ms; demo karesi 45,2 -> 14,6 ms (gerekçe paneli düzeltmesi). Başsız, i7-8850H; iPad ölçülmedi.
 **Ölçütler [KARAR yönü, sayılar ÇM]:** *tetikleyici olaydan* (bölgenin hem erişimi hem planı tamamlandığı SON olay: yol onayı veya plan yürürlüğü) ilk inşaat ≤~40 gün, ilk tamamlanan bina ≤~100 gün; "hızlı" hızda ~25 sn (100 gün ÷ 4). Hepsi onay değil: ret dağılımı kalır.
 | Parça | Ne yapar | Katman | Hash/determinizm |
 |---|---|---|---|
@@ -67,8 +69,9 @@ Gizleme riski (SIM-08): C yalnız hızı seçer; bekleme süresini saklamaz (gü
 |---|---|---|---|
 | Başlangıç arsa değeri | 0 [okundu: görev girdisi]; çarpansal güncelleme taban 0'da hep 0 [tahmin] | `L = land_share_pm · units_potential · cost_per_unit(kullanım)` / 1000; planlı olmayan parselde kullanım yoktur: arsa değeri **plan yürürlüğe girince** tanımlanır (plan = arsa değerini açar; spekülasyon SIM-07 için doğal kapı) [tahmin, ekonomi-engineer teyit eder]. Tuzak: "artık değer" mevcut sayılarla hiç bina üretmez [hesap] | bölge farkı, yolun arsa etkisi sorulmadı |
 | T0 imarı | ~~çevreden türetme~~ **İPTAL** (D-010) | yapılı parsel: mevcut; boş parsel: `unplanned` | kapandı |
-| Belediye bütçesi | T-014 kurulmadı; `BudgetView` sözleşmesi ve `BudgetPanel` var, sim tarafı `system.not_built` [okundu] | **Gösterge bütçe** (T-043C): gelir = bina birimi · `rent_per_unit_month` · `tax_rate_pm` aylık; gider = yol: eklenen altyapı birimi · `cost_per_unit` · `public_cost_share_pm`; kasa yalnız gösterge, hiçbir komutu reddetmez | [KARAR] önce gösterge; vergi oranı/başlangıç kasası yer tutucu |
-| Yolun etkisi | `infra_units_per_km` yok | `= K_proje · medyan_birim / 0,3 km` | — |
+| Belediye bütçesi | **T-043C kuruldu (2026-10-30)**: sim `src/sim/budget/`, `BudgetPanel` gerçek veriyle, yol önizlemesinde "Maliyet: N birim". Kasa yalnız gösterge; kısıt, tahsis (`budget.propose` hâlâ kurulmadı), hizmet kapasitesi YOK (T-014'ün kalanı) | **Gösterge bütçe** (uygulandı; yer tutucu `initial_balance` 50000, `tax_rate_pm` 100, `public_cost_share_pm` 100, çalışma değeri): gelir = bina birimi · `rent_per_unit_month` · `tax_rate_pm` aylık; gider = yol: eklenen altyapı birimi · `cost_per_unit` · `public_cost_share_pm`; kasa yalnız gösterge, hiçbir komutu reddetmez | [KARAR] önce gösterge; vergi oranı/başlangıç kasası yer tutucu |
+| Yolun etkisi | uygulandı: `road_works.json` `infra_units_per_km` | **çalışma değeri 100 birim/km** (sim varsayılanı; formül yerine sabit). [ölçülü 10-31, D2] 108 m -> 10 birim -> 3 bina; 248 m -> 24 birim -> 7 bina; deneme 160/km (eski `K·medyan/0,3 km` formülünün verdiği) -> 108 m'de 4 bina. Yol uzunluğu bina sayısını belirler (SIM-10 için iyi; "yol çok kısa" ise ret gerekçesi altyapı). Değer kanon değil; 100 mü 160 mı denge kararı | — |
+| Başlangıç boş kapasite (yol bölgesi) | pay %30 | `infra_free_units_max` = **0** (mutlak birim; +1 artık), `infra_headroom_pm` 300 korundu (küçük bölge eski değeri `min(pay, sınır)` ile korur) | çalışma değeri; kontrol `-1` |
 | Plan önizlemesi ("ne kadar iyi şey olacak") | yok; yalnız `proposal_effects` tabloları (meclis için) [okundu] | önizleme sim sorgusundan: seçili parsellerin potansiyel birimi, kapasite yükü, `proposal_effects` kesim yarar/zarar işareti | içerik düzeyi Q-024 |
 Kural: HUD'a yalnız hesaplanan sayı girer; sim'de hesabı olmayan alan "henüz kurulmadı" (sahte sayı yok).
 
@@ -93,6 +96,7 @@ Kural: HUD'a yalnız hesaplanan sayı girer; sim'de hesabı olmayan alan "henüz
 | 5 | Sayı gerçekliği: kötü yol (bağlantısız) | ret anlaşılır (≥%80), sayı oynamaz | sahte hareket |
 | 6 | **Plan adımı:** oyuncu yoldan sonra plan vermesi gerektiğini ipucu sormadan bulur ve planı ≤2 dk içinde gönderir | ≥3/5 | ≥3/5 "neden bina çıkmadı"da takılır (ipucu/akış yetersiz) |
 | 7 | **Plansız arazi:** yol çizip plan vermeyen oyuncu | "plan yok" gerekçesini okur (≥%80) | "oyun bozuk/bekliyor" yorumu |
+**Durum [10-31]:** gözlem 1-7 **insanlarla HİÇ denenmedi** (his testi yapılmadı). Otomatik/probe karşılığı olanlar: gözlem 2 tempo (ölçüldü, geçer: 12/66 gün), gözlem 3 (tohumlar arası aynı gün sayıları ama farklı durum hash'i; "bina sayısı tohumlar arası farklı" **kanıtlanmadı**, tohum 2 ve 3'te de 3 bina), gözlem 4 tepki (**bugün kalır**: yol+plan sonrası 400 günde grup tepkisi 0, §9), gözlem 5/7 (plansız ve yolsuz plan reddi testli).
 Otomatik karşılıklar (qa-engineer): 5 tohumlu çift senaryo, kayıt/yükleme sonrası N tick hash eşit, GOLDEN_A/B (`enabled=false`) değişmez, oynanabilirde yeni tabanlı hash tekrar oynatmada eşit.
 Test senaryoları: **olumlu** yol + plan -> tetikleyiciden ≤40 gün içinde ≥1 parsel `approved`, etken `source_ref` plan komutu ve yol komutu. **Olumsuz 1** yol var plan yok -> tüm boş parsellerde `zoning.unplanned` reddi, bina 0, kapasite +N. **Olumsuz 2** plan var yol/kapasite yok -> `infra` reddi, bina yok. **Uç** plan meclis yolunda reddedilir -> `plan_rejected`, yeniden teklif edilebilir; yol geri alınır -> `stalled`.
 
@@ -100,17 +104,33 @@ Test senaryoları: **olumlu** yol + plan -> tetikleyiciden ≤40 gün içinde �
 | Parametre | Öneri | Gerekçe / test |
 |---|---|---|
 | `unplanned_land.enabled` | varsayılan false; oynanabilir true | altın korunumu; iki durumda kontrol testi |
-| `decision.priority_radius_m` (R) / `decision.priority_max_parcels` (K) | 150 / 12 | gözlem 2; tick maliyeti ölçülür |
+| `decision.priority_radius_m` (R) / `decision.priority_max_parcels` (K) | 150 / 12 (uygulandı: `priority_review_enabled`=1 oynanabilirde) | gözlem 2; gerçek veride kuyruk yalnız başlangıçları yayıyor (§3), gün sayısı değişmiyor; K=12 ile 30 parselde son bina 87. gün |
 | `plan_max_parcels_per_proposal` | 40 | UI/oylama yükü; gözlem 6 |
 | `requires_council` (zoning.propose) | oynanabilirde false ("meclis yok"), bayrakla true | Q-014 AÇIK; iki yol da test |
-| `infra_units_per_km` | §4 formülü | gözlem 1 |
-| başlangıç boş kapasite (yol bölgesi) | dar (pay %30 yerine bölgeye bağlı) | `infra_headroom_pm` 300 yerine; gözlem 1 |
+| `infra_units_per_km` | **100** (uygulandı) | 108 m=3 bina, 248 m=7 bina; 160 deneyi 4 bina; karar sahibi: denge |
+| `infra_free_units_max` (başlangıç boş kapasite üst sınırı) | **0** (uygulandı; -1 = sınırsız kontrol) | yolsuz plan 0 bina, yol+plan 3 bina; gözlem 1 |
+| `decision.infra_bonus_max` / `base_threshold` | **0 / 300** (uygulandı; 150 / 450 ile boş bölgede skor eşit) | altyapı yalnız sığar/sığmaz kapısı; ret gerekçesi okunur |
+| `blocs_grievance_rule_overrides` (`infra_stress` lo/hi) | **1000 / 1300** (yalnız oynanabilir) | baskı yalnız gerçek aşımda (yük > kapasite); eski kuralda yol+plan olmadan da şikâyet 1000'e doyuyordu (yanlış nedensellik) |
 | `land_share_pm` | 250 | 5 tohumda onay %20-80 |
-| `tax_rate_pm`, `public_cost_share_pm`, `premium_pm`, başlangıç kasası | yer tutucu | Q-022 (kısmen D-010), Q-003 |
-| başlangıç oyun hızı | "hızlı" | gözlem 2 |
+| `tax_rate_pm`, `public_cost_share_pm`, başlangıç kasası | 100 / 100 / 50000 (uygulandı, yer tutucu) | Q-003 para birimi AÇIK; kasa gösterge, kısıt değil |
+| `premium_pm` (kamulaştırma) | uygulanmadı | Q-017, T-042b |
+| başlangıç oyun hızı | "hızlı" (4 gün/sn, uygulandı) + hız ipucu | gözlem 2; 12/66 gün = 3,0/16,5 sn çok hızlı bulunursa hız ya da `attention_delay_days` ayarlanır |
 
 ## 8. Açık sorular
 - ~~Q-023~~ "Zoomlarda" aslında "zone'larda" (D-010 düzeltmesi): oyuncu imar bölgesi (zone) seçerek parsellerin ne olacağını belirler; zoom ile ilgisi yok.
 - **Q-024** İmar planı teklifinin içeriği ve önizlemesi ("ne kadar iyi şey olacak").
 - Q-014 meclis onayı (AÇIK; "meclis" ifadesi D-010'da geçti ama zorunluluk açıkça söylenmedi) · Q-017 yıkım · Q-003 para birimi · Q-015/D-002 başlangıç noktası.
 - Q-020/Q-021/Q-022 D-010 ile yanıtlandı (kayıtları güncellendi).
+
+## 9. Bugün ne var, ne yok (2026-10-31; ÇM)
+**Çalışıyor [doğrulandı: `verify full` PASS @ b6fa635, 2225 test, 0 hata; sonrası yalnız `quick` 920, kısmi]:** yol çiz (D-009 kuralları, geri alma) -> bölge altyapı kapasitesi (+N birim) -> plansız arazi + plan teklifi (kullanım + yoğunluk, sim önizlemesi) -> yatırımcı değerlendirmesi (plan VE kapasite şartı, gerekçe iki kaynağı birlikte) -> iskele kademeli 3D bina -> hane/kira/arsa -> gösterge bütçe. Olumsuz yollar testli: yalnız yol 0 bina, yalnız plan (yolsuz) 0 bina, kapasiteyi aşan parseller ret.
+**Eksik / sessiz (bilerek):**
+| Parça | Durum | Neden / bağ |
+|---|---|---|
+| Halk tepkisi (D-008 son adımı) | **Sessiz.** Altyapı baskısı şikâyeti yalnız gerçek aşımda (yük > kapasite) başlıyor; yol+plan 400 günde grup tepkisi 0, gündem 0 [ölçülü 10-31]. İnşaat baskısı D2'de kesime ulaşmıyor (kesim payı ~%7,5 < `min_share_pm` %10) | Önceki "tepki" yanlış nedenseldi (akışsız da aynı tepkiler). Tepki ne tetiklesin? Karar bekliyor: `production/QUESTIONS.md` Q-025 |
+| Meclis | Yok (`requires_council.zoning.propose=false`; iki yol testli) | Q-014 AÇIK |
+| Bütçe | Gösterge: kısıt yok, tahsis/oylama yok, hizmet kapasitesi yok | T-014'ün kalanı; Q-022 kalan, Q-003 |
+| Kamulaştırma/yıkım | Yok; ret metni "kamulaştırma henüz yok"; yapılı parsel imarı değişmez | T-042b, Q-017 |
+| PE-07 (hizmet aşımı) | Hiç tetiklenmedi (yük hiç kapasiteyi aşmadı) | yol geri alma akışı ile ölçülmedi |
+**Test edilmemiş:** başka bölgeler (D1, D3-D6) ve dünya tohumları; çok yollu zincir; ikinci plan; insanlarla his testi (§6); iPad; pencereli kare süresi yol tick'i/`RoadDraftCheck` (rank 1 gönderim ~14 ms) dahil; yol geri alma sonrası siyaset etkisi.
+**Tasarım riski (açık):** yol+plan ile hızlı ve her seferinde aynı sayıda bina (tohumlar arası fark yok) SIM-10'a (sapma) zayıf; çare tohum başına getiri/talep/finansman varyansı, bu veride ölçülmedi.
