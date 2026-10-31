@@ -63,7 +63,7 @@ static func process_pending(state: GameState, handlers: Dictionary) -> void:
 		var handler: CommandHandler = handlers.get(String(cmd["type"]), null)
 		var reason: StringName = REASON_UNKNOWN if handler == null else handler.validate(state, cmd["params"])
 		if reason == &"":
-			handler.apply_with_id(state, cmd["params"], int(cmd["seq"]) + 1)
+			reason = handler.try_apply(state, cmd["params"], int(cmd["seq"]) + 1)
 		entry["tick_applied"] = state.tick
 		entry["status"] = STATUS_APPLIED if reason == &"" else STATUS_REJECTED
 		entry["reason"] = reason

@@ -9,15 +9,16 @@ extends RefCounted
 ##   `public_work.road/undo_last` komutları, `public_work.built/removed` olayları, `SimFacade.public_works()`/
 ##   `PublicWorkView`, `EconomyRegionOutcome.infra_*` (ADR-0005 Ek E);
 ##   1.4 (T-043A) imar planı sorguları: `SimFacade.plan_state()`/`PlanStateView`, `plan_preview()`/`PlanPreviewView`
-##   (ADR-0005 Ek G).
+##   (ADR-0005 Ek G); 1.5 (T-042b, D-011) kamulaştırma: `public_work.road` + `expropriate`, `ParcelView.development =
+##   taken`, `public_work.expropriated/restored` olayları, kamulaştırma ret anahtarları (ADR-0005 Ek F).
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 4
-const VERSION := "1.4"
+const VERSION_MINOR := 5
+const VERSION := "1.5"
 
 const FIXED_SCALE := 1000
 
@@ -137,7 +138,8 @@ static func to_name_dict(value: Variant) -> Dictionary:
 
 
 ## Metin şablonu argümanları (kanonik): anahtar String; değer int / String / bool (ondalık yok: sabit nokta int
-## kullanılır). JSON'dan gelen tam sayılı float → int, StringName → String. Sözlük değilse boş.
+## kullanılır). JSON'dan gelen tam sayılı float → int, StringName → String; iç içe sözlük aynı kuralla özyinelemeli.
+## Sözlük değilse boş.
 static func to_args(value: Variant) -> Dictionary:
 	var out := {}
 	if value is Dictionary:
@@ -147,6 +149,8 @@ static func to_args(value: Variant) -> Dictionary:
 				v = int(v)
 			elif v is StringName:
 				v = String(v)
+			elif v is Dictionary:  # iç içe sözlük (ör. bölge -> sayı): JSON'dan gelen tam sayılı float'lar int olur
+				v = to_args(v)
 			out[str(k)] = v
 	return out
 

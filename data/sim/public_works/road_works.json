@@ -3,6 +3,14 @@
 	"classes": {
 		"local": {"infra_units_per_km": 100}
 	},
+	"expropriation": {
+		"_note": "T-042b / D-011 (kullanici karari): yolun aldigi parselin binasi yikilir, yikilan yol onaydan sonra geri alinabilir (binalar doner, halk tepkisi DONMEZ), halk esas olarak yerinden edilmeye tepki verir; yol/plan cevresinde yerinden edilmeyenler daha hafif ve mesafeye bagli tepki verir; tarihi yapilar korunur; bedel yalniz gosterge. HEPSI CALISMA MODELI (F05-C), kanon DEGIL. Q-017 acik ayrintilari (hanelerin nereye gittigi, isletme kaybi, sahip tazminati) burada yalniz bayrak/calisma degeri: household_fate return_to_latent = hane bolgenin bekleyen talebine doner, leave_region = bolgeden ayrilir (geri almada geri gelir). Uygulanmayanlar: tazminat parasi (T-014/Q-003), isletme kaybi, hane yeniden yerlesim kuyrugu. proximity_radius_m yol cizgisine metre; agirlik = (R-d)/R. reaction_keep_days tepki defterinin tutulma suresi (gun).",
+		"enabled": true,
+		"protect_heritage": true,
+		"household_fate": "return_to_latent",
+		"proximity_radius_m": 60,
+		"reaction_keep_days": 720
+	},
 	"cost": {
 		"available": false,
 		"reason_key": "public_work.cost.not_built"

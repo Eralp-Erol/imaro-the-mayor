@@ -91,6 +91,11 @@ func change_log() -> ParcelChangeLog:
 	return _changes
 
 
+## T-042b · Statik parsel sütunları (kaynaktan türer, durum DEĞİL; salt okunur): kamulaştırma etkisi ve yakınlık için.
+func static_columns() -> Dictionary:
+	return {"region_of": _region_of, "center_x": _center_x_cm, "center_z": _center_z_cm, "codes": _region_codes}
+
+
 ## T-045 · Kayıt yüklendi: halkanın geçmişi bilinmiyor; `tick` yüklenen durumun tick'idir.
 func reset_changes(tick: int) -> void:
 	_changes.reset(tick)

@@ -13,6 +13,10 @@ const DEVELOPMENT_PLANNED := &"planned"
 const DEVELOPMENT_UNDER_CONSTRUCTION := &"under_construction"
 const DEVELOPMENT_BUILT := &"built"
 const DEVELOPMENT_STALLED := &"stalled"
+## v1.5 (T-042b, D-011): parsel bir yol tarafından ALINDI (bina yıkıldı); `use` boş, `units` 0, `progress_pm` 0, karar
+## yok.
+## Yol geri alınırsa parsel önceki durumuna döner. Sim parsel kümesi sabit kalır (kimlik silinmez).
+const DEVELOPMENT_TAKEN := &"taken"
 
 ## Yatırımcı karar özeti (v1.2): `decision` değerleri.
 const DECISION_NONE := &""
@@ -65,6 +69,9 @@ var decision_tick: int = -1
 ## onay kararının gerekçesidir (sonraki durma/devam gerekçesi değil). Budama bir durum DEĞİŞİKLİĞİ sayılmaz:
 ## `parcel_changes_since` bu kimliğin 0'a düşmesini bildirmez.
 var decision_reason_id: int = 0
+## v1.5 · `development == taken` iken parseli alan yolun komut kimliği (`command.N`; `SimFacade.public_works()` satırına
+## ve `reasons_for(parcel.N)` içindeki `decision.municipal.expropriate` kaydına çözülür); aksi halde 0.
+var taken_by_command: int = 0
 ## Birimsiz tamsayı (Q-003).
 var land_value: int = 0
 ## Bu parselin durumunu açıklayan en güncel gerekçeler.
@@ -83,7 +90,7 @@ func to_dict() -> Dictionary:
 		"land_value": land_value, "reason_ids": reason_ids, "provenance": provenance,
 		"use": use, "units": units, "progress_pm": progress_pm, "developed_by_sim": developed_by_sim,
 		"decision": decision, "decision_code": decision_code, "decision_tick": decision_tick,
-		"decision_reason_id": decision_reason_id,
+		"decision_reason_id": decision_reason_id, "taken_by_command": taken_by_command,
 	}
 
 
@@ -108,4 +115,5 @@ static func from_dict(d: Dictionary) -> ParcelView:
 	p.decision_code = SimContract.to_name(d.get("decision_code", ""))
 	p.decision_tick = SimContract.to_int(d.get("decision_tick", -1), -1)
 	p.decision_reason_id = SimContract.to_int(d.get("decision_reason_id", 0))
+	p.taken_by_command = SimContract.to_int(d.get("taken_by_command", 0))
 	return p

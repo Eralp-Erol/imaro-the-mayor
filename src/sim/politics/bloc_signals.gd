@@ -9,6 +9,15 @@ const SCALE := 1000
 const NAMES: Array[String] = [
 	"construction_burden", "infra_stress", "service_gap", "service_level", "demand_shortage", "supply_added",
 ]
+## T-042b · İsteğe bağlı sinyaller: yalnız yol kamulaştırma yaptıysa hesaplanır ve kesim durumuna yazılır (yolsuz
+## koşuda durum ve hash'ler değişmez). `displacement`: yerinden edilen hane / bölge hanesi; `proximity`: yola yakın
+## (yerinden edilmeyen) hane x mesafe ağırlığı / bölge hanesi. İkisi de zamanla söner (`reaction.window_days`).
+const OPTIONAL_NAMES: Array[String] = ["displacement", "proximity"]
+const ALL_NAMES: Array[String] = [
+	"construction_burden", "infra_stress", "service_gap", "service_level", "demand_shortage", "supply_added",
+	"displacement", "proximity",
+]
+const DEFAULT_WINDOW_DAYS := 360
 ## Kesim büyüklüğü kaynakları (hane kohortu).
 const SIZE_SOURCES: Array[String] = ["housed_hh", "seeking_hh"]
 
@@ -74,3 +83,15 @@ static func blend(by_region: Dictionary, shares: Dictionary, signal_name: String
 		total += int(shares[code]) * int(by_region.get(code, {}).get(signal_name, 0))
 		weight += int(shares[code])
 	return 0 if weight == 0 else total / weight
+
+
+## T-042b · Tepki defterinden bölge sinyali (pm). `rows`: [[tick, değer, komut]...]; satır `window` gün boyunca doğrusal
+## söner. `value_scale`: displacement için SCALE (değer = hane), proximity için 1 (değer zaten hane x ağırlık_pm).
+@warning_ignore("integer_division")
+static func reaction_pm(rows: Array, tick: int, window: int, latent_hh: int, value_scale: int) -> int:
+	var total := 0
+	for row: Array in rows:
+		var age := tick - int(row[0])
+		if age >= 0 and age < window:
+			total += int(row[1]) * (window - age) * value_scale / window
+	return clampi(total / maxi(latent_hh, 1), 0, SCALE)

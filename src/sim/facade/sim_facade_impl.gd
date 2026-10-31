@@ -104,6 +104,9 @@ func attach_public_works(ctx: PublicWorksContext) -> bool:
 	for handler in ctx.handlers():
 		if not _sim.add_handler(handler):
 			return false
+	ctx.economy = _economy  # T-042b: kamulaştırma alınan parselin ekonomi sütunlarını okur/yazar (yoksa kapalı)
+	if not _sim.add_system(ExpropriationFlushSystem.new(ctx)):  # komut aşamasında alınan parseller halkaya girsin
+		return false
 	_public_works = ctx
 	return true
 
@@ -143,6 +146,14 @@ func public_works() -> Array[PublicWorkView]:
 		v.road_class = StringName(work["road_class"])
 		v.length_cm = work["length_cm"]
 		v.region_units = SimContract.to_args(work["region_units"])
+		if work.has("expropriation"):  # v1.5: sim'in kaydı (uydurma yok)
+			var record: Dictionary = work["expropriation"]
+			v.expropriated = true
+			v.taken_parcel_ids = ExpropriationSummary.sorted_ids(record)
+			v.taken_built_parcels = record["built_parcels"]
+			v.taken_res_units = record["res_units"]
+			v.taken_com_units = record["com_units"]
+			v.displaced_households = record["households"]
 		out.append(v)
 	return out
 
@@ -442,6 +453,8 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 		return mismatch
 	var economy_problem := EconomyState.validate_data(result.state.systems.get(EconomyState.KEY, null),
 		_parcels.parcel_count())  # T-013: ekonomi bölümü varsa biçimi/boyu denetlenir (yoksa "" döner)
+	if economy_problem.is_empty():  # T-042b: ekonomide TAKEN olan parseller = yol kayıtlarındaki alınanlar
+		economy_problem = ExpropriationFlow.consistency_problem(result.state)
 	if not economy_problem.is_empty():
 		var corrupt := SimSave.LoadResult.new()
 		corrupt.error_code = &"corrupt"

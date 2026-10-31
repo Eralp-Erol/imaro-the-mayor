@@ -16,11 +16,25 @@ extends RefCounted
 ##   infra_source          TÜRETİLMİŞ {kod: "command.N"}: bölgede kapasiteyi EN SON artıran yol (gerekçe `source_ref`i)
 ## Türetilmiş iki sözlük `works`ten yeniden hesaplanabilir; `validate_data` uyuşmayı bozuk kayıt sayar. Ekonomi sütunu
 ## `regions.infra_cap`a DOKUNULMAZ: etkin kapasite = taban + bonus; geri alma bonusu kendiliğinden düşürür.
+##
+## v2 (T-042b, D-011, ADR-0005 Ek F): bölüm İLK kamulaştırmada v1'den v2'ye yükselir (yolsuz ve kamulaştırmasız
+## koşuların
+## durumu/hash'i v1 kalır). Eklenenler:
+##   works[i].expropriation   YALNIZ kamulaştıran yolda: {parcel_ids [artan], snapshots [alınan satırın anlık
+## görüntüsü],
+##                            built_parcels, project_parcels, res_units, com_units, households, regions {kod: parsel},
+##                            latent_removed {kod: hane}, nearby_households, nearby_parcels, fate}
+##   taken                    TÜRETİLMİŞ {parsel_kimliği: komut_kimliği}: şu an alınmış parseller (geri alma düşürür)
+##   displaced                {kod: [[tick, hane, komut]...]} yerinden edilme olayları. GERİ ALINMAZ (halk tepkisi
+##                            geri gelmez, D-011); eski kayıtlar `reaction_keep_days` sonra budanır
+##   nearby                   {kod: [[tick, hane x ağırlık_pm, komut]...]} yakınlık olayları (GERİ ALINMAZ)
 
 const KEY := "public_works"
 const VERSION := 1
+const VERSION_EXPROPRIATION := 2
 const OP_ADD_ROAD := "add_road"
 const COMMAND_PREFIX := "command."
+const REACTION_BOOKS: Array[String] = ["displaced", "nearby"]
 
 
 ## Bölüm (DOĞRUDAN durumun parçası); yoksa boş sözlük.
@@ -53,7 +67,65 @@ static func infra_source(state: GameState, region_code: Variant) -> StringName:
 	return StringName(str((d["infra_source"] as Dictionary).get(String(region_code), "")))
 
 
-## Yeni yolu ekler (bölüm yoksa yaratır). `work`: {command_id, tick, road_class, length_cm, region_units}.
+## Alınmış parselin alınma komut kimliği (`command.N`nin N'i); alınmamışsa 0. O(1).
+static func taken_command(state: GameState, parcel_id: int) -> int:
+	var d: Variant = state.systems.get(KEY, null)
+	if not (d is Dictionary) or not (d as Dictionary).has("taken"):
+		return 0
+	return int((d["taken"] as Dictionary).get(parcel_id, 0))
+
+
+## Şu an alınmış parsel sayısı (bölüm/anahtar yoksa 0).
+static func taken_count(state: GameState) -> int:
+	var d := data(state)
+	return 0 if not d.has("taken") else (d["taken"] as Dictionary).size()
+
+
+## Bölge için kayıtlı tepki olayları: `book` = "displaced" | "nearby". [[tick, değer, komut]...]; yoksa [].
+static func reaction_rows(state: GameState, book: String, region_code: String) -> Array:
+	var d: Variant = state.systems.get(KEY, null)
+	if not (d is Dictionary) or not (d as Dictionary).has(book):
+		return []
+	return (d[book] as Dictionary).get(region_code, [])
+
+
+## Kamulaştırma tepki kaydı var mı (v2)? Siyaset sinyalleri YALNIZ bu durumda yazılır (yolsuz/kamulaştırmasız koşularda
+## kesim durumu eskisiyle bit-bit aynıdır).
+static func has_reactions(state: GameState) -> bool:
+	var d := data(state)
+	return d.has("displaced")
+
+
+## Tepki olaylarını ekler (geri alınmaz). `displaced`/`nearby`: {kod: değer}; `keep_days` > 0: bu günden eski satırlar
+## budanır. Bölüm v2 olmalı (`append_work` kamulaştıran işte yükseltir).
+static func note_reactions(state: GameState, command_id: int, displaced: Dictionary, nearby: Dictionary,
+		keep_days: int) -> void:
+	var d := data(state)
+	var rows := {"displaced": displaced, "nearby": nearby}
+	for book in REACTION_BOOKS:
+		var table: Dictionary = d[book]
+		for code: String in _sorted_keys(rows[book]):
+			if int(rows[book][code]) > 0:
+				var list: Array = table.get(code, [])
+				list.append([state.tick, int(rows[book][code]), command_id])
+				table[code] = list
+		if keep_days > 0:
+			for code: String in table:
+				var kept: Array = []
+				for row: Array in table[code]:
+					if state.tick - int(row[0]) <= keep_days:
+						kept.append(row)
+				table[code] = kept
+
+
+static func _sorted_keys(table: Dictionary) -> Array:
+	var keys: Array = table.keys()
+	keys.sort()
+	return keys
+
+
+## Yeni yolu ekler (bölüm yoksa yaratır). `work`: {command_id, tick, road_class, length_cm, region_units}; kamulaştıran
+## yolda ek olarak `expropriation` (bölümü v2'ye yükseltir).
 static func append_work(state: GameState, base_graph_hash: String, op: Dictionary, graph_hash_after: String,
 		work: Dictionary) -> void:
 	var d := state.system_data(StringName(KEY))
@@ -70,6 +142,11 @@ static func append_work(state: GameState, base_graph_hash: String, op: Dictionar
 	var entry := work.duplicate(true)
 	entry["id"] = (d["works"] as Array).size() + 1
 	(d["works"] as Array).append(entry)
+	if entry.has("expropriation") and int(d["version"]) < VERSION_EXPROPRIATION:  # ilk kamulaştırma: v1 -> v2
+		d["version"] = VERSION_EXPROPRIATION
+		d["taken"] = {}
+		d["displaced"] = {}
+		d["nearby"] = {}
 	rebuild_derived(d)
 
 
@@ -90,12 +167,18 @@ static func rebuild_derived(d: Dictionary) -> void:
 	var derived := derive(d["works"])
 	d["infra_bonus"] = derived["bonus"]
 	d["infra_source"] = derived["source"]
+	if d.has("taken"):
+		d["taken"] = derived["taken"]
 
 
 static func derive(works: Array) -> Dictionary:
 	var bonus := {}
 	var source := {}
+	var taken := {}
 	for work: Dictionary in works:
+		if work.has("expropriation"):
+			for id: Variant in work["expropriation"]["parcel_ids"]:
+				taken[int(id)] = int(work["command_id"])
 		var units: Dictionary = work["region_units"]
 		for code: Variant in units:
 			var key := str(code)
@@ -104,7 +187,7 @@ static func derive(works: Array) -> Dictionary:
 				continue
 			bonus[key] = int(bonus.get(key, 0)) + amount
 			source[key] = "%s%d" % [COMMAND_PREFIX, int(work["command_id"])]
-	return {"bonus": bonus, "source": source}
+	return {"bonus": bonus, "source": source, "taken": taken}
 
 
 ## Bölge birimleri toplamı.
@@ -126,7 +209,8 @@ static func sorted_codes(units: Dictionary) -> Array:
 static func validate_data(value: Variant) -> String:
 	if value == null:
 		return ""
-	if not (value is Dictionary) or value.get("version", null) != VERSION:
+	var version: Variant = value.get("version", null) if value is Dictionary else null
+	if version != VERSION and version != VERSION_EXPROPRIATION:
 		return "durum.systems.public_works sürümü geçersiz"
 	if typeof(value.get("base_graph_hash", null)) != TYPE_STRING:
 		return "durum.systems.public_works.base_graph_hash dizge değil"
@@ -140,13 +224,59 @@ static func validate_data(value: Variant) -> String:
 	if (value["hashes"] as Array).size() != n or (value["works"] as Array).size() != n:
 		return "durum.systems.public_works ops/hashes/works uzunlukları farklı"
 	for i in n:
-		var problem := _op_problem(value["ops"][i]) + _hash_problem(value["hashes"][i]) + _work_problem(value["works"][i], i)
+		var problem := _op_problem(value["ops"][i]) + _hash_problem(value["hashes"][i]) \
+			+ _work_problem(value["works"][i], i)
 		if not problem.is_empty():
 			return "durum.systems.public_works[%d]: %s" % [i, problem]
+		if version == VERSION and (value["works"][i] as Dictionary).has("expropriation"):
+			return "durum.systems.public_works[%d]: v1 kayıtta kamulaştırma satırı olamaz" % i
 	var derived := derive(value["works"])
 	if StateHash.of(derived["bonus"]) != StateHash.of(value["infra_bonus"]) \
 			or StateHash.of(derived["source"]) != StateHash.of(value["infra_source"]):
 		return "durum.systems.public_works türetilmiş kapasite yollarla uyuşmuyor"
+	return _expropriation_section_problem(value, derived) if version == VERSION_EXPROPRIATION else ""
+
+
+## v2 bölümü: `taken` türetilmişle aynı, tepki defterleri biçimli.
+static func _expropriation_section_problem(value: Dictionary, derived: Dictionary) -> String:
+	for field_name in ["taken", "displaced", "nearby"]:
+		if not (value.get(field_name, null) is Dictionary):
+			return "durum.systems.public_works.%s sözlük değil" % field_name
+	if StateHash.of(derived["taken"]) != StateHash.of(value["taken"]):
+		return "durum.systems.public_works.taken yollarla uyuşmuyor"
+	for book in REACTION_BOOKS:
+		for code: Variant in value[book]:
+			if typeof(code) != TYPE_STRING or not (value[book][code] is Array):
+				return "durum.systems.public_works.%s[%s] dizi değil" % [book, str(code)]
+			for row: Variant in value[book][code]:
+				if not (row is Array) or (row as Array).size() != 3 or typeof(row[0]) != TYPE_INT \
+						or typeof(row[1]) != TYPE_INT or typeof(row[2]) != TYPE_INT:
+					return "durum.systems.public_works.%s satırı [tick, değer, komut] tamsayı üçlüsü değil" % book
+	return ""
+
+
+static func _expropriation_problem(x: Variant) -> String:
+	if not (x is Dictionary):
+		return "kamulaştırma kaydı sözlük değil"
+	for field_name in ["parcel_ids", "snapshots"]:
+		if not (x.get(field_name, null) is Array):
+			return "kamulaştırma.%s dizi değil" % field_name
+	for field_name in ["built_parcels", "project_parcels", "res_units", "com_units", "households", "nearby_households",
+			"nearby_parcels"]:
+		if typeof(x.get(field_name, null)) != TYPE_INT:
+			return "kamulaştırma.%s tamsayı değil" % field_name
+	for field_name in ["regions", "latent_removed"]:
+		if not (x.get(field_name, null) is Dictionary):
+			return "kamulaştırma.%s sözlük değil" % field_name
+	if (x["snapshots"] as Array).size() != (x["parcel_ids"] as Array).size():
+		return "kamulaştırma anlık görüntüleri alınan parsellerle aynı sayıda değil"
+	for k in (x["parcel_ids"] as Array).size():
+		var snap: Variant = x["snapshots"][k]
+		if typeof(x["parcel_ids"][k]) != TYPE_INT or not (snap is Dictionary) \
+				or snap.get("id", null) != x["parcel_ids"][k] \
+				or typeof(snap.get("stage", null)) != TYPE_INT or typeof(snap.get("units", null)) != TYPE_INT \
+				or typeof(snap.get("region", null)) != TYPE_STRING:
+			return "kamulaştırma anlık görüntüsü geçersiz"
 	return ""
 
 
@@ -182,4 +312,4 @@ static func _work_problem(work: Variant, index: int) -> String:
 	for code: Variant in work["region_units"]:
 		if typeof(code) != TYPE_STRING or typeof(work["region_units"][code]) != TYPE_INT:
 			return "yol bölge birimi tamsayı değil"
-	return ""
+	return _expropriation_problem(work["expropriation"]) if (work as Dictionary).has("expropriation") else ""

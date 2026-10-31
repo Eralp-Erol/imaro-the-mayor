@@ -35,7 +35,7 @@ const CATALOG := {
 	},
 	&"public_work.road": {
 		"required": {"points_cm": TYPE_PACKED_INT64_ARRAY, "road_class": TYPE_STRING_NAME},
-		"optional": {},
+		"optional": {"expropriate": TYPE_BOOL},  # v1.5 (T-042b, D-011): yok/false = Ek E davranışı
 	},
 	&"public_work.undo_last": {
 		"required": {},
@@ -69,8 +69,14 @@ static func budget_propose(lines: Dictionary) -> SimCommand:
 
 
 ## v1.3 · İki uç (v0) ya da daha çok noktalı yol: `points_cm` = [x0, z0, x1, z1, ...] santimetre tamsayı.
-static func public_work_road(points_cm: PackedInt64Array, road_class: StringName) -> SimCommand:
-	return make(KIND_PUBLIC_WORK_ROAD, {"points_cm": points_cm, "road_class": road_class})
+## v1.5 · `expropriate`: yol binalı parsellerden geçerse parselleri alır (bina yıkılır, geri alınabilir). false iken
+## parametre HİÇ yazılmaz (komut günlüğü ve hash Ek E ile bit-bit aynı kalır).
+static func public_work_road(points_cm: PackedInt64Array, road_class: StringName, expropriate: bool = false) \
+		-> SimCommand:
+	var params := {"points_cm": points_cm, "road_class": road_class}
+	if expropriate:
+		params["expropriate"] = true
+	return make(KIND_PUBLIC_WORK_ROAD, params)
 
 
 ## v1.3 · Son oyuncu yolunu geri al (LIFO).

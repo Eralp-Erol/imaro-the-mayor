@@ -27,6 +27,15 @@ const REJECT_PRECONDITION := &"command.reject.precondition"
 ## outside_jurisdiction, busy, nothing_to_undo, bad_class}`; kümeyi world hattı büyütebilir, önek sabittir).
 const REJECT_PUBLIC_WORK_PREFIX := "public_work.reject."
 const REJECT_NOTHING_TO_UNDO := &"public_work.reject.nothing_to_undo"
+## v1.5 (ADR-0005 Ek F): kamulaştırmaya özgü ret anahtarları (aynı `public_work.reject.` ailesi, passthrough).
+## `protected_structure`: alınacak parsellerde korunan (tarihî/simge/kamu) yapı var; `expropriation_disabled`:
+## bayrak/veri
+## kapalı ya da bu oturumda dünya kamulaştırmayı sunmuyor; `expropriation_changed`: tick'te dünyanın aldığı küme
+## sim'in hesabından farklı çıktı (durum bozulmaz); `economy_not_started`: ilk günlük tick geçmeden etki hesaplanamaz.
+const REJECT_PROTECTED_STRUCTURE := &"public_work.reject.protected_structure"
+const REJECT_EXPROPRIATION_DISABLED := &"public_work.reject.expropriation_disabled"
+const REJECT_EXPROPRIATION_CHANGED := &"public_work.reject.expropriation_changed"
+const REJECT_ECONOMY_NOT_STARTED := &"public_work.reject.economy_not_started"
 
 var command_id: int = SimContract.NO_ID
 var kind: StringName = &""

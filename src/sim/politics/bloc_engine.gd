@@ -31,7 +31,7 @@ static func scan(state: GameState, ctx: PoliticsContext) -> void:
 	if rows.is_empty():
 		return
 	var pol := PoliticsState.data(state)
-	var by_region := _region_signals(pol, rows)
+	var by_region := _region_signals(pol, rows, _reaction_signals(state, ctx, rows))
 	_update_service(pol, rows, int(ctx.politics.cadence["scan_days"]))
 	var total_size := 0
 	var order: Array[String] = PoliticsState.bloc_keys(state)
@@ -56,7 +56,7 @@ static func bloc_view(state: GameState, key: String) -> Dictionary:
 # --- Sinyaller ---
 
 ## {bölge: {sinyal: pm}} ve ilk taramada başlangıç konut arzı (baseline).
-static func _region_signals(pol: Dictionary, rows: Array[Dictionary]) -> Dictionary:
+static func _region_signals(pol: Dictionary, rows: Array[Dictionary], extra: Dictionary = {}) -> Dictionary:
 	var baselines: Dictionary = pol["baselines"]
 	var out := {}
 	for row in rows:
@@ -64,6 +64,26 @@ static func _region_signals(pol: Dictionary, rows: Array[Dictionary]) -> Diction
 		if not baselines.has(code):
 			baselines[code] = int(row["res_built"]) + int(row["res_pipe"])
 		out[code] = BlocSignals.of_region(row, int(baselines[code]))
+		if extra.has(code):  # T-042b: yalnız kamulaştırma olduysa (yolsuz koşuda bu anahtarlar HİÇ yazılmaz)
+			(out[code] as Dictionary).merge(extra[code])
+	return out
+
+
+## T-042b · Yerinden edilme/yakınlık sinyalleri {bölge: {displacement, proximity}} (kamulaştırma yoksa boş).
+static func _reaction_signals(state: GameState, ctx: PoliticsContext, rows: Array[Dictionary]) -> Dictionary:
+	var out := {}
+	if not PublicWorksState.has_reactions(state):
+		return out
+	var window := int(ctx.politics.blocs["reaction_window"])
+	for row in rows:
+		var code := String(row["code"])
+		var latent := int(row["latent_hh"])
+		out[code] = {
+			"displacement": BlocSignals.reaction_pm(PublicWorksState.reaction_rows(state, "displaced", code),
+				state.tick, window, latent, BlocSignals.SCALE),
+			"proximity": BlocSignals.reaction_pm(PublicWorksState.reaction_rows(state, "nearby", code),
+				state.tick, window, latent, 1),
+		}
 	return out
 
 
@@ -118,7 +138,10 @@ static func _scan_bloc(state: GameState, ctx: PoliticsContext, key: String, by_r
 	var signals := {}
 	var peak: bool = ctx.politics.blocs["blend_mode"] == "peak"
 	var min_share := int(ctx.politics.blocs["min_share"])
-	for signal_name in BlocSignals.NAMES:
+	var names: Array[String] = BlocSignals.NAMES.duplicate()
+	if PublicWorksState.has_reactions(state):
+		names.append_array(BlocSignals.OPTIONAL_NAMES)
+	for signal_name in names:
 		signals[signal_name] = BlocSignals.blend(by_region, bloc["exposure"], signal_name, peak, min_share)
 	bloc["signals"] = signals
 	bloc["hot_region"] = _hot_region(cohort, by_region, bloc["exposure"], min_share)
@@ -147,15 +170,23 @@ static func _scan_bloc(state: GameState, ctx: PoliticsContext, key: String, by_r
 static func derive(actor: Dictionary, cohort: Dictionary, signals: Dictionary) -> void:
 	var priorities := {}
 	for rule: Dictionary in cohort["priorities"]:
-		priorities[rule["id"]] = clampi(_rule_value(rule, signals), 0, SCALE)
+		if _usable(rule["source"], signals):
+			priorities[rule["id"]] = clampi(_rule_value(rule, signals), 0, SCALE)
 	actor["salience"] = priorities
 	var stances := {}
 	for rule: Dictionary in cohort["stances"]:
-		stances[rule["id"]] = clampi(_rule_value(rule, signals), -SCALE, SCALE)
+		if _usable(rule["source"], signals):
+			stances[rule["id"]] = clampi(_rule_value(rule, signals), -SCALE, SCALE)
 	actor["stance"] = stances
 	for book_name in ["grievances", "satisfaction"]:
 		if not actor["state"].has(book_name):
 			actor["state"][book_name] = {}
+
+
+## T-042b · İsteğe bağlı sinyale (`displacement`/`proximity`) bağlı kural, sinyal henüz yokken (kamulaştırma olmadı)
+## hiç çalışmaz: durum anahtarı bile yazılmaz (kamulaştırmasız koşuların hash'i değişmez).
+static func _usable(signal_name: Variant, signals: Dictionary) -> bool:
+	return not (BlocSignals.OPTIONAL_NAMES.has(str(signal_name)) and not signals.has(str(signal_name)))
 
 
 @warning_ignore("integer_division")
@@ -171,13 +202,14 @@ static func _apply_rules(astate: Dictionary, book_name: String, rules: Array, si
 		decay: int) -> void:
 	var book: Dictionary = astate.get(book_name, {})
 	var topics: Array = book.keys()
-	for rule: Dictionary in rules:
+	var active: Array = rules.filter(func(rule: Dictionary) -> bool: return _usable(rule["signal"], signals))
+	for rule: Dictionary in active:
 		if not topics.has(rule["topic"]):
 			topics.append(rule["topic"])
 	topics.sort()
 	for topic: String in topics:
 		book[topic] = int(book.get(topic, 0)) * (SCALE - decay) / SCALE
-	for rule: Dictionary in rules:
+	for rule: Dictionary in active:
 		var span: int = int(rule["hi"]) - int(rule["lo"])
 		var level := clampi((int(signals.get(rule["signal"], 0)) - int(rule["lo"])) * SCALE / span, 0, SCALE)
 		book[rule["topic"]] = clampi(int(book[rule["topic"]]) + level * int(rule["gain"]) / SCALE, 0, SCALE)

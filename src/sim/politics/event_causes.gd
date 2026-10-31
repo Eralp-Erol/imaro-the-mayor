@@ -17,7 +17,8 @@ static func region_projects(state: GameState, ctx: PoliticsContext, exposure: Di
 	var reason_column: PackedInt64Array = d["reason_id"]
 	var found: Array = []
 	for i in stage.size():
-		if stage[i] == EconomyState.STAGE_VACANT or reason_column[i] < 1 or not exposure.has(ctx.regions.code_at(i)):
+		var skipped: bool = stage[i] == EconomyState.STAGE_VACANT or stage[i] == EconomyState.STAGE_TAKEN  # T-042b
+		if skipped or reason_column[i] < 1 or not exposure.has(ctx.regions.code_at(i)):
 			continue
 		found.append([reason_column[i], ctx.regions.id_at(i)])
 	found.sort_custom(func(a: Array, b: Array) -> bool: return a[0] > b[0] or (a[0] == b[0] and a[1] < b[1]))

@@ -96,12 +96,14 @@ static func check_parcel_projects(views: Array[ParcelView]) -> PackedStringArray
 			out.append("%s use '%s' unknown" % [where, p.use])
 		if p.progress_pm < 0 or p.progress_pm > ParcelView.PROGRESS_FULL:
 			out.append("%s progress_pm %d outside 0..%d" % [where, p.progress_pm, ParcelView.PROGRESS_FULL])
-		if p.developed_by_sim and p.development == ParcelView.DEVELOPMENT_VACANT:
-			out.append("%s developed_by_sim on a vacant parcel" % where)
+		if p.developed_by_sim and p.development in [ParcelView.DEVELOPMENT_VACANT, ParcelView.DEVELOPMENT_TAKEN]:
+			out.append("%s developed_by_sim on a %s parcel" % [where, p.development])
+		if (p.development == ParcelView.DEVELOPMENT_TAKEN) != (p.taken_by_command > 0):  # v1.5: yalnız `taken` iken
+			out.append("%s taken_by_command %d on a %s parcel" % [where, p.taken_by_command, p.development])
 		match p.development:
-			ParcelView.DEVELOPMENT_VACANT:
+			ParcelView.DEVELOPMENT_VACANT, ParcelView.DEVELOPMENT_TAKEN:  # v1.5: alınmış parselde proje alanı kalmaz
 				if p.use != ParcelView.USE_NONE or p.units != 0 or p.progress_pm != 0:
-					out.append("%s vacant but has project fields" % where)
+					out.append("%s %s but has project fields" % [where, p.development])
 			ParcelView.DEVELOPMENT_PLANNED, ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION, \
 					ParcelView.DEVELOPMENT_STALLED, ParcelView.DEVELOPMENT_BUILT:
 				if p.use == ParcelView.USE_NONE or p.units < 1:
