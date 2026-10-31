@@ -369,6 +369,7 @@ func undo_last_op() -> Dictionary:
 	var version_before := graph_version
 	var refreshed := journal.undo(self)
 	_touch()
+	NetworkComponents.restore(self, journal.components)  # ağ işlemden önceki ile aynı: bileşen önbelleği geri gelir
 	_blocks_single_comp = journal.single_before
 	var change := NetworkChange.from_journal(self, journal, NetworkChange.KIND_UNDO, refreshed, journal.change)
 	change.op_index = delta.ops.size()
@@ -905,7 +906,7 @@ func components(mode: StringName = MODE_ROAD) -> Array[PackedInt32Array]:
 
 ## Düğümün `mode` bileşen indeksi (components() sırasında); kipte kenarı yoksa -1.
 func component_of(node_id: int, mode: StringName = MODE_ROAD) -> int:
-	return int(_component_info(mode)["of"].get(node_id, -1))
+	return NetworkComponents.index_of(_component_info(mode), node_id)
 
 
 func same_component(a: int, b: int, mode: StringName = MODE_ROAD) -> bool:
