@@ -29,6 +29,7 @@ const SECTION_GROUPS := &"groups"
 const SECTION_ECONOMY := &"economy"
 const REASON_ECONOMY_NOT_STARTED := &"economy.not_started"
 const WORLD_SYSTEM := &"world"
+const _BUSY_CODE := &"public_work.reject.busy"  # RoadDraftCheck.key_of(REASON_BUSY); dünya meşgul (yalnız gönderim)
 
 ## Senaryo/kampanya kimliği (CAN-09); kayıt yuvası bunu ayrıca saklar. Sim durumunun/hash'in parçası değildir.
 var campaign_id: StringName = &""
@@ -591,7 +592,9 @@ func _precheck(command: SimCommand) -> Dictionary:
 	var code := handler.validate_submit(_state, command.params)
 	if code == &"":
 		return {}
-	var args := handler.reject_args(_state, command.params)
+	# B-020: meşgul reddi argümansızdır ve işleyiciye SORULMAZ: `reject_args` (özellikle yıkım kuru koşusu) ağı geçici
+	# yazar; yol görünümü işçisi o sırada ağı okuyor. Tick sınırı (`Commands`) bu yoldan geçmez.
+	var args := {} if code == _BUSY_CODE else handler.reject_args(_state, command.params)
 	if not CommandReject.is_contract_code(code):
 		args["code"] = code
 	return {"reason_key": CommandReject.key_for(code), "args": args}

@@ -135,6 +135,71 @@ func test_the_preview_names_what_is_demolished_and_that_nothing_comes_back() -> 
 	assert_int(_f(run).demolish_cost(built.command_id)).is_equal(-1)
 
 
+# --- B-020: meşgul dünyada yıkım önizlemesi ağa YAZMAZ ---
+
+## Yol görünümü işçisi ağı okurken (`world_busy`) önizleme/ret yolu kuru koşuyla ağı geçici yazmamalı (ağ sürümü,
+## değişim günlüğü, grafik özeti öncesiyle aynı; yoksa işçi silinmiş bir kenar kimliği okur).
+func test_a_busy_world_demolish_preview_never_writes_the_network() -> void:
+	var run := _setup()
+	var f := _f(run)
+	var net: WorldNetwork = run["net"]
+	var first := _build(run, P.spur_a_cm())
+	var second := _build(run, P.spur_b_cm())
+	(run["ctx"] as PublicWorksContext).busy_probe = func() -> bool: return true
+	var version := net.graph_version
+	var log_size := net.change_log.size()
+	var hash_before := net.graph_hash()
+	for round_i in 3:  # iki yol dönüşümlü: tek-girdili önbellek hiç isabet etmez
+		for target in [first.command_id, second.command_id]:
+			var r := f.validate_command(SimCommand.public_work_demolish(target))
+			assert_str(String(r.reason_key)).is_equal(KEYS + "busy")
+			assert_bool(r.args.is_empty()).is_true()
+			assert_int(f.demolish_cost(target)).is_equal(-1)
+			var s := f.submit_command(SimCommand.public_work_demolish(target))
+			assert_str(String(s.reason_key)).is_equal(KEYS + "busy")
+	assert_int(net.graph_version).override_failure_message("meşgulken önizleme ağı yazdı").is_equal(version)
+	assert_int(net.change_log.size()).is_equal(log_size)
+	assert_str(net.graph_hash()).is_equal(hash_before)
+
+
+func test_the_demolish_preview_still_works_once_the_world_is_idle_again() -> void:
+	var run := _setup()
+	var f := _f(run)
+	var built := _build(run, P.spur_a_cm())
+	var busy := [true]
+	(run["ctx"] as PublicWorksContext).busy_probe = func() -> bool: return busy[0]
+	assert_str(String(f.validate_command(SimCommand.public_work_demolish(built.command_id)).reason_key)) \
+		.is_equal(KEYS + "busy")
+	busy[0] = false
+	var ok := f.validate_command(SimCommand.public_work_demolish(built.command_id))
+	assert_str(String(ok.status)).is_equal("valid")
+	assert_int(int(ok.args["edges"])).is_equal(1)
+
+
+## Önizleme ağı geçici yazar ama geri alır: sürüm/değişim günlüğü de öncesiyle aynı kalmalı. Aksi halde her önizleme
+## yol görünümüne sahte "bekleyen değişim" üretir; o iş başlarken sıradaki tick ağa yazabilir (B-020 ikincil).
+func test_an_idle_demolish_preview_leaves_the_graph_version_and_change_log_untouched() -> void:
+	var run := _setup()
+	var f := _f(run)
+	var net: WorldNetwork = run["net"]
+	var first := _build(run, P.spur_a_cm())
+	var second := _build(run, P.spur_b_cm())
+	var version := net.graph_version
+	var log_size := net.change_log.size()
+	var last_version: int = net.change_log.back().graph_version
+	var hash_before := net.graph_hash()
+	for target in [first.command_id, second.command_id, first.command_id]:
+		assert_str(String(f.validate_command(SimCommand.public_work_demolish(target)).status)).is_equal("valid")
+		assert_int(f.demolish_cost(target)).is_greater(0)
+	assert_int(net.graph_version).is_equal(version)
+	assert_int(net.change_log.size()).is_equal(log_size)
+	assert_int(net.change_log.back().graph_version).is_equal(last_version)
+	assert_str(net.graph_hash()).is_equal(hash_before)
+	_demolish(run, first.command_id)  # gerçek yıkım hâlâ sürümü artırır ve yolu kaldırır
+	assert_int(net.graph_version).is_greater(version)
+	assert_int(f.public_works().size()).is_equal(1)
+
+
 # --- Maliyet ---
 
 func test_the_cost_is_length_times_the_configured_rate_and_is_booked_once() -> void:

@@ -112,17 +112,24 @@ func _problem(state: GameState, params: Dictionary, at_submit: bool) -> Dictiona
 	return out
 
 
-## Kuru koşu: yıkımı uygula + geri al. Aynı durum + ağ sürümü + yol için tekrar hesaplanmaz (ağ sürümü kuru koşudan
-## SONRAKİ değerle anahtarlanır).
+## Kuru koşu: yıkımı uygula + geri al. Aynı durum + ağ sürümü + yol için tekrar hesaplanmaz. Geri alma ağı öncesiyle
+## AYNI içeriğe döndürür; bu yüzden `graph_version` ve değişim günlüğü de öncesine döner (B-020): aksi halde her
+## önizleme yol görünümüne sahte "bekleyen değişim" üretir, o iş sürerken sıradaki tick ağa yazabilir.
 func _dry_run(state: GameState, work: Dictionary) -> Dictionary:
-	var key := "%d|%d|%d" % [state.get_instance_id(), _ctx.net.graph_version, int(work["command_id"])]
+	var net := _ctx.net
+	var key := "%d|%d|%d" % [state.get_instance_id(), net.graph_version, int(work["command_id"])]
 	if _ctx.demolition_memo_key == key:
 		return _ctx.demolition_memo
-	var run := DemolitionPlan.run(_ctx.net, _op_of(state, work), false)
-	if DemolitionPlan.rollback(_ctx.net, run["ops"]) > 0:
+	var version_before := net.graph_version
+	var log_before := net.change_log.duplicate()
+	var run := DemolitionPlan.run(net, _op_of(state, work), false)
+	if DemolitionPlan.rollback(net, run["ops"]) > 0:
 		push_error("PublicWorkDemolishHandler: AĞ BOZULDU: kuru koşu geri alınamadı")
+	else:
+		net.graph_version = version_before
+		net.change_log = log_before
 	_ctx.demolition_memo = run
-	_ctx.demolition_memo_key = "%d|%d|%d" % [state.get_instance_id(), _ctx.net.graph_version, int(work["command_id"])]
+	_ctx.demolition_memo_key = "%d|%d|%d" % [state.get_instance_id(), net.graph_version, int(work["command_id"])]
 	return run
 
 

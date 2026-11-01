@@ -44,8 +44,12 @@ func run() -> void:
 			push_error("probe: aday yol yok")
 			quit(3)
 			return
+		var idle := 0
+		while idle < 900 and (_scene._pr.follow.busy() or _scene._pr.sync.world_busy()):  # meşgulken gönderim reddedilir
+			await _frame()
+			idle += 1
 		var res := facade.submit_command(SimCommand.public_work_road(cand["cm"], RoadDrawTool.ROAD_CLASS, true))
-		print("RPROBE_ROAD status=%s" % String(res.status))
+		print("RPROBE_ROAD status=%s reason=%s" % [String(res.status), String(res.reason_key)])
 		facade.advance(1)
 		for _i in 20:
 			await _frame()
