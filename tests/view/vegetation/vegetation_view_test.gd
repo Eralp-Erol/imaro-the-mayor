@@ -249,3 +249,34 @@ func test_blob_disabled_builds_no_chunks_and_a_layout_less_view_ignores_the_came
 	empty.setup(VegetationViewTestSupport.look_numbers(), VegetationViewTestSupport.config())
 	empty.track_camera(Vector3.ZERO)   # düzen yok: hata/çökme yok
 	assert_int(empty.visible_mmi_count()).is_equal(0)
+
+
+## Yol aracı kare sıçraması (production/log/2026-11-01-yol-araci-ilk-kare.md): kamera hareketinden sonra biten leke
+## parçaları aynı karede kurulunca ~110 ms'lik kare çıkıyordu. Kurulum `blob_install_budget_ms` ile dilimlidir: bütçe
+## dolunca karede en çok 1 parça kurulur, kalanlar sonraki karelerde; sonuç bütçesiz sonuçla AYNI parça kümesidir.
+func test_blob_installs_are_time_sliced_and_converge_to_the_unbudgeted_result() -> void:
+	var cam := VegetationViewTestSupport.camera_over_peak(300.0)
+	var full := _view()
+	full.track_camera(cam)
+	full.settle()
+	var expected := full.blob_keys()
+	assert_int(expected.size()).is_greater(2)   # dilimleme ancak birden çok parçada anlamlı
+	var cfg := VegetationViewConfig.load_default()
+	cfg.blob_install_budget_ms = 0.001   # her karede yalnız zorunlu 1 parça
+	var view := _view(null, cfg)
+	var seen := 0
+	var most_in_one_frame := 0
+	for _frame in 400:
+		view.track_camera(cam)
+		view._join_blob_jobs()   # işçiler biter; kurulum yine de kare başına bütçeli
+		var now := view.blob_keys().size()
+		most_in_one_frame = maxi(most_in_one_frame, now - seen)
+		seen = now
+		if seen == expected.size() and int(view.stats.get("blob_jobs", 1)) == 0 and int(view.stats.get("queued", 1)) == 0:
+			break
+	assert_int(most_in_one_frame).is_equal(1)
+	var got := view.blob_keys()
+	assert_int(got.size()).is_equal(expected.size())
+	for key in expected:
+		assert_bool(got.has(key)).is_true()
+	assert_int(int(view.stats["blob_tris_all"])).is_equal(int(full.stats["blob_tris_all"]))
