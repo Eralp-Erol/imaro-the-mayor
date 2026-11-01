@@ -140,11 +140,13 @@ func test_counts_never_exceed_the_class_cap() -> void:
 	var act := _activity(_net())
 	_fill(act, Vector3i(500, 500, 500))
 	var cap := _cfg.class_row(&"local")
+	# Tavan merkez çarpanı kadar yükselir (D-014 §4): aşırı yükte kenar en çok tavan x çarpan taşır.
+	var scale := maxf(1.0, _cfg.centrality("center_multiplier"))
 	for eid: int in act.eligible:
 		var e: WorldRoadEdge = act.net.edges[eid]
 		var ex := act.expected(eid, 1.0)
-		assert_float(ex.x).is_less_equal(float(cap["cars_cap_per_100m"]) * e.length / 100.0 + 0.0001)
-		assert_float(ex.y).is_less_equal(float(cap["people_cap_per_100m"]) * e.length / 100.0 + 0.0001)
+		assert_float(ex.x).is_less_equal(float(cap["cars_cap_per_100m"]) * e.length / 100.0 * scale + 0.0001)
+		assert_float(ex.y).is_less_equal(float(cap["people_cap_per_100m"]) * e.length / 100.0 * scale + 0.0001)
 
 
 func test_layout_is_deterministic_and_seed_changes_positions_not_counts() -> void:

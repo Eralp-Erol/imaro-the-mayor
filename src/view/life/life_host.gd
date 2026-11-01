@@ -9,6 +9,7 @@ extends Node
 ## Dev argümanları (oynanışı ve sim'i değiştirmez):
 ##   --no-life            yaşam görünümü kapalı (perf A/B).
 ##   --life-force         başsız çalışmada da kur (varsayılan: başsızda atlanır; görüntü yok).
+##   --life-flat          merkez/çeper çarpanını kapat (hepsi 1,0: eski düz yoğunluk; A/B ölçümü için).
 ##   --life-density=X     profil yoğunluk çarpanı (0..4).    --life-profile=touch  dokunmatik profil değerleri.
 ##   --life-time=S        yaşam saatini S saniyede SABİTLER (yakalamada tekrarlanabilir kare).
 ##   --life-settle        menzildeki tüm hücreleri kurulum anında kurar (yakalama; kare başı tavanı beklemez).
@@ -91,6 +92,9 @@ func _start(view_root: Node3D, terrain: TerrainView, cols: BuildingColumns, worl
 		return
 	if _args.has("life-density"):
 		config.data["profiles"][String(profile)]["density"] = clampf(float(str(_args["life-density"])), 0.0, 4.0)
+	if _args.has("life-flat"):
+		config.data["centrality"]["edge_multiplier"] = 1.0
+		config.data["centrality"]["center_multiplier"] = 1.0
 	var assets := LifeAssets.load_default()
 	if not assets.ok():
 		push_error("life: varlıklar yüklenemedi: %s" % "; ".join(assets.errors))

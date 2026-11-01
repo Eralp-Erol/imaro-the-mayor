@@ -7,6 +7,9 @@
 		"spill_share: bir kenarın faaliyetine komşu kenarların (aynı iki uç düğümde buluşan) faaliyetinin bu payı eklenir (yan sokaklardan toplanan trafik). Yeni çizilen bir yol, bağlandığı yollardan hemen pay alır; yanında bina çıktıkça kendi faaliyeti de artar.",
 		"classes: sınıf başına araç/yaya katsayısı ve yoğunluk tavanı (100 m başına). Tavan yalnız taşma emniyetidir; tipik değerler tavanın çok altında kalmalı (kalibrasyon: gerçek Ismeral T0 dağılımı, bkz. production/log/2026-10-31-T-050-yasam-belirtisi.md).",
 		"movement: yalnız yol parçası boyunca basit ileri akış. Rota bulma, kavşak, trafik sıkışıklığı YOK (M3, kapsam dışı). Hareket gölgelendiricidedir (UNIFORM life_t); CPU'da kare başı örnek güncellemesi yoktur. Parça sonunda araç/insan küçülüp kaybolur ve parça başında belirir (bilinen kusur: basit akış, parça başına döngü).",
+		"MERKEZ/ÇEPER (D-014 §4, Q-026): araç/yaya sayısı kenarın ÇEVRESİNDEKİ YAPILAŞMA YOĞUNLUĞUNA göre ölçeklenir. Veri: kenarın bulunduğu hücre ve 8 komşusu (3x3 = 768 m kutu) içindeki sim faaliyet kütlesi (biten konut x w_res + ticaret x w_com + inşaat x w_con; cephe parsellerinden, yani yine gerçek sim birimleri) / alan (km2). Neden bu veri: Ismeral T0 çok merkezli (>=6 ayrı yoğun öbek; faaliyet ağırlıklı tek ağırlık merkezi boş araziye düşüyor), bu yüzden tek merkez+uzaklık yanlış olur; yerel yoğunluk her öbeği ayrı merkez sayar, oyuncu yeni bir mahalle kurunca orası da merkezleşir ve koordinat uydurulmaz. Faaliyet 0 ise çarpan sonucu değiştirmez (0 x m = 0): sahte sayı yok.",
+		"centrality.density_lo_per_km2 / density_hi_per_km2: faaliyet kütlesi/km2 bu iki eşik arasında smoothstep ile çeper->merkez geçişi. lo: altı = çeper (T0 Ismeral'de hücrelerin ~%35'i, faaliyetin ~%12'si), hi: üstü = merkez (faaliyet ağırlıklı ~%75. yüzdelik). edge_multiplier / center_multiplier: çeperde bugünkünün 0,8 katı, merkezde 2 katı (kullanıcı sözü: '2 kat kalabalık merkez bölgeleri olsun, çeperlere gidildikçe seyrekleşsin'). Eşikler ÇALIŞMA DEĞERİ (T0 Ismeral'e göre kalibre), kanon değil.",
+		"Sınıf yoğunluk tavanı (cars_cap_per_100m / people_cap_per_100m) kenarın çarpanıyla (>1 ise) ölçeklenir: aksi halde 2 kat çarpan merkezdeki ~%30 kenarda tavana çarpıp kesilirdi. Profil tavanları (max_cars / max_people) DEĞİŞMEDİ.",
 		"profiles: görünüm profilleri (ADR-0004). density çarpanı ve menzil; dokunmatik/iPad profili daha seyrek. iPad ölçülmedi."
 	],
 	"status": "working-value",
@@ -17,6 +20,12 @@
 		"collector": {"cars_per_activity": 0.05, "cars_cap_per_100m": 9.0, "people_per_activity": 0.07, "people_cap_per_100m": 10.0},
 		"local": {"cars_per_activity": 0.05, "cars_cap_per_100m": 8.0, "people_per_activity": 0.07, "people_cap_per_100m": 12.0},
 		"field": {"cars_per_activity": 0.0, "cars_cap_per_100m": 0.0, "people_per_activity": 0.0, "people_cap_per_100m": 0.0}
+	},
+	"centrality": {
+		"density_lo_per_km2": 1500.0,
+		"density_hi_per_km2": 7000.0,
+		"edge_multiplier": 0.8,
+		"center_multiplier": 2.0
 	},
 	"layout": {
 		"cell_m": 256.0,

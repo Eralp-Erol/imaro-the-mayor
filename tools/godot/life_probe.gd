@@ -44,6 +44,7 @@ func run() -> void:
 			await process_frame
 	print("LIFEPROBE_STATE ", JSON.stringify(life.stats if life != null else {}))
 	var edges := _busiest_edges(activity)
+	var rim_edges := _busiest_edges(activity, true)
 	_print_distribution(activity)
 	for k in mini(3, edges.size()):
 		var ee: WorldRoadEdge = _scene._net.edges[int(edges[k][1])]
@@ -59,7 +60,7 @@ func run() -> void:
 			# Yakın plan: yaşam saatini dondur (örnek konumu hesaplandığı yerde kalsın).
 			life._args["life-time"] = "1"
 			view.set_running(false)
-		var st := _pose_state(str(pose), edges)
+		var st := _pose_state(str(pose), rim_edges if str(pose).begins_with("rim") else edges)
 		if st == null:
 			continue
 		_scene._camera.apply_state(st, true)
@@ -84,7 +85,7 @@ func run() -> void:
 
 
 ## Beklenen araç+yaya toplamı en yüksek kenarlar (uzunluk >= 70 m): yakalama pozları bunlardan seçilir.
-func _busiest_edges(activity: LifeEdgeActivity) -> Array:
+func _busiest_edges(activity: LifeEdgeActivity, rim_only: bool = false) -> Array:
 	var out: Array = []
 	if activity == null:
 		return out
@@ -92,11 +93,19 @@ func _busiest_edges(activity: LifeEdgeActivity) -> Array:
 		var e: WorldRoadEdge = activity.net.edges[eid]
 		if e.length < 90.0:
 			continue
+		if rim_only and _edge_centrality(activity, int(eid)) > 0.02:
+			continue
 		var w := activity.expected(int(eid), 1.0)
 		out.append([w.x + w.y, int(eid)])
 	out.sort_custom(func(a: Array, b: Array) -> bool:
 		return float(a[0]) > float(b[0]) or (float(a[0]) == float(b[0]) and int(a[1]) < int(b[1])))
 	return out
+
+
+## Kenarın merkezilik değeri (0 = çeper, 1 = merkez; `LifeEdgeActivity.centrality`, orta nokta hücresi).
+func _edge_centrality(activity: LifeEdgeActivity, eid: int) -> float:
+	var e: WorldRoadEdge = activity.net.edges[eid]
+	return activity.centrality(activity.cell_of((activity.net.node_pos(e.a) + activity.net.node_pos(e.b)) * 0.5))
 
 
 func _pose_state(pose: String, edges: Array) -> CameraState:
@@ -110,6 +119,8 @@ func _pose_state(pose: String, edges: Array) -> CameraState:
 	if edges.is_empty():
 		return null
 	var pick := 1 if pose == "edge2" else 0
+	if pose.begins_with("rim") and edges.is_empty():
+		return null
 	var e: WorldRoadEdge = _scene._net.edges[int(edges[mini(pick, edges.size() - 1)][1])]
 	var a: Vector2 = _scene._net.node_pos(e.a)
 	var b: Vector2 = _scene._net.node_pos(e.b)
@@ -119,7 +130,7 @@ func _pose_state(pose: String, edges: Array) -> CameraState:
 	var dir := (b - a).normalized()
 	var heading := rad_to_deg(atan2(dir.x, -dir.y))   # 0 = kuzey (-z), 90 = doğu
 	match pose:
-		"street", "edge2":
+		"street", "edge2", "rim":
 			st.distance = 38.0
 			st.pitch_deg = 14.0
 			st.heading_deg = heading + 5.0
@@ -131,7 +142,7 @@ func _pose_state(pose: String, edges: Array) -> CameraState:
 			st.distance = 18.0
 			st.pitch_deg = 8.0
 			st.heading_deg = heading + 12.0
-		"neigh":
+		"neigh", "rim_neigh":
 			st.distance = 320.0
 			st.pitch_deg = 32.0
 			st.heading_deg = heading
@@ -163,6 +174,7 @@ func _sample(frames: int) -> Dictionary:
 	var rcpu := 0.0
 	var vp := root.get_viewport().get_viewport_rid()
 	RenderingServer.viewport_set_measure_render_time(vp, true)
+	var cal := _calibrate()
 	for _i in frames:
 		await process_frame
 		var now := Time.get_ticks_usec()
@@ -172,7 +184,7 @@ func _sample(frames: int) -> Dictionary:
 		rcpu += RenderingServer.viewport_get_measured_render_time_cpu(vp)
 		dc += Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
 		prims += Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)
-	return {"times": times, "dc": dc, "prims": prims, "gpu": gpu, "rcpu": rcpu, "n": frames}
+	return {"times": times, "dc": dc, "prims": prims, "gpu": gpu, "rcpu": rcpu, "n": frames, "cal": cal}
 
 
 func _report(label: String, parts: Array) -> void:
@@ -182,7 +194,9 @@ func _report(label: String, parts: Array) -> void:
 	var gpu := 0.0
 	var rcpu := 0.0
 	var n := 0
+	var cal := 0.0
 	for part in parts:
+		cal += float(part["cal"]) / parts.size()
 		times.append_array(part["times"] as Array[float])
 		dc += float(part["dc"])
 		prims += float(part["prims"])
@@ -193,9 +207,27 @@ func _report(label: String, parts: Array) -> void:
 	var sum := 0.0
 	for t in times:
 		sum += t
+	var med: float = times[times.size() / 2]
 	print("LIFEPROBE_PERF pose=%s mean_ms=%.2f median_ms=%.2f p95_ms=%.2f max_ms=%.2f draw_calls=%.0f tris=%.0f "
-			% [label, sum / times.size(), times[times.size() / 2], times[int(times.size() * 0.95)], times[-1], dc / n,
-			prims / n] + "gpu_ms=%.2f render_cpu_ms=%.2f n=%d" % [gpu / n, rcpu / n, n])
+			% [label, sum / times.size(), med, times[int(times.size() * 0.95)], times[-1], dc / n,
+			prims / n] + "gpu_ms=%.2f render_cpu_ms=%.2f n=%d cal_ms=%.2f median_over_cal=%.2f rcpu_over_cal=%.2f"
+			% [gpu / n, rcpu / n, n, cal, med / maxf(cal, 0.001), rcpu / n / maxf(cal, 0.001)])
+	var life_node: Node = _scene.get_node_or_null("Life")
+	if life_node != null and life_node.view != null:
+		var vs: Dictionary = life_node.view.stats
+		print("LIFEPROBE_COUNTS pose=%s cells=%d cars=%d people=%d skipped_over_budget=%d" % [label, int(vs["cells"]),
+				int(vs["cars"]), int(vs["people"]), int(vs["skipped_over_budget"])])
+
+
+## Makine hızı göstergesi (yük/CPU hız sınırı gürültüsünü ayıklamak için; demo_frame_probe ile aynı döngü).
+func _calibrate() -> float:
+	var t := Time.get_ticks_usec()
+	var acc := 0.0
+	for i in 8000:
+		acc += float(i) * 0.5
+	if acc < 0.0:
+		print(acc)
+	return (Time.get_ticks_usec() - t) / 1000.0
 
 
 func _measure(label: String) -> void:
@@ -250,6 +282,7 @@ func _print_distribution(activity: LifeEdgeActivity) -> void:
 			continue
 		(row["cars"] as Array).append(w.x / e.length * 100.0)
 		(row["people"] as Array).append(w.y / e.length * 100.0)
+	_print_centrality_split(activity)
 	var out := {}
 	for key in per_class:
 		var row: Dictionary = per_class[key]
@@ -303,3 +336,36 @@ func _pose_on_instance(car: bool, st: CameraState, flip_deg: float) -> CameraSta
 				"car" if car else "person", str(pos), str(fwd), d, cd.r])
 		return st
 	return null
+
+
+## Merkez (merkezilik >= 0,9) / çeper (<= 0,1) / orta için 100 m başına medyan araç ve yaya (sınıf başına ve toplu) ile
+## kenar sayıları; ayrıca profil tavanlarına karşı dünya toplamı.
+func _print_centrality_split(activity: LifeEdgeActivity) -> void:
+	var groups := {"center": {}, "mid": {}, "rim": {}}
+	for eid in activity.eligible:
+		var e: WorldRoadEdge = activity.net.edges[eid]
+		var w := activity.expected(int(eid), 1.0)
+		if w.x <= 0.0 and w.y <= 0.0:
+			continue
+		var t := _edge_centrality(activity, int(eid))
+		var g := "center" if t >= 0.9 else ("rim" if t <= 0.1 else "mid")
+		for key in [String(e.road_class), "all"]:
+			if not (groups[g] as Dictionary).has(key):
+				(groups[g] as Dictionary)[key] = {"cars": [], "people": [], "len": 0.0}
+			var row: Dictionary = (groups[g] as Dictionary)[key]
+			(row["cars"] as Array).append(w.x / e.length * 100.0)
+			(row["people"] as Array).append(w.y / e.length * 100.0)
+			row["len"] += e.length
+	var out := {}
+	for g in groups:
+		out[g] = {}
+		for key in groups[g]:
+			var row: Dictionary = groups[g][key]
+			var cars: Array = row["cars"]
+			var ppl: Array = row["people"]
+			cars.sort()
+			ppl.sort()
+			out[g][key] = {"n": cars.size(), "km": snappedf(float(row["len"]) / 1000.0, 0.1),
+					"cars_p50_p90": [snappedf(cars[cars.size() / 2], 0.01), snappedf(cars[int(cars.size() * 0.9)], 0.01)],
+					"people_p50_p90": [snappedf(ppl[ppl.size() / 2], 0.01), snappedf(ppl[int(ppl.size() * 0.9)], 0.01)]}
+	print("LIFEPROBE_CENTRALITY ", JSON.stringify(out))
