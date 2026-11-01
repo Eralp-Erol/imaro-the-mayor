@@ -12,13 +12,19 @@ extends RefCounted
 
 const CROSSES_PARCELS := &"public_work.reject.crosses_parcels"
 const CROSSES_PARCELS_OFFER := &"public_work.reject.crosses_parcels_offer"
+const CROSSES_PARCELS_EMPTY := &"public_work.reject.crosses_parcels_empty"
 const EVENT_EXPROPRIATED := &"event.road.expropriated"
 const EVENT_RESTORED := &"event.road.restored"
 
 
 ## `crosses_parcels` reddi sim'in kamulaştırma teklifini taşıyor mu?
 static func is_offer(reason_key: StringName, args: Dictionary) -> bool:
-	return reason_key == CROSSES_PARCELS and has_impact(args)
+	return reason_key == CROSSES_PARCELS and args.has("taken_parcels")
+
+
+## B-015/B-017 · Sim "alınacak arsa yok" dedi (anahtar var, sayı 0): yıkılıp boşalan şerit. Yıkım/hane uyarısı yoktur.
+static func is_empty_strip(args: Dictionary) -> bool:
+	return args.has("taken_parcels") and int(args["taken_parcels"]) <= 0
 
 
 ## Argümanlar alınacak arsa bildiriyor mu (teklif ya da kamulaştırmalı geçerli önizleme)?
@@ -34,7 +40,9 @@ static func demolishes(args: Dictionary) -> bool:
 
 ## Ret anahtarı: teklif taşıyan `crosses_parcels` için teklif metni, aksi halde aynı anahtar.
 static func reject_key(reason_key: StringName, args: Dictionary) -> StringName:
-	return CROSSES_PARCELS_OFFER if is_offer(reason_key, args) else reason_key
+	if is_offer(reason_key, args):
+		return CROSSES_PARCELS_EMPTY if is_empty_strip(args) else CROSSES_PARCELS_OFFER
+	return reason_key
 
 
 ## Ana satır: "N bina yıkılacak, M hane yerinden edilecek." (bina yoksa boş arsa cümlesi).

@@ -217,7 +217,8 @@ func confirm() -> CommandResult:
 func offer() -> Dictionary:
 	if verdict == null or not verdict.is_rejected() or expropriate:
 		return {}
-	if verdict.reason_key != REJECT_CROSSES_PARCELS or int(verdict.args.get("taken_parcels", 0)) <= 0:
+	# B-015/B-017: yıkılan şeritte sim teklifi `taken_parcels = 0` ile verir (anahtar VAR); anahtar yoksa teklif yoktur.
+	if verdict.reason_key != REJECT_CROSSES_PARCELS or not verdict.args.has("taken_parcels"):
 		return {}
 	return verdict.args
 
