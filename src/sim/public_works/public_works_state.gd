@@ -77,6 +77,30 @@ static func is_standing_road(entry: Dictionary) -> bool:
 	return not is_demolition(entry) and not entry.has("demolished_by")
 
 
+## Yolun yeniden iskân tahsis kaydı ({} = yok: politika kapalıydı ya da yerinden edilen yoktu).
+static func resettlement_of(work: Dictionary) -> Dictionary:
+	return (work.get("expropriation", {}) as Dictionary).get("resettlement", {})
+
+
+## Yolun yeniden iskân bedeli (kayıt yoksa 0).
+static func resettlement_cost(work: Dictionary) -> int:
+	return int(resettlement_of(work).get("cost", 0))
+
+
+## Tahsis kaydı olan yollar {komut kimliği: kayıt}. YIKILMIŞ yol da sayılır (tepki satırları yıkımda silinmez, rahatlama
+## sürer); geri alınmış yol `works`ta yoktur. Kayıt yoksa BOŞ sözlük.
+static func resettlement_records(state: GameState) -> Dictionary:
+	var out := {}
+	var d := data(state)
+	if d.is_empty():
+		return out
+	for work: Dictionary in d["works"]:
+		var record := resettlement_of(work)
+		if not is_demolition(work) and not record.is_empty():
+			out[int(work["command_id"])] = record
+	return out
+
+
 ## Ayakta duran oyuncu yolu satırları (eskiden yeniye; değer kopyası DEĞİL, bölümdeki sözlükler).
 static func standing_roads(state: GameState) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []

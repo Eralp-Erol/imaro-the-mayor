@@ -14,25 +14,24 @@ extends RefCounted
 ## davranış bit-bit eskisi gibidir: sayı aynen döner. SAF ve durumsuz; rastgelelik yok.
 
 
-## Tahsis kayıtlarından {komut: {effective, unplaced_by, rehoused_by}} (her biri {kod: hane}). Ayakta yolların
-## (`standing_roads`) kaydı; kayıt yoksa BOŞ sözlük (kapalı yol). Tarama başına BİR KEZ kurulur.
+## Tahsis kayıtlarından {komut: {effective, unplaced_by, rehoused_by}} (her biri {kod: hane}). Yolların
+## kaydı (yıkılmış yol dahil: yıkım tepki satırlarını silmez); kayıt yoksa BOŞ sözlük (kapalı yol). Tarama başına
+## BİR KEZ kurulur.
 static func index(state: GameState) -> Dictionary:
 	var out := {}
-	for work: Dictionary in PublicWorksState.standing_roads(state):
-		var record: Dictionary = (work.get("expropriation", {}) as Dictionary).get("resettlement", {})
-		if record.is_empty():
-			continue
+	var records := PublicWorksState.resettlement_records(state)
+	for command_id: int in records:
+		var record: Dictionary = records[command_id]
 		var rehoused_by := {}
 		for move: Array in record["moves"]:
 			rehoused_by[String(move[0])] = int(rehoused_by.get(String(move[0]), 0)) + int(move[2])
-		out[int(work["command_id"])] = {"effective": record["effective"], "unplaced_by": record["unplaced_by"],
+		out[command_id] = {"effective": record["effective"], "unplaced_by": record["unplaced_by"],
 			"rehoused_by": rehoused_by}
 	return out
 
 
 ## (Bölge, komut) satırındaki `households` yerinden edilen haneden kaçı HÂLÂ barınamıyor (tepki sayar). `index` boş ya
-## da
-## bu (komut, bölge) için kayıt yoksa tümü; kayıt varsa tahsisin kalan tepkisi (`effective`, en çok `households`).
+## da bu (komut, bölge) için kayıt yoksa tümü; kayıt varsa tahsisin kalan tepkisi (`effective`, en çok `households`).
 static func still_unhoused(region_code: String, command_id: int, households: int, index: Dictionary = {}) -> int:
 	if index.is_empty() or not index.has(command_id):
 		return households

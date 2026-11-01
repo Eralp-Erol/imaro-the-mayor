@@ -117,3 +117,15 @@ func test_a_record_that_does_not_add_up_is_refused_on_load() -> void:
 		var bad := good.duplicate(true)
 		(cases[label] as Callable).call(bad["works"][0]["expropriation"]["resettlement"])
 		assert_str(PublicWorksState.validate_data(bad)).override_failure_message(label).is_not_empty()
+
+
+
+## Kamulaştıran yol YIKILAMAZ (`public_work.reject.demolition_changes_parcels`), bu yüzden yıkımın tahsisi geri almadığı
+## ve bedeli iade etmediği durumu bu aşamada tetiklenemez; yıkım yalnız düz yolda olur.
+func test_demolishing_an_expropriating_road_is_refused_so_the_allocation_cannot_be_orphaned() -> void:
+	var run := _o1()
+	var works := PublicWorksState.standing_roads(_h(run).state())
+	var r := _f(run).submit_command(SimCommand.public_work_demolish(int(works[works.size() - 1]["command_id"])))
+	assert_bool(r.is_rejected()).is_true()
+	assert_str(String(r.reason_key)).is_equal("public_work.reject.demolition_changes_parcels")
+	assert_int(_latent(run, TARGET)).is_equal(56)
