@@ -13,7 +13,8 @@ const NO_DISTANCE := 1 << 60
 
 
 ## Bu tick onaylanan yollar: [{pts: [[x, z]...] (cm), command_id}], onay sırasıyla. Komutlar tick sınırında, tick
-## artmadan uygulanır; sistemler tick artınca çalışır: yeni yolun `tick`'i `state.tick - 1`dir.
+## artmadan uygulanır; sistemler tick artınca çalışır: yeni yolun `tick`'i `state.tick - 1`dir. Yıkım satırları (ops'ta
+## `pts_cm` yok) ve aynı tick'te yıkılmış yol "yeni yol" DEĞİLDİR (B-009): yalnız AYAKTA duran yollar sayılır.
 static func new_roads(state: GameState) -> Array:
 	var out: Array = []
 	var section := PublicWorksState.data(state)
@@ -24,19 +25,24 @@ static func new_roads(state: GameState) -> Array:
 	while first > 0 and int((works[first - 1] as Dictionary)["tick"]) == state.tick - 1:
 		first -= 1
 	for k in range(first, works.size()):
+		if not PublicWorksState.is_standing_road(works[k]):
+			continue
 		out.append({"pts": (section["ops"][k] as Dictionary)["pts_cm"],
 			"command_id": int((works[k] as Dictionary)["command_id"])})
 	return out
 
 
-## Durumdaki tüm oyuncu yollarının nokta listeleri ([[x, z]...] cm), yol sırasıyla.
+## Durumdaki AYAKTA duran oyuncu yollarının nokta listeleri ([[x, z]...] cm), yol sırasıyla. Yıkılmış yol (artık erişim
+## sağlamaz) ve yıkım işlemleri (`pts_cm` yok) dışarıda kalır (B-009).
 static func road_polylines(state: GameState) -> Array:
 	var out: Array = []
 	var section := PublicWorksState.data(state)
 	if section.is_empty():
 		return out
-	for op: Dictionary in section["ops"]:
-		out.append(op["pts_cm"])
+	var works: Array = section["works"]
+	for k in works.size():
+		if PublicWorksState.is_standing_road(works[k]):
+			out.append((section["ops"][k] as Dictionary)["pts_cm"])
 	return out
 
 
