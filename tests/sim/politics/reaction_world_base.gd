@@ -27,7 +27,9 @@ func _views() -> Array[ParcelView]:
 
 
 ## `edit`: ham siyaset dosyası düzenleyici (isteğe bağlı). `stock_rows`: varsayılan stok yerine konacak satırlar.
-func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: Array = []) -> Dictionary:
+## `with_budget`: gerçek bütçe sistemi de takılır (varsayılan kapalı: mevcut testler değişmez).
+func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: Array = [],
+		with_budget: bool = false) -> Dictionary:
 	var net := P.network()
 	var stock := ListStockSource.create(stock_rows if not stock_rows.is_empty() else [
 		{"parcel_id": 1, "use": "residential", "units": 10, "owner": 1},
@@ -44,6 +46,8 @@ func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: A
 	fake.take(PackedInt64Array(DIAGONAL), [1, 2, 3])
 	ctx.set_expropriation(fake)
 	assert_bool(h.facade.attach_public_works(ctx)).is_true()
+	if with_budget:  # tick 0'da takılmalı (GOLDEN_X)
+		assert_bool(h.facade.attach_budget(BudgetConfig.load_default())).is_true()
 	h.facade.advance(1)
 	if expropriate:
 		h.facade.submit_command(SimCommand.public_work_road(PackedInt64Array(DIAGONAL), &"local", true))
