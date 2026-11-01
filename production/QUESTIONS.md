@@ -2,6 +2,17 @@
 
 Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Gruplanmış tutulur; her biri için stüdyonun beklerken ne yaptığı yazılıdır. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
+## Geri al penceresi · halkın ilk tepkisi geri alınamıyor — sahibe 1 kart (2026-11-01; engellemiyor, mevcut davranışla ilerler)
+Sözün (D-014 §1): "ta ki başka bir yol parçası yapılana kadar geri al seçeneği bulunsun." Bugün kamulaştırmalı yolda geri al, yolun halk tepkisi ilk haftalık taramaya girince (1-7 gün) kapanıyor. Nedenini ölçtüm (`production/log/2026-11-01-b009-b013.md`): tarama yalnız tepki satırı yazmıyor; halkın duygu defterine (başka etkenlerle karışık), gündem öğesine, haber adayına ve gerekçe kayıtlarına da iz bırakıyor. Satırı silmek bunları geri sarmıyor; "hiç yapılmamış gibi" geri alma yarım kalırdı. Yarım geri alma uydurmadım.
+
+**Kart G1 · Geri al, halk tepki verdikten sonra da açık kalsın mı? (Q-030)**
+- A) Önerilen: Evet, sözün gibi başka yol yapılana kadar açık kalsın. Geri alınca yol, binalar, açılmış gündem öğesi ve haber kalkar; ama halkın o haftalarda biriken öfkesi silinmez, birkaç haftada kendiliğinden söner ("hiç olmamış gibi" tam değil, dürüstçe böyle yazılır).
+- B) Şimdiki: halk tepki verince geri al kapanır, yalnız yıkma kalır. Tam tutarlı ama sözünle çelişir; kart metni "başka yol yapana kadar" demekten vazgeçer ("halk tepki verene kadar" der).
+- C) Tam "hiç olmamış gibi": halk, geri al açıkken tepki vermesin; yolu "kesinleştirince" (başka yol ya da yıkım) tepki başlasın. Tam temiz geri alma, ama oyuncu başka yol yapmazsa tepki hiç gelmez; bir süre sınırı (kaç gün?) ayrıca karar ister ve tepki zamanı değişir.
+- Beklerken: B (bugünkü davranış). Yalnız sim kuralı ve ret/onay metni değişir; veri değil kod, yanıt gelince kısa iş.
+
+---
+
 ## T-065 Aşama 1 · yeniden iskân çalışma sayıları — sahibe 3 kart (2026-11-01; hiçbiri engellemiyor, sayılar veride)
 Bunlar karar DEĞİLDİR. Hepsi `data/sim/public_works/road_works.json` `expropriation.resettlement` içinde ayarlanabilir (F05-C); yanıt gelince kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Politika varsayılan KAPALI; oyuncu açana dek bugünkü oyun aynen sürer.
 
@@ -118,6 +129,7 @@ Durumlar:
 | Q-027 | Gündem Kararı gözden geçir seçeneği yolu geri almıyor (etiket / gerçek geri alma / kaldır) | answered → D-014 | — |
 | Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | answered → D-014 | — |
 | Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | answered → D-014 | — |
+| Q-030 | Geri al penceresi: halk tepki verdikten sonra da açık kalsın mı (A açık kalsın, iz söner / B bugünkü / C tepki beklesin) | **open** | — (engellemiyor) |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)

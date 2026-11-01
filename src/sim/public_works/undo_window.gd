@@ -8,7 +8,8 @@ extends RefCounted
 ##  2. Yolun halk tepkisi (tepki defteri satırları) siyaset katmanının haftalık taramasına GİRMEMİŞTİR: girdiyse kesim
 ##     durumu (şikâyet/memnuniyet), gündem öğesi ve haber ondan etkilenmiş olur ve geri sarılamaz; yarım geri alma
 ##     yapmak yerine pencere KAPANIR (`reaction_recorded`). Tepki defterinde satırı olmayan yolda (düz yol) tarama
-##     pencereyi kapatmaz.
+##     pencereyi kapatmaz. (B-013 / Q-030: D-014 §1 sözü "başka yol yapılana kadar" ile bu kısıt arasındaki fark
+##     kullanıcı kararını bekliyor; tarama izleri geri sarılamadığı için kural, karar gelene dek DEĞİŞMEDİ.)
 ## Tepki katmanı kendi kuralını `PublicWorksContext.reaction_consumed` ile ekleyebilir (örn. gündem öğesi açıldı).
 
 const CAUSE_NONE := &""

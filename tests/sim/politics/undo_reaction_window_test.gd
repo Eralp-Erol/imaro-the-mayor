@@ -39,6 +39,23 @@ func test_the_window_closes_once_a_weekly_scan_has_consumed_the_reaction() -> vo
 	assert_int(PublicWorksState.reaction_rows(h.state(), "displaced", "D1").size()).is_equal(rows_before)
 
 
+## Pencerenin neden tepki işlenince kapandığının ölçümü (B-013, Q-030): ilk haftalık tarama yolun tepkisinden kesim
+## defterlerine (EMA + kenetleme; başka sinyallerle karışık), gerekçe kayıtlarına ve açılan gündem işaretine iz yazar.
+## Tepki satırlarını silmek (`retract_command`) bu izleri GERİ SARMAZ. Biri bunu geri sarabilirse (ya da tepki taramaya
+## girmeyi bekletilirse) pencere kuralı ancak o zaman gevşetilebilir; bu test o karara kadar kuralın dayanağıdır.
+func test_retracting_the_rows_after_a_scan_cannot_rewind_what_the_scan_already_wrote() -> void:
+	var h: PoliticsHandle = _world()["handle"]
+	var before: Dictionary = ActorStore.actor_ref(h.state(), BLOC_HOUSED)["state"].get("grievances", {})
+	assert_dict(before).is_empty()
+	h.facade.advance(SCAN_DAYS)  # tick 7 taraması
+	var rows := ReactionAgenda.retract_command(h.state(), h.facade.public_works()[0].command_id)
+	assert_int(rows).is_greater(0)  # satırlar silinir...
+	var grievances: Dictionary = ActorStore.actor_ref(h.state(), BLOC_HOUSED)["state"]["grievances"]
+	assert_bool(grievances.is_empty()).override_failure_message("tarama defterlere iz yazmadı").is_false()
+	assert_bool(pol(h)["reaction_local"]["opened"].is_empty()).is_false()  # ...ama açılan gündem işareti
+	assert_int(int(pol(h)["counters"]["reason_records"])).is_greater(0)  # ve gerekçe kayıtları kalır
+
+
 func test_a_plain_road_stays_undoable_across_scans_because_it_has_no_reaction() -> void:
 	var h: PoliticsHandle = _world(false)["handle"]
 	h.facade.submit_command(SimCommand.public_work_road(P.spur_a_cm(), &"local", false))
