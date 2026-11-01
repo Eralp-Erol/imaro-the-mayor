@@ -6,10 +6,9 @@ extends GdUnitTestSuite
 const S := preload("res://tests/contracts/contract_test_support.gd")
 
 
-func test_version_is_1_6_and_the_surface_arrived_in_that_minor() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.6")
+func test_the_surface_arrived_in_1_6_and_older_minors_stay_compatible() -> void:
 	assert_int(SimContract.VERSION_MAJOR).is_equal(1)
-	assert_int(SimContract.VERSION_MINOR).is_equal(6)
+	assert_int(SimContract.VERSION_MINOR).is_greater_equal(6)  # 1.6 yolu yık; 1.7 yeniden iskân (policy_contract_test)
 	assert_bool(SimContract.is_compatible("1.5")).is_true()
 	assert_bool(SimContract.is_compatible("1.6")).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()

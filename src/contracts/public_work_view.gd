@@ -22,6 +22,13 @@ var taken_built_parcels: int = 0
 var taken_res_units: int = 0
 var taken_com_units: int = 0
 var displaced_households: int = 0
+## v1.7 (ADR-0005 Ek I, T-065) · Bu yol yapılırken yeniden iskân politikası AÇIK mıydı ve sim'in kaydı: ev ayrılan hane
+## (`rehoused_households`), ev bulunamayan hane (`unplaced_households`; ikisinin toplamı `displaced_households`),
+## gösterge bedel. Politika kapalıyken (ve eski yollarda) varsayılan (false/0/0/0); sahte "karşılandı" yok (SIM-07).
+var resettlement_applied: bool = false
+var rehoused_households: int = 0
+var unplaced_households: int = 0
+var resettlement_cost: int = 0
 var provenance: StringName = SimContract.PROVENANCE_SIM
 
 
@@ -35,7 +42,9 @@ func to_dict() -> Dictionary:
 		"region_units": SimContract.to_args(region_units), "provenance": provenance,
 		"expropriated": expropriated, "taken_parcel_ids": taken_parcel_ids, "taken_built_parcels": taken_built_parcels,
 		"taken_res_units": taken_res_units, "taken_com_units": taken_com_units,
-		"displaced_households": displaced_households,
+		"displaced_households": displaced_households, "resettlement_applied": resettlement_applied,
+		"rehoused_households": rehoused_households, "unplaced_households": unplaced_households,
+		"resettlement_cost": resettlement_cost,
 	}
 
 
@@ -54,4 +63,8 @@ static func from_dict(d: Dictionary) -> PublicWorkView:
 	w.taken_res_units = SimContract.to_int(d.get("taken_res_units"))
 	w.taken_com_units = SimContract.to_int(d.get("taken_com_units"))
 	w.displaced_households = SimContract.to_int(d.get("displaced_households"))
+	w.resettlement_applied = SimContract.to_bool(d.get("resettlement_applied", false))
+	w.rehoused_households = SimContract.to_int(d.get("rehoused_households"))
+	w.unplaced_households = SimContract.to_int(d.get("unplaced_households"))
+	w.resettlement_cost = SimContract.to_int(d.get("resettlement_cost"))
 	return w

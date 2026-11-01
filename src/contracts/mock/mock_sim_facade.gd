@@ -38,6 +38,9 @@ var _undo_open: bool = false
 var _taken_saved: Dictionary = {}
 ## v1.5 · Senaryonun `agenda` etkisiyle açtığı gündem öğeleri (kimlik artan). Geri alma onları kaldırmaz (D-011).
 var _agenda: Array[AgendaItemView] = []
+## v1.7 · Kalıcı politikalar (mock): kimlik -> {enabled, tick, command}. Tek politika: yeniden iskân (varsayılan
+## kapalı).
+var _policies: Dictionary = {String(PolicyView.ID_RESETTLEMENT): {"enabled": false, "tick": -1, "command": 0}}
 var _order: int = 0
 var _global_ctx: Dictionary = {"command_id": SimContract.NO_ID, "labels": {}}
 ## v1.2 · Parsel değişim günlüğü (mock: sınırsız, kayıt yüklemesi yok): tick ve kimlik paralel, tick artan.
@@ -175,6 +178,23 @@ func undo_available() -> bool:
 	return _undo_open and not _roads.is_empty()
 
 
+## v1.7 · Kalıcı politikalar (kimlik sıralı). Mock `policy.set` komutunu gerçek sim ile aynı kurallarla işler.
+func policies() -> Array[PolicyView]:
+	var out: Array[PolicyView] = []
+	var ids: Array = _policies.keys()
+	ids.sort()
+	for id: String in ids:
+		var row: Dictionary = _policies[id]
+		var v := PolicyView.new()
+		v.provenance = provenance()
+		v.policy_id = StringName(id)
+		v.enabled = bool(row["enabled"])
+		v.changed_tick = int(row["tick"])
+		v.changed_by_command = int(row["command"])
+		out.append(v)
+	return out
+
+
 ## v1.3 · Uygulanmış yollar (eskiden yeniye).
 func public_works() -> Array[PublicWorkView]:
 	var out: Array[PublicWorkView] = []
@@ -253,9 +273,9 @@ func _precheck(command: SimCommand) -> Dictionary:
 
 func _state_problem(command: SimCommand) -> Dictionary:
 	match command.kind:
-		SimCommand.KIND_PUBLIC_WORK_ROAD, SimCommand.KIND_PUBLIC_WORK_UNDO_LAST, SimCommand.KIND_AGENDA_RESPOND:
-			return _public_work_problem(command) if command.kind != SimCommand.KIND_AGENDA_RESPOND \
-				else _agenda_response_problem(command)
+		SimCommand.KIND_PUBLIC_WORK_ROAD, SimCommand.KIND_PUBLIC_WORK_UNDO_LAST, SimCommand.KIND_AGENDA_RESPOND, \
+				SimCommand.KIND_POLICY_SET:
+			return _targeted_problem(command)
 		SimCommand.KIND_ZONING_PROPOSE:
 			for id: int in command.params["parcel_ids"]:
 				if not _parcels.has(id):
@@ -269,6 +289,27 @@ func _state_problem(command: SimCommand) -> Dictionary:
 			for key: StringName in command.params["lines"]:
 				if _budget.line(key) == null:
 					return _problem(CommandResult.REJECT_INVALID_TARGET, {"ref": key})
+	return {}
+
+
+## Yol / gündem / politika komutlarının duruma bağlı denetimi (tek giriş: `_state_problem` dönüş sayısı sınırı).
+func _targeted_problem(command: SimCommand) -> Dictionary:
+	match command.kind:
+		SimCommand.KIND_POLICY_SET:
+			return _policy_problem(command)
+		SimCommand.KIND_AGENDA_RESPOND:
+			return _agenda_response_problem(command)
+	return _public_work_problem(command)
+
+
+## v1.7 · Politika: bilinmeyen kimlik -> invalid_value (param=policy_id); zaten bu değerde -> precondition
+## (why=policy.unchanged). Gerçek sim ile aynı kodlar.
+func _policy_problem(command: SimCommand) -> Dictionary:
+	var id := String(command.params["policy_id"])
+	if not _policies.has(id):
+		return _problem(CommandResult.REJECT_INVALID_VALUE, {"param": "policy_id"})
+	if bool(_policies[id]["enabled"]) == bool(command.params["enabled"]):
+		return _problem(CommandResult.REJECT_PRECONDITION, {"why": PolicyView.WHY_UNCHANGED})
 	return {}
 
 
@@ -327,8 +368,9 @@ func _accepted(command: SimCommand, status: StringName, id: int) -> CommandResul
 			"regions": SimContract.to_args(regions), "units_total": _sum(regions),
 			"cost_available": false, "cost_reason_key": "public_work.cost.not_built"}
 		if _expropriates(command):  # v1.5: sayılar senaryo verisi, anahtarlar gerçek sim ile aynı yardımcıdan
-			result.args.merge(SimContract.to_args(ExpropriationSummary.preview_args(
-				_expropriation_of(_match_rule(command)))))
+			var data := _expropriation_of(_match_rule(command))
+			result.args.merge(SimContract.to_args(ExpropriationSummary.preview_args(data)))
+			result.args.merge(SimContract.to_args(ExpropriationSummary.resettlement_args(_resettlement_of(data))))
 	elif command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and not _roads.is_empty():
 		var last := _roads[_roads.size() - 1]
 		result.args = {"removed_command_id": last.command_id, "length_cm": last.length_cm,
@@ -371,6 +413,7 @@ func _apply_command(id: int, command: SimCommand) -> void:
 			"args": problem["args"], "subjects": [command_ref]}, ctx)
 		return
 	_apply_public_work(id, command, ctx)
+	_apply_policy(id, command, ctx)
 	var subjects := _apply_semantics(command)
 	subjects.append(command_ref)
 	_emit({"kind": SimEvent.KIND_COMMAND_APPLIED, "message_key": &"event.command.applied",
@@ -407,9 +450,31 @@ func _apply_public_work(id: int, command: SimCommand, ctx: Dictionary) -> void:
 			{"removed_command_id": removed.command_id}, ctx)
 
 
+## v1.7 · Politika uygulaması: durum değişir, `policy.changed` olayı (gerçek sim sırası: işleyici olayı, sonra
+## `command.applied`).
+func _apply_policy(id: int, command: SimCommand, ctx: Dictionary) -> void:
+	if command.kind != SimCommand.KIND_POLICY_SET:
+		return
+	var key := String(command.params["policy_id"])
+	var previous := bool(_policies[key]["enabled"])
+	_policies[key] = {"enabled": bool(command.params["enabled"]), "tick": _tick, "command": id}
+	_emit({"kind": SimEvent.KIND_POLICY_CHANGED, "message_key": &"event.policy.changed",
+		"args": {"policy_id": key, "enabled": bool(command.params["enabled"]), "previous": previous},
+		"subjects": [String(SimContract.ref(SimContract.REF_COMMAND, id))]}, ctx)
+
+
 ## v1.5 · Kamulaştırma bayrağı ve senaryonun kamulaştırma verisi (`preview.expropriation`, yoksa {}).
 static func _expropriates(command: SimCommand) -> bool:
 	return command.kind == SimCommand.KIND_PUBLIC_WORK_ROAD and bool(command.params.get("expropriate", false))
+
+
+## v1.7 · Senaryonun tahsis verisi (`expropriation.resettlement` {rehoused, unplaced, cost}); yalnız politika AÇIKKEN
+## geçerli, yoksa {} (mock geometri/ev hesaplamaz, sayılar senaryo verisidir).
+func _resettlement_of(data: Dictionary) -> Dictionary:
+	var record: Variant = data.get("resettlement", {})
+	if not bool(_policies[String(PolicyView.ID_RESETTLEMENT)]["enabled"]) or not (record is Dictionary):
+		return {}
+	return record
 
 
 static func _expropriation_of(rule: Dictionary) -> Dictionary:
@@ -445,8 +510,13 @@ func _take_parcels(id: int, w: PublicWorkView, data: Dictionary, ctx: Dictionary
 	w.taken_res_units = SimContract.to_int(data.get("res_units"))
 	w.taken_com_units = SimContract.to_int(data.get("com_units"))
 	w.displaced_households = SimContract.to_int(data.get("households"))
+	var resettlement := _resettlement_of(data)
+	w.resettlement_applied = not resettlement.is_empty()
+	w.rehoused_households = SimContract.to_int(resettlement.get("rehoused"))
+	w.unplaced_households = SimContract.to_int(resettlement.get("unplaced"))
+	w.resettlement_cost = SimContract.to_int(resettlement.get("cost"))
 	_emit({"kind": SimEvent.KIND_PUBLIC_WORK_EXPROPRIATED, "message_key": &"event.road.expropriated",
-		"args": ExpropriationSummary.event_args(data),
+		"args": ExpropriationSummary.event_args(data, resettlement),
 		"subjects": ExpropriationSummary.subjects(id, data)}, ctx)
 
 
@@ -465,6 +535,8 @@ func _restore_parcels(removed: PublicWorkView, ctx: Dictionary, undo_id: int) ->
 		"households": removed.displaced_households, "regions": _regions_of(removed.taken_parcel_ids)}
 	var args := ExpropriationSummary.event_args(data)
 	args["removed_command_id"] = removed.command_id
+	if removed.resettlement_applied:  # mock yolu geri alır: aileler döner (mock kırpmaz)
+		args["rehoused_returned"] = removed.rehoused_households
 	_emit({"kind": SimEvent.KIND_PUBLIC_WORK_RESTORED, "message_key": &"event.road.restored", "args": args,
 		"subjects": ExpropriationSummary.subjects(undo_id, data)}, ctx)
 

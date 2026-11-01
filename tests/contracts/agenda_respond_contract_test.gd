@@ -38,8 +38,8 @@ func _option(id: String = "listen") -> AgendaOptionView:
 
 # --- Komut kataloğu ---
 
-func test_version_is_1_6_and_the_command_is_a_catalogued_mayor_verb() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.6")  # agenda.respond 1.5'te geldi; 1.6 yolu yık (ADR-0005 Ek H)
+func test_version_is_1_7_and_the_command_is_a_catalogued_mayor_verb() -> void:
+	assert_str(SimContract.VERSION).is_equal("1.7")  # agenda.respond 1.5'te geldi; 1.6 yolu yık; 1.7 yeniden iskân
 	assert_bool(SimCommand.CATALOG.has(&"agenda.respond")).is_true()
 	assert_str(String(SimCommand.KIND_AGENDA_RESPOND)).is_equal("agenda.respond")
 	assert_bool(SimCommand.is_forbidden_kind(SimCommand.KIND_AGENDA_RESPOND)).is_false()

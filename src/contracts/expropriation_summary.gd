@@ -27,8 +27,28 @@ static func preview_args(summary: Dictionary) -> Dictionary:
 	}
 
 
+## v1.7 (ADR-0005 Ek I) · Yeniden iskân alanları: önizleme argümanları, `public_work.expropriated` olay argümanları ve
+## `PublicWorkView` AYNI dört anahtarı taşır. `record`: {rehoused, unplaced, cost} (sim'in tahsis kaydı); boşsa
+## (politika kapalı / yerinden edilen yok) HİÇBİR anahtar yazılmaz: 1.6 tüketicisi ve kapalı politikadaki komut
+## sonucu aynı kalır.
+static func resettlement_args(record: Dictionary) -> Dictionary:
+	if record.is_empty():
+		return {}
+	return {
+		"resettlement_applied": true, "rehoused_households": int(record.get("rehoused", 0)),
+		"unplaced_households": int(record.get("unplaced", 0)), "resettlement_cost": int(record.get("cost", 0)),
+	}
+
+
 ## `public_work.expropriated` / `public_work.restored` olay argümanları (anahtarlar aynı sözlükten, `taken_` öneksiz).
-static func event_args(summary: Dictionary) -> Dictionary:
+## `resettlement` (isteğe bağlı): tahsis kaydı; doluysa `resettlement_args` anahtarları eklenir.
+static func event_args(summary: Dictionary, resettlement: Dictionary = {}) -> Dictionary:
+	var out := _event_args(summary)
+	out.merge(resettlement_args(resettlement))
+	return out
+
+
+static func _event_args(summary: Dictionary) -> Dictionary:
 	return {
 		"parcels": sorted_ids(summary).size(), "built_parcels": int(summary.get("built_parcels", 0)),
 		"project_parcels": int(summary.get("project_parcels", 0)), "res_units": int(summary.get("res_units", 0)),
