@@ -289,6 +289,11 @@ func _add_preview_card() -> void:
 		inner.add_child(_muted(cost_line(args)))
 		if expropriating:
 			_add_expropriation_block(inner, args, true)
+		elif tool.expropriate and ExpropriationText.is_empty_strip(args):
+			inner.add_child(_muted(UiText.t(&"expropriation.empty_valid")))
+	elif not tool.offer().is_empty() and ExpropriationText.is_empty_strip(tool.offer()):
+		inner.add_child(UiFactory.label(UiText.t(&"expropriation.empty_title"), UiTheme.V_LABEL_HEADING, true))
+		inner.add_child(UiFactory.label(UiText.t(&"expropriation.empty_body"), &"", true))
 	elif not tool.offer().is_empty():
 		inner.add_child(UiFactory.label(UiText.t(&"expropriation.offer_title"), UiTheme.V_LABEL_DANGER, true))
 		_add_expropriation_block(inner, tool.offer(), false)
@@ -356,14 +361,17 @@ func _add_buttons() -> void:
 	var offer := tool.offer()
 	if not offer.is_empty() and tool.step == RoadDrawTool.Step.REVIEW:
 		# 1. adım: sim'in kamulaştırma teklifini kabul et (sayılar kartta); 2. adım yıkım onayıdır.
-		_accept_button = UiFactory.button(_ctx, UiText.t(&"expropriation.accept"), true)
+		var empty_strip := ExpropriationText.is_empty_strip(offer)
+		_accept_button = UiFactory.button(_ctx, UiText.t(
+				&"expropriation.empty_accept" if empty_strip else &"expropriation.accept"), true)
 		UiFactory.emphasize(_ctx, _accept_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
 		_tag(_accept_button, "road_expropriate")
 		_accept_button.pressed.connect(func() -> void:
 			tool.accept_offer()
 			refresh())
 		row.add_child(_accept_button)
-	if tool.expropriate and tool.step == RoadDrawTool.Step.REVIEW:
+	if tool.expropriate and tool.step == RoadDrawTool.Step.REVIEW \
+			and not ExpropriationText.is_empty_strip(tool.preview_args()):
 		_back_button = UiFactory.button(_ctx, UiText.t(&"expropriation.back"), false)
 		_tag(_back_button, "road_expropriate_back")
 		_back_button.pressed.connect(func() -> void:
