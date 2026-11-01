@@ -53,6 +53,11 @@ func class_row(road_class: StringName) -> Dictionary:
 	return row if row is Dictionary else {}
 
 
+## Merkez/çeper ayarı: "density_lo_per_km2" | "density_hi_per_km2" | "edge_multiplier" | "center_multiplier".
+func centrality(key: String) -> float:
+	return float((data.get("centrality", {}) as Dictionary).get(key, 0.0))
+
+
 func layout(key: String) -> float:
 	return float((data.get("layout", {}) as Dictionary).get(key, 0.0))
 
@@ -107,6 +112,16 @@ func _validate() -> PackedStringArray:
 			for k in CLASS_KEYS:
 				if not (row as Dictionary).has(k) or float((row as Dictionary)[k]) < 0.0:
 					out.append("classes.%s.%s >= 0 olmalı" % [str(cls), k])
+	var cen: Variant = data.get("centrality")
+	if not (cen is Dictionary):
+		out.append("centrality yok")
+	else:
+		for k in ["density_lo_per_km2", "density_hi_per_km2", "edge_multiplier", "center_multiplier"]:
+			if not (cen as Dictionary).has(k) or float((cen as Dictionary)[k]) < 0.0:
+				out.append("centrality.%s >= 0 olmalı" % k)
+		if float((cen as Dictionary).get("density_hi_per_km2", 0.0)) <= float(
+				(cen as Dictionary).get("density_lo_per_km2", 0.0)):
+			out.append("centrality.density_hi_per_km2 > density_lo_per_km2 olmalı")
 	for section in ["layout", "movement", "update"]:
 		if not (data.get(section) is Dictionary):
 			out.append("%s yok" % section)
