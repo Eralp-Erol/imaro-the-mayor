@@ -54,6 +54,8 @@ var _budget: BudgetSystem
 var _public_works: PublicWorksContext
 ## T-045: değişen-parsel sorgusunun durum kuşağı. Kayıt yüklenince artar (halka boşalır); durum/hash dışıdır.
 var _change_epoch: int = 0
+## 2026-11-01 · `parcel_views` gerekçe dizini önbelleği (türetilmiştir; durum/hash/kayıt dışı, bkz. ReasonSubjectCache).
+var _reason_cache := ReasonSubjectCache.new()
 
 
 ## Yeni oyun. Geçersiz yapılandırma/kaynak/hız tablosunda push_error + null.
@@ -288,7 +290,7 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 	var wanted := {}
 	for id in ids:
 		wanted[String(SimContract.parcel_ref(id))] = true
-	var reason_index := _state.reasons.subject_index(wanted, _facade_config.parcel_reason_limit)
+	var reason_index := _reason_cache.lookup(_state, wanted, _facade_config.parcel_reason_limit)
 	var out: Array[ParcelView] = []
 	for id in ids:
 		var view := _parcels.template(id)
@@ -510,6 +512,7 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 	_state = result.state
 	_driver.bind_state(_state)
 	_retained_cache = {}
+	_reason_cache.reset()  # eski durumu da bırakır
 	_sim_units_cache = {}
 	_change_epoch += 1  # T-045: halkanın geçmişi artık geçersiz; tüketici tam yeniden eşitler
 	if _economy != null:

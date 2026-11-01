@@ -234,27 +234,17 @@ static func has_reaction_rows(state: GameState, command_id: int) -> bool:
 	return false
 
 
-## Komuta ait tepki satırlarını siler (yolun geri alınması: halk tepkisi hiç olmamış gibi). Boşalan bölge anahtarı da
-## silinir. Silinen satır sayısı.
-static func remove_reactions(state: GameState, command_id: int) -> int:
+## Tepki defterinde boşalan bölge anahtarlarını siler (geri alma: `ReactionAgenda.retract_command` satırları siler,
+## boş liste bırakır; defter hiç tepki olmamış gibi boş kalsın).
+static func prune_empty_reactions(state: GameState) -> void:
 	var d := data(state)
-	var removed := 0
 	for book in REACTION_BOOKS:
 		if not d.has(book):
 			continue
 		var table: Dictionary = d[book]
 		for code: String in _sorted_keys(table):
-			var kept: Array = []
-			for row: Array in table[code]:
-				if int(row[2]) == command_id:
-					removed += 1
-				else:
-					kept.append(row)
-			if kept.is_empty():
+			if (table[code] as Array).is_empty():
 				table.erase(code)
-			else:
-				table[code] = kept
-	return removed
 
 
 ## Son yolu çıkarır ve döndürür ({} = yok). Türetilmiş sözlükler yeniden hesaplanır.

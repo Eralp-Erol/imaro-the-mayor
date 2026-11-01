@@ -48,7 +48,7 @@ func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: A
 	if expropriate:
 		h.facade.submit_command(SimCommand.public_work_road(PackedInt64Array(DIAGONAL), &"local", true))
 		h.facade.advance(1)
-	return {"handle": h, "net": net}
+	return {"handle": h, "net": net, "fake": fake}
 
 
 func _signal(h: PoliticsHandle, name: String) -> int:

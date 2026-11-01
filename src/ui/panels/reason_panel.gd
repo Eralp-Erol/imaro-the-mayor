@@ -779,8 +779,13 @@ func _link_button(text: String, node_name: String) -> Button:
 
 
 func _decision_text(r: ReasonRecord) -> String:
-	var key := StringName("%s.%s" % [r.decision_key, r.outcome])
-	return UiText.t(key) if UiText.has(key) else UiText.humanize(String(r.decision_key))
+	return decision_text(r.decision_key, r.outcome)
+
+
+## Karar adı + sonuç -> oyuncu metni. Çevirisi olmayan karar için son çare ham anahtar (B-006 testi bunu yasaklar).
+static func decision_text(decision_key: StringName, outcome: StringName) -> String:
+	var key := StringName("%s.%s" % [decision_key, outcome])
+	return UiText.t(key) if UiText.has(key) else UiText.humanize(String(decision_key))
 
 
 func _records_of(entry: Dictionary) -> Array[ReasonRecord]:

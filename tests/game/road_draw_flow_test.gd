@@ -515,6 +515,31 @@ func test_cursor_label_names_the_step_at_every_step() -> void:
 	assert_str(ctrl.tip.step_text()).is_equal("3/3 · Onayla: Enter ya da işarete tıkla")
 
 
+## Kare sıçraması (production/log/2026-11-01-yol-araci-ilk-kare.md): ilk imleç hareketi karesi sim kuru koşusu +
+## önizleme ağı + panel düğüm kurulumunu tek karede yapıyordu (~30-40 ms). Panel yeniden çizimi hareketin karesinde
+## değil SONRAKİ karede yapılır (içerik yine de güncellenir).
+func test_hover_defers_the_panel_rebuild_to_the_next_frame() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	await _open_tool()
+	_click(_screen(A))
+	await get_tree().create_timer(float(ctrl.hover_interval_msec() + RoadDrawController.PANEL_HOVER_INTERVAL_MSEC + 30)
+			/ 1000.0).timeout
+	var before := ctrl.panel().confirm_button().get_instance_id()
+	_move(_screen(B_OK))
+	assert_bool(ctrl.tool.is_valid()).override_failure_message("hareket önizlemeyi güncellemeli").is_true()
+	assert_int(ctrl.panel().confirm_button().get_instance_id()).override_failure_message(
+			"panel hareketin karesinde kurulmamalı").is_equal(before)
+	ctrl.process()
+	assert_int(ctrl.panel().confirm_button().get_instance_id()).override_failure_message(
+			"aynı karedeki process() de kurmamalı").is_equal(before)
+	await get_tree().process_frame
+	ctrl.process()
+	assert_int(ctrl.panel().confirm_button().get_instance_id()).override_failure_message(
+			"sonraki karede panel yetişmeli").is_not_equal(before)
+	assert_str(ctrl.panel().joined_text()).contains(UiText.t(&"road.valid"))
+
+
 ## Panel imleç önizlemesinde her adımda yeniden kurulmaz (ölçüm: ~6,6 ms/adım); en çok PANEL_HOVER_INTERVAL_MSEC'te bir.
 func test_side_panel_is_not_rebuilt_on_every_hover_step_but_catches_up() -> void:
 	await _build()

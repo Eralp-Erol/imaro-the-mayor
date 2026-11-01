@@ -17,6 +17,9 @@ const Support := preload("res://tests/game/expropriation_game_support.gd")
 const SCENE := "res://scenes/game/playable.tscn"
 const NETWORK_PATH := "res://data/world/ismeral/network.json"
 const DT := 0.016667
+## Dış gürültü göstergesi (demo_frame_probe ile aynı): sabit CPU işi süresi; CPU_Speed_Limit düşünce şişer.
+## `norm` = adım ms / (cal / nominal): makine yavaşlamasına bölünmüş adım süresi.
+const CAL_NOMINAL_MS := 0.35
 
 var _args: Dictionary = {}
 var _scene: Node = null
@@ -60,6 +63,10 @@ func run() -> void:
 	for _i in 30:
 		await _frame()
 	await _wait_vegetation()
+	if _args.has("veg-install-ms") and _scene.get("_vegetation") != null:
+		# A/B: leke parçası kurulum bütçesi (ms). Çok büyük değer = bütçesiz eski davranış (hepsi tek karede).
+		(_scene.get("_vegetation") as VegetationView).config.blob_install_budget_ms = float(_args["veg-install-ms"])
+		print("XPROBE_VEG install_budget_ms=%s" % str(_args["veg-install-ms"]))
 	if _args.has("no-veg-parcel"):
 		_scene._pr.follow._veg_of = Callable()   # A/B: alınan parselin bitki gizlemesi KAPALI (yalnız koridor kaynağı)
 	var cand := _find_candidate(facade)
@@ -73,6 +80,14 @@ func run() -> void:
 	_set_stage("focus")
 	await _focus_on(cand["a"], cand["b"], float(_args.get("distance", "230")))
 	_set_stage("idle")
+	if _args.has("settle-veg"):
+		var n_settle := 0
+		while not _veg_idle() and n_settle < 600:
+			await _frame()
+			n_settle += 1
+		for _i in int(_args.get("settle-extra", "0")):
+			await _frame()
+		print("XPROBE_SETTLE veg_frames=%d" % n_settle)
 	await _shot("1-before")
 	if _args.has("ui"):
 		await _drive_road_ui(facade, cand)
@@ -93,16 +108,28 @@ func run() -> void:
 
 ## Bir kare: sahne `_process` + engine karesi. Süre (ms) toplanır.
 func _frame(dt: float = DT) -> float:
+	if _args.has("mark"):
+		print("XPROBE_F f=%d %s#%d" % [Engine.get_process_frames(), _stage, _stage_i])
 	var t0 := Time.get_ticks_usec()
 	_scene._process(dt)
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
 	_frame_ms.append(ms)
 	await process_frame
-	_trace.append({"stage": _stage, "i": _stage_i, "proc": ms, "input": _input_ms,
+	_trace.append({"stage": _stage, "i": _stage_i, "proc": ms, "input": _input_ms, "cal": _calibrate(),
 			"wall": (Time.get_ticks_usec() - t0) / 1000.0 + _input_ms})
 	_stage_i += 1
 	_input_ms = 0.0
 	return ms
+
+
+func _calibrate() -> float:
+	var t := Time.get_ticks_usec()
+	var acc := 0.0
+	for i in 8000:
+		acc += float(i) * 0.5
+	if acc < 0.0:
+		print(acc)
+	return (Time.get_ticks_usec() - t) / 1000.0
 
 
 func _set_stage(name: String) -> void:
@@ -130,8 +157,9 @@ func _print_trace() -> void:
 		if step > 16.0:
 			over16[st] = int(over16[st]) + 1
 		if step > limit:
-			print("XPROBE_TRACE %s#%d proc=%.1f input=%.1f wall=%.1f" % [st, int(rec["i"]), float(rec["proc"]),
-					float(rec["input"]), float(rec["wall"])])
+			print("XPROBE_TRACE %s#%d proc=%.1f input=%.1f wall=%.1f cal=%.2f norm=%.1f" % [st, int(rec["i"]),
+					float(rec["proc"]), float(rec["input"]), float(rec["wall"]), float(rec["cal"]),
+					step / maxf(float(rec["cal"]) / CAL_NOMINAL_MS, 0.5)])
 	for st in stages:
 		print("XPROBE_STAGE %s frames=%d peak_step_ms=%.1f over16=%d" % [st, int(count[st]), float(peak[st]),
 				int(over16[st])])

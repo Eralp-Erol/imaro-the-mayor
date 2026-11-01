@@ -77,7 +77,11 @@ func apply_with_id(state: GameState, _params: Dictionary, command_id: int) -> vo
 	var removed_command := int(work["command_id"])
 	if work.has("expropriation"):  # iş kaydındaki alt kayıtlar (snapshots, ileride yeniden iskân) burada geri sarılır
 		ExpropriationFlow.revert(_ctx, state, work, command_id)  # restored olayı removed'dan ÖNCE
-	var reactions := PublicWorksState.remove_reactions(state, removed_command)  # halk tepkisi hiç olmamış gibi
+	# Halk tepkisi hiç olmamış gibi: tepki katmanının kancası satırları siler (tek doğru nokta), defter boşalanı temizler.
+	# Zaten açılmış gündem öğesi burada KAPATILMAZ: pencere, tepki satırı olan yolun siyaset taraması geçince kapanır
+	# (`UndoWindow`), yani öğe açıldıysa geri alma zaten reddedilmiştir.
+	var reactions := ReactionAgenda.retract_command(state, removed_command)
+	PublicWorksState.prune_empty_reactions(state)
 	if _ctx.reaction_revoke.is_valid():
 		_ctx.reaction_revoke.call(state, removed_command)
 	var units: Dictionary = work["region_units"]
