@@ -22,14 +22,8 @@ const BLOCK_CELL_M := 256.0
 const PARCEL_CELL_M := 64.0
 ## Oyuncu yolunun su üstünden geçmediğini örnekleme adımı (m).
 const WATER_SAMPLE_STEP_M := 20.0
-## Parsel kara denetimi: blok merkezi kıyıdan bu kadar (blok çapı + pay) uzaktaysa tek tek denetim atlanır.
-const LAND_FAST_PATH_MARGIN_M := 60.0
-## Parsel bölge kodu bloktan alınır (blok bu boyuttan küçükse); aksi halde parsel merkezine göre.
-const BLOCK_REGION_MAX_M := 400.0
 ## Paralel iz (yol yanında ray): ara düğüm ek kaydırma payı (m).
 const PARALLEL_CLEARANCE_M := 4.0
-## Ofseti geçersiz bir yüz bu alandan büyükse sliver değil parselsiz açık arazi (kama) sayılır.
-const OPEN_WEDGE_MIN_AREA_M2 := 20000.0
 ## Bellekte tutulan değişim kaydı sayısı üst sınırı.
 const CHANGE_LOG_MAX := 64
 
@@ -532,231 +526,9 @@ func _new_report() -> Dictionary:
 
 ## Yüzleri yeniden türetir; geometri imzası aynı olan bloklar (ve parselleri, mülkiyet yuvaları dahil) KORUNUR,
 ## değişenler yeniden üretilir. Dönüş: {added_blocks, removed_blocks, added_parcels, removed_parcels}.
+## Gövde `NetworkBlockBuild`dedir (ADR-0005 Ek J takip f).
 func refresh_blocks() -> Dictionary:
-	var report := {"added_blocks": [], "removed_blocks": [], "added_parcels": [], "removed_parcels": []}
-	var matched := {}
-	var candidates := {}
-	for old_id: int in blocks:
-		candidates[old_id] = true
-	var pending := NetworkBlockMatch.match_faces(self, NetworkBlocks.extract(self), matched, candidates)
-	if NetworkExpropriation.active(self):  # tam ve yerel yenileme AYNI havuzlu yeniden kurma işlevini kullanır
-		NetworkExpropriation.rebuild(self, pending, matched, report, blocks.keys())
-		pending.clear()
-	for face in pending:
-		var block := _build_block(face, report)
-		matched[block.id] = true
-		WorldNetwork.report_add(report, "added_blocks", block.id)
-	for old_id: int in blocks.keys():
-		if not matched.has(old_id):
-			_remove_block(old_id, report)
-			WorldNetwork.report_add(report, "removed_blocks", old_id)
-	_blocks_single_comp = NetworkBlocks.component_count(self) == 1
-	return report
-
-
-func _update_matched_block(block: WorldBlock, face: Dictionary) -> void:
-	var new_edges: PackedInt32Array = face["edge_ids"]
-	var new_sig: String = face["signature"]
-	if _journal != null and (new_edges != block.edge_ids or block.outline != face["points"] or new_sig != block.signature):
-		var front := {}
-		for pid in block.parcel_ids:
-			front[pid] = (parcels[pid] as WorldParcel).frontage_edge
-		_journal.on_block_updated(block, front)
-	block.outline = face["points"]
-	if new_sig != block.signature:
-		# Köşe anahtarıyla eşleşme (kenar bölünmesi imzayı kaydırdı): blok ve parselleri korunur, imza yenisine bağlanır.
-		if int(_block_by_sig.get(block.signature, -1)) == block.id:
-			_block_by_sig.erase(block.signature)
-		block.signature = new_sig
-		_block_by_sig[new_sig] = block.id
-	if new_edges == block.edge_ids:
-		return
-	block.edge_ids = new_edges
-	for pid in block.parcel_ids:
-		var parcel: WorldParcel = parcels[pid]
-		if new_edges.has(parcel.frontage_edge) and NetworkBlockMatch.frontage_holds(self, parcel):
-			continue  # Cephe kenarı hâlâ blok sınırında ve parsele bakıyor: parselin kendi cephesi korunur.
-		var best := -1
-		var best_d := INF
-		for eid in new_edges:
-			var e: WorldRoadEdge = edges[eid]
-			if not WorldRoadEdge.is_road_class(e.road_class):
-				continue
-			var d := NetworkGeometry.distance_point_segment(parcel.front_mid, node_pos(e.a), node_pos(e.b))
-			if d < best_d - 1.0e-9:
-				best_d = d
-				best = eid
-		if best >= 0 and best != parcel.frontage_edge:
-			_set_frontage(parcel, best)
-
-
-func _build_block(face: Dictionary, report: Dictionary) -> WorldBlock:
-	var block := WorldBlock.new()
-	block.id = _next_block_id
-	_next_block_id += 1
-	block.outline = face["points"]
-	block.edge_ids = face["edge_ids"]
-	block.signature = face["signature"]
-	var center := NetworkGeometry.centroid(block.outline)
-	block.region_code = rules.region_code_at(world, center)
-	block.fabric = rules.template_at(center)
-	var face_area := float(face["area"])
-	if bool(face["holed"]):
-		block.kind = WorldBlock.KIND_HOLED
-	elif face_area > float(rules.template_params(block.fabric).get("max_block_area_m2", rules.max_block_area_m2)):
-		block.kind = WorldBlock.KIND_OPEN
-	elif world.is_water(center.x, center.y):
-		block.kind = WorldBlock.KIND_UNBUILDABLE
-	elif rules.keep_parcels_on_delta and sealed:
-		# v0: mühür sonrası yeni yüz (yol çevirdi/yıkım birleştirdi) PARSELLENMEZ; parseller kimlikle taşınır (T-042b).
-		block.kind = WorldBlock.KIND_OPEN
-	else:
-		_parcelize_block(block, face, report)
-	blocks[block.id] = block
-	if _journal != null:
-		_journal.on_block_added(block.id)
-	_block_by_sig[block.signature] = block.id
-	_block_grid.insert(block.id, NetworkGeometry.bounds(block.outline))
-	return block
-
-
-func _parcelize_block(block: WorldBlock, face: Dictionary, report: Dictionary) -> void:
-	var offsets := PackedFloat64Array()
-	for eid in block.edge_ids:
-		offsets.append((edges[eid] as WorldRoadEdge).width * 0.5)
-	var inset := NetworkGeometry.inset_polygon(block.outline, offsets)
-	if (inset["points"] as PackedVector2Array).is_empty():
-		# Ofset geçersiz: küçükse sliver; büyük düzensiz kama (paralel yollar arası) parselsiz açık arazi sayılır.
-		block.kind = WorldBlock.KIND_OPEN if float(face["area"]) > OPEN_WEDGE_MIN_AREA_M2 else WorldBlock.KIND_SLIVER
-		return
-	block.buildable = inset["points"]
-	block.area = NetworkGeometry.signed_area(block.buildable)
-	if block.area < rules.min_block_area_m2:
-		block.kind = WorldBlock.KIND_SLIVER
-		return
-	var tags := PackedInt32Array()
-	for original: int in inset["edge_of"]:
-		var tag := -1
-		if original >= 0:
-			var e: WorldRoadEdge = edges[block.edge_ids[original]]
-			if WorldRoadEdge.is_road_class(e.road_class):
-				tag = e.id
-		tags.append(tag)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = NetworkRules.stream_seed(net_seed, "parcels:" + block.signature)
-	var params := rules.template_params(block.fabric)
-	var lots := NetworkParcelizer.subdivide(block.buildable, tags, params, rng)
-	var check_land := _needs_land_check(block)
-	var block_rect := NetworkGeometry.bounds(block.outline)
-	var spurs: PackedInt32Array = face["spurs"]
-	block.kind = WorldBlock.KIND_PARCELIZED
-	for lot in lots:
-		var outline: PackedVector2Array = lot["outline"]
-		if check_land and not _outline_on_land(outline):
-			continue
-		if not spurs.is_empty() and _touches_spur(outline, spurs):
-			continue
-		var parcel := _make_parcel(block, block_rect, lot, rng)
-		WorldNetwork.report_add(report, "added_parcels", parcel.id)
-
-
-func _make_parcel(block: WorldBlock, block_rect: Rect2, lot: Dictionary, rng: RandomNumberGenerator) -> WorldParcel:
-	var parcel := WorldParcel.new()
-	parcel.id = _next_parcel_id
-	_next_parcel_id += 1
-	parcel.block_id = block.id
-	parcel.outline = lot["outline"]
-	parcel.centroid = NetworkGeometry.average(parcel.outline)
-	parcel.area = NetworkGeometry.signed_area(parcel.outline)
-	parcel.front_length = float(lot["front_len"])
-	parcel.front_mid = lot["front_mid"]
-	# Küçük blokta bölge/doku bloktan; büyük (kırsal) blokta parsel merkezine göre (bölge sınırı bloğu kesebilir).
-	if block_rect.size.x < BLOCK_REGION_MAX_M and block_rect.size.y < BLOCK_REGION_MAX_M:
-		parcel.region_code = block.region_code
-		parcel.fabric = block.fabric
-	else:
-		parcel.region_code = rules.region_code_at(world, parcel.centroid)
-		parcel.fabric = rules.template_at(parcel.centroid)
-	parcel.detail = rng.randi()
-	parcels[parcel.id] = parcel
-	block.parcel_ids.append(parcel.id)
-	_parcel_grid.insert(parcel.id, NetworkGeometry.bounds(parcel.outline))
-	_set_frontage(parcel, int(lot["frontage"]))
-	return parcel
-
-
-func _set_frontage(parcel: WorldParcel, edge_id: int) -> void:
-	if _journal != null:
-		if parcel.frontage_edge >= 0:
-			_journal.on_edge_parcels(parcel.frontage_edge, _edge_parcels.get(parcel.frontage_edge))
-		_journal.on_edge_parcels(edge_id, _edge_parcels.get(edge_id))
-	if parcel.frontage_edge >= 0 and _edge_parcels.has(parcel.frontage_edge):
-		var old: PackedInt32Array = _edge_parcels[parcel.frontage_edge]
-		var at := old.find(parcel.id)
-		if at >= 0:
-			old.remove_at(at)
-		_edge_parcels[parcel.frontage_edge] = old
-	parcel.frontage_edge = edge_id
-	var list: PackedInt32Array = _edge_parcels.get(edge_id, PackedInt32Array())
-	list.append(parcel.id)
-	_edge_parcels[edge_id] = list
-
-
-## `keep`: yeni bloğa taşınan (kamulaştırma, T-042b) parsel kimlikleri; silinmez, rapora girmez.
-func _remove_block(block_id: int, report: Dictionary, keep: Dictionary = {}) -> void:
-	var block: WorldBlock = blocks[block_id]
-	if _journal != null:
-		var gone: Array[WorldParcel] = []
-		for pid in block.parcel_ids:
-			var p: WorldParcel = parcels[pid]
-			if not keep.has(pid):
-				gone.append(p)
-				_journal.on_edge_parcels(p.frontage_edge, _edge_parcels.get(p.frontage_edge))
-		_journal.on_block_removed(block, gone)
-	for pid in block.parcel_ids:
-		if keep.has(pid):
-			continue
-		var parcel: WorldParcel = parcels[pid]
-		if _edge_parcels.has(parcel.frontage_edge):
-			var list: PackedInt32Array = _edge_parcels[parcel.frontage_edge]
-			var at := list.find(pid)
-			if at >= 0:
-				list.remove_at(at)
-			_edge_parcels[parcel.frontage_edge] = list
-		parcels.erase(pid)
-		_parcel_grid.remove(pid)
-		WorldNetwork.report_add(report, "removed_parcels", pid)
-	if int(_block_by_sig.get(block.signature, -1)) == block_id:
-		_block_by_sig.erase(block.signature)
-	blocks.erase(block_id)
-	_block_grid.remove(block_id)
-
-
-## Blok kıyıya yakınsa parseller tek tek kara denetiminden geçer (hızlı yol: iç bölgedeki bloklar).
-func _needs_land_check(block: WorldBlock) -> bool:
-	var rect := NetworkGeometry.bounds(block.outline)
-	var center := rect.get_center()
-	var idx := world.world_to_index(center.x, center.y)
-	return float(world.shore_distance[idx]) < rect.size.length() * 0.5 + LAND_FAST_PATH_MARGIN_M \
-			or world.landmass_ids[idx] != WorldData.LANDMASS_MAINLAND
-
-
-func _outline_on_land(outline: PackedVector2Array) -> bool:
-	for p in outline:
-		if world.is_water(p.x, p.y):
-			return false
-	var c := NetworkGeometry.centroid(outline)
-	return not world.is_water(c.x, c.y)
-
-
-func _touches_spur(outline: PackedVector2Array, spurs: PackedInt32Array) -> bool:
-	for eid in spurs:
-		if not edges.has(eid):
-			continue
-		var e: WorldRoadEdge = edges[eid]
-		if NetworkGeometry.segment_polygon_distance(node_pos(e.a), node_pos(e.b), outline) <= e.width * 0.5 + 0.5:
-			return true
-	return false
+	return NetworkBlockBuild.refresh(self)
 
 
 func _adjacency_add(node_id: int, edge_id: int) -> void:
@@ -965,7 +737,8 @@ func state_hash(include_owner: bool = true) -> String:
 
 
 ## Taban özeti: yalnız graf (düğüm + kenar sütunları, hub'lar, tohum). Bloklar/parseller graftan ve tohumdan TÜRETİLİR;
-## delta bu grafın üstüne uygulanır (parsel üretim kodu değişse delta yine uygulanır, parseller yeniden türer).
+## delta bu grafın üstüne uygulanır. "Parseller yeniden türer" yalnız mühür öncesi doğrudur; mühür sonrası
+## parsel yeni doğmaz, mevcutlar kimlikle taşınır (ADR-0005 Ek J kural 1).
 func graph_hash() -> String:
 	return graph_hash_full() if _hash_cache == null else StateHash.of({"schema": SCHEMA_VERSION, "seed": net_seed,
 			"nodes_sha": _hash_cache.nodes_sha(self), "edges_sha": _hash_cache.edges_sha(self), "hubs": _hubs_dict()})

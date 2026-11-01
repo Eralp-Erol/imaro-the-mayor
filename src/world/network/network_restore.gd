@@ -63,7 +63,7 @@ static func reinstate_edge(net: WorldNetwork, snap: Dictionary) -> void:
 
 ## İşlemin ürettiği bloğu (ve parsellerini) siler; `_edge_parcels` günlükten ayrıca geri yazılır.
 static func drop_block(net: WorldNetwork, block_id: int) -> void:
-	net._remove_block(block_id, {"removed_parcels": []})
+	NetworkBlockBuild.remove_block(net, block_id, {"removed_parcels": []})
 
 
 static func reinstate_block(net: WorldNetwork, block: WorldBlock) -> void:

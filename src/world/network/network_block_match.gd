@@ -5,13 +5,14 @@ extends RefCounted
 ## `NetworkBlocks._signature` göreli 1e-4 eşdoğrusallık kullanır, 0,01 m'ye yuvarlanmış kısa kenar bölünmesi bunu
 ## aşıp parselli
 ## komşu bloğun imzasını değiştirebilir ve parsellerini yeniden ürettirirdi. Eşleşen blok kimliğini, parsellerini ve
-## `owner_id`lerini korur; imzası yeni yüzün imzasına bağlanır (`WorldNetwork._update_matched_block`).
+## `owner_id`lerini korur; imzası yeni yüzün imzasına bağlanır (`NetworkBlockBuild.update_matched_block`).
 ## Saf; WorldNetwork'ün `_`-önekli üyelerine bilerek erişir.
 
 const CORNER_TOL_M := 0.03
 
 
-## Eşleşen yüzleri günceller (`matched` işaretlenir); eşleşmeyenleri sırayla döndürür (çağıran `_build_block` yapar).
+## Eşleşen yüzleri günceller (`matched` işaretlenir); eşleşmeyenleri sırayla döndürür
+## (çağıran `NetworkBlockBuild.build_block` yapar).
 ## `candidates`: tolerans eşlemesine aday blok kimlikleri (kimlik -> true).
 static func match_faces(net: WorldNetwork, faces: Array[Dictionary], matched: Dictionary,
 		candidates: Dictionary) -> Array[Dictionary]:
@@ -20,7 +21,7 @@ static func match_faces(net: WorldNetwork, faces: Array[Dictionary], matched: Di
 		var old_id := int(net._block_by_sig.get(face["signature"], -1))
 		if old_id >= 0 and not matched.has(old_id) and net.blocks.has(old_id):
 			matched[old_id] = true
-			net._update_matched_block(net.blocks[old_id], face)
+			NetworkBlockBuild.update_matched_block(net, net.blocks[old_id], face)
 		else:
 			pending.append(face)
 	if not net.rules.keep_parcels_on_delta or pending.is_empty():
@@ -37,7 +38,7 @@ static func match_faces(net: WorldNetwork, faces: Array[Dictionary], matched: Di
 		var bid := int(keys.get(corner_key(face["points"]), -1))
 		if bid >= 0 and not matched.has(bid):
 			matched[bid] = true
-			net._update_matched_block(net.blocks[bid], face)
+			NetworkBlockBuild.update_matched_block(net, net.blocks[bid], face)
 		else:
 			rest.append(face)
 	return rest
