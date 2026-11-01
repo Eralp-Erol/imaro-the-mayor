@@ -18,10 +18,18 @@ extends RefCounted
 ##          kohortu (blocs.json kimliği; yerinden edilenler barınan hanelerdi). `enabled` false ise yol kapalıdır;
 ##          KOD varsayılanı kapalıdır (bayrak: yalnız `reactions.json` açar), böylece dosyasız koşular ve GOLDEN A/B
 ##          etkilenmez.
+##          D-014 §3 (2026-11-01) EK ALANLAR (hepsi KOD varsayılanı kapalı/0 = eski davranış):
+##          `floor_pressure_pm`: yerinden edilen hane varken öğe baskısının tabanı (evi yıkılan: yüksek tepki).
+##          `district_floor` / `district_gain`: ilçe geneli, yerinden edilme sürerken haftalık küçük şikâyet
+##          (puan/tarama) = max(district_floor, hane x district_gain / bölge hanesi); 0 = kapalı.
+##          "Yeni ev sunuldu mu" kararı burada DEĞİL, tek noktada: `ReactionRehousing.still_unhoused` (şimdilik hep
+##          "hâlâ barınamıyor": sim'de yeniden iskân mekanizması yok; sahip ayrıca karar verecek).
 
 const KEYS: Array[String] = ["schema", "window_days", "cohorts", "cause", "agenda", "local"]
 const LOCAL_KEYS: Array[String] = ["enabled", "cohort", "neighborhood_households", "min_displacement_pm",
-	"full_displacement_pm", "proximity_share_pm"]
+	"full_displacement_pm", "proximity_share_pm", "floor_pressure_pm", "district_floor", "district_gain"]
+## Yüksek tepki / ilçe şikâyeti alanlarının KOD varsayılanı (eski davranış; yalnız `reactions.json` açar).
+const LOCAL_EXTRA_DEFAULTS := {"floor_pressure_pm": 0, "district_floor": 0, "district_gain": 0}
 const CAUSE_FACTORS: Array[String] = ["displaced_households", "road_proximity"]
 
 
@@ -31,7 +39,7 @@ static func defaults() -> Dictionary:
 			"weights": {"displaced_households": 700, "road_proximity": 300}},
 		"agenda": {"template": "PE-01", "min_displacement_pm": 20, "full_displacement_pm": 100},
 		"local": {"enabled": false, "cohort": "housed", "neighborhood_households": 200, "min_displacement_pm": 20,
-			"full_displacement_pm": 200, "proximity_share_pm": 250},
+			"full_displacement_pm": 200, "proximity_share_pm": 250}.merged(LOCAL_EXTRA_DEFAULTS),
 	}
 
 
@@ -108,4 +116,9 @@ static func _local(raw: Variant, errors: PackedStringArray) -> Dictionary:
 	out["min_displacement_pm"] = ActorSchema.required_int(raw, "min_displacement_pm", 1, 100000, path, errors)
 	out["full_displacement_pm"] = ActorSchema.required_int(raw, "full_displacement_pm", 1, 100000, path, errors)
 	out["proximity_share_pm"] = ActorSchema.required_int(raw, "proximity_share_pm", 0, 1000, path, errors)
+	if raw.has("floor_pressure_pm"):
+		out["floor_pressure_pm"] = ActorSchema.required_int(raw, "floor_pressure_pm", 0, 1000, path, errors)
+	for name: String in ["district_floor", "district_gain"]:
+		if raw.has(name):
+			out[name] = ActorSchema.required_int(raw, name, 0, 100000, path, errors)
 	return out
