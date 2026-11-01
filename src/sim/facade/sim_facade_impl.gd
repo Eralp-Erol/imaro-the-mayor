@@ -135,12 +135,12 @@ func public_works_context() -> PublicWorksContext:
 	return _public_works
 
 
-## v1.5 ek · Klasik geri al açık mı (`UndoWindow`)? Salt okunur.
+## v1.6 · Klasik geri al açık mı (`UndoWindow`)? Salt okunur.
 func undo_available() -> bool:
 	return _public_works != null and bool(UndoWindow.status(_public_works, _state)["open"])
 
 
-## v1.5 ek · Yolu yıkma maliyeti (önizlemenin `cost`u); yok/yıkılamaz/maliyet kurulu değil: -1.
+## v1.6 · Yolu yıkma maliyeti (önizlemenin `cost`u); yok/yıkılamaz/maliyet kurulu değil: -1.
 func demolish_cost(command_id: int) -> int:
 	var preview := validate_command(SimCommand.public_work_demolish(command_id))
 	if preview.is_rejected() or not bool(preview.args.get("cost_available", false)):

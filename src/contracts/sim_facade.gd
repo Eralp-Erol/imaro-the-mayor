@@ -114,7 +114,7 @@ func public_works() -> Array[PublicWorkView]:
 	return []
 
 
-## v1.5 isteğe bağlı ek (T-042c, D-014 §1) · KLASİK GERİ AL açık mı? Başka bir yol/yıkım yapılana, geri alınana ya da
+## v1.6 (T-042c, D-014 §1) · KLASİK GERİ AL açık mı? Başka bir yol/yıkım yapılana, geri alınana ya da
 ## o yolun halk tepkisi siyaset taramasına girene kadar en son yol geri alınabilir (`public_work.undo_last`). Ret nedeni
 ## ve ön izleme için `validate_command(SimCommand.public_work_undo_last())`
 ## (`public_work.reject.undo_window_closed`, `args.cause`). Salt okunur.
@@ -123,7 +123,7 @@ func undo_available() -> bool:
 	return false
 
 
-## v1.5 isteğe bağlı ek (T-042c, D-014 §1) · Yolu YIKMA maliyeti (gösterge, bütçe kısıtı yok; değer veri/config'te):
+## v1.6 (T-042c, D-014 §1) · Yolu YIKMA maliyeti (gösterge, bütçe kısıtı yok; değer veri/config'te):
 ## `command_id` = `PublicWorkView.command_id`. Dönüş: maliyet birimi (>= 0) ya da -1 (yol yok/yıkılamaz/maliyet henüz
 ## kurulu değil). Ayrıntı ve ret nedeni için `validate_command(SimCommand.public_work_demolish(command_id))`.
 ## Salt okunur. Varsayılan: -1.

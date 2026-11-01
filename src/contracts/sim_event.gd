@@ -21,7 +21,7 @@ const KIND_PUBLIC_WORK_REMOVED := &"public_work.removed"
 ## (`public_work.removed`tan ÖNCE). `subjects`: `command.N`, `region.<kod>`…, `parcel.<id>`… (kod ve kimlik sıralı).
 const KIND_PUBLIC_WORK_EXPROPRIATED := &"public_work.expropriated"
 const KIND_PUBLIC_WORK_RESTORED := &"public_work.restored"
-## v1.5 isteğe bağlı ek (T-042c, D-014): duran yol YIKILDI (alınan parseller geri gelmez). `subjects`:
+## v1.6 (T-042c, D-014): duran yol YIKILDI (alınan parseller geri gelmez). `subjects`:
 ## `command.<yıkım>`, `command.<yol>`, `region.<kod>`…; `args.target_command_id`, `length_cm`, `edges`, `units.<kod>`
 ## (kaybolan kapasite).
 const KIND_PUBLIC_WORK_DEMOLISHED := &"public_work.demolished"

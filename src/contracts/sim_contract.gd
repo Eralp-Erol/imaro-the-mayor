@@ -13,15 +13,18 @@ extends RefCounted
 ##   taken`, `public_work.expropriated/restored` olayları, kamulaştırma ret anahtarları (ADR-0005 Ek F);
 ##   1.5'e isteğe bağlı ek (sürüm artmadı): `SimFacade.agenda_items()`/`AgendaItemView` (sim'in açık gündem öğeleri,
 ##   PE-01 yerinden edilme dahil; soyut olmayan, boş varsayılan; ADR-0005 Ek F son paragraf); aynı ekte gündem yanıtı:
-##   `agenda.respond {item_id, option_id}` komutu + `AgendaItemView.options`/`AgendaOptionView` (yalnız etkili seçenek).
+##   `agenda.respond {item_id, option_id}` komutu + `AgendaItemView.options`/`AgendaOptionView` (yalnız etkili seçenek);
+##   1.6 (T-042c, D-014 §1; ADR-0005 Ek H, ADR-0009) klasik geri al + yolu yık: `public_work.demolish` komutu,
+##   `public_work.demolished` olayı, `SimFacade.undo_available()`/`demolish_cost()` sorguları, yıkım ret anahtarları
+##   (1.5'e "sürüm artmadan ek" olarak girmişti; bundan sonra yeni komut/olay/sorgu her zaman MINOR artırır).
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 5
-const VERSION := "1.5"
+const VERSION_MINOR := 6
+const VERSION := "1.6"
 
 const FIXED_SCALE := 1000
 

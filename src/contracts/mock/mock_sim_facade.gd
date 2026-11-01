@@ -170,7 +170,7 @@ func parcel_changes_since(tick: int) -> ParcelChangeFeed:
 	return feed
 
 
-## v1.5 ek (D-014) · Klasik geri al: yalnız en son yol ve henüz geri alınmadıysa (gerçek sim ile aynı kural).
+## v1.6 (D-014) · Klasik geri al: yalnız en son yol ve henüz geri alınmadıysa (gerçek sim ile aynı kural).
 func undo_available() -> bool:
 	return _undo_open and not _roads.is_empty()
 
