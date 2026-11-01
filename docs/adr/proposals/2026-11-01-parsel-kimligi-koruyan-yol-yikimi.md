@@ -1,6 +1,6 @@
 # ÖNERİ · Parsel kimliğini koruyan yol yıkımı (kamulaştırmalı yol da yıkılabilsin)
 
-- Durum: **ÖNERİ + UYGULAMA (küçük çözüm bulundu, aynı dalda; director incelemesi bekler)**. Numara verilmedi; kabul edilirse ADR-0005'e kısa bir "Ek" olarak ya da `docs/adr/` altına yazılır.
+- Durum: **ÖNERİ + UYGULAMA (küçük çözüm bulundu ve uygulandı, aynı dalda; director incelemesi bekler)**. Numara verilmedi; kabul edilirse ADR-0005'e kısa bir "Ek" olarak ya da `docs/adr/` altına yazılır.
 - Tarih: 2026-11-01 · Yazan: world-engineer · Taban: `c44d414`
 - Karşıladığı gereksinimler: WLD-01 / TEK-03 (tek dünya), TEK-01 / TEK-02 (determinizm, kayıt), CAN-03 (bina doğmaz), CAN-04 (yol çizen oyuncu), D-014 §1 ("yolu yıkma seçeneği hep olsun, maliyeti olsun"), T-042b seçenek A (sim parsel kümesi SABİT)
 - Girdi: `src/world/network/world_network.gd`, `network_expropriation.gd`, `network_block_match.gd`, `network_op_journal.gd`, `src/sim/public_works/demolition_plan.gd`, `public_work_demolish_handler.gd`, `tests/sim/public_works/undo_demolish_real_world_test.gd`, ADR-0005 Ek E/F, ADR-0009 §6.
@@ -59,11 +59,16 @@ Kimlik/determinizm/kayıt:
 - **Bağlantı koparan yıkım:** kenar silme ağı iki bileşene bölerse birleşen yüz "deliklidir" ve havuz o yüze parsel vermez (`_claim` deliklileri atlar). O durumda parseller silinir -> `DemolitionPlan` yine `demolition_changes_parcels` der ve ağı geri alır (güvenli ret, durum değişmez). Denenen iki yol bu duruma düşmedi; kasıtlı bir test yok (UNVERIFIED sınırı). Gerekirse deliklileri destekleyen ayrı bir iş.
 - **Süre:** gerçek Ismeral ağında yıkım süresi ÖLÇÜLMEDİ. Yeniden kurma, kamulaştırmalı eklemeyle aynı kodu kullanır ve yıkımın kuru koşusu (`_dry_run`) bellekte tutulur; yine de ölçülmeli.
 
-## 5. Test planı
+## 5. Test planı ve sonuç (koşuldu)
 
-Plan (uygulama bir sonraki commit'te): `tests/sim/public_works/undo_demolish_real_world_test.gd` (gerçek `NetworkExpropriationPort`): (1) kamulaştırmalı yol yıkılır: komut kabul, parsel kimlik kümesi yol sonrası ile aynı, parsel nesneleri aynı, sayaç ilerlemez, graf özeti taban, `NetworkInvariants.check_parcels` boş, alınan parseller sim'de `taken`, bütçe maliyeti, geri al penceresi kapalı; (2) yıkım + kayıt/yükleme: sonraki 40 tick hash'i eşit; (3) yıkım sonrası ağın `undo` zinciri ile tabana dönüş (bit-bit `state_hash`); `tests/world/network/` altında yıkım havuzu testi; `DemolitionPlan` güvenlik ağı testi (anahtar kapalı dünyada yeniden parsellenen yıkım hâlâ reddedilir). Mevcut üç ret testi yeni doğruya göre güncellendi.
+Kırmızıdan yeşile: yeni dünya testi düzeltme geri alınınca 5 testin 4'ü kırmızı (özellik testleri; 5.'si eski davranış güvenlik ağı testi, iki durumda da yeşil), düzeltmeyle 5/5 yeşil.
 
-Yapılacak / yapılmadı: gerçek Ismeral ölçümü; sahnede görünür doğrulama (`playable.tscn --demo`); deliklileri destekleme.
+- `tests/world/network/network_demolition_parcels_test.gd` (yeni): (1) köşegen/kesen kamulaştırmalı yol yıkılır: kalan parseller AYNI nesne, yeni kimlik yok, kayıp yok, kimlik sayacı ilerlemez, graf özeti taban, alınanlar geri dönmez, `NetworkInvariants` boş; (2) yıkım + geri alma zinciri yol sonrasına ve tabana bit-eşit (`state_hash`), kayıttan yeniden oynatma bit-eşit; (3) yerel yenileme == tam yenileme (iki yol, yıkım); (4) `keep_parcels` kapalı dünyada yıkım hâlâ yeniden parseller ve `DemolitionPlan` güvenlik ağı reddeder; (5) 300 tohumlu rastgele yol özelliği: 209 uygulanabilir yol (195'i blok bölen) yıkıldı, parsel kümesi değişmedi, tamamı geri alınınca tabana bit-eşit.
+- `tests/sim/public_works/undo_demolish_real_world_test.gd`: eski "reddedilir" testi yerine gerçek köprüyle yıkım kabul + kimlik koruması + bütçe + geri al penceresi kapanır; kayıt/yükleme + 40 tick sonrası hash eşit.
+- `demolish_test.gd` ve `resettlement_undo_test.gd`: eski ret testleri yeni doğruya göre yenilendi (sahte dünya ikizinde yıkım kabul; yıkım tahsisi geri ALMAZ, ADR-0009 §6 artık tetiklenebilir ve doğrulanıyor).
+- Dokunulmayanlar geçti: `tests/world/network` (171), `tests/sim/public_works` (188, GOLDEN_X dahil).
+
+Yapılmadı: gerçek Ismeral ağında yıkım süresi ölçümü; `playable.tscn --demo` ile görünür doğrulama (yıkım sonrası zemin yenilemesi, ağaçların alınmış arsada gizli kalması); bağlantı koparan yıkım için kasıtlı test; `verify full`.
 
 ## 6. Tahmini iş ve sahip
 

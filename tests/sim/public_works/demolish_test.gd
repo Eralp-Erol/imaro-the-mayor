@@ -202,30 +202,23 @@ func test_demolishing_an_expropriating_road_neither_restores_buildings_nor_remov
 	assert_array(SimContractChecks.check_facade(f)).is_empty()
 
 
-func test_a_road_whose_removal_would_regenerate_parcels_cannot_be_demolished_and_nothing_changes() -> void:
+func test_a_road_through_parcelled_blocks_is_demolished_without_regenerating_any_parcel() -> void:
 	var run := _setup()
 	var f := _f(run)
 	var net: WorldNetwork = run["net"]
-	var built := _build(run, _diag(), true)  # parselli bloktan geçen yol: kenarını silmek bloğu yeniden parsellerdi
-	var parcels := net.parcels.size()
-	var graph := net.graph_hash()
-	var hash_before := f.state_hash()
+	var built := _build(run, _diag(), true)  # parselli bloktan geçen yol (kenarını silmek eskiden yeniden parsellerdi)
+	var ids_before := net.parcels.keys()
+	var parcel_counter: int = NetworkRestore.counters(net)["parcel"]
 	var r := f.validate_command(SimCommand.public_work_demolish(built.command_id))
-	assert_str(String(r.status)).is_equal("rejected")
-	assert_str(String(r.reason_key)).is_equal(KEYS + "demolition_changes_parcels")
-	assert_int(int(r.args["added_parcels"])).is_greater(0)
-	assert_int(net.parcels.size()).is_equal(parcels)  # kuru koşu ağı geri bıraktı
-	assert_str(net.graph_hash()).is_equal(graph)
-	f.submit_command(SimCommand.public_work_demolish(built.command_id))
-	f.advance(1)
-	assert_int(f.public_works().size()).is_equal(1)
-	assert_str(net.graph_hash()).is_equal(graph)
-	assert_int(net.parcels.size()).is_equal(parcels)
-	assert_bool(f.undo_available()).is_true()  # reddedilen yıkım pencereyi kapatmaz
-	assert_bool(hash_before != f.state_hash()).is_true()  # yalnız tick ilerledi
+	assert_str(String(r.status)).override_failure_message("%s %s" % [r.reason_key, r.args]).is_equal("valid")
+	assert_array(net.parcels.keys()).contains_exactly_in_any_order(ids_before)  # kuru koşu ağı geri bıraktı
+	_demolish(run, built.command_id)
+	assert_int(f.public_works().size()).is_equal(0)
+	assert_array(net.parcels.keys()).contains_exactly_in_any_order(ids_before)  # yeni numara yok, kayıp yok
+	assert_int(NetworkRestore.counters(net)["parcel"]).is_equal(parcel_counter)
+	assert_int(_delta_edges(net)).is_equal(0)
+	assert_bool(f.undo_available()).is_false()  # yıkım klasik geri al penceresini kapatır
 
-
-# --- Olumsuz ---
 
 func test_demolishing_an_unknown_or_already_demolished_road_is_rejected_and_changes_nothing() -> void:
 	var run := _setup()

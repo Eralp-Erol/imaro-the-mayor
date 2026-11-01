@@ -8,7 +8,8 @@ extends CommandHandler
 ## listesinden çıkar ve klasik geri al penceresi kapanır.
 ##
 ## Ret kodları: `no_such_road` (yok/zaten yıkılmış), `demolition_unavailable` (ağda kenarı bulunamadı ya da tam
-## silinemedi), `demolition_changes_parcels` (dünya parselleri yeniden üretirdi; sim parsel kümesi sabit), `busy`
+## silinemedi), `demolition_changes_parcels` (dünya parselleri yeniden üretirdi; sim parsel kümesi sabit; güvenlik
+## ağı: keep_parcels açık dünyada kamulaştırmalı yol da yıkılır, parsel kimlikleri korunur), `busy`
 ## (yalnız gönderimde: dünya meşgul). Hesap `DemolitionPlan`dadır (kuru koşu = önizleme ile uygulama aynı kod).
 
 const _SHAPE_PREFIX := "command.reject."

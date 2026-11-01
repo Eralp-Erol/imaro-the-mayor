@@ -41,9 +41,11 @@ static func is_flagged(op: Dictionary) -> bool:
 	return bool(op.get(KEY_FLAG, false))
 
 
-## Şu an kamulaştırmalı bir işlem yenileniyor mu?
+## Şu an kamulaştırmalı ya da (keep_parcels açıkken) yıkım işlemi yenileniyor mu? Yıkım da havuzlu kurar: birleşen
+## yüzün parselleri kimlikleriyle taşınır, baştan parsellenmez (alınmış parseller dönmez, yeni parsel doğmaz).
 static func active(net: WorldNetwork) -> bool:
-	return net._journal != null and net._journal.expropriating
+	return net._journal != null and (net._journal.expropriating or (net.rules.keep_parcels_on_delta \
+			and str(net._journal.op.get("op", "")) == "remove_edge"))
 
 
 ## Alınacak parseller (artan kimlik): parsel çokgenine çizginin uzaklığı <= yarı genişlik + pay. `width_m` op'taki gibi
