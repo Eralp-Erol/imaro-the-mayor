@@ -10,6 +10,7 @@ Sözün (D-014 §1): "ta ki başka bir yol parçası yapılana kadar geri al se�
 - B) Şimdiki: halk tepki verince geri al kapanır, yalnız yıkma kalır. Tam tutarlı ama sözünle çelişir; kart metni "başka yol yapana kadar" demekten vazgeçer ("halk tepki verene kadar" der).
 - C) Tam "hiç olmamış gibi": halk, geri al açıkken tepki vermesin; yolu "kesinleştirince" (başka yol ya da yıkım) tepki başlasın. Tam temiz geri alma, ama oyuncu başka yol yapmazsa tepki hiç gelmez; bir süre sınırı (kaç gün?) ayrıca karar ister ve tepki zamanı değişir.
 - Beklerken: B (bugünkü davranış). Yalnız sim kuralı ve ret/onay metni değişir; veri değil kod, yanıt gelince kısa iş.
+- Ek (design-director, 2026-11-01; karar değil, HATA): beklerken de yıkımlı yol onay kartı (`expropriation.undo_note`) "Başka bir yol yapana kadar ... geri alabilirsiniz" diyor; bu bugünkü davranışla çelişen bir vaat. Karar gelene dek metin bugünkü kuralı söylemeli ("halk tepki verene kadar, en çok birkaç gün").
 
 ---
 
@@ -33,6 +34,7 @@ Bunlar karar DEĞİLDİR. Hepsi `data/sim/public_works/road_works.json` `expropr
 - B) Daha yumuşak (örn. %10 / %40): taşınan aile neredeyse susar; yeni değerler ölçülmedi.
 - C) Daha sert (örn. %40 / %80): taşınma tepkiyi az azaltır; yeni değerler ölçülmedi.
 - Bekleyen: `residual_reaction_pm` 200, `partial_relief_pm` 600; yukarı yuvarlama (en az 1 hane kalsın) kod kuralı, veride değil.
+- Ek (design-director, 2026-11-01, kod okumasıyla hesap, koşulmadı): "%20 kalır" HANE sayısı içindir. Gündem öğesinin gücü (baskı) için ayrıca "evi yıkılan varsa taban 600/1000" kuralı (D-014 §3, `local.floor_pressure_pm`) var ve en az 1 hane kaldığı için hep işler. Örnek: 34 hanenin hepsine tam ev bulunsa bile (yakında oturan yokken) baskı 940'tan yalnız 670'e iner (~%30 azalma). Yani bugün "biraz kalsın" (D-016 §2) pratikte "çoğu kalsın". Bu kartın sorusu değil, sözünle uyum düzeltmesi: taban ev bulunamayan hane payıyla ölçeklenmeli (stüdyo işi). Ayrıca "duruma göre" bugün yalnız evin uygunluğuna (tam/kısmi) göre; ailenin varlığına/gelirine göre değil (D-015; T-065 Aşama 2).
 
 **Kart R2 · "Yakın ve uygun kira" ne demek? (spec §4; D-015)**
 Şimdi: hedef bölgenin kirası kaynaktan en çok %25 pahalı ve hedefin yola en yakın yapılı konutu 800 m içinde ise ev "tam"; ikisi de aşılıyorsa ev sayılmaz. "Yer" ölçüsü yıkılan parselin merkezine değil YOLUN ÇİZGİSİNE göre (ucuz ve belirleyici); bir yol hedefin boş evlerinin en çok %30'unu alır.
@@ -48,7 +50,39 @@ Bunlar karar DEĞİLDİR. Hepsi `data/sim/public_works/road_works.json` `expropr
 - C) Bedeli hiç yazma, yalnız hane sayısını göster: bütçe satırı kalkar.
 - Bekleyen: `support_months` 12, `move_grant` 0.
 
-Not (karar gerektirmeyen): politika paneli konumu UI işidir (`ui-engineer`); sim yalnız `policies()` ve `policy.set` verir.
+Not (karar gerektirmeyen): politika paneli konumu UI işidir (`ui-engineer`); sim yalnız `policies()` ve `policy.set` verir. (Güncelleme: konum alt çubuğa yeni bir sekme eklediği için sahibe Kart P1 olarak soruluyor, aşağıda.)
+
+---
+
+## Tasarım sadakati incelemesi · gece teslimi — sahibe 3 yeni kart (design-director, 2026-11-01; hiçbiri engellemiyor, mevcut davranışla ilerler)
+Kaynak: D-014 §1/§3, D-015, D-016; kod ve QA turu 3 okuması (`production/log/2026-11-01-qa-oynanis-turu-3.md` §5). Bunlar karar DEĞİLDİR.
+
+**Kart E1 · Ev bulunamayan aileler: tepki ne kadar sürsün, ev sonradan bulunabilsin mi? (Q-032)**
+Sözün (D-014 §3): "onlara yeni ev sunulmadığı sürece tepki olsun." Bugün ev, yalnız yolun yapıldığı an aranır; o an yoksa aile sıraya girmez ve tepkisi yaklaşık 1 yılda (360 gün) kendiliğinden söner, ev hiç sunulmasa da. Ayrıca gerçek Ismeral'de bugün hiçbir ilçede boş ev yok (her ilçede konut açığı; QA turu 3 ölçümü): Yeniden iskân açık olsa da şu an hiçbir aileye ev bulamıyor, oyuncu politikanın faydasını göremiyor.
+- A) Önerilen: Sıraya girsinler. Politika açıkken bu aileler bekleme listesine girer; yatırımcıların bitirdiği yeni evler önce onlara verilir (belediye bina yapmaz). Ev verilene dek tepki sürer, verilince "biraz kalır". Sözüne en yakın; orta büyüklükte iş.
+- B) Şimdiki: ev o an yoksa aile kendi başına kalır, tepki ~1 yılda söner. Ek iş yok, ama bugünkü haritada politika işe yaramıyor.
+- C) Ev yoksa kira yardımı: belediye kira yardımı öder, tepki "kısmi ev" kadar azalır. Bedel sayısı ve para birimi (Q-003) ayrıca sorulur.
+- Beklerken: B.
+
+**Kart K1 · Yolu yıkmanın bedeli ne kadar olsun? (Q-033)**
+Sözün (D-014 §1): "yolu yıkma seçeneği de hep olsun (bu bir cost olacak)." Şimdi: metre başına 15 birim (yer tutucu). 134 m yol yapmak 1.300, yıkmak 1.995: yıkmak yapmaktan pahalı. Kasadan gerçekten düşer, hiçbir işlemi engellemez (gösterge bütçe, T-014).
+- A) Önerilen: yapım bedeli kadar (134 m: 1.300). Anlaşılır: "yaptığın kadar ödersin".
+- B) Şimdiki: metre başına 15 (yapımdan ~1,5 kat pahalı, caydırıcı).
+- C) Yapımın yarısı: yıkmak ucuz, oyuncu daha rahat düzeltir.
+- Beklerken: B (`data/sim/budget/budget_config.json` `demolish_cost_per_m`).
+
+**Kart P1 · Politikalar düğmesi nerede dursun? (Q-034)**
+Alt çubukta "Yönetim" sekmesi daha önce gizliydi; artık [İnşa | İmar | Yönetim] görünüyor ve Yönetim'in içinde yalnız "Politikalar" var. İlk 5 dakikaya (D-008) bir sekme eklendi.
+- A) Önerilen: Böyle kalsın (Yönetim > Politikalar); bütçe ve meclis de ileride buraya gelir.
+- B) Yönetim sekmesi ilk kamulaştırmalı yola kadar gizli kalsın; yol kartındaki "Politikalar'dan açabilirsiniz" notu oraya götürsün.
+- C) Ayrı sekme olmasın; politika bütçe/meclis panellerinin içinde dursun.
+- Beklerken: A.
+
+Karar gerektirmeyen sapmalar (stüdyo düzeltir; kullanıcı sözü açık):
+- D-014 §1 "yolu yıkma seçeneği hep olsun": arayüz yalnız EN SON yolu yıkabiliyor (`road_draw_panel.gd` `tool.last_road()`); daha eski bir oyuncu yolunu seçip yıkmanın yolu yok. Sim her ayakta yolu kabul ediyor (`public_work_demolish_handler.gd` `standing_road`), eksik yalnız seçim arayüzü. (T0'dan kalan şehir yollarının yıkılıp yıkılamayacağı sorulmadı; şimdilik yalnız oyuncu yolları.)
+- R1 ekindeki baskı tabanı (D-016 §2 "biraz").
+- G1 ekindeki onay kartı vaadi.
+- Eski metinler hâlâ D-014 §3'ün "sunulursa hiç olmasın" sözünü anıyor (`data/politics/reactions.json` `_notes`, `reaction_rehousing.gd` başlığı); davranış D-016 §2'ye uygun, yalnız açıklama bayat.
 
 ## EN GÜNCEL: sahibe 4 kart — 2026-11-01 CEVAPLANDI → D-014 (aşağıdaki metin tarihî kayıt)
 Bunlar karar DEĞİLDİR; yanıtlanınca kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Sayılar yalnız kayıtlardan; "ölçülmedi" yazan yerde ölçüm yok. Aşağıdaki eski "Kart 2 (Q-025)" ve "Kart 3 (Q-014)" bunlarla örtüşür: Kart B, Q-014'ün güncel hâlidir; Kart C, Q-025'in "yolun yıkımı" kısmını somutlar.
@@ -142,6 +176,9 @@ Durumlar:
 | Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | answered → D-014 | — |
 | Q-030 | Geri al penceresi: halk tepki verdikten sonra da açık kalsın mı (A açık kalsın, iz söner / B bugünkü / C tepki beklesin) | **open** | — (engellemiyor) |
 | Q-031 | Yıkılan yolun yerinde kalan boş şerit ne olsun (A boş belediye arazisi / B çim ve ağaç / C yeniden arsa) | **open** | — (engellemiyor) |
+| Q-032 | Ev bulunamayan aileler: bekleme listesi / ~1 yılda söner (bugünkü) / kira yardımı (Kart E1) | **open** | — (engellemiyor) |
+| Q-033 | Yolu yıkmanın bedeli: yapım kadar / metre başı 15 (bugünkü) / yapımın yarısı (Kart K1) | **open** | — (engellemiyor) |
+| Q-034 | Politikalar düğmesinin yeri: Yönetim sekmesi (bugünkü) / ilk kamulaştırmaya kadar gizli / bütçe-meclis içinde (Kart P1) | **open** | — (engellemiyor) |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
