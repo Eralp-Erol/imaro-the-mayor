@@ -14,6 +14,8 @@ var error: String = ""
 var initial_balance: int = 0
 var tax_rate_pm: int = 0
 var public_cost_share_pm: int = 0
+## T-042c (D-014 §1): yolu YIKMA gideri, yolun metresi başına (birimsiz tamsayı; gösterge, kasa kısıt değil).
+var demolish_cost_per_m: int = 0
 ## Yol giderinin birim maliyetini aldığı kullanım (`economy_config.json uses` anahtarı).
 var road_cost_use: StringName = &"residential"
 var ledger_max: int = 64
@@ -54,6 +56,8 @@ static func from_dict(data: Dictionary) -> BudgetConfig:
 	if problem.is_empty():
 		problem = _read_int(data["road"], "road", "public_cost_share_pm", 0, 1000)
 	if problem.is_empty():
+		problem = _read_int(data["road"], "road", "demolish_cost_per_m", 0, 1000000)
+	if problem.is_empty():
 		problem = _read_int(data["ledger"], "ledger", "max_entries", 1, 100000)
 	if problem.is_empty():
 		problem = _read_int(data["ledger"], "ledger", "view_reason_limit", 1, 1000)
@@ -68,6 +72,7 @@ static func from_dict(data: Dictionary) -> BudgetConfig:
 		return _invalid(problem)
 	cfg.tax_rate_pm = int(data["tax"]["tax_rate_pm"])
 	cfg.public_cost_share_pm = int(data["road"]["public_cost_share_pm"])
+	cfg.demolish_cost_per_m = int(data["road"]["demolish_cost_per_m"])
 	cfg.road_cost_use = StringName(use)
 	cfg.ledger_max = int(data["ledger"]["max_entries"])
 	cfg.view_reason_limit = int(data["ledger"]["view_reason_limit"])
@@ -89,7 +94,7 @@ static func _read_int(section: Dictionary, section_name: String, key: String, lo
 ## Bilinmeyen alt anahtarları yakalar (yazım hatası).
 static func _only_known(data: Dictionary) -> String:
 	var known := {
-		"tax": ["tax_rate_pm"], "road": ["public_cost_share_pm", "cost_use"],
+		"tax": ["tax_rate_pm"], "road": ["public_cost_share_pm", "cost_use", "demolish_cost_per_m"],
 		"ledger": ["max_entries", "view_reason_limit", "reason_parcel_limit"],
 	}
 	for section: String in known:

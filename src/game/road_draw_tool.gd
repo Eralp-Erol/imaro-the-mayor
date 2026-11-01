@@ -27,6 +27,7 @@ const MSG_START_NOT_ON_ROAD := &"road.start_not_on_road"
 const MSG_DONE := &"road.step.done"
 const MSG_FAILED := &"road.step.failed"
 const MSG_UNDONE := &"road.undo_done"
+const MSG_DEMOLISHED := &"road.demolish_sent"
 ## T-042b (D-011): sim'in `crosses_parcels` retti kamulaştırma teklifini (`taken_parcels` > 0) taşıyorsa teklif vardır.
 const REJECT_CROSSES_PARCELS := &"public_work.reject.crosses_parcels"
 const REJECT_EXPROPRIATION_CHANGED := &"public_work.reject.expropriation_changed"
@@ -270,8 +271,29 @@ func undo_last() -> CommandResult:
 	return result
 
 
+## Klasik geri al açık mı (D-014 §1)? Başka bir yol/yıkım yapılana, geri alınana ya da halk tepkisi siyaset taramasına
+## girene kadar yalnız SON yol geri alınır; sim söyler (`SimFacade.undo_available`).
 func has_undoable_road() -> bool:
-	return not _facade.public_works().is_empty()
+	return _facade.undo_available()
+
+
+## Yolu yık (D-014 §1): her zaman denenebilir, maliyeti vardır, kamulaştırılan parselleri/binaları geri getirmez.
+## `road_command_id` = `PublicWorkView.command_id`. Dönüş: sim sonucu (ret nedeni sonuçta).
+func demolish_road(road_command_id: int) -> CommandResult:
+	var result := _facade.submit_command(SimCommand.public_work_demolish(road_command_id))
+	if result.is_rejected():
+		message = MSG_FAILED
+		message_args = {"reason_key": result.reason_key, "args": result.args}
+	else:
+		message = MSG_DEMOLISHED
+		message_args = {}
+	changed.emit()
+	return result
+
+
+## Yolu yıkmanın gösterge maliyeti (sim önizlemesi); yok/yıkılamaz/maliyet kurulu değil: -1.
+func demolish_cost(road_command_id: int) -> int:
+	return _facade.demolish_cost(road_command_id)
 
 
 ## Sim olayları: gönderilen komutun sonucu. `public_work.built` -> yeni yol için PICK_A; `command.rejected` -> REVIEW.

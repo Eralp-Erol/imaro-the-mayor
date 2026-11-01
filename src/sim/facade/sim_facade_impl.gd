@@ -133,13 +133,28 @@ func public_works_context() -> PublicWorksContext:
 	return _public_works
 
 
-## v1.3 · Ağa eklenmiş oyuncu yolları, eskiden yeniye (sim durumundan; değer kopyası).
+## v1.5 ek · Klasik geri al açık mı (`UndoWindow`)? Salt okunur.
+func undo_available() -> bool:
+	return _public_works != null and bool(UndoWindow.status(_public_works, _state)["open"])
+
+
+## v1.5 ek · Yolu yıkma maliyeti (önizlemenin `cost`u); yok/yıkılamaz/maliyet kurulu değil: -1.
+func demolish_cost(command_id: int) -> int:
+	var preview := validate_command(SimCommand.public_work_demolish(command_id))
+	if preview.is_rejected() or not bool(preview.args.get("cost_available", false)):
+		return -1
+	return int(preview.args.get("cost", 0))
+
+
+## v1.3 · Ağda DURAN oyuncu yolları, eskiden yeniye (sim durumundan; değer kopyası). Yıkılmış yol listede yoktur.
 func public_works() -> Array[PublicWorkView]:
 	var out: Array[PublicWorkView] = []
 	var d := PublicWorksState.data(_state)
 	if d.is_empty():
 		return out
 	for work: Dictionary in d["works"]:
+		if not PublicWorksState.is_standing_road(work):
+			continue
 		var v := PublicWorkView.new()
 		v.provenance = provenance()
 		v.work_id = work["id"]

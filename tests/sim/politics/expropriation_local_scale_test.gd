@@ -147,7 +147,7 @@ func test_one_road_opens_one_item_only_not_a_stream_over_a_year() -> void:
 	assert_int((pol(h)[LOCAL_KEY]["opened"] as Dictionary).size()).is_equal(1)
 
 
-func test_two_roads_open_two_items_one_after_the_other_never_a_burst() -> void:
+func test_a_road_rebuilt_after_an_undo_opens_only_its_own_item_never_a_burst() -> void:
 	var h: PoliticsHandle = _world(true, _local())["handle"]
 	h.facade.submit_command(SimCommand.public_work_undo_last())  # aynı parseller geri gelir; ikinci komut ayrı bir yol
 	h.facade.advance(1)
@@ -161,9 +161,10 @@ func test_two_roads_open_two_items_one_after_the_other_never_a_burst() -> void:
 		for item: Dictionary in _local_items(h):
 			open += 1 if item["status"] == "open" else 0
 		most_open = maxi(most_open, open)
+	# D-014 §1: geri alınan ilk yolun tepkisi silindi (öğesi hiç açılmadı); yalnız yeniden yapılan yol öğe alır
 	assert_int((pol(h)[LOCAL_KEY]["opened"] as Dictionary).size()).override_failure_message(
-		"her yol (komut) kendi öğesini alır").is_equal(2)
-	assert_int(_local_items(h).size()).is_equal(2)
+		"her yol (komut) kendi öğesini alır; geri alınanın öğesi yok").is_equal(1)
+	assert_int(_local_items(h).size()).is_equal(1)
 	assert_int(most_open).override_failure_message("aynı anda tek yerinden edilme öğesi").is_less_equal(1)
 
 
@@ -208,11 +209,11 @@ func test_the_threshold_and_scale_are_data_not_code() -> void:
 	assert_int(_local_items(off).size()).is_equal(0)
 
 
-func test_the_reaction_is_not_undone_when_the_road_is_undone() -> void:
+func test_the_reaction_is_removed_when_the_road_is_undone_before_the_scan() -> void:
 	var h: PoliticsHandle = _world(true, _local())["handle"]
 	h.facade.submit_command(SimCommand.public_work_undo_last())
 	h.facade.advance(14)
-	assert_int(_local_items(h).size()).override_failure_message("halk tepkisi geri alınmaz (D-011)").is_equal(1)
+	assert_int(_local_items(h).size()).override_failure_message("geri alınan yolun tepkisi kalmaz (D-014)").is_equal(0)
 
 
 func test_runs_without_expropriation_never_write_the_local_state() -> void:

@@ -234,7 +234,7 @@ func test_protected_structure_reject_offers_no_expropriation() -> void:
 
 # --- geri alma onayı ---
 
-func test_undoing_a_demolishing_road_needs_a_second_step_that_states_the_reaction_stays() -> void:
+func test_undoing_a_demolishing_road_needs_a_second_step_that_states_the_reaction_is_removed() -> void:
 	_review()
 	_tool.accept_offer()
 	_tool.confirm()
@@ -246,7 +246,7 @@ func test_undoing_a_demolishing_road_needs_a_second_step_that_states_the_reactio
 	assert_bool(panel.undo_pending()).is_true()
 	assert_int(_facade.public_works().size()).is_equal(1)   # henüz geri alınmadı
 	var text := panel.joined_text()
-	assert_str(text).contains("Yıkımlı yolu geri almak binaları geri getirir, halkın tepkisi geri gelmez.")
+	assert_str(text).contains("Yıkımlı yolu geri almak binaları geri getirir ve o yola bağlı halk tepkisini siler.")
 	assert_str(text).contains("Geri gelecek: 2 bina, 12 konut birimi, 4 ticaret birimi.")
 	panel.undo_keep_button().pressed.emit()
 	assert_bool(panel.undo_pending()).is_false()

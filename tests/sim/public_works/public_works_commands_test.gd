@@ -271,6 +271,8 @@ func test_undo_without_a_road_is_rejected() -> void:
 	assert_str(f.state_hash()).is_equal(before)
 
 
+## D-014 §1: klasik geri al YIĞILMAZ. Son yol (B) gidince bir önceki (A) yeni bir yol yapılana kadar geri alınamaz
+## (kaldırmanın yolu yıkımdır, `demolish_test.gd`).
 func test_undo_removes_the_last_road_and_returns_the_graph_and_capacity() -> void:
 	var run := _run()
 	var f := _facade(run)
@@ -291,7 +293,15 @@ func test_undo_removes_the_last_road_and_returns_the_graph_and_capacity() -> voi
 	assert_int(removed.size()).is_equal(1)
 	assert_bool(removed[0].subjects.has("region." + String(P.CODE_B))).is_true()
 	assert_int(int(removed[0].args["removed_command_id"])).is_equal(2)
+	var second := f.validate_command(SimCommand.public_work_undo_last())  # A artık geri alınamaz
+	assert_str(String(second.reason_key)).is_equal("public_work.reject.undo_window_closed")
 	f.submit_command(SimCommand.public_work_undo_last())
+	f.advance(1)
+	assert_int(net.delta.ops.size()).is_equal(1)
+	assert_str(net.graph_hash()).is_not_equal(base_graph)  # A yerinde
+	assert_dict(f.game_state().systems[SECTION]["infra_bonus"]).is_equal({String(P.CODE_A): 10})
+	assert_int(f.public_works().size()).is_equal(1)
+	f.submit_command(SimCommand.public_work_demolish(f.public_works()[0].command_id))  # A'yı kaldırmanın yolu yıkım
 	f.advance(1)
 	assert_str(net.graph_hash()).is_equal(base_graph)
 	assert_dict(f.game_state().systems[SECTION]["infra_bonus"]).is_equal({})

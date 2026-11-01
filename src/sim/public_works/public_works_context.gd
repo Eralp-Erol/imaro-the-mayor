@@ -27,6 +27,17 @@ var pending_notes: PackedInt64Array = PackedInt64Array()
 ## taraması O(parsel)). Anahtar durum NESNESİNİ içerir (kayıt yükleme yeni nesne getirir), tick ve alınan sayısını.
 var problem_memo_key: String = ""
 var problem_memo: Dictionary = {}
+## T-042c · Halk tepkisi katmanı için küçük arayüz (D-014 §1; tepki dosyalarına dokunulmaz). İkisi de İSTEĞE BAĞLI:
+## - `reaction_consumed(state: GameState, command_id: int) -> bool`: bu yolun tepkisi tepki katmanınca işlendiyse
+##   (örn. gündem öğesi açıldı) true -> klasik geri al penceresi kapanır (yarım geri alma yok). Yerleşik kural zaten
+##   "siyaset taraması tepki satırı olan yoldan sonra çalıştı" durumunu kapatır (`UndoWindow`).
+## - `reaction_revoke(state: GameState, command_id: int) -> void`: yol geri alınırken tepki defteri
+##   satırları silindikten SONRA çağrılır; tepki katmanı kendi türetilmiş kaydını (varsa) buradan kaldırır.
+var reaction_consumed: Callable = Callable()
+var reaction_revoke: Callable = Callable()
+## Yıkım kuru koşusunun son sonucu (aynı ağ sürümü + hedef yol için tekrar hesaplanmaz).
+var demolition_memo_key: String = ""
+var demolition_memo: Dictionary = {}
 var _x_memo: Dictionary = {}
 var _x_memo_version: int = -1
 var _x_memo_class: StringName = &""
@@ -111,7 +122,7 @@ func draft_expropriating(points_cm: PackedInt64Array, road_class: StringName, bu
 
 ## Komut kuyruğuna girecek işleyiciler (facade `attach_public_works` kaydeder).
 func handlers() -> Array[CommandHandler]:
-	return [PublicWorkRoadHandler.new(self), PublicWorkUndoHandler.new(self)]
+	return [PublicWorkRoadHandler.new(self), PublicWorkUndoHandler.new(self), PublicWorkDemolishHandler.new(self)]
 
 
 ## Ağın yol listesi sim durumuyla tutarlı mı? (Bu bağlam dışında ağa delta yazılmamış olmalı.)
@@ -234,7 +245,10 @@ func undo_live_op() -> Dictionary:
 
 
 # `add_road` biçiminde rapor: kamulaştırmalı op köprüden (`removed_parcels` = alınan kimlikler), diğeri ağdan.
+# Yıkım satırının `remove_edge` işlemi doğrudan ağa uygulanır.
 func _replay_op(op: Dictionary) -> Dictionary:
+	if str(op.get("op", "")) == PublicWorksState.OP_REMOVE_EDGE:
+		return net.remove_edge(int(op["edge"]))
 	if bool(op.get("expropriate", false)):
 		if expropriation == null or not expropriation.available():
 			return {"ok": false, "error": "kayıtta kamulaştırmalı yol var ama dünya köprüsü yok"}

@@ -162,3 +162,53 @@ func test_a_command_rejected_event_returns_to_review_with_the_reason() -> void:
 	assert_int(_tool.step).is_equal(RoadDrawTool.Step.REVIEW)
 	assert_str(String(_tool.message)).is_equal(String(RoadDrawTool.MSG_FAILED))
 	assert_str(String(_tool.message_args["reason_key"])).is_equal("public_work.reject.duplicate")
+
+
+# --- T-042c (D-014 §1): klasik geri al penceresi + her zaman yıkma ---
+
+func _draw(from_a: Vector2, to_b: Vector2) -> void:
+	_tool.activate()
+	_tool.tap_at(from_a + Vector2(3.0, -2.0), R)
+	_tool.tap_at(to_b, 2.0)
+	_tool.confirm()
+	_facade.advance(1)
+	_tool.on_events(_events())
+
+
+func test_the_undo_option_lasts_only_until_another_road_is_built_and_does_not_stack() -> void:
+	var east := P.GRID_ORIGIN + Vector2(P.DX * P.COLS, 0)
+	_draw(P.GRID_ORIGIN, NORTH)
+	assert_bool(_tool.has_undoable_road()).is_true()
+	var first_id := _facade.public_works()[0].command_id
+	_draw(east, east + Vector2(0, -100))
+	assert_int(_facade.public_works().size()).is_equal(2)
+	assert_bool(_tool.has_undoable_road()).is_true()  # yeni yol için açık
+	var undo := _tool.undo_last()
+	assert_str(String(undo.status)).is_equal("queued")
+	_facade.advance(1)
+	assert_int(_facade.public_works().size()).is_equal(1)
+	assert_int(_facade.public_works()[0].command_id).is_equal(first_id)
+	assert_bool(_tool.has_undoable_road()).is_false()  # ilk yol artık geri alınamaz
+	var again := _tool.undo_last()
+	assert_bool(again.is_rejected()).is_true()
+	assert_str(String(again.reason_key)).is_equal("public_work.reject.undo_window_closed")
+	assert_str(String(_tool.message)).is_equal(String(RoadDrawTool.MSG_FAILED))
+
+
+func test_demolish_is_always_available_costs_something_and_removes_the_road() -> void:
+	assert_bool(_facade.attach_budget(BudgetConfig.load_default())).is_true()  # oyunda PlayableBudget takar
+	_draw(P.GRID_ORIGIN, NORTH)
+	var road_id := _facade.public_works()[0].command_id
+	var edges := _net.edges.size()
+	assert_int(_tool.demolish_cost(road_id)).override_failure_message("yer tutucu maliyet > 0").is_greater(0)
+	var result := _tool.demolish_road(road_id)
+	assert_str(String(result.status)).is_equal("queued")
+	assert_str(String(_tool.message)).is_equal(String(RoadDrawTool.MSG_DEMOLISHED))
+	_facade.advance(1)
+	assert_int(_net.edges.size()).is_less(edges)
+	assert_int(_facade.public_works().size()).is_equal(0)
+	assert_bool(_tool.has_undoable_road()).is_false()
+	assert_int(_tool.demolish_cost(road_id)).is_equal(-1)
+	var again := _tool.demolish_road(road_id)
+	assert_bool(again.is_rejected()).is_true()
+	assert_str(String(again.reason_key)).is_equal("public_work.reject.no_such_road")

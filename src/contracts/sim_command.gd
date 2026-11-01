@@ -17,6 +17,9 @@ const KIND_BUDGET_PROPOSE := &"budget.propose"
 ## değiştirir; özel bina doğurmaz (CAN-03).
 const KIND_PUBLIC_WORK_ROAD := &"public_work.road"
 const KIND_PUBLIC_WORK_UNDO_LAST := &"public_work.undo_last"
+## v1.5 isteğe bağlı ek (T-042c, D-014 §1): duran bir oyuncu yolunu YIK (her zaman mümkün, maliyeti var; alınan
+## parselleri/binaları geri GETİRMEZ). Yalnız koşulu değiştirir, özel bina doğurmaz (CAN-03).
+const KIND_PUBLIC_WORK_DEMOLISH := &"public_work.demolish"
 ## v1.5 isteğe bağlı ek (ADR-0005 Ek F): oyuncunun gündem öğesine yanıtı. `AgendaItemView.options` listesindeki bir
 ## seçeneği seçer; etkisi yalnız mevcut sistem durumlarına (şikâyet, güven, yatırımcı riski ...) zamana yayılarak
 ## yazılır, özel bina doğurmaz (CAN-03).
@@ -43,6 +46,10 @@ const CATALOG := {
 	},
 	&"public_work.undo_last": {
 		"required": {},
+		"optional": {},
+	},
+	&"public_work.demolish": {
+		"required": {"command_id": TYPE_INT},  # yolu yapan komutun kimliği (`PublicWorkView.command_id`)
 		"optional": {},
 	},
 	&"agenda.respond": {
@@ -90,6 +97,11 @@ static func public_work_road(points_cm: PackedInt64Array, road_class: StringName
 ## v1.3 · Son oyuncu yolunu geri al (LIFO).
 static func public_work_undo_last() -> SimCommand:
 	return make(KIND_PUBLIC_WORK_UNDO_LAST, {})
+
+
+## v1.5 (isteğe bağlı ek, T-042c) · Duran yolu yık: `command_id` = `PublicWorkView.command_id` (>= 1).
+static func public_work_demolish(road_command_id: int) -> SimCommand:
+	return make(KIND_PUBLIC_WORK_DEMOLISH, {"command_id": road_command_id})
 
 
 ## v1.5 (isteğe bağlı ek) · Gündem öğesine yanıt: `item_id` = `AgendaItemView.item_id`, `option_id` =

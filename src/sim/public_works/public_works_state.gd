@@ -27,12 +27,26 @@ extends RefCounted
 ##   taken                    TÜRETİLMİŞ {parsel_kimliği: komut_kimliği}: şu an alınmış parseller (geri alma düşürür)
 ##   displaced                {kod: [[tick, hane, komut]...]} yerinden edilme olayları. GERİ ALINMAZ (halk tepkisi
 ##                            geri gelmez, D-011); eski kayıtlar `reaction_keep_days` sonra budanır
-##   nearby                   {kod: [[tick, hane x ağırlık_pm, komut]...]} yakınlık olayları (GERİ ALINMAZ)
+##   nearby                   {kod: [[tick, hane x ağırlık_pm, komut]...]} yakınlık olayları (D-014: o yolun geri
+##                            alınması bu satırları SİLER; halk tepkisi hiç olmamış gibi olur)
+##
+## T-042c (D-014 §1, ek alanlar; sürüm artmaz, yolsuz koşuların durumu aynı kalır):
+##   undo                     KLASİK GERİ AL penceresi {command_id, scans}: yalnız en son yapılan yol geri alınabilir ve
+##                            ancak başka bir yol/yıkım yapılana, geri alınana ya da halk tepkisi siyaset taramasına
+##                            girene kadar (`scans`: yol uygulanırken siyasetin tarama sayacı). {} = pencere kapalı.
+##                            Alan YOKSA (eski kayıt) son yol açık sayılır.
+##   works[i].kind            "demolish" yalnız yıkım satırlarında (yolun her kenarı için bir satır = bir ağ işlemi,
+##                            op `remove_edge`); yol satırlarında yoktur. Yıkım satırı: {kind, command_id (yıkım
+##                            komutu), target_command_id, edge, road_class, length_cm 0, region_units {}}
+##   works[i].demolished_by   YIKILMIŞ yol satırında yıkım komutunun kimliği. Satır silinmez (alınan parseller
+##                            `taken`da kalır, bütçe satırı yerinde durur); kapasite etkisi türetmede düşer.
 
 const KEY := "public_works"
 const VERSION := 1
 const VERSION_EXPROPRIATION := 2
 const OP_ADD_ROAD := "add_road"
+const OP_REMOVE_EDGE := "remove_edge"
+const KIND_DEMOLISH := "demolish"
 const COMMAND_PREFIX := "command."
 const REACTION_BOOKS: Array[String] = ["displaced", "nearby"]
 
@@ -51,6 +65,36 @@ static func is_present(state: GameState) -> bool:
 static func work_count(state: GameState) -> int:
 	var d := data(state)
 	return 0 if d.is_empty() else (d["works"] as Array).size()
+
+
+## Satır bir yıkım satırı mı (kenar başına bir ağ işlemi)?
+static func is_demolition(entry: Dictionary) -> bool:
+	return str(entry.get("kind", "")) == KIND_DEMOLISH
+
+
+## Satır, ağda duran bir oyuncu yolu mu (yıkım satırı da yıkılmış yol da değil)?
+static func is_standing_road(entry: Dictionary) -> bool:
+	return not is_demolition(entry) and not entry.has("demolished_by")
+
+
+## Ayakta duran oyuncu yolu satırları (eskiden yeniye; değer kopyası DEĞİL, bölümdeki sözlükler).
+static func standing_roads(state: GameState) -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	var d := data(state)
+	if d.is_empty():
+		return out
+	for entry: Dictionary in d["works"]:
+		if is_standing_road(entry):
+			out.append(entry)
+	return out
+
+
+## Komut kimliğiyle ayakta duran yol satırı; yoksa {}.
+static func standing_road(state: GameState, command_id: int) -> Dictionary:
+	for entry in standing_roads(state):
+		if int(entry["command_id"]) == command_id:
+			return entry
+	return {}
 
 
 ## Tabana eklenen kapasite birimi (bölüm/kod yoksa 0). Ekonomi karar yolunda çağrılır: O(1).
@@ -147,7 +191,70 @@ static func append_work(state: GameState, base_graph_hash: String, op: Dictionar
 		d["taken"] = {}
 		d["displaced"] = {}
 		d["nearby"] = {}
+	d["undo"] = {"command_id": int(entry["command_id"]), "scans": UndoWindow.scans(state)}  # klasik geri al (D-014)
 	rebuild_derived(d)
+
+
+## Yıkım: `target_command_id` yolunun her kenarı için bir satır + ağ işlemi eklenir (`ops` = remove_edge sırası) ve
+## hedef yol satırı `demolished_by` ile işaretlenir (satır silinmez). Geri al penceresi kapanır. `ops[i]`/`hashes[i]`:
+## i. kenar silindikten sonraki işlem ve graf özeti. Bölüm olmalı.
+static func append_demolition(state: GameState, command_id: int, target_command_id: int, road_class: String,
+		ops: Array, hashes: Array) -> void:
+	var d := data(state)
+	for i in ops.size():
+		(d["ops"] as Array).append((ops[i] as Dictionary).duplicate(true))
+		(d["hashes"] as Array).append(hashes[i])
+		(d["works"] as Array).append({"id": (d["works"] as Array).size() + 1, "kind": KIND_DEMOLISH,
+			"command_id": command_id, "tick": state.tick, "target_command_id": target_command_id,
+			"edge": int((ops[i] as Dictionary)["edge"]), "road_class": road_class, "length_cm": 0,
+			"region_units": {}})
+	for entry: Dictionary in d["works"]:
+		if not is_demolition(entry) and int(entry["command_id"]) == target_command_id:
+			entry["demolished_by"] = command_id
+	d["undo"] = {}
+	rebuild_derived(d)
+
+
+## Klasik geri al penceresini kapatır (geri alma sonrası: yığılmaz). Bölüm yoksa bir şey yapmaz.
+static func close_undo(state: GameState) -> void:
+	var d := data(state)
+	if not d.is_empty():
+		d["undo"] = {}
+
+
+## Komuta ait tepki satırı var mı (yerinden edilme/yakınlık defterleri)?
+static func has_reaction_rows(state: GameState, command_id: int) -> bool:
+	var d := data(state)
+	for book in REACTION_BOOKS:
+		var table: Dictionary = d.get(book, {})
+		for code: Variant in table:
+			for row: Array in table[code]:
+				if int(row[2]) == command_id:
+					return true
+	return false
+
+
+## Komuta ait tepki satırlarını siler (yolun geri alınması: halk tepkisi hiç olmamış gibi). Boşalan bölge anahtarı da
+## silinir. Silinen satır sayısı.
+static func remove_reactions(state: GameState, command_id: int) -> int:
+	var d := data(state)
+	var removed := 0
+	for book in REACTION_BOOKS:
+		if not d.has(book):
+			continue
+		var table: Dictionary = d[book]
+		for code: String in _sorted_keys(table):
+			var kept: Array = []
+			for row: Array in table[code]:
+				if int(row[2]) == command_id:
+					removed += 1
+				else:
+					kept.append(row)
+			if kept.is_empty():
+				table.erase(code)
+			else:
+				table[code] = kept
+	return removed
 
 
 ## Son yolu çıkarır ve döndürür ({} = yok). Türetilmiş sözlükler yeniden hesaplanır.
@@ -158,6 +265,7 @@ static func pop_work(state: GameState) -> Dictionary:
 	(d["ops"] as Array).pop_back()
 	(d["hashes"] as Array).pop_back()
 	var work: Dictionary = (d["works"] as Array).pop_back()
+	d["undo"] = {}  # geri alma yığılmaz: bir sonraki yol, yeni bir yol yapılana kadar geri alınamaz (D-014)
 	rebuild_derived(d)
 	return work
 
@@ -176,9 +284,13 @@ static func derive(works: Array) -> Dictionary:
 	var source := {}
 	var taken := {}
 	for work: Dictionary in works:
+		if is_demolition(work):
+			continue
 		if work.has("expropriation"):
 			for id: Variant in work["expropriation"]["parcel_ids"]:
 				taken[int(id)] = int(work["command_id"])
+		if work.has("demolished_by"):
+			continue  # yıkılmış yolun kapasite etkisi kalmaz; alınan parseller `taken`da kalır
 		var units: Dictionary = work["region_units"]
 		for code: Variant in units:
 			var key := str(code)
@@ -228,12 +340,17 @@ static func validate_data(value: Variant) -> String:
 			+ _work_problem(value["works"][i], i)
 		if not problem.is_empty():
 			return "durum.systems.public_works[%d]: %s" % [i, problem]
+		if is_demolition(value["works"][i]) != (str(value["ops"][i].get("op", "")) == OP_REMOVE_EDGE):
+			return "durum.systems.public_works[%d]: satır türü işlemle uyuşmuyor" % i
 		if version == VERSION and (value["works"][i] as Dictionary).has("expropriation"):
 			return "durum.systems.public_works[%d]: v1 kayıtta kamulaştırma satırı olamaz" % i
 	var derived := derive(value["works"])
 	if StateHash.of(derived["bonus"]) != StateHash.of(value["infra_bonus"]) \
 			or StateHash.of(derived["source"]) != StateHash.of(value["infra_source"]):
 		return "durum.systems.public_works türetilmiş kapasite yollarla uyuşmuyor"
+	var window := _undo_problem(value) + _demolition_problem(value["works"])
+	if not window.is_empty():
+		return "durum.systems.public_works: %s" % window
 	return _expropriation_section_problem(value, derived) if version == VERSION_EXPROPRIATION else ""
 
 
@@ -252,6 +369,49 @@ static func _expropriation_section_problem(value: Dictionary, derived: Dictionar
 				if not (row is Array) or (row as Array).size() != 3 or typeof(row[0]) != TYPE_INT \
 						or typeof(row[1]) != TYPE_INT or typeof(row[2]) != TYPE_INT:
 					return "durum.systems.public_works.%s satırı [tick, değer, komut] tamsayı üçlüsü değil" % book
+	return ""
+
+
+## Klasik geri al penceresi: yoksa geçerli (eski kayıt); varsa {} ya da son satırdaki yolu gösteren {command_id, scans}.
+static func _undo_problem(value: Dictionary) -> String:
+	if not value.has("undo"):
+		return ""
+	var window: Variant = value["undo"]
+	if not (window is Dictionary):
+		return "undo sözlük değil"
+	if (window as Dictionary).is_empty():
+		return ""
+	if typeof(window.get("command_id", null)) != TYPE_INT or typeof(window.get("scans", null)) != TYPE_INT:
+		return "undo.command_id/scans tamsayı değil"
+	var works: Array = value["works"]
+	if works.is_empty():
+		return "undo penceresi açık ama yol yok"
+	var last: Dictionary = works[works.size() - 1]
+	if is_demolition(last) or last.has("demolished_by") or int(last["command_id"]) != int(window["command_id"]):
+		return "undo penceresi son yolu göstermiyor"
+	return ""
+
+
+## Yıkım satırları: hedef yol satırı var ve `demolished_by` onu yıkan komutu gösteriyor; işaretli her yolun yıkım
+## satırı var.
+static func _demolition_problem(works: Array) -> String:
+	var by_command := {}
+	for entry: Dictionary in works:
+		if not is_demolition(entry):
+			by_command[int(entry["command_id"])] = entry
+	var marked := {}
+	for entry: Dictionary in works:
+		if not is_demolition(entry):
+			continue
+		if typeof(entry.get("target_command_id", null)) != TYPE_INT or typeof(entry.get("edge", null)) != TYPE_INT:
+			return "yıkım satırı hedef/kenar tamsayı değil"
+		var target: Variant = by_command.get(int(entry["target_command_id"]), null)
+		if target == null or int(target.get("demolished_by", -1)) != int(entry["command_id"]):
+			return "yıkım satırı yıkılmış bir yola bağlı değil"
+		marked[int(entry["target_command_id"])] = true
+	for command_id: int in by_command:
+		if (by_command[command_id] as Dictionary).has("demolished_by") and not marked.has(command_id):
+			return "yıkılmış yolun yıkım satırı yok"
 	return ""
 
 
@@ -281,8 +441,10 @@ static func _expropriation_problem(x: Variant) -> String:
 
 
 static func _op_problem(op: Variant) -> String:
+	if op is Dictionary and str(op.get("op", "")) == OP_REMOVE_EDGE:  # yıkım satırının işlemi
+		return "" if typeof(op.get("edge", null)) == TYPE_INT else "op kenar kimliği tamsayı değil"
 	if not (op is Dictionary) or str(op.get("op", "")) != OP_ADD_ROAD:
-		return "op add_road değil"
+		return "op add_road/remove_edge değil"
 	if typeof(op.get("class", null)) != TYPE_STRING or typeof(op.get("width_dm", null)) != TYPE_INT:
 		return "op sınıf/genişlik geçersiz"
 	var pts: Variant = op.get("pts_cm", null)

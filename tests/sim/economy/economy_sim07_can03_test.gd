@@ -208,6 +208,7 @@ func test_every_catalog_command_leaves_development_to_actor_decisions() -> void:
 		&"budget.propose": {"lines": {&"budget.line.roads": 1000}},
 		&"public_work.road": {"points_cm": PackedInt64Array([0, 0, 0, 10000]), "road_class": &"local"},
 		&"public_work.undo_last": {},
+		&"public_work.demolish": {"command_id": 1},  # yol ağda yok: gerekçeli ret, yine bina yok
 		&"agenda.respond": {"item_id": 1, "option_id": &"listen"},  # siyaset kurulu değil: gerekçeli ret, yine bina yok
 	}
 	for kind: StringName in SimCommand.CATALOG:

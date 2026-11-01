@@ -49,14 +49,15 @@ func test_displaced_households_raise_the_housing_cost_grievance_with_a_recorded_
 	assert_int(int(rows[0][2])).is_equal(h.facade.public_works()[0].command_id)
 
 
-func test_undoing_the_road_returns_the_buildings_but_not_the_reaction() -> void:
+func test_undoing_the_road_returns_the_buildings_and_removes_the_reaction() -> void:
 	var world := _world()
 	var h: PoliticsHandle = world["handle"]
 	h.facade.submit_command(SimCommand.public_work_undo_last())
 	h.facade.advance(1)
 	assert_str(String(h.facade.parcel_views(PackedInt64Array([1]))[0].development)).is_equal("built")
 	scan_blocs(h)
-	assert_int(_signal(h, "displacement")).override_failure_message("halk tepkisi geri alınmaz (D-011)").is_greater(0)
+	# D-014 §1 (D-011'i değiştirir): klasik geri al = hiç yapılmamış gibi; tepki siyaset taramasından önce silinir
+	assert_int(_signal(h, "displacement")).override_failure_message("geri alınan yolun tepkisi kalmamalı").is_equal(0)
 
 
 func test_the_reaction_fades_after_the_window() -> void:

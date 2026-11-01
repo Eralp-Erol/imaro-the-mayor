@@ -338,14 +338,14 @@ func test_a_world_report_that_differs_from_the_preview_rejects_and_leaves_state_
 
 # --- Geri alma ---
 
-func test_undo_restores_the_buildings_but_not_the_publics_reaction() -> void:
+func test_undo_restores_the_buildings_and_removes_the_publics_reaction() -> void:
 	var run := _setup()
 	var f := _f(run)
 	var net: WorldNetwork = run["net"]
 	var rows_before := _rows(f, [1, 2, 3, 4, 5])
 	var region_before := _region(f, P.CODE_A)
 	_take(run)
-	var displaced := f.public_works()[0].displaced_households
+	assert_int(PublicWorksState.reaction_rows(f.game_state(), "displaced", "D1").size()).is_equal(1)
 	f.submit_command(SimCommand.public_work_undo_last())
 	f.advance(1)
 	assert_array(_rows(f, [1, 2, 3, 4, 5])).is_equal(rows_before)
@@ -354,9 +354,10 @@ func test_undo_restores_the_buildings_but_not_the_publics_reaction() -> void:
 	assert_int(_view(f, 1).taken_by_command).is_equal(0)
 	assert_str(net.graph_hash()).is_equal(net.base_hash)
 	assert_int(f.public_works().size()).is_equal(0)
-	var rows := PublicWorksState.reaction_rows(f.game_state(), "displaced", "D1")
-	assert_int(rows.size()).is_equal(1)  # halk tepkisi geri alınmaz (D-011)
-	assert_int(int(rows[0][1])).is_equal(displaced)
+	# D-014 §1: klasik geri al = eylem hiç yapılmamış gibi; o yolun halk tepkisi de silinir (D-011'in "tepki dönmez"i
+	# bu karar ile yürürlükten kalktı)
+	assert_int(PublicWorksState.reaction_rows(f.game_state(), "displaced", "D1").size()).is_equal(0)
+	assert_int(PublicWorksState.reaction_rows(f.game_state(), "nearby", "D1").size()).is_equal(0)
 	var kinds := _kinds(f)
 	assert_int(kinds.rfind(&"public_work.removed")).is_greater(kinds.rfind(&"public_work.restored"))
 	assert_int(kinds.rfind(&"public_work.restored")).is_greater_equal(0)
@@ -372,7 +373,7 @@ func test_undo_preview_names_what_comes_back() -> void:
 	assert_int(int(r.args["restored_built_parcels"])).is_equal(3)
 
 
-func test_undo_is_lifo_across_an_expropriating_and_a_plain_road() -> void:
+func test_undo_is_not_stacked_across_an_expropriating_and_a_plain_road() -> void:
 	var run := _setup()
 	var f := _f(run)
 	_take(run)  # 1: köşegen (1,2,3)
@@ -381,10 +382,12 @@ func test_undo_is_lifo_across_an_expropriating_and_a_plain_road() -> void:
 	f.submit_command(SimCommand.public_work_undo_last())
 	f.advance(1)
 	assert_str(String(_view(f, 5).development)).is_equal("built")
-	assert_str(String(_view(f, 1).development)).is_equal("taken")  # eski yol hâlâ kalıcı
+	assert_str(String(_view(f, 1).development)).is_equal("taken")  # eski yol kalıcı: yalnız son yol geri alınır
+	var again := f.validate_command(SimCommand.public_work_undo_last())  # klasik geri al yığılmaz (D-014)
+	assert_str(String(again.reason_key)).is_equal(KEYS + "undo_window_closed")
 	f.submit_command(SimCommand.public_work_undo_last())
 	f.advance(1)
-	assert_str(String(_view(f, 1).development)).is_equal("built")
+	assert_str(String(_view(f, 1).development)).is_equal("taken")
 
 
 func test_undo_without_the_bridge_is_refused_when_the_last_road_took_parcels() -> void:

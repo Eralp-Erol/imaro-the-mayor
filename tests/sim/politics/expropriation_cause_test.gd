@@ -83,15 +83,12 @@ func test_the_groups_reaction_points_at_the_cause_and_the_react_decision_has_it_
 	assert_bool(Array(react.parent_ids).has(cause_id)).override_failure_message("tepki kararı nedene bağlı").is_true()
 
 
-func test_undoing_the_road_does_not_erase_the_cause_of_the_reaction() -> void:
+func test_undoing_the_road_before_any_scan_leaves_no_reaction_and_so_no_cause() -> void:
 	var h: PoliticsHandle = _world()["handle"]
-	var ref := _command_ref(h)
 	h.facade.submit_command(SimCommand.public_work_undo_last())
 	h.facade.advance(30)
-	var causes := _causes(h, BLOC_HOUSED)
-	assert_int(causes.size()).is_greater(0)
-	assert_bool((causes[causes.size() - 1]["subjects"] as PackedStringArray).has(ref)).is_true()
-	assert_int(int(_factor(causes[causes.size() - 1], F_DISPLACED)["value"])).is_greater(0)
+	# D-014 §1 (D-011'i değiştirir): klasik geri al = hiç yapılmamış gibi; tepki defteri silinir, neden kaydı yazılmaz
+	assert_int(_causes(h, BLOC_HOUSED).size()).is_equal(0)
 
 
 # --- (2) Gündem ve medya ---

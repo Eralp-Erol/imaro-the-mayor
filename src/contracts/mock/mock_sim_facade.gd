@@ -32,6 +32,8 @@ var _next_command_id: int = 1
 ## v1.3 · Uygulanmış oyuncu yolları (LIFO): {"work": PublicWorkView}. Mock geometri hesaplamaz; bölge birimleri senaryo
 ## kuralının `preview.regions` verisidir.
 var _roads: Array[PublicWorkView] = []
+## D-014: klasik geri al penceresi (yeni yol açar, geri alma kapatır).
+var _undo_open: bool = false
 ## v1.5 · Kamulaştırmada alınan parsellerin önceki hali: komut kimliği -> {parsel kimliği -> ParcelView.to_dict()}.
 var _taken_saved: Dictionary = {}
 ## v1.5 · Senaryonun `agenda` etkisiyle açtığı gündem öğeleri (kimlik artan). Geri alma onları kaldırmaz (D-011).
@@ -168,6 +170,11 @@ func parcel_changes_since(tick: int) -> ParcelChangeFeed:
 	return feed
 
 
+## v1.5 ek (D-014) · Klasik geri al: yalnız en son yol ve henüz geri alınmadıysa (gerçek sim ile aynı kural).
+func undo_available() -> bool:
+	return _undo_open and not _roads.is_empty()
+
+
 ## v1.3 · Uygulanmış yollar (eskiden yeniye).
 func public_works() -> Array[PublicWorkView]:
 	var out: Array[PublicWorkView] = []
@@ -296,6 +303,8 @@ func _public_work_problem(command: SimCommand) -> Dictionary:
 	if command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST:
 		if _roads.is_empty():
 			return _problem(CommandResult.REJECT_NOTHING_TO_UNDO, {})
+		if not _undo_open:  # geri alma yığılmaz (D-014)
+			return _problem(&"public_work.reject.undo_window_closed", {"cause": "superseded"})
 		return {}
 	var rule := _match_rule(command)
 	var reject: Variant = rule.get("reject")
@@ -387,9 +396,11 @@ func _apply_public_work(id: int, command: SimCommand, ctx: Dictionary) -> void:
 		if _expropriates(command):
 			_take_parcels(id, w, _expropriation_of(rule), ctx)
 		_roads.append(w)
+		_undo_open = true
 		_emit_road_event(SimEvent.KIND_PUBLIC_WORK_BUILT, &"event.road.built", command_ref, w, {}, ctx)
 	elif command.kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and not _roads.is_empty():
 		var removed: PublicWorkView = _roads.pop_back()
+		_undo_open = false
 		if removed.expropriated:
 			_restore_parcels(removed, ctx, id)
 		_emit_road_event(SimEvent.KIND_PUBLIC_WORK_REMOVED, &"event.road.removed", command_ref, removed,

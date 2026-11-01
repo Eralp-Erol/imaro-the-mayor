@@ -6,9 +6,10 @@
 		"tax_rate_pm": 100
 	},
 	"road": {
-		"_notes": "Yol gideri (is basina, yol onaylaninca) = yolun eklediği altyapi birimi x economy_config.json uses.<cost_use>.cost_per_unit x public_cost_share_pm / 1000; yol geri alinirsa ayni tutar iade edilir. cost_use: hangi kullanimin birim maliyeti tabandir (Q-022 AÇIK: kamulastirma bedeli bu degil).",
+		"_notes": "Yol gideri (is basina, yol onaylaninca) = yolun eklediği altyapi birimi x economy_config.json uses.<cost_use>.cost_per_unit x public_cost_share_pm / 1000; yol geri alinirsa ayni tutar iade edilir. cost_use: hangi kullanimin birim maliyeti tabandir (Q-022 AÇIK: kamulastirma bedeli bu degil). T-042c (D-014 karar 1, kullanici: yolu yikma secenegi hep olsun ve bir maliyeti olsun): demolish_cost_per_m = yolu YIKMANIN gideri, yolun metresi basina birimsiz tamsayi (yer tutucu/gosterge, kasa kisit degil, kanon DEGIL); yikim iade edilmez, kamulastirilan parselleri/binalari geri getirmez.",
 		"public_cost_share_pm": 100,
-		"cost_use": "residential"
+		"cost_use": "residential",
+		"demolish_cost_per_m": 15
 	},
 	"ledger": {
 		"_notes": "max_entries: durumda tutulan kalem defteri uzunlugu (en eski budanir). view_reason_limit: BudgetView.reason_ids icin en yeni kac kalem gerekcesi. reason_parcel_limit: bir vergi gerekcesinin baglanacagi en cok tamamlanan parsel.",

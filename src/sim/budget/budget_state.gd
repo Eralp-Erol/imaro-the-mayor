@@ -11,7 +11,9 @@ extends RefCounted
 ##   revenue_last      son KAPANAN ayın vergi geliri (ay sonunda yazılır; arada değişmez)
 ##   revenue_total     başlangıçtan toplanan vergi
 ##   roads_net         yol gideri - iadeler (başlangıçtan; yol kalemi tutarı)
-##   charged           [{command_id, amount}] yol listesiyle (PublicWorksState.works) aynı sırada tahsil edilmiş yollar
+##   charged           [{command_id, amount, demolished?}] yol listesiyle (PublicWorksState.works, yıkım
+##                     satırları hariç) aynı sırada tahsil edilmiş yollar; `amount` yıkılmış yolda yapım + yıkım
+##                     gideridir (T-042c)
 ##   event_cursor      vergi gerekçesinin tamamlanan parselleri için okunan son olay seq'i
 ##   ledger            [{tick, kind, amount, ref, reason_id}] son `ledger.max_entries` kalem (eskiden yeniye)
 
@@ -20,7 +22,8 @@ const VERSION := 1
 const KIND_TAX := "tax"
 const KIND_ROAD_COST := "road_cost"
 const KIND_ROAD_REFUND := "road_refund"
-const _LEDGER_KINDS: Array[String] = [KIND_TAX, KIND_ROAD_COST, KIND_ROAD_REFUND]
+const KIND_ROAD_DEMOLISH := "road_demolish"
+const _LEDGER_KINDS: Array[String] = [KIND_TAX, KIND_ROAD_COST, KIND_ROAD_REFUND, KIND_ROAD_DEMOLISH]
 const _INT_FIELDS: Array[String] = [
 	"initial_balance", "balance", "revenue_last", "revenue_total", "roads_net", "event_cursor",
 ]

@@ -12,6 +12,8 @@ extends SimSystem
 ##   yeni yol = birim x cost_per_unit(kullanım) x public_cost_share_pm / 1000 gider; listeden düşen (geri alınan,
 ##   LIFO) yol tahsil edildiği tutarla iade. Böylece yol işleyicilerine dokunulmaz; komutlar aynı tick sınırında önce
 ##   uygulanır, sistem aynı tick'te eşitler.
+## - Yol YIKILIRSA (T-042c, D-014 §1; `PublicWorksState.works[i].demolished_by`) yıkım gideri BİR KEZ yazılır: yolun
+##   uzunluğu (m) x `road.demolish_cost_per_m`; yapım gideri iade EDİLMEZ, `charged` satırının tutarına eklenir.
 ## - Her kalem gerekçe kaydı taşır (`actor.municipality.1`; faktör `budget.factor.amount` tutarı, ağırlığı 0 olan
 ##   faktörler girdileri gösterir) ve kalem defterine yazılır. Tüm sayılar `BudgetConfig`tedir.
 ## Sistem DURUM TUTMAZ: kalıcı veri `state.systems["budget"]`; nesnedeki alanlar yalnız değişmez yapılandırmadır.
@@ -21,6 +23,7 @@ const ACTOR := &"actor.municipality.1"
 const DECISION_TAX := &"decision.budget.tax_revenue"
 const DECISION_ROAD_COST := &"decision.budget.road_cost"
 const DECISION_ROAD_REFUND := &"decision.budget.road_refund"
+const DECISION_ROAD_DEMOLISH := &"decision.budget.road_demolish"
 const LINE_ROADS := &"budget.line.roads"
 const FACTOR_AMOUNT := &"budget.factor.amount"
 const _EVENT_COMPLETED := "event.construction.completed"
@@ -77,6 +80,12 @@ func on_monthly(state: GameState) -> void:
 
 # --- Salt okunur sorgular ---
 
+## Yolu yıkma gideri: yol uzunluğu (cm -> m, sıfıra doğru kesme) x metre başına maliyet.
+@warning_ignore("integer_division")
+func demolish_cost(length_cm: int) -> int:
+	return maxi(length_cm, 0) / 100 * _cfg.demolish_cost_per_m
+
+
 ## Yol gideri: eklenen altyapı birimi x cost_per_unit x pay / 1000 (sıfıra doğru kesme).
 ## Önizleme ve tahsilat AYNI hesap.
 @warning_ignore("integer_division")
@@ -114,6 +123,10 @@ func decorate_preview(state: GameState, kind: StringName, args: Dictionary) -> v
 		args["cost_available"] = true
 		args["cost"] = road_cost(int(args["units_total"]))
 		args.erase("cost_reason_key")
+	elif kind == SimCommand.KIND_PUBLIC_WORK_DEMOLISH and args.has("length_cm"):
+		args["cost_available"] = true
+		args["cost"] = demolish_cost(int(args["length_cm"]))
+		args.erase("cost_reason_key")
 	elif kind == SimCommand.KIND_PUBLIC_WORK_UNDO_LAST and args.has("removed_command_id"):
 		var charged := BudgetState.charged_amount(state, int(args["removed_command_id"]))
 		if charged >= 0:
@@ -133,12 +146,30 @@ func _reconcile_roads(state: GameState, d: Dictionary) -> void:
 	while charged.size() > common:  # geri alınan yollar, LIFO iade
 		var entry: Dictionary = charged.pop_back()
 		_book_road(state, d, int(entry["command_id"]), int(entry["amount"]), true, 0)
+	for i in common:  # yıkılan yollar: yıkım gideri bir kez
+		if (works[i] as Dictionary).has("demolished_by") and not bool((charged[i] as Dictionary).get("demolished", false)):
+			_book_demolition(state, d, charged[i], works[i])
 	for i in range(common, works.size()):
 		var work: Dictionary = works[i]
 		var units := PublicWorksState.total_units(work["region_units"])
 		var amount := road_cost(units)
 		charged.append({"command_id": int(work["command_id"]), "amount": amount})
 		_book_road(state, d, int(work["command_id"]), amount, false, units)
+
+
+func _book_demolition(state: GameState, d: Dictionary, entry: Dictionary, work: Dictionary) -> void:
+	var cost := demolish_cost(int(work["length_cm"]))
+	var ref := String(SimContract.ref(SimContract.REF_COMMAND, int(work["demolished_by"])))
+	var factors: Array = [{"name": FACTOR_AMOUNT, "value": cost, "source_ref": ref},
+		{"name": &"budget.factor.length_cm", "value": int(work["length_cm"]), "weight": 0},
+		{"name": &"budget.factor.demolish_cost_per_m", "value": _cfg.demolish_cost_per_m, "weight": 0}]
+	var reason_id := state.record_reason(ACTOR, DECISION_ROAD_DEMOLISH, factors, 0, &"road_demolish",
+		PackedStringArray([ref, String(SimContract.ref(SimContract.REF_COMMAND, int(work["command_id"])))]))
+	entry["amount"] = int(entry["amount"]) + cost
+	entry["demolished"] = true
+	d["roads_net"] = int(d["roads_net"]) + cost
+	d["balance"] = int(d["balance"]) - cost
+	BudgetState.add_ledger(d, state.tick, BudgetState.KIND_ROAD_DEMOLISH, cost, ref, reason_id, _cfg.ledger_max)
 
 
 func _book_road(state: GameState, d: Dictionary, command_id: int, amount: int, refund: bool,
@@ -159,10 +190,16 @@ func _book_road(state: GameState, d: Dictionary, command_id: int, amount: int, r
 		amount, ref, reason_id, _cfg.ledger_max)
 
 
-## Oyuncu yolu listesi (salt okunur; bölüm yoksa boş).
+## Oyuncu YOLU satırları (salt okunur; yıkım satırları hariç; yıkılmış yol satırı yerinde durur; bölüm yoksa boş).
 static func _works_of(state: GameState) -> Array:
 	var section := PublicWorksState.data(state)
-	return [] if section.is_empty() else section["works"]
+	var out: Array = []
+	if section.is_empty():
+		return out
+	for work: Dictionary in section["works"]:
+		if not PublicWorksState.is_demolition(work):
+			out.append(work)
+	return out
 
 
 # --- Vergi ---
