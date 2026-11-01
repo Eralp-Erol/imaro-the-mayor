@@ -80,10 +80,3 @@ static func frontage_holds(net: WorldNetwork, parcel: WorldParcel) -> bool:
 	var d := NetworkGeometry.distance_point_segment(parcel.front_mid, net.node_pos(e.a), net.node_pos(e.b))
 	return d <= e.width * 0.5 + NetworkInvariants.FRONTAGE_TOLERANCE_M
 
-
-## Yüzün çevrimi oyuncu yolu (LAYER_DELTA) kenarı içeriyor mu?
-static func has_delta_edge(net: WorldNetwork, edge_ids: PackedInt32Array) -> bool:
-	for eid in edge_ids:
-		if (net.edges[eid] as WorldRoadEdge).layer == WorldRoadEdge.LAYER_DELTA:
-			return true
-	return false

@@ -13,6 +13,17 @@ Sözün (D-014 §1): "ta ki başka bir yol parçası yapılana kadar geri al se�
 
 ---
 
+## Yol yıkımı · yıkılan yolun yerinde ne olsun — sahibe 1 kart (2026-11-01; engellemiyor, mevcut davranışla ilerler)
+Sözün (D-014 §1): "yolu yıkma seçeneği hep olsun." Kamulaştırma yapan yol da artık yıkılabiliyor (öneri: `docs/adr/proposals/2026-11-01-parsel-kimligi-koruyan-yol-yikimi.md`). Teknik olarak ne olacağı belli: yol kalkar, yolun kalan arsaları aynen yerinde durur, yolun aldığı arsalar geri dönmez. Sorulacak tek şey o boşluğun görünüşü ve geleceği; ben seçmedim.
+
+**Kart Y1 · Yıkılan yolun (ve aldığı arsaların) yerinde ne olsun? (Q-031)**
+- A) Önerilen: Boş belediye arsası kalsın. Bina yok, kimse bina yapmaz, bugün kamulaştırılmış arsaların durduğu gibi; yeni iş gerekmez.
+- B) Yeşil alan olarak görünsün (ağaç/çim). Bu bir görsel iştir; park yapmak oyuncunun işi olduğu için (yol/park çizimi) otomatik park kurmuyoruz, yalnız zemin yeşile döner.
+- C) Boş arsa yeniden satışa/imara açılsın (yatırımcı yeniden bina yapabilir). Doğru ama büyük iş: yeni arsa numaraları, ekonomi ve kayıt değişir.
+- Beklerken: A. Seçim yanıtlanınca yalnız görünüm (B) ya da ayrı bir görev (C) açılır; yıkım kuralı değişmez.
+
+---
+
 ## T-065 Aşama 1 · yeniden iskân çalışma sayıları — sahibe 3 kart (2026-11-01; hiçbiri engellemiyor, sayılar veride)
 Bunlar karar DEĞİLDİR. Hepsi `data/sim/public_works/road_works.json` `expropriation.resettlement` içinde ayarlanabilir (F05-C); yanıt gelince kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Politika varsayılan KAPALI; oyuncu açana dek bugünkü oyun aynen sürer.
 
@@ -130,6 +141,7 @@ Durumlar:
 | Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | answered → D-014 | — |
 | Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | answered → D-014 | — |
 | Q-030 | Geri al penceresi: halk tepki verdikten sonra da açık kalsın mı (A açık kalsın, iz söner / B bugünkü / C tepki beklesin) | **open** | — (engellemiyor) |
+| Q-031 | Yıkılan yolun (ve aldığı arsaların) yerinde ne olsun (A boş belediye arsası / B yeşil zemin / C yeniden satışa açık) | **open** | — (engellemiyor) |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)

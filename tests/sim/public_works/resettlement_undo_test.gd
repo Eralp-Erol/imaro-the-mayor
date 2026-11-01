@@ -120,12 +120,20 @@ func test_a_record_that_does_not_add_up_is_refused_on_load() -> void:
 
 
 
-## Kamulaştıran yol YIKILAMAZ (`public_work.reject.demolition_changes_parcels`), bu yüzden yıkımın tahsisi geri almadığı
-## ve bedeli iade etmediği durumu bu aşamada tetiklenemez; yıkım yalnız düz yolda olur.
-func test_demolishing_an_expropriating_road_is_refused_so_the_allocation_cannot_be_orphaned() -> void:
+## Kamulaştıran yol artık yıkılabilir (D-014 §1 "hep olsun"; parsel kimlikleri korunur). Yıkım geri alma DEĞİLDİR
+## (ADR-0009 §6): tahsis geri alınmaz, taşınan haneler kaynağa dönmez, tepki satırları silinmez.
+func test_demolishing_an_expropriating_road_does_not_undo_the_allocation() -> void:
 	var run := _o1()
+	var source_before := _latent(run, SOURCE)
+	var rows_before := PublicWorksState.reaction_rows(_h(run).state(), "displaced", SOURCE).size()
 	var works := PublicWorksState.standing_roads(_h(run).state())
-	var r := _f(run).submit_command(SimCommand.public_work_demolish(int(works[works.size() - 1]["command_id"])))
-	assert_bool(r.is_rejected()).is_true()
-	assert_str(String(r.reason_key)).is_equal("public_work.reject.demolition_changes_parcels")
-	assert_int(_latent(run, TARGET)).is_equal(56)
+	var road_id := int(works[works.size() - 1]["command_id"])
+	var r := _f(run).submit_command(SimCommand.public_work_demolish(road_id))
+	assert_bool(r.is_rejected()).override_failure_message("%s %s" % [r.reason_key, r.args]).is_false()
+	_f(run).advance(1)
+	assert_int(_roads(run).size()).is_equal(0)  # yol kalktı
+	assert_int(_latent(run, TARGET)).is_equal(56)  # tahsis geri alınmadı
+	assert_int(_latent(run, SOURCE)).is_equal(source_before)
+	assert_int(PublicWorksState.reaction_rows(_h(run).state(), "displaced", SOURCE).size()).is_equal(rows_before)
+	assert_int(_events(run, SimEvent.KIND_PUBLIC_WORK_RESTORED).size()).is_equal(0)  # "geri alındı" olayı yok
+	assert_int(_events(run, SimEvent.KIND_PUBLIC_WORK_DEMOLISHED).size()).is_equal(1)

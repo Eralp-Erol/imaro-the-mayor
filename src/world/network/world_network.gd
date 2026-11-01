@@ -607,8 +607,8 @@ func _build_block(face: Dictionary, report: Dictionary) -> WorldBlock:
 		block.kind = WorldBlock.KIND_OPEN
 	elif world.is_water(center.x, center.y):
 		block.kind = WorldBlock.KIND_UNBUILDABLE
-	elif rules.keep_parcels_on_delta and NetworkBlockMatch.has_delta_edge(self, block.edge_ids):
-		# T-042 v0: oyuncu yolunun çevirdiği yeni yüz PARSELLENMEZ (sim parsel kümesi sabit; D-009 aşama 1).
+	elif rules.keep_parcels_on_delta and sealed:
+		# v0: mühür sonrası yeni yüz (yol çevirdi/yıkım birleştirdi) PARSELLENMEZ; parseller kimlikle taşınır (T-042b).
 		block.kind = WorldBlock.KIND_OPEN
 	else:
 		_parcelize_block(block, face, report)

@@ -14,9 +14,10 @@ extends RefCounted
 ## sayılır; sessiz kısmi yıkım yok.
 ##
 ## Parsel kümesi sim'de SABİTTİR (T-042b seçenek A): silme dünyanın parsellerini yeniden üretirse (`added_parcels`/
-## `removed_parcels` boş değil) işlem başarısız sayılır; çağıran ağı geri alır ve yıkımı reddeder. Bugünkü dünya,
-## kamulaştırmalı yolun kenarları silinince birleşen blokları yeniden parseller (world-engineer işi: parsel kimliklerini
-## koruyan birleştirme); düz yolda parsel değişmez.
+## `removed_parcels` boş değil) işlem başarısız sayılır; çağıran ağı geri alır ve yıkımı reddeder. Dünya, `keep_parcels`
+## açıkken birleşen bloğu BAŞTAN parsellemez: kalan parseller kimlikleriyle taşınır, kamulaştırılanlar geri dönmez
+## (`NetworkExpropriation.active`; öneri 2026-11-01-parsel-kimligi-koruyan-yol-yikimi). Bu denetim güvenlik ağıdır:
+## yalnız dünya yine de parsel değiştirirse (anahtar kapalı dünya, bağlantıyı koparan yıkım) devreye girer.
 
 const MAX_EDGES := 64
 
