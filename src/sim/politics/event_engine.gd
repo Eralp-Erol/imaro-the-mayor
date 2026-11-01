@@ -242,7 +242,7 @@ static func _delivery_for(state: GameState, ctx: PoliticsContext, template: Dict
 static func _region_of_event(state: GameState, ctx: PoliticsContext, bloc: Dictionary,
 		causes: PackedInt64Array) -> String:
 	for i in range(causes.size() - 1, -1, -1):
-		var record := state.reasons.by_id(causes[i])
+		var record := state.reasons.peek(causes[i])  # kopyasız; yalnız okunur
 		for subject: String in record.get("subjects", PackedStringArray()):
 			var code := ctx.regions.code_of(int(SimContract.parse_ref(StringName(subject))["id"])) \
 				if subject.begins_with("parcel.") else ""
