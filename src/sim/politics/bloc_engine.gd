@@ -43,8 +43,9 @@ static func scan(state: GameState, ctx: PoliticsContext) -> void:
 		bloc["size"] = exposure["size"]
 		total_size += int(exposure["size"])
 	var budget := int(ctx.politics.cadence["max_react_records_per_scan"])
+	var scan_cache := {}  # yalnız bu tarama: bölge başına neden adayları (EventCauses), kesimler arası paylaşılır
 	for key in order:
-		budget -= _scan_bloc(state, ctx, key, by_region, total_size, budget)
+		budget -= _scan_bloc(state, ctx, key, by_region, total_size, budget, scan_cache)
 
 
 ## Kesimin güncel görünümü (salt okunur kopya): GroupReactionView üretimi için ham değerler.
@@ -130,7 +131,7 @@ static func _hot_region(cohort: Dictionary, by_region: Dictionary, shares: Dicti
 
 ## Kesimi günceller; harcanan gerekçe kaydı sayısını döner.
 static func _scan_bloc(state: GameState, ctx: PoliticsContext, key: String, by_region: Dictionary, total_size: int,
-		budget: int) -> int:
+		budget: int, scan_cache: Dictionary) -> int:
 	var pol := PoliticsState.data(state)
 	var bloc: Dictionary = pol["blocs"][key]
 	var cohort := ctx.politics.cohort(bloc["cohort"])
@@ -162,7 +163,7 @@ static func _scan_bloc(state: GameState, ctx: PoliticsContext, key: String, by_r
 		+ int(ctx.politics.blocs["organizer_k"]) * share / SCALE, 0, SCALE)
 	if not _should_evaluate(state, ctx, bloc) or budget <= 0:
 		return 0
-	return _evaluate(state, ctx, key, bloc, actor, by_region)
+	return _evaluate(state, ctx, key, bloc, actor, by_region, scan_cache)
 
 
 ## Öncelik ve eksen konumunu kohort kurallarından yeniden türetir: base + k * (kaynak - 500) / 500.
@@ -259,10 +260,10 @@ static func _should_evaluate(state: GameState, ctx: PoliticsContext, bloc: Dicti
 ## Kararı verir, durumu ve olayları yazar; yazılan gerekçe kaydı sayısını döner.
 @warning_ignore("integer_division")
 static func _evaluate(state: GameState, ctx: PoliticsContext, key: String, bloc: Dictionary,
-		actor: Dictionary, by_region: Dictionary) -> int:
+		actor: Dictionary, by_region: Dictionary, scan_cache: Dictionary) -> int:
 	var player := ActorStore.protagonist_key(state, ctx.actors)
 	var trust: Dictionary = ActorInputs.relation_factors(state, ctx.actors, key, player)["trust_in_player"]
-	var causes := EventCauses.region_projects(state, ctx, bloc["exposure"])
+	var causes := EventCauses.region_projects(state, ctx, bloc["exposure"], scan_cache)
 	var subjects := PackedStringArray([key])
 	subjects.append_array(causes["parcel_refs"])
 	var parents: PackedInt64Array = (causes["reason_ids"] as PackedInt64Array).duplicate()
