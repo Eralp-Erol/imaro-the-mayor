@@ -1,6 +1,6 @@
 # ÖNERİ · Parsel kimliğini koruyan yol yıkımı (kamulaştırmalı yol da yıkılabilsin)
 
-- Durum: **ÖNERİ + UYGULAMA (küçük çözüm bulundu ve uygulandı, aynı dalda; director incelemesi bekler)**. Numara verilmedi; kabul edilirse ADR-0005'e kısa bir "Ek" olarak ya da `docs/adr/` altına yazılır.
+- Durum: **KABUL -> ADR-0005 Ek J** (technical-director, 2026-11-01; seçenek A uygulandı `29a2427`). Bağlayıcı metin ve açık kenar durumları (çok parçalı çıkmaz yol, yüklemede yıkım parsel denetimi, `world_network.gd` bölme) Ek J'dedir; bu belge ölçüm/gerekçe kaydı olarak kalır.
 - Tarih: 2026-11-01 · Yazan: world-engineer · Taban: `c44d414`
 - Karşıladığı gereksinimler: WLD-01 / TEK-03 (tek dünya), TEK-01 / TEK-02 (determinizm, kayıt), CAN-03 (bina doğmaz), CAN-04 (yol çizen oyuncu), D-014 §1 ("yolu yıkma seçeneği hep olsun, maliyeti olsun"), T-042b seçenek A (sim parsel kümesi SABİT)
 - Girdi: `src/world/network/world_network.gd`, `network_expropriation.gd`, `network_block_match.gd`, `network_op_journal.gd`, `src/sim/public_works/demolition_plan.gd`, `public_work_demolish_handler.gd`, `tests/sim/public_works/undo_demolish_real_world_test.gd`, ADR-0005 Ek E/F, ADR-0009 §6.
