@@ -161,7 +161,12 @@
       "F1": 3
      },
      "nearby_households": 8,
-     "nearby_parcels": 1
+     "nearby_parcels": 1,
+     "resettlement": {
+      "rehoused": 7,
+      "unplaced": 4,
+      "cost": 5200
+     }
     }
    },
    "effects": [

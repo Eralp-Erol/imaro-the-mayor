@@ -4,6 +4,9 @@ extends RefCounted
 ## `CommandResult.args` ve olay args'ından gelir (`taken_*`, `displaced_households`, `nearby_*`, `restored_*`);
 ## burada hesap ya da tahmin yoktur. Bedel: sim'de kurulu değil (Q-017/T-014, Q-003): "Bedel: henüz
 ## kurulmadı", para simgesi/sayısı yok.
+## T-065 (D-016): yeniden iskân politikası AÇIKKEN sim önizleme/olay args'ına `resettlement_applied`,
+## `rehoused_households`, `unplaced_households`, `resettlement_cost` ekler; kapalıyken bu anahtarlar YOKTUR ve metin
+## bugünküyle aynıdır. Bedel GÖSTERGEDİR (para kısıtı değil, Q-003/T-014).
 ## Teklif = `crosses_parcels` retinin args'ı kamulaştırma önizleme anahtarlarını (`taken_parcels` > 0) taşır;
 ## kamulaştırma kapalıysa ya da dünya sunmuyorsa bu anahtarlar YOKTUR ve "kamulaştırma henüz yok" metni kalır.
 
@@ -79,6 +82,46 @@ static func nearby_line(args: Dictionary) -> String:
 			"households": int(args.get("nearby_households", 0))})
 
 
+## Yeniden iskân tahsisi (açık politika) önizleme/olay args'ında var mı?
+static func has_resettlement(args: Dictionary) -> bool:
+	return bool(args.get("resettlement_applied", false))
+
+
+## Satırlar `{text, tone}` (tone: ok | danger | muted | normal): ev ayrılan, ev olmayan (yol yine yapılır),
+## gösterge bedel.
+## Sayılar YALNIZ sim args'ından; tahsis kaydı yoksa boş.
+static func resettlement_rows(args: Dictionary) -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
+	if not has_resettlement(args):
+		return rows
+	var housed := int(args.get("rehoused_households", 0))
+	var unplaced := int(args.get("unplaced_households", 0))
+	if housed > 0:
+		rows.append({"text": UiText.t(&"resettlement.preview.housed", {"count": housed}), "tone": "ok"})
+	else:
+		rows.append({"text": UiText.t(&"resettlement.preview.none_housed"), "tone": "danger"})
+	if unplaced > 0:
+		rows.append({"text": UiText.t(&"resettlement.preview.unplaced", {"count": unplaced}), "tone": "danger"})
+	rows.append({"text": UiText.t(&"resettlement.preview.cost",
+			{"cost": UiText.money(int(args.get("resettlement_cost", 0)))}), "tone": "normal"})
+	if housed > 0:
+		rows.append({"text": UiText.t(&"resettlement.preview.relief"), "tone": "muted"})
+	return rows
+
+
+static func resettlement_lines(args: Dictionary) -> PackedStringArray:
+	var out := PackedStringArray()
+	for row in resettlement_rows(args):
+		out.append(String(row["text"]))
+	return out
+
+
+## Politika KAPALIyken ve hane yerinden edilecekken "kapalı, ev ayrılmaz" notu gerekir mi? `policy_enabled`: sim'in
+## `PolicyView.enabled` değeri (çağıran, dünyada politika yoksa notu hiç istemez).
+static func resettlement_off_needed(args: Dictionary, policy_enabled: bool) -> bool:
+	return int(args.get("displaced_households", 0)) > 0 and not has_resettlement(args) and not policy_enabled
+
+
 ## İmleç etiketi: geçerli kamulaştırmalı yolda uzunluk + yıkım sayıları.
 static func tip_line(args: Dictionary) -> String:
 	return UiText.t(&"road.tip_valid_demolish", {"length": int(args.get("length_m", 0)),
@@ -101,15 +144,39 @@ static func handles_event(message_key: StringName) -> bool:
 	return message_key == EVENT_EXPROPRIATED or message_key == EVENT_RESTORED
 
 
-## Olay metni: bina yoksa "boş arsa" varyantı (sayılar olay args'ından).
+## Olay metni: bina yoksa "boş arsa" varyantı (sayılar olay args'ından). Yeniden iskân tahsisi varsa "N hane taşındı;
+## K aile için ev yok" eklenir; geri almada `rehoused_returned` varsa dönen hane sayısı eklenir.
 static func event_text(event: SimEvent) -> String:
 	var built := int(event.args.get("built_parcels", 0))
 	var key := event.message_key
 	if built == 0 and int(event.args.get("households", 0)) == 0:
 		key = StringName("%s_vacant" % event.message_key)
-	return UiText.t(key, event.args)
+	var text := UiText.t(key, event.args)
+	if event.message_key == EVENT_EXPROPRIATED:
+		var parts := resettlement_event_parts(event.args)
+		if not parts.is_empty():
+			text += "; " + "; ".join(parts)
+	elif event.message_key == EVENT_RESTORED and int(event.args.get("rehoused_returned", 0)) > 0:
+		text += " " + UiText.t(&"resettlement.event.returned", {"count": int(event.args["rehoused_returned"])})
+	return text
+
+
+## "7 hane taşındı", "4 aile için ev yok" (yalnız sıfırdan büyük ve tahsis kaydı varsa).
+static func resettlement_event_parts(args: Dictionary) -> PackedStringArray:
+	var out := PackedStringArray()
+	if not has_resettlement(args):
+		return out
+	if int(args.get("rehoused_households", 0)) > 0:
+		out.append(UiText.t(&"resettlement.event.moved", {"count": int(args["rehoused_households"])}))
+	if int(args.get("unplaced_households", 0)) > 0:
+		out.append(UiText.t(&"resettlement.event.unplaced", {"count": int(args["unplaced_households"])}))
+	return out
 
 
 ## Şeritte yol satırına eklenen kısa yıkım özeti (aynı komutun `public_work.expropriated` olayından).
 static func strip_suffix(event: SimEvent) -> String:
-	return UiText.t(&"strip.expropriation_suffix", event.args)
+	var text := UiText.t(&"strip.expropriation_suffix", event.args)
+	var parts := resettlement_event_parts(event.args)
+	if not parts.is_empty():
+		text += " · " + "; ".join(parts)
+	return text

@@ -106,7 +106,8 @@ func _signature_of() -> String:
 	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(_plan_hint_needed()), str(tool.is_valid()),
 			str(tool.message),
 			str(tool.message_args), str(tool.has_undoable_road()), str(_facade.speed() == SimFacade.SPEED_PAUSED),
-			str(_undo_refund()), str(tool.expropriate), str(_undo_pending), _demolish_signature()]
+			str(_undo_refund()), str(tool.expropriate), str(_undo_pending), _demolish_signature(),
+			str(_resettlement_policy())]
 	if tool.verdict != null:
 		parts.append(String(tool.verdict.reason_key))
 		parts.append(str(tool.verdict.args))
@@ -304,9 +305,39 @@ func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: 
 	var nearby := ExpropriationText.nearby_line(args)
 	if nearby != "":
 		inner.add_child(_muted(nearby))
+	_add_resettlement_rows(inner, args)
 	inner.add_child(_muted(UiText.t(&"expropriation.react_note")))
 	if accepted:
 		inner.add_child(_muted(UiText.t(&"expropriation.undo_note")))
+
+
+## T-065 · Yeniden iskân satırları (sim args'ından): ev ayrılan hane, ev olmayan hane (yol yine yapılır), gösterge
+## bedel. Politika dünyada var ve KAPALIysa tek satır "kapalı, ev ayrılmaz"; politika yoksa hiçbir şey eklenmez.
+func _add_resettlement_rows(inner: VBoxContainer, args: Dictionary) -> void:
+	for row in ExpropriationText.resettlement_rows(args):
+		var variation: StringName = &""
+		match String(row["tone"]):
+			"ok":
+				variation = UiTheme.V_LABEL_OK
+			"danger":
+				variation = UiTheme.V_LABEL_DANGER
+			"muted":
+				variation = UiTheme.V_LABEL_MUTED
+		var label := UiFactory.label(String(row["text"]), variation, true)
+		_tag(label, "resettlement_row")
+		inner.add_child(label)
+	if _resettlement_policy() == 0 and ExpropriationText.resettlement_off_needed(args, false):
+		var off := _muted(UiText.t(&"resettlement.preview.off"))
+		_tag(off, "resettlement_off")
+		inner.add_child(off)
+
+
+## Sim'in yeniden iskân politikası: 1 açık, 0 kapalı, -1 dünyada yok (not gösterilmez).
+func _resettlement_policy() -> int:
+	for v in _facade.policies():
+		if v.policy_id == PolicyView.ID_RESETTLEMENT:
+			return 1 if v.enabled else 0
+	return -1
 
 
 func _add_buttons() -> void:
@@ -429,6 +460,8 @@ func _add_undo_confirm(last: PublicWorkView) -> void:
 	var restore := ExpropriationText.restore_args(probe.args, last)
 	if not restore.is_empty():
 		inner.add_child(UiFactory.label(UiText.t(&"expropriation.undo_restores", restore), &"", true))
+	if last.resettlement_applied and last.rehoused_households > 0:   # T-065: taşınan haneler (hedefte kalan kadarı) döner
+		inner.add_child(_muted(UiText.t(&"resettlement.undo_returns", {"count": last.rehoused_households})))
 	var refund := _undo_refund()
 	if refund >= 0:
 		inner.add_child(_muted(UiText.t(&"road.refund_line", {"units": UiText.number(refund)})))
