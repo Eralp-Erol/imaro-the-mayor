@@ -36,14 +36,14 @@ static func refresh(net: WorldNetwork, j: NetworkOpJournal) -> Dictionary:
 		NetworkExpropriation.rebuild(net, pending, matched, report, affected.keys())
 		return report
 	for face in pending:
-		var block: WorldBlock = net._build_block(face, report)
+		var block: WorldBlock = NetworkBlockBuild.build_block(net, face, report)
 		matched[block.id] = true
 		WorldNetwork.report_add(report, "added_blocks", block.id)
 	var stale: Array = affected.keys()
 	stale.sort()
 	for old_id: int in stale:
 		if not matched.has(old_id):
-			net._remove_block(old_id, report)
+			NetworkBlockBuild.remove_block(net, old_id, report)
 			WorldNetwork.report_add(report, "removed_blocks", old_id)
 	return report
 

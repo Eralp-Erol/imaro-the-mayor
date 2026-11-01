@@ -13,7 +13,7 @@ extends RefCounted
 ##
 ## Yenileme ("havuzlu"): işlem bloğu bölünce eşleşmeyen eski blokların (STALE) alınmayan parselleri bir HAVUZa konur;
 ## yeni yüzler kurulur ve havuzdan merkezi yüzün içinde kalan parselleri kimlikleriyle alır (cephe yeniden atanır:
-## `WorldNetwork._update_matched_block` mantığı); eski bloklar silinir (taşınanlar silinmez, rapora girmez). Bloğu
+## `NetworkBlockBuild.update_matched_block` mantığı); eski bloklar silinir (taşınanlar silinmez, rapora girmez). Bloğu
 ## korunan (örn. çıkmaz sokağın yalnız yanından geçilen) bloklarda alınan parseller tek tek emekliye ayrılır. Tam
 ## (`refresh_blocks`) ve yerel (`NetworkLocalRefresh`) yenileme AYNI `rebuild` işlevini çağırır. Sonuç parsel kümesi
 ## geometriden, op'tan ve eski kümeden türer (yenileme yolundan bağımsız); yalnız blok kimlikleri yola göre farklı
@@ -114,12 +114,12 @@ static func rebuild(net: WorldNetwork, pending: Array[Dictionary], matched: Dict
 				pool.append(net.parcels[pid])
 	var claimed := {}
 	for face in pending:
-		var block: WorldBlock = net._build_block(face, report)
+		var block: WorldBlock = NetworkBlockBuild.build_block(net, face, report)
 		matched[block.id] = true
 		_claim(net, j, block, face, pool, claimed)
 		WorldNetwork.report_add(report, "added_blocks", block.id)
 	for bid: int in stale:
-		net._remove_block(bid, report, claimed)
+		NetworkBlockBuild.remove_block(net, bid, report, claimed)
 		WorldNetwork.report_add(report, "removed_blocks", bid)
 	(report["removed_parcels"] as Array).sort()
 
@@ -149,7 +149,7 @@ static func _retire_in_kept_blocks(net: WorldNetwork, j: NetworkOpJournal, stale
 
 
 ## Yeni yüzün içinde merkezi kalan havuz parsellerini bloğa alır (parselli blok olur). Yüz deliklidir ya da hiç parsel
-## yoksa blok `_build_block`un verdiği türde (açık arazi/su/sliver) kalır.
+## yoksa blok `NetworkBlockBuild.build_block`un verdiği türde (açık arazi/su/sliver) kalır.
 static func _claim(net: WorldNetwork, j: NetworkOpJournal, block: WorldBlock, face: Dictionary,
 		pool: Array[WorldParcel], claimed: Dictionary) -> void:
 	if pool.is_empty() or bool(face["holed"]) or not block.parcel_ids.is_empty():
@@ -182,7 +182,8 @@ static func _claim(net: WorldNetwork, j: NetworkOpJournal, block: WorldBlock, fa
 			_reassign_frontage(net, block, parcel)
 
 
-## Cephe kenarı artık bu bloğun sınırında değil ya da bölünmeyle kaydı: en yakın yol kenarı (`_update_matched_block`).
+## Cephe kenarı artık bu bloğun sınırında değil ya da bölünmeyle kaydı: en yakın yol kenarı
+## (`NetworkBlockBuild.update_matched_block`).
 static func _reassign_frontage(net: WorldNetwork, block: WorldBlock, parcel: WorldParcel) -> void:
 	var best := -1
 	var best_d := INF
@@ -195,4 +196,4 @@ static func _reassign_frontage(net: WorldNetwork, block: WorldBlock, parcel: Wor
 			best_d = d
 			best = eid
 	if best >= 0 and best != parcel.frontage_edge:
-		net._set_frontage(parcel, best)
+		NetworkBlockBuild.set_frontage(net, parcel, best)
