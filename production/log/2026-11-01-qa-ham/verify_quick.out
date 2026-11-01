@@ -1,0 +1,11 @@
+verify quick · head 3fdecb61a · fingerprint 58a54f9b6afb
+kapsam: değişen alan + koruma çekirdeği · alanlar: tests/sim · taban 07515f62d (son-başarılı-full) · 102/257 suite
+PASS canon-check              0s  canon-check: 11/11 dosya manifestle eşleşiyor
+PASS studio-check             1s  studio-check: 12 ajan, 17 skill, kurallar/hook/MCP sağlam 
+PASS area-map                15s  area-map: 65 kural, 19 çekirdek belirteci, src dizinlerinin hepsi eşli
+PASS gdlint                   1s  [3 dosya] Success: no problems found
+PASS import                  28s  içe aktarma temiz
+PASS unit-gdunit            397s  [kapsam: 102 suite] 1067 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 12 orphans | (uyarılar)
+ATLANDI: 155 suite, ~1533 test: tests/app (4 suite, ~48 test); tests/art (3 suite, ~37 test); tests/game (15 suite, ~111 test); tests/library (4 suite, ~28 test); tests/ui (38 suite, ~389 test); tests/view (57 suite, ~495 test); tests/world (34 suite, ~425 test); canon-guard (hook/kanon aracı değişmedi; zorlamak: VERIFY_QUICK_CANON_GUARD=1); tam doğrulama: tools/verify.sh full
+SONUÇ: pass · kapsam: değişen alan (TAM DOĞRULAMA DEĞİL) · rapor: artifacts/verify/quick-latest.json
+exit=0
