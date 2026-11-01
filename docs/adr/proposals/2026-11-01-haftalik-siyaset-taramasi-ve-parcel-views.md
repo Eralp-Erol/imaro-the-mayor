@@ -1,6 +1,7 @@
 # ÖNERİ · Haftalık siyaset taraması sıçraması ve `parcel_views` çift okuması
 
-- Durum: **ÖNERİ** (numara verilmedi; kabul edilirse ADR numarası alır ya da yalnız görev olarak uygulanır, bkz. §2.4)
+- Durum: **UYGULANDI, numaralı ADR gerekmez (§2.4)** (2026-11-01 notu, technical-director): commit `471a088` §1 Seçenek A'yı ve §2.3 facade-yerel önbelleği uyguladı; commit mesajına göre GOLDEN_A/B ve büyük dünya hash'i değişmedi (bu not yazılırken testler koşulmadı, iddia commit mesajından). §1.4 (D: tick'i iş parçacığına alma) ayrı ADR olarak açık kalır. §2.2'deki "MINOR 1.6" atfı artık "sıradaki boş MINOR" diye okunur: 1.6 yolu yık (ADR-0005 Ek H), 1.7 yeniden iskân (ADR-0009) için ayrıldı.
+- (Eski durum satırı: ÖNERİ; numara verilmedi; kabul edilirse ADR numarası alır ya da yalnız görev olarak uygulanır, bkz. §2.4)
 - Tarih: 2026-11-01 · Yazan: technical-director · Taban: `3fdecb6`
 - Karşıladığı gereksinimler: TEK-01, TEK-02 (determinizm ve kayıt hash'i korunur), TEK-05 (bütçe aşımı kanıtla), PLT-03 (sim kapsamı kısılmaz)
 - Girdi: `production/log/2026-10-31-kare-sicramalari.md` (C tablosu, satır 83-89; öneri tablosu satır 123, 126)

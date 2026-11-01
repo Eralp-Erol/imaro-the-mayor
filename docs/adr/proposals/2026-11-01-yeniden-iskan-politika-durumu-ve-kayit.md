@@ -1,6 +1,7 @@
 # ÖNERİ · Yeniden iskân politikasının durum yeri, kayıt uyumu, hash koruması ve sözleşme sürümü (T-065 Aşama 1)
 
-- Durum: **ÖNERİ** (numara verilmedi; kabul edilince ADR-0005'e "Ek H · Sürüm 1.6" olarak işlenir, ayrı ADR gerekmez)
+- Durum: **KABUL EDİLDİ (DEĞİŞİKLİKLE) -> `docs/adr/ADR-0009-yeniden-iskan-politika-durumu-kayit-ve-sozlesme-surumu.md`** (2026-11-01). Üç madde değişti: tepki rahatlaması defter yazımında değil `ReactionRehousing`'te okumada (§3/§6 yerine); geri almada tepki satırları silinir (§6 "tepki defteri kalır" yerine, T-042c koduyla tutarlı); sözleşme yıkım için 1.6 (ADR-0005 Ek H), yeniden iskân için 1.7 (§7 yerine). Bu metin tarihî kayıttır; çelişkide ADR-0009 geçerlidir.
+- (Eski durum satırı: ÖNERİ; numara verilmedi; kabul edilince ADR-0005'e "Ek H · Sürüm 1.6" olarak işlenir, ayrı ADR gerekmez)
 - Tarih: 2026-11-01 · Yazan: technical-director · Taban: `ccfe68c` (`agent/handover-imaro-m01-349562fb`)
 - Karşıladığı gereksinimler: TEK-01, TEK-02 (determinizm, kaydet/yükle/N tick hash eşitliği), SIM-07 (ev yoksa yok), SIM-12 (neden kaydı), CAN-03 (bina yaratılmaz), CAN-10/SIM-10 (politika seçimdir)
 - Girdi: `production/tasks/T-065.md`, `design/specs/resettlement-social-security-v0.md` §3.0, `design/decisions/D-016`, D-014 §1, D-011, ADR-0002 Karar 5, ADR-0005 madde 2-3 ve Ek E/F
