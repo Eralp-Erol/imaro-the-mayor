@@ -129,6 +129,8 @@ static func event_text(event: SimEvent) -> String:
 		return t(&"state.error.command_rejected", {"reason": reject_reason(event.message_key, event.args)})
 	if ExpropriationText.handles_event(event.message_key):  # T-042b: bina yoksa "boş arsa" varyantı
 		return ExpropriationText.event_text(event)
+	if PolicyText.handles_event(event.message_key):   # T-065: "Yeniden iskân politikası açıldı/kapatıldı"
+		return PolicyText.event_text(event)
 	return t(event.message_key, event.args)
 
 

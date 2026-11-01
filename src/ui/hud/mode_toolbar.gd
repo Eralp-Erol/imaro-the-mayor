@@ -19,6 +19,8 @@ const TOOL_ZONE := &"tool.zone"
 const TOOL_BUDGET := &"tool.budget"
 const TOOL_COUNCIL := &"tool.council"
 const TOOL_AGENDA := &"tool.agenda"
+## Politikalar (T-065, D-016): yalnız dünya bir politika sunuyorsa (`SimFacade.policies()` boş değil) kaydedilir.
+const TOOL_POLICY := &"tool.policy"
 ## Sonuç paneli (T-040): yalnız bir sahip `add_tool` ile kaydederse görünür (ölü düğme yok).
 const TOOL_RESULTS := &"tool.results"
 ## Yol çizimi (T-042 adım 3): yalnız oyun katmanı yol komutunu bağlayınca `add_tool` ile kaydedilir (ölü düğme yok).
@@ -28,7 +30,7 @@ const TOOL_ROAD_DRAW := &"tool.road_draw"
 const MODES := {
 	&"mode.build": {"tools": []},
 	&"mode.plan": {"tools": [&"tool.inspect", &"tool.zone"]},
-	&"mode.manage": {"tools": [&"tool.budget", &"tool.council", &"tool.agenda"]},
+	&"mode.manage": {"tools": [&"tool.budget", &"tool.council", &"tool.agenda", &"tool.policy"]},
 }
 
 var current_mode: StringName = MODE_PLAN

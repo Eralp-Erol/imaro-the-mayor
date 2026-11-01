@@ -13,6 +13,10 @@ const KIND_EVENT := &"event"
 const KIND_DISPLACEMENT := &"displacement"
 ## Sim'in yerinden edilme neden kaydı: bu etken adı kayıtta hane SAYISI taşır (T-042b, ağırlık 0 = yalnız gösterim).
 const DISPLACED_COUNT_FACTOR := &"reason.factor.displaced_household_count"
+## T-065: aynı neden kaydındaki yeniden iskân tahsisi sayımları (gerçek hane sayısı, ağırlık 0); yalnız politika AÇIK ve
+## tahsis kaydı varken yazılır.
+const REHOUSED_FACTOR := &"reason.factor.rehoused_households"
+const UNPLACED_FACTOR := &"reason.factor.unplaced_households"
 const CHAIN_DEPTH := 4
 
 
@@ -183,7 +187,9 @@ static func effect_text(effect: Dictionary) -> String:
 
 
 ## Öğenin gerekçe zincirinde (öğe kaydı -> ebeveyn ... en çok `CHAIN_DEPTH` basamak) sim'in yazdığı yerinden edilme
-## sayısını arar. Dönüş: `{found, households, record_id}`; yoksa `found=false` (UI sayı UYDURMAZ, satır gizlenir).
+## sayısını arar. Dönüş: `{found, households, record_id, resettled, rehoused, unplaced}`; yoksa `found=false` (UI sayı
+## UYDURMAZ, satır gizlenir). `resettled`: aynı kayıtta yeniden iskân sayımları var (T-065: `rehoused` ev ayrılan,
+## `unplaced` ev bulunamayan hane).
 static func displaced_cause(facade: SimFacade, reason_ids: PackedInt64Array) -> Dictionary:
 	var queue: Array[int] = []
 	for rid in reason_ids:
@@ -201,12 +207,51 @@ static func displaced_cause(facade: SimFacade, reason_ids: PackedInt64Array) -> 
 				continue
 			for f in rec.factors:
 				if f.name_key == DISPLACED_COUNT_FACTOR:
-					return {"found": true, "households": f.value, "record_id": rid}
+					return _cause_of(facade, rec, f.value)
 			for pid in rec.parent_ids:
 				next.append(pid)
 		queue = next
 		depth += 1
-	return {"found": false, "households": 0, "record_id": SimContract.NO_ID}
+	return {"found": false, "households": 0, "record_id": SimContract.NO_ID, "resettled": false, "rehoused": 0,
+			"unplaced": 0, "scope": &"record"}
+
+
+## Sayım kaynağı: önce aynı kaydın tahsis etkenleri (mahalle kaydı); yoksa kaydın özne olarak andığı yolların sim kaydı
+## (`PublicWorkView.rehoused_households/unplaced_households`, bölge ölçekli kayıtta etken yoktur). İkisi de yoksa
+## `resettled=false` (satır çıkmaz, sayı uydurulmaz). `scope`: `record` (mahalle) ya da `road` (yolun toplamı).
+static func _cause_of(facade: SimFacade, rec: ReasonRecord, households: int) -> Dictionary:
+	var out := {"found": true, "households": households, "record_id": rec.id, "resettled": false, "rehoused": 0,
+			"unplaced": 0, "scope": &"record"}
+	var housed := false
+	var unplaced := false
+	for f in rec.factors:
+		if f.name_key == REHOUSED_FACTOR:
+			out["rehoused"] = f.value
+			housed = true
+		elif f.name_key == UNPLACED_FACTOR:
+			out["unplaced"] = f.value
+			unplaced = true
+	out["resettled"] = housed and unplaced
+	if not out["resettled"]:
+		var commands := PackedInt64Array()
+		for subject in rec.subjects:
+			var ref := SimContract.parse_ref(StringName(subject))
+			if str(ref["kind"]) == String(SimContract.REF_COMMAND):
+				commands.append(int(ref["id"]))
+		var rehoused_total := 0
+		var unplaced_total := 0
+		var any := false
+		for work in facade.public_works():
+			if work.resettlement_applied and commands.has(work.command_id):
+				rehoused_total += work.rehoused_households
+				unplaced_total += work.unplaced_households
+				any = true
+		if any:
+			out["resettled"] = true
+			out["rehoused"] = rehoused_total
+			out["unplaced"] = unplaced_total
+			out["scope"] = &"road"
+	return out
 
 
 ## Gündemin kaynağı kurulu mu (kurulmadıysa "Olay sistemi henüz kurulmadı").

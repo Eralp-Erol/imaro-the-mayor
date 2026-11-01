@@ -16,6 +16,7 @@ const PANEL_ZONING := &"zoning"
 const PANEL_COUNCIL := &"council"
 const PANEL_BUDGET := &"budget"
 const PANEL_AGENDA := &"agenda"
+const PANEL_POLICY := &"policy"
 
 var hud: HudRoot = null
 var facade: SimFacade = null
@@ -27,6 +28,9 @@ var _zoning_panel: ZoningFlowPanel = null
 var _council_panel: CouncilPanel = null
 var _budget_panel: BudgetPanel = null
 var _agenda_panel: AgendaPanel = null
+var _policy_panel: PolicyPanel = null
+## Politikalar panelinin bekleyen istek/ret belleği (panel profil değişince yeniden kurulsa da kalır).
+var _policy_memo: Dictionary = {}
 var _seen_agenda: Dictionary = {}
 var _agenda_ready: bool = false
 ## Gündem türetmesi önbelleği (öğe kümesi imzası aynıysa her tick yeniden türetilmez).
@@ -48,6 +52,9 @@ static func attach(hud_in: HudRoot, facade_in: SimFacade, structure_probe: Calla
 		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_BUDGET)
 		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_COUNCIL)
 		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_AGENDA)
+	# T-065: Politikalar aracı yalnız dünya gerçekten bir politika sunuyorsa görünür (ölü düğme yok).
+	if not facade_in.policies().is_empty():
+		hud_in.register_tool(ModeToolbar.MODE_MANAGE, ModeToolbar.TOOL_POLICY)
 	hud_in.refreshed.connect(d._on_refreshed)
 	hud_in.events_received.connect(d._on_events)
 	hud_in.panel_closed.connect(d._on_panel_closed)
@@ -65,6 +72,7 @@ func rebind(facade_in: SimFacade) -> void:
 	_seen_agenda = {}
 	_agenda_ready = false
 	_agenda_cache.invalidate()
+	_policy_memo = {}
 
 
 # --- Panel açma ---
@@ -100,6 +108,10 @@ func open_agenda() -> void:
 	hud.open_panel(PANEL_AGENDA, &"agenda.title", _build_agenda)
 
 
+func open_policy() -> void:
+	hud.open_panel(PANEL_POLICY, &"policy.title", _build_policy)
+
+
 ## Yönetim araçları (bütçe, meclis, gündem). Ele alındıysa true.
 func on_tool_selected(tool_id: StringName) -> bool:
 	match tool_id:
@@ -115,6 +127,8 @@ func on_tool_selected(tool_id: StringName) -> bool:
 			open_council()
 		ModeToolbar.TOOL_AGENDA:
 			open_agenda()
+		ModeToolbar.TOOL_POLICY:
+			open_policy()
 		_:
 			return false
 	return true
@@ -134,6 +148,10 @@ func budget_panel() -> BudgetPanel:
 
 func agenda_panel() -> AgendaPanel:
 	return _agenda_panel if _alive(_agenda_panel) else null
+
+
+func policy_panel() -> PolicyPanel:
+	return _policy_panel if _alive(_policy_panel) else null
 
 
 ## Serbest bırakılmış nesne tipli parametreye geçirilemez ("previously freed" SCRIPT ERROR):
@@ -172,6 +190,13 @@ func _build_agenda(ctx: UiContext) -> Control:
 	return p
 
 
+func _build_policy(ctx: UiContext) -> Control:
+	var p := PolicyPanel.create(ctx, facade, _policy_memo)
+	_wire(p)
+	_policy_panel = p
+	return p
+
+
 func _wire(panel: FlowPanel) -> void:
 	panel.reason_requested.connect(reason_wanted.emit)
 	panel.navigate_requested.connect(_on_navigate)
@@ -197,6 +222,8 @@ func _on_events(events: Array[SimEvent]) -> void:
 			budget_panel().handle_event(e)
 		if agenda_panel() != null:
 			agenda_panel().handle_event(e)
+		if policy_panel() != null:
+			policy_panel().handle_event(e)
 
 
 func _on_refreshed() -> void:
@@ -204,7 +231,7 @@ func _on_refreshed() -> void:
 	if snap == null:
 		return
 	_update_agenda(snap)
-	for panel: FlowPanel in [council_panel(), budget_panel(), agenda_panel()]:
+	for panel: FlowPanel in [council_panel(), budget_panel(), agenda_panel(), policy_panel()]:
 		if panel != null:
 			panel.refresh()
 
@@ -233,3 +260,5 @@ func _on_panel_closed(panel_id: StringName) -> void:
 			_budget_panel = null
 		PANEL_AGENDA:
 			_agenda_panel = null
+		PANEL_POLICY:
+			_policy_panel = null

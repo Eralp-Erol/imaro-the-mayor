@@ -119,6 +119,18 @@ func _add_displacement_cause(inner: VBoxContainer, it: AgendaModel.Item) -> void
 		return
 	inner.add_child(UiFactory.label(UiText.t(&"agenda.displacement.households", {"count": UiText.number(
 		int(cause["households"]))}), &"", true))
+	if bool(cause["resettled"]):   # T-065: sim'in tahsis sayımları (aynı neden kaydında)
+		var housed := int(cause["rehoused"])
+		var unplaced := int(cause["unplaced"])
+		var summary_key := &"resettlement.agenda.summary_road" if cause["scope"] == &"road" \
+				else &"resettlement.agenda.summary"
+		inner.add_child(UiFactory.label(UiText.t(summary_key,
+				{"total": UiText.number(housed + unplaced), "housed": UiText.number(housed)}), &"", true))
+		if unplaced > 0:
+			var no_home := UiFactory.label(UiText.t(&"resettlement.agenda.unplaced",
+					{"count": UiText.number(unplaced)}), UiTheme.V_LABEL_DANGER, true)
+			_tag(no_home, "resettlement_unplaced")
+			inner.add_child(no_home)
 	var ids := it.reason_ids
 	var why := UiFactory.button(_ctx, UiText.t(&"agenda.displacement.why"), false)
 	_tag(why, "why_%s" % it.id)
