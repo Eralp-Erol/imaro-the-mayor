@@ -16,6 +16,8 @@ extends RefCounted
 ## `chunk_keys`i (segment kutuları + kavşak payı). Günlük eksikse (`change_log_covers`) tüm yollar yeniden kurulur.
 
 var stats: Dictionary = {}
+## B-020: arka plan işi sürerken ağ sürümü değişen iş sayısı (0 olmalı; bkz. `_check_net_unchanged`).
+var mutated_during_job: int = 0
 
 var _net: WorldNetwork = null
 var _roads: RoadView = null
@@ -100,6 +102,7 @@ func poll(budget_us: int = RoadView.INSTALL_BUDGET_US) -> Dictionary:
 			return {}
 		WorkerThreadPool.wait_for_task_completion(_task)
 		_task = -1
+		_check_net_unchanged(int(_job["version"]))
 		_roads.begin_install(_job["keys"], _job["plan"], _job["meshes"], int(_job["started"]))
 		_installing = true
 	if not _roads.step_install(budget_us):
@@ -109,6 +112,25 @@ func poll(budget_us: int = RoadView.INSTALL_BUDGET_US) -> Dictionary:
 	_installing = false
 	_seen_version = int(job["version"])
 	return _report(job["keys"], false, int(job["started"]))
+
+
+## B-020 · `world_busy()` sözleşmesi: işçi iş parçacığı ağı okurken ağ YAZILMAZ. İş bitince ağ sürümü iş başladığındaki
+## ile aynı olmalı; değilse ağı biri meşgulken değiştirmiştir ve işçi, yarı değişmiş ağdan (silinmiş kenar/düğüm
+## kimliği: "Out of bounds get index" `road_junction.gd`/`road_mesh_builder.gd`) bozuk ya da eksik mesh verisi
+## üretmiş olabilir.
+## Sessizce yutulmaz: hata günlüğe düşer ve sayaç `mutated_during_job` artar (sonuç yine de kurulur; ağ
+## sürümü farklı kaldığından `pending()` true olur ve sonraki iş değişen bölgeyi yeniden kurar).
+func _check_net_unchanged(job_version: int) -> void:
+	if _net.graph_version == job_version:
+		return
+	mutated_during_job += 1
+	push_error(mutation_message(job_version, _net.graph_version))
+
+
+static func mutation_message(job_version: int, now_version: int) -> String:
+	return ("RoadEditSync: ağ, yol görünümü arka plan işi sürerken değişti (graph_version %d -> %d); işçi iş parçacığı "
+			+ "tutarsız ağ okumuş olabilir. Meşgulken ağa yazan kod (örn. yıkım kuru koşusu) world_busy() sözleşmesini "
+			+ "çiğniyor: production/bugs/B-020.md") % [job_version, now_version]
 
 
 ## Tamamlanmasını bekler (testler/kapanış/dev döngüsü): kurulum ve uzak mesh sonuna kadar yürür. İş yoksa boş.

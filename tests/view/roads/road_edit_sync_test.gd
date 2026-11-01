@@ -183,6 +183,41 @@ func test_background_job_marks_the_world_busy_until_the_chunks_are_installed() -
 	assert_dict(_all_hashes(view)).is_equal(_all_hashes(_view()))
 
 
+func _wait_worker(sync: RoadEditSync) -> void:
+	while not WorkerThreadPool.is_task_completed(sync._task):
+		OS.delay_msec(1)
+
+
+## B-020 · Normal akışta ağ iş sürerken değişmez: sayaç 0, hata yok.
+func test_an_untouched_net_during_the_background_job_is_not_flagged() -> void:
+	var view := _view()
+	var sync := RoadEditSync.create(_net, view)
+	_apply(SPLIT_FROM, SPLIT_TO)
+	assert_bool(sync.begin_async()).is_true()
+	_wait_worker(sync)
+	sync.wait()
+	assert_int(sync.mutated_during_job).is_equal(0)
+	assert_bool(sync.world_busy()).is_false()
+
+
+## B-020 · Meşgulken ağa yazan kod (gerçek hata: yıkım kuru koşusu uygula + geri al) sessiz kalmaz: hata günlüğe düşer.
+## İşçi bitmiş durumda değiştirilir (testte gerçek veri yarışı yaratmamak için); sürüm farkı yine görünür.
+func test_a_net_write_while_the_job_is_busy_is_reported_not_swallowed() -> void:
+	var view := _view()
+	var sync := RoadEditSync.create(_net, view)
+	_apply(SPLIT_FROM, SPLIT_TO)
+	assert_bool(sync.begin_async()).is_true()
+	var job_version := _net.graph_version
+	_wait_worker(sync)
+	_apply(WEST_FROM, WEST_TO)   # meşgulken ağ yazımı (sözleşme ihlali)
+	var now_version := _net.graph_version
+	assert_int(now_version).is_not_equal(job_version)
+	await assert_error(func() -> void: sync.wait()) \
+		.is_push_error(RoadEditSync.mutation_message(job_version, now_version))
+	assert_int(sync.mutated_during_job).is_equal(1)
+	assert_bool(sync.pending()).override_failure_message("değişim görünüme yansımalı: pending kalır").is_true()
+
+
 func test_the_player_road_adds_triangles_and_undo_removes_them() -> void:
 	var view := _view()
 	var base_tris := int(view.stats["near_triangles"])
