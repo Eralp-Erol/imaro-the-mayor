@@ -9,7 +9,17 @@
 		"protect_heritage": true,
 		"household_fate": "return_to_latent",
 		"proximity_radius_m": 60,
-		"reaction_keep_days": 720
+		"reaction_keep_days": 720,
+		"resettlement": {
+			"_note": "T-065 Asama 1 / D-015 / D-016 (kullanici karari): kamulastirmada yeniden iskan yukumlulugu KALICI, acilip kapanan bir politikadir (policy.set resettlement); varsayilan KAPALI ve kapali olmasi mesru bir secimdir (CAN-10) — varsayilan burada DEGIL, sabit kuraldir (bolum yok = kapali), cunku veri varsayilani eski kayitlarin davranisini sessizce cevirirdi (ADR-0009 A). Acikken yerinden edilen hanelere sehirdeki GERCEKTEN bos konut birimleri ayrilir (hedef bolgenin latent_hh'i artar; bina YARATILMAZ, CAN-03); ev yoksa yol yine yapilir, tepki tam surer. HEPSI CALISMA MODELI (F05-C), kanon DEGIL: max_fill_pm = bir yolun hedef bolgenin bos evinden en cok alacagi pay (binde); rent_tolerance_pm = hedef kira kaynak kiranin (1000+x)/1000 kati kadar olabilir; max_distance_m = hedef bolgenin yola en yakin yapili konut parseli bu kadar yakinsa yer sarti tamam (olculmedi, mahalle yuruyus mesafesi tahmini); partial_relief_pm = sartlardan YALNIZ biri asildiysa (kismi ev) tepkideki azalma; residual_reaction_pm = tam uygun ev bulunan ailenin KALAN tepkisi (D-016 'duruma gore biraz kalsin': 0 DEGIL; 0 yapilirsa eski D-014 'hic olmasin' davranisi); support_months = bedel icin kira ay sayisi (gosterge); move_grant = hane basi tasinma yardimi: ACIK (Q-003/T-014), sayi verilmedi, 0 = bedel yalniz kira. Kalan tepkinin hane sinifina gore degismesi (D-015 'duruma gore') Asama 2'dir: bugun income_pm tum bolgelerde esit, veri girmeden fark yok.",
+			"max_fill_pm": 300,
+			"rent_tolerance_pm": 250,
+			"max_distance_m": 800,
+			"partial_relief_pm": 600,
+			"residual_reaction_pm": 200,
+			"support_months": 12,
+			"move_grant": 0
+		}
 	},
 	"cost": {
 		"available": false,

@@ -28,8 +28,10 @@ func _views() -> Array[ParcelView]:
 
 ## `edit`: ham siyaset dosyası düzenleyici (isteğe bağlı). `stock_rows`: varsayılan stok yerine konacak satırlar.
 ## `with_budget`: gerçek bütçe sistemi de takılır (varsayılan kapalı: mevcut testler değişmez).
+## `works_config`: yol işi yapılandırması (varsayılan: gerçek `data/` dosyası; T-065 testleri yeniden iskân sayılarını
+## değiştirir).
 func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: Array = [],
-		with_budget: bool = false) -> Dictionary:
+		with_budget: bool = false, works_config: PublicWorksConfig = null) -> Dictionary:
 	var net := P.network()
 	var stock := ListStockSource.create(stock_rows if not stock_rows.is_empty() else [
 		{"parcel_id": 1, "use": "residential", "units": 10, "owner": 1},
@@ -41,7 +43,8 @@ func _world(expropriate: bool = true, edit: Callable = Callable(), stock_rows: A
 	var h := PoliticsBootstrap.create(SEED, source, E.config(P.economy_patch()), stock, config(),
 		pol_valid(edit, config()) if edit.is_valid() else politics_config())
 	assert_object(h).is_not_null()
-	var ctx := PublicWorksContext.create(net, RoadDraftRules.new(), PublicWorksConfig.load_default())
+	var ctx := PublicWorksContext.create(net, RoadDraftRules.new(),
+		works_config if works_config != null else PublicWorksConfig.load_default())
 	var fake := FakeExpropriationWorld.new(net)
 	fake.take(PackedInt64Array(DIAGONAL), [1, 2, 3])
 	ctx.set_expropriation(fake)

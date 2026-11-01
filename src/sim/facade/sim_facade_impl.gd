@@ -148,6 +148,22 @@ func demolish_cost(command_id: int) -> int:
 	return int(preview.args.get("cost", 0))
 
 
+## v1.7 (T-065) · Belediyenin kalıcı politikaları (kimlik sıralı). Kurulu olanlar listelenir (yol bağlamı takılı ve
+## yapılandırmada var); politika hiç değiştirilmediyse kapalı, `changed_tick = -1`. Sim durumuna bölüm YAZMAZ.
+func policies() -> Array[PolicyView]:
+	var out: Array[PolicyView] = []
+	if _public_works == null or not _public_works.config.resettlement.available:
+		return out
+	var v := PolicyView.new()
+	v.provenance = provenance()
+	v.policy_id = PolicyView.ID_RESETTLEMENT
+	v.enabled = PolicyState.enabled(_state, v.policy_id)
+	v.changed_tick = PolicyState.changed_tick(_state, v.policy_id)
+	v.changed_by_command = PolicyState.changed_by(_state, v.policy_id)
+	out.append(v)
+	return out
+
+
 ## v1.3 · Ağda DURAN oyuncu yolları, eskiden yeniye (sim durumundan; değer kopyası). Yıkılmış yol listede yoktur.
 func public_works() -> Array[PublicWorkView]:
 	var out: Array[PublicWorkView] = []
