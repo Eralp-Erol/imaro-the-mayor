@@ -282,8 +282,7 @@ func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: 
 
 
 func _add_buttons() -> void:
-	var row := HFlowContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var row := _button_row()
 	var offer := tool.offer()
 	if not offer.is_empty() and tool.step == RoadDrawTool.Step.REVIEW:
 		# 1. adım: sim'in kamulaştırma teklifini kabul et (sayılar kartta); 2. adım yıkım onayıdır.
@@ -382,8 +381,7 @@ func _add_undo_confirm(last: PublicWorkView) -> void:
 	var refund := _undo_refund()
 	if refund >= 0:
 		inner.add_child(_muted(UiText.t(&"road.refund_line", {"units": UiText.number(refund)})))
-	var row := HFlowContainer.new()
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var row := _button_row()
 	_undo_yes_button = UiFactory.button(_ctx, UiText.t(&"expropriation.undo_confirm"), true)
 	_tag(_undo_yes_button, "road_undo_confirm")
 	_undo_yes_button.pressed.connect(func() -> void:

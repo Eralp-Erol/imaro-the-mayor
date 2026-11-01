@@ -83,6 +83,7 @@ func _setup_flow(ctx: UiContext, facade: SimFacade) -> void:
 	add_child(badge)
 	_body = VBoxContainer.new()
 	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_space_for_touch(_body)
 	state_view = StateView.create(ctx)
 	state_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	state_view.set_content(_body)
@@ -168,8 +169,26 @@ func _card() -> Array:
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	var inner := VBoxContainer.new()
 	inner.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_space_for_touch(inner)
 	card.add_child(inner)
 	return [card, inner]
+
+
+## Dokunmatikte alt alta dizilen düğmeler arası boşluk `gap` tabanından (8 pt) az olamaz: tema dikey ayırıcısı
+## `spacing / 2` = 4 pt idi, Onayla/Vazgeç ve kart düğmeleri arasında yanlış dokunmaya yol açıyordu. Masaüstü değişmez.
+func _space_for_touch(box: BoxContainer) -> void:
+	if _ctx != null and _ctx.is_touch():
+		box.add_theme_constant_override("separation", int(_ctx.spacing()))
+
+
+## Yan yana/sarılan eylem düğmeleri satırı; dokunmatikte iki yönde de `spacing()` boşluk (varsayılan 4 pt idi).
+func _button_row() -> HFlowContainer:
+	var row := HFlowContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if _ctx != null and _ctx.is_touch():
+		row.add_theme_constant_override("h_separation", int(_ctx.spacing()))
+		row.add_theme_constant_override("v_separation", int(_ctx.spacing()))
+	return row
 
 
 func _estimate_chip() -> Control:
