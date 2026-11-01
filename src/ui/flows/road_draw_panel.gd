@@ -26,8 +26,13 @@ var _accept_button: Button = null
 var _back_button: Button = null
 var _undo_yes_button: Button = null
 var _undo_keep_button: Button = null
+var _demolish_button: Button = null
+var _demolish_yes_button: Button = null
+var _demolish_keep_button: Button = null
 ## T-042b · Yıkımlı yolu geri alma ikinci adımda onaylanır (binalar geri gelir, halk tepkisi gelmez).
 var _undo_pending: bool = false
+## D-014 §1 · Yolu yıkma ek onay adımı: hedef yol komut kimliği (NO_ID = beklemiyor). Yıkım geri alınamaz.
+var _demolish_target: int = SimContract.NO_ID
 ## İpucu önbelleği: (son yol komutu, gün/PLAN_HINT_DAYS) -> bölgede plansız parsel var mı (ilk bulunanda durur).
 var _hint_key: String = ""
 var _hint_value: bool = false
@@ -75,6 +80,23 @@ func undo_pending() -> bool:
 	return _undo_pending
 
 
+## D-014 §1 · "Son yolu yık", yıkım onayı ve vazgeç düğmeleri (yoksa null).
+func demolish_button() -> Button:
+	return _demolish_button
+
+
+func demolish_confirm_button() -> Button:
+	return _demolish_yes_button
+
+
+func demolish_keep_button() -> Button:
+	return _demolish_keep_button
+
+
+func demolish_pending() -> bool:
+	return _demolish_target != SimContract.NO_ID
+
+
 ## Tick/olay başına değil, ARAÇ durumu değişince yeniden çizer (imleç ret/önizlemeyi değiştirmedikçe düğüm kurmaz).
 func refresh() -> void:
 	refresh_if_changed(_signature_of())
@@ -84,7 +106,7 @@ func _signature_of() -> String:
 	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(_plan_hint_needed()), str(tool.is_valid()),
 			str(tool.message),
 			str(tool.message_args), str(tool.has_undoable_road()), str(_facade.speed() == SimFacade.SPEED_PAUSED),
-			str(_undo_refund()), str(tool.expropriate), str(_undo_pending)]
+			str(_undo_refund()), str(tool.expropriate), str(_undo_pending), _demolish_signature()]
 	if tool.verdict != null:
 		parts.append(String(tool.verdict.reason_key))
 		parts.append(str(tool.verdict.args))
@@ -102,8 +124,14 @@ func _render() -> void:
 	_back_button = null
 	_undo_yes_button = null
 	_undo_keep_button = null
+	_demolish_button = null
+	_demolish_yes_button = null
+	_demolish_keep_button = null
 	if not tool.has_undoable_road():
 		_undo_pending = false
+	var standing := tool.last_road()
+	if standing == null or standing.command_id != _demolish_target:
+		_demolish_target = SimContract.NO_ID   # hedef yol artık yok/değişti: onay bekleme
 	if not tool.band_active:
 		_body.add_child(UiFactory.label(UiText.t(&"road.zoom_in"), UiTheme.V_LABEL_DANGER, true))
 		_add_undo_row()
@@ -342,11 +370,34 @@ func _undo_refund() -> int:
 	return int(probe.args.get("refund", 0))
 
 
+## Geri al + yık satırı (D-014 §1). Ölü düğme yok: yol yoksa hiçbiri görünmez; geri alma kapandıysa sim'in nedeni
+## yazılır; yıkım sim önizlemesi reddederse düğme yerine ret nedeni yazılır.
 func _add_undo_row() -> void:
-	# Ölü düğme yok: geri alınacak yol yoksa düğme hiç görünmez.
-	if not tool.has_undoable_road():
-		return
 	var last := tool.last_road()
+	if last == null:
+		return
+	if _demolish_target != SimContract.NO_ID:
+		_add_demolish_confirm(last)
+		return
+	if tool.has_undoable_road():
+		_add_undo_controls(last)
+	else:
+		var closed := _facade.validate_command(SimCommand.public_work_undo_last())
+		if closed.is_rejected():
+			_body.add_child(_muted(UiText.t(&"road.undo_closed",
+					{"reason": UiText.reject_reason(closed.reason_key, closed.args)})))
+	_add_demolish_controls(last)
+
+
+func _demolish_signature() -> String:
+	var last := tool.last_road() if tool != null else null
+	if last == null:
+		return "-"
+	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
+	return "%d|%d|%s|%d" % [last.command_id, int(probe.args.get("cost", -1)), String(probe.reason_key), _demolish_target]
+
+
+func _add_undo_controls(last: PublicWorkView) -> void:
 	if _undo_pending and last != null and last.expropriated:
 		_add_undo_confirm(last)
 		return
@@ -395,5 +446,69 @@ func _add_undo_confirm(last: PublicWorkView) -> void:
 		_undo_pending = false
 		refresh())
 	row.add_child(_undo_keep_button)
+	inner.add_child(row)
+	_body.add_child(parts[0])
+
+
+## D-014 §1 · Yolu yık: her zaman bulunur (geri alma penceresi kapansa da), maliyeti görünür. Yalnız en son duran yol
+## hedeflenir (sim önizlemesi `public_work.demolish`). Sim yıkımı reddediyorsa düğme yok, neden yazılır.
+func _add_demolish_controls(last: PublicWorkView) -> void:
+	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
+	if probe.is_rejected():
+		_body.add_child(_muted(UiText.t(&"road.demolish_blocked",
+				{"reason": UiText.reject_reason(probe.reason_key, probe.args)})))
+		return
+	_demolish_button = UiFactory.button(_ctx, UiText.t(&"road.demolish_last"), false)
+	_tag(_demolish_button, "road_demolish")
+	_demolish_button.disabled = tool.step == RoadDrawTool.Step.SENDING
+	_demolish_button.pressed.connect(func() -> void:
+		_demolish_target = last.command_id
+		refresh())
+	_body.add_child(_demolish_button)
+	_body.add_child(_muted(_demolish_cost_text(probe.args)))
+
+
+## "Yıkım maliyeti: N birim" (sim `cost_available`) ya da "henüz kurulmadı"; birim para birimi değildir (Q-003).
+static func _demolish_cost_text(args: Dictionary) -> String:
+	if bool(args.get("cost_available", false)):
+		return UiText.t(&"road.demolish_cost_units", {"units": UiText.number(int(args.get("cost", 0)))})
+	return UiText.t(&"road.demolish_cost_unset")
+
+
+## Ek onay adımı: yıkım geri alınamaz; alınan parsel/bina dönmez, tepki kalır (sim önizlemesi `restores_nothing`).
+func _add_demolish_confirm(last: PublicWorkView) -> void:
+	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
+	if probe.is_rejected():   # onay beklerken durum değişti: bekleme biter, ret nedeni satırı çizilir
+		_demolish_target = SimContract.NO_ID
+		_add_demolish_controls(last)
+		return
+	var args := probe.args
+	var parts := _card()
+	var inner: VBoxContainer = parts[1]
+	inner.add_child(UiFactory.label(UiText.t(&"road.demolish_title"), UiTheme.V_LABEL_HEADING, true))
+	inner.add_child(UiFactory.label(UiText.t(&"road.demolish_effect", {
+			"length": UiText.number(int(args.get("length_m", 0))), "units": int(args.get("units_total", 0))}), &"", true))
+	var taken := int(args.get("taken_parcels", 0))
+	var warning_text := UiText.t(&"road.demolish_warning")
+	if bool(args.get("expropriated", false)) and taken > 0:
+		warning_text = UiText.t(&"road.demolish_warning_taken", {"parcels": taken})
+	var warning := UiFactory.label(warning_text, UiTheme.V_LABEL_DANGER, true)
+	_tag(warning, "road_demolish_warning")
+	inner.add_child(warning)
+	inner.add_child(_muted(_demolish_cost_text(args)))
+	var row := _button_row()
+	_demolish_yes_button = UiFactory.button(_ctx, UiText.t(&"road.demolish_confirm"), true)
+	_tag(_demolish_yes_button, "road_demolish_confirm")
+	_demolish_yes_button.pressed.connect(func() -> void:
+		_demolish_target = SimContract.NO_ID
+		tool.demolish_road(last.command_id)
+		refresh())
+	row.add_child(_demolish_yes_button)
+	_demolish_keep_button = UiFactory.button(_ctx, UiText.t(&"road.demolish_keep"), false)
+	_tag(_demolish_keep_button, "road_demolish_keep")
+	_demolish_keep_button.pressed.connect(func() -> void:
+		_demolish_target = SimContract.NO_ID
+		refresh())
+	row.add_child(_demolish_keep_button)
 	inner.add_child(row)
 	_body.add_child(parts[0])
