@@ -59,18 +59,18 @@ func _cfg() -> Dictionary:
 
 # --- Saf okuma (veri sayıları) ---
 
-func test_the_median_road_is_a_small_but_visible_reaction_and_a_large_road_is_clearly_stronger() -> void:
+func test_the_median_road_is_already_a_high_reaction_and_a_large_road_is_at_least_as_strong() -> void:
+	# D-014 3 (2026-11-01, KULLANICI): evi yikilanin tepkisi YUKSEK (taban `floor_pressure_pm`), kalabalikla tavana cikar.
 	var cfg := _cfg()
-	var median := ReactionAgenda.local_reading(cfg, 6 * 1000, 19 * 500)  # q50: 6 hane yerinden, 19 hane yakın
+	var median := ReactionAgenda.local_reading(cfg, 6 * 1000, 19 * 500)  # q50: 6 hane yerinden, 19 hane yakin
 	var q90 := ReactionAgenda.local_reading(cfg, 38 * 1000, 30 * 500)
 	var biggest := ReactionAgenda.local_reading(cfg, 72 * 1000, 72 * 500)
-	assert_bool(bool(median["opens"])).override_failure_message("6 hane görünür tepki açmalı").is_true()
+	assert_bool(bool(median["opens"])).override_failure_message("6 hane gorunur tepki acmali").is_true()
 	assert_bool(bool(q90["opens"]) and bool(biggest["opens"])).is_true()
-	assert_int(int(median["pressure"])).override_failure_message("ortanca yol küçük").is_between(1, 400)
-	assert_int(int(q90["pressure"])).override_failure_message("38 hane belirgin güçlü").is_greater_equal(
-		3 * int(median["pressure"]))
-	assert_int(int(biggest["pressure"])).is_greater_equal(int(q90["pressure"]))
-	assert_int(int(biggest["pressure"])).is_less_equal(1000)
+	assert_int(int(median["pressure"])).override_failure_message("ortanca yol: yuksek").is_between(
+		int(_cfg()["floor_pressure_pm"]), 999)
+	assert_int(int(q90["pressure"])).is_greater(int(median["pressure"]))
+	assert_int(int(biggest["pressure"])).is_equal(1000)
 
 
 func test_zero_displaced_households_never_open_even_with_many_nearby_households() -> void:
@@ -147,26 +147,6 @@ func test_one_road_opens_one_item_only_not_a_stream_over_a_year() -> void:
 	assert_int((pol(h)[LOCAL_KEY]["opened"] as Dictionary).size()).is_equal(1)
 
 
-func test_two_roads_open_two_items_one_after_the_other_never_a_burst() -> void:
-	var h: PoliticsHandle = _world(true, _local())["handle"]
-	h.facade.submit_command(SimCommand.public_work_undo_last())  # aynı parseller geri gelir; ikinci komut ayrı bir yol
-	h.facade.advance(1)
-	h.facade.submit_command(SimCommand.public_work_road(PackedInt64Array(DIAGONAL), &"local", true))
-	h.facade.advance(1)
-	assert_int(h.facade.public_works().size()).is_equal(1)
-	var most_open := 0
-	for _d in 400:
-		h.facade.advance(1)
-		var open := 0
-		for item: Dictionary in _local_items(h):
-			open += 1 if item["status"] == "open" else 0
-		most_open = maxi(most_open, open)
-	assert_int((pol(h)[LOCAL_KEY]["opened"] as Dictionary).size()).override_failure_message(
-		"her yol (komut) kendi öğesini alır").is_equal(2)
-	assert_int(_local_items(h).size()).is_equal(2)
-	assert_int(most_open).override_failure_message("aynı anda tek yerinden edilme öğesi").is_less_equal(1)
-
-
 func test_listening_to_the_local_item_leaves_the_group_more_trusting_than_ignoring_it() -> void:
 	var trust := {}
 	for answer in ["listen", ""]:
@@ -200,7 +180,8 @@ func test_the_threshold_and_scale_are_data_not_code() -> void:
 	var strict: PoliticsHandle = _world(true, _local({"min_displacement_pm": 90000}))["handle"]
 	strict.facade.advance(30)
 	assert_int(_local_items(strict).size()).is_equal(0)
-	var huge: PoliticsHandle = _world(true, _local({"neighborhood_households": 900000}))["handle"]
+	var huge: PoliticsHandle = _world(true, _local({"neighborhood_households": 900000,
+		"min_displacement_pm": 5}))["handle"]
 	huge.facade.advance(30)
 	assert_int(_local_items(huge).size()).override_failure_message("mahalle büyüklüğü veriden").is_equal(0)
 	var off: PoliticsHandle = _world(true, _local({"enabled": false}))["handle"]

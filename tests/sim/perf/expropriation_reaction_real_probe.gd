@@ -385,6 +385,7 @@ class _Rec:
 				var sig: Dictionary = b["signals"]
 				blocs[key] = {"exposure": b["exposure"], "size": int(b["size"]), "hot": str(b.get("hot_region", "")),
 					"G": int(b["G"]), "S": int(b["S"]), "reaction": str(ev["reaction"]), "tier": str(ev["tier"]),
+					"housing_cost_grievance": int(ActorStore.actor_ref(state, key)["state"].get("grievances", {}).get("housing_cost", 0)),
 					"intensity": int(ev["intensity"]), "displacement": int(sig.get("displacement", 0)),
 					"proximity": int(sig.get("proximity", 0)), "infra_stress": int(sig.get("infra_stress", 0))}
 		var reg_sig := {}
