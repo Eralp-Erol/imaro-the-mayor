@@ -37,6 +37,9 @@ var _demolish_target: int = SimContract.NO_ID
 var _hint_key: String = ""
 var _hint_value: bool = false
 var _hint_scan: PlanHintScan = null
+## B-012 · Son çizimde sim bir komutu "dünya hazırlanıyor" (`busy`) diye reddetti: bu durum sim OLAYI ile değil,
+## görünümün işi bitirmesiyle kalkar; denetleyici bu bayrak açıkken paneli kısa aralıkla yeniden doğrulatır.
+var _awaiting_world: bool = false
 
 
 static func create(ctx: UiContext, facade: SimFacade, draw_tool: RoadDrawTool) -> RoadDrawPanel:
@@ -102,6 +105,11 @@ func refresh() -> void:
 	refresh_if_changed(_signature_of())
 
 
+## Panel şu an sim'in "dünya hazırlanıyor" reddini gösteriyor mu (bkz. `_awaiting_world`).
+func awaiting_world() -> bool:
+	return _awaiting_world
+
+
 func _signature_of() -> String:
 	var parts: Array[String] = [str(tool.step), str(tool.band_active), str(_plan_hint_needed()), str(tool.is_valid()),
 			str(tool.message),
@@ -118,6 +126,7 @@ func _render() -> void:
 	if _body == null or tool == null:
 		return
 	var focus_role := _begin_render()
+	_awaiting_world = false
 	_confirm_button = null
 	_cancel_button = null
 	_undo_button = null
@@ -308,6 +317,8 @@ func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: 
 	_add_resettlement_rows(inner, args)
 	inner.add_child(_muted(UiText.t(&"expropriation.react_note")))
 	if accepted:
+		# TODO(B-013 / Q-030): metin "başka bir yol yapana kadar" vaat ediyor; sim pencereyi ilk haftalık taramada
+		# kapatabiliyor. Karar gelene dek metin DEĞİŞTİRİLMEDİ; kural B kalırsa düzeltilecek (production/bugs/B-013.md).
 		inner.add_child(_muted(UiText.t(&"expropriation.undo_note")))
 
 
@@ -420,6 +431,10 @@ func _add_undo_row() -> void:
 	_add_demolish_controls(last)
 
 
+static func _is_busy_reason(reason_key: StringName) -> bool:
+	return reason_key == StringName(RoadDraftCheck.key_of(RoadDraftCheck.REASON_BUSY))
+
+
 func _demolish_signature() -> String:
 	var last := tool.last_road() if tool != null else null
 	if last == null:
@@ -488,6 +503,7 @@ func _add_undo_confirm(last: PublicWorkView) -> void:
 func _add_demolish_controls(last: PublicWorkView) -> void:
 	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
 	if probe.is_rejected():
+		_awaiting_world = _awaiting_world or _is_busy_reason(probe.reason_key)
 		_body.add_child(_muted(UiText.t(&"road.demolish_blocked",
 				{"reason": UiText.reject_reason(probe.reason_key, probe.args)})))
 		return

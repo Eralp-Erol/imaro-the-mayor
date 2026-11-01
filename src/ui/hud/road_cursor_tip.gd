@@ -8,6 +8,8 @@ extends PanelContainer
 
 const CURSOR_OFFSET := Vector2(18.0, 20.0)
 const MAX_WIDTH := 340.0
+## Kartın dolu HUD kartlarından uzak kalacağı en küçük boşluk (>= 8 pt aralık kuralı).
+const GAP := 8.0
 ## Bu uzunluğa dek metin tek satırdır (ekran: ~ MAX_WIDTH'e sığar).
 const SHORT_CHARS := 36
 
@@ -71,8 +73,9 @@ func hide_tip() -> void:
 
 
 ## İmleç yanı: ekran dışına taşarsa içeri kaydırılır. `area` (boş değilse): HUD'un boş harita dikdörtgeni; etiket
-## araç çubuğu/panel/yardım alanlarına binmesin diye bu dikdörtgenin içinde tutulur.
-func place_near(cursor: Vector2, bounds: Vector2, area: Rect2 = Rect2()) -> void:
+## araç çubuğu/panel/yardım alanlarına binmesin diye bu dikdörtgenin içinde tutulur. `obstacles`: dolu HUD kartları
+## (bildirim satırları, hız ipucu); kart bunların üstüne binmez (B-014).
+func place_near(cursor: Vector2, bounds: Vector2, area: Rect2 = Rect2(), obstacles: Array[Rect2] = []) -> void:
 	var sz := get_combined_minimum_size()
 	var pos := cursor + CURSOR_OFFSET
 	pos.x = clampf(pos.x, 0.0, maxf(0.0, bounds.x - sz.x))
@@ -81,12 +84,52 @@ func place_near(cursor: Vector2, bounds: Vector2, area: Rect2 = Rect2()) -> void
 	if area.has_area():
 		pos.x = clampf(pos.x, area.position.x, maxf(area.position.x, area.end.x - sz.x))
 		pos.y = clampf(pos.y, area.position.y, maxf(area.position.y, area.end.y - sz.y))
-	position = pos
+	position = _clear_spot(pos, sz, area, obstacles, cursor)
 	size = sz
 
 
-## Sabit yer: verilen dikdörtgenin üst-ortası (dokunmatik).
-func place_at_top(area: Rect2) -> void:
+## Sabit yer: verilen dikdörtgenin üst-ortası (dokunmatik); `obstacles` doluysa boş bir yere kayar.
+func place_at_top(area: Rect2, obstacles: Array[Rect2] = []) -> void:
 	var sz := get_combined_minimum_size()
-	position = Vector2(area.position.x + maxf(0.0, (area.size.x - sz.x) * 0.5), area.position.y + 8.0)
+	var pos := Vector2(area.position.x + maxf(0.0, (area.size.x - sz.x) * 0.5), area.position.y + 8.0)
+	position = _clear_spot(pos, sz, area, obstacles, area.get_center())
 	size = sz
+
+
+## `preferred` engellerle (aralarında GAP) çakışmıyorsa o; aksi halde engellerin çevresinden ve alanın köşelerinden
+## türetilen adaylar içinde tercih edilene EN YAKIN boş yer. Hiç yer yoksa tercih edilen (kart yine de görünür).
+static func _clear_spot(preferred: Vector2, sz: Vector2, area: Rect2, obstacles: Array[Rect2],
+		anchor: Vector2) -> Vector2:
+	if obstacles.is_empty() or _is_clear(Rect2(preferred, sz), area, obstacles):
+		return preferred
+	var candidates: Array[Vector2] = []
+	for o in obstacles:
+		candidates.append(Vector2(preferred.x, o.end.y + GAP))
+		candidates.append(Vector2(preferred.x, o.position.y - GAP - sz.y))
+		candidates.append(Vector2(o.end.x + GAP, preferred.y))
+		candidates.append(Vector2(o.position.x - GAP - sz.x, preferred.y))
+		candidates.append(Vector2(o.end.x + GAP, o.position.y))
+		candidates.append(Vector2(o.position.x, o.end.y + GAP))
+	if area.has_area():
+		for x in [area.position.x + GAP, area.end.x - GAP - sz.x, preferred.x]:
+			for y in [area.position.y + GAP, area.end.y - GAP - sz.y, preferred.y]:
+				candidates.append(Vector2(x, y))
+	var best := preferred
+	var best_d := INF
+	for c in candidates:
+		if not _is_clear(Rect2(c, sz), area, obstacles):
+			continue
+		var d := (c + sz * 0.5).distance_to(anchor)
+		if d < best_d:
+			best_d = d
+			best = c
+	return best
+
+
+static func _is_clear(rect: Rect2, area: Rect2, obstacles: Array[Rect2]) -> bool:
+	if area.has_area() and not area.grow(0.01).encloses(rect):
+		return false
+	for o in obstacles:
+		if rect.intersects(o.grow(GAP - 0.01)):
+			return false
+	return true

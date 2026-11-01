@@ -67,6 +67,9 @@ var _relayout_queued: bool = false
 var _input_shared: bool = false
 ## Sahiplerce kaydedilen ek araçlar (mod -> [tool_id]); araç çubuğu yeniden kurulunca yeniden uygulanır.
 var _extra_tools: Dictionary = {}
+## Harita boşluğunda yüzen, HUD dışı kartlar (hız ipucu gibi): imleç/ipucu etiketleri bunların üstüne binmesin diye
+## `occupied_rects`e girer.
+var _occupants: Array[Control] = []
 
 
 func setup(facade_in: SimFacade, platform: PlatformProfile) -> void:
@@ -292,7 +295,11 @@ func _relayout() -> void:
 		return
 	_safe.refresh()
 	var frame_size := ctx.frame_size(size)
-	_frame.position = Vector2.ZERO
+	# B-014: konum güvenli alan kaydırmasında KALIR (UiSafeArea'nın MarginContainer sıralaması `resized` içinde bizi
+	# çağırır; burada sıfırlamak kaydırmayı siliyordu: üst şerit durum çubuğunun altında, `free_map_rect` araç
+	# çubuğuna taşıyordu).
+	var origin := ctx.frame_insets()
+	_frame.position = Vector2(origin.x, origin.y)
 	_frame.size = frame_size
 	top_bar.set_wrapped(top_bar.single_row_min_width() > frame_size.x)
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
@@ -325,6 +332,27 @@ func free_map_rect() -> Rect2:
 	if is_panel_open() and layout.panel_mode == HudLayout.MODE_SHEET:
 		bottom = layout.panel.position.y
 	return Rect2(origin + region.position, Vector2(region.size.x, maxf(0.0, bottom - region.position.y)))
+
+
+## Harita boşluğunda yüzen kartı kaydeder (görünürken `occupied_rects`e girer).
+func register_occupant(card: Control) -> void:
+	if card != null and not _occupants.has(card):
+		_occupants.append(card)
+
+
+## Serbest harita dikdörtgeninin içinde şu an DOLU olan bölgeler (ekran koordinatı): bildirim şeridinin görünür
+## satırları ve kayıtlı yüzen kartlar. Yol ipucu kartı gibi yüzen etiketler buradan kaçınır (B-014).
+func occupied_rects() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	if strip != null and strip.is_visible_in_tree():
+		for row in strip.get_children():
+			var c := row as Control
+			if c != null and c.visible and c.size.x > 0.0 and c.size.y > 0.0:
+				out.append(c.get_global_rect())
+	for card in _occupants:
+		if is_instance_valid(card) and card.is_visible_in_tree() and card.size.x > 0.0 and card.size.y > 0.0:
+			out.append(card.get_global_rect())
+	return out
 
 
 func _place(c: Control, rect: Rect2) -> void:

@@ -106,6 +106,9 @@ static func actor_name(actor: ActorRef) -> String:
 		return t(&"common.unknown")
 	if actor.name_key != &"" and has(actor.name_key):
 		return t(actor.name_key)
+	var bare_key := StringName("actor.name.%s" % actor.kind)  # numarasız ad: sistem, başkanın kendisi
+	if has(bare_key):
+		return t(bare_key)
 	var kind_key := StringName("actor.kind.%s" % actor.kind)
 	var kind_text := t(kind_key) if has(kind_key) else String(actor.kind)
 	if not has(kind_key):
@@ -154,9 +157,30 @@ static func humanize(value: Variant) -> String:
 				return "%s %d" % [t(&"command.label"), id]
 			"budget":
 				return "%s %d" % [t(&"budget.title"), id]
-			"actor.investor", "actor.landowner", "actor.group", "actor.council", "actor.council_bloc":
-				return actor_name(ActorRef.make(StringName(str(parsed["kind"]).trim_prefix("actor.")), id))
+			"agenda":
+				return t(&"agenda.item_ref", {"n": id})
+	var actor := _actor_of_ref(s)
+	if actor != null:
+		return actor_name(actor)
 	return s
+
+
+## `actor.<tür>.<n>` ya da numarasız `actor.<tür>` (protagonist, sistem) başvurusu -> ActorRef; değilse null.
+static func _actor_of_ref(s: String) -> ActorRef:
+	if not s.begins_with("actor."):
+		return null
+	var parts := s.split(".")
+	if parts.size() < 2 or parts[1].is_empty():
+		return null
+	var id := 1
+	if parts.size() > 2:
+		if not parts[parts.size() - 1].is_valid_int():
+			return null
+		id = int(parts[parts.size() - 1])
+	var kind := StringName(parts[1])
+	if not has(StringName("actor.kind.%s" % kind)) and not has(StringName("actor.name.%s" % kind)):
+		return null  # tanınmayan tür: ham kalır ve eksik olarak kaydedilir (veri hatası görünür)
+	return ActorRef.make(kind, id)
 
 
 static func _arg_text(arg_name: String, value: Variant) -> String:

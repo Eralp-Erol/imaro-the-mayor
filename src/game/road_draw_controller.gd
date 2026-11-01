@@ -27,6 +27,8 @@ const HOVER_COST_FACTOR := 7.0
 ## İmleç önizlemesinde yan panelin en sık yeniden çizilme aralığı (ms): panel düğüm kurar (~6,6 ms/çizim); imleçle aynı
 ## hızda gerekmez.
 const PANEL_HOVER_INTERVAL_MSEC := 250
+## B-012: panel "dünya hazırlanıyor" gösterirken sim'e bu aralıkla yeniden sorulur (olay gelmez; ~1 doğrulama/aralık).
+const WORLD_POLL_INTERVAL_MSEC := 200
 
 var tool: RoadDrawTool = null
 var preview: RoadDraftPreview = null
@@ -57,6 +59,8 @@ var _click_in_progress: bool = false
 ## sim + şerit + ipucu içerir; panelin düğüm kurulumu (~9 ms ölçüldü) aynı kareye binmesin.
 var _panel_due: bool = false
 var _in_events: bool = false
+var _last_world_poll_msec: int = 0
+var _owns_panel: bool = true
 
 
 ## Yol komutları bağlı değilse (facade gerçek sim değil / `attach_public_works` yapılmadı) null: araç hiç görünmez.
@@ -108,6 +112,8 @@ func panel() -> RoadDrawPanel:
 ## Aracı açar (düğme / Y): paneli açar, araç çubuğunda seçili gösterir.
 func activate() -> void:
 	if tool.is_active():
+		if _hud.panel_id() != PANEL_ID:   # başka panel yerimizi aldı: "Yol çiz"e yeniden dokunmak paneli geri getirir
+			_hud.open_panel(PANEL_ID, &"road.title", _build_panel)
 		return
 	tool.activate()
 	_hud.open_panel(PANEL_ID, &"road.title", _build_panel)
@@ -158,6 +164,8 @@ func handle_select(screen_pos: Vector2) -> bool:
 
 ## Her kare (playable `_process`): ağ başka yoldan değiştiyse açık taslağı sim'e yeniden doğrulatır.
 func process() -> void:
+	_poll_world_ready()
+	_follow_panel_ownership()
 	if tool.is_active():
 		tool.refresh_if_graph_changed()
 		_place_chip()
@@ -170,6 +178,31 @@ func process() -> void:
 			_refresh_panel()
 		if panel() != null:
 			panel().pump_hint()   # plan ipucu taraması kare dilimli (yol onayından sonraki ilk karede ~45 ms'ydi)
+
+
+## B-014: yol paneli yerini başka bir panele (gündem, gerekçe) bırakınca araç dokunuş beklemez: imleç/ipucu etiketi ve
+## onay işareti çekilir (bildirim düğmelerini örtmesin); panel geri gelince yeniden çizilir. `HudRoot` yer değişiminde
+## sinyal vermez, bu yüzden her karede kimlik karşılaştırılır (ucuz).
+func _follow_panel_ownership() -> void:
+	var owns := _hud.panel_id() == PANEL_ID
+	if owns == _owns_panel:
+		return
+	_owns_panel = owns
+	if tool.is_active():
+		_sync_visuals()
+
+
+## B-012: panel sim'in "dünya hazırlanıyor" reddini gösterirken, görünüm işi bitince (olay yok, duraklatılmış oyunda da)
+## paneli yeniden doğrulatır; imza değişmediyse düğüm kurulmaz.
+func _poll_world_ready() -> void:
+	var p := panel()
+	if p == null or not p.awaiting_world():
+		return
+	var now := Time.get_ticks_msec()
+	if now - _last_world_poll_msec < WORLD_POLL_INTERVAL_MSEC:
+		return
+	_last_world_poll_msec = now
+	p.refresh()
 
 
 ## Masaüstü imleç önizlemesi: yalnız UI'nin tüketmediği fare hareketi (`_unhandled_input`) gelir, yani imleç panel/araç
@@ -326,7 +359,8 @@ func _step_line(n: int) -> String:
 func _place_chip() -> void:
 	if chip == null:
 		return
-	var show := tool.is_active() and tool.band_active and tool.step == RoadDrawTool.Step.REVIEW and tool.can_confirm()
+	var show := tool.is_active() and tool.band_active and tool.step == RoadDrawTool.Step.REVIEW and tool.can_confirm() \
+			and _hud.panel_id() == PANEL_ID
 	if not show:
 		chip.visible = false
 		return
@@ -417,16 +451,20 @@ func _show_tip() -> void:
 func _place_tip() -> void:
 	if not tip.visible:
 		return
+	if tool.is_active() and _hud.panel_id() != PANEL_ID:
+		tip.hide_tip()   # başka panel yol panelinin yerini aldı: etiket kalmaz (B-014)
+		return
 	tip.theme = _hud.theme
+	var obstacles := _hud.occupied_rects()   # bildirim satırları + hız ipucu: kart bunların üstüne binmez (B-014)
 	if dev_tip_world is Vector2:
 		var w: Vector2 = dev_tip_world
 		var o := _camera.rebase_origin
 		var screen := _camera.camera.unproject_position(Vector3(w.x - o.x, 0.0, w.y - o.y))
-		tip.place_near(screen, _hud.get_viewport().get_visible_rect().size, _hud.free_map_rect())
+		tip.place_near(screen, _hud.get_viewport().get_visible_rect().size, _hud.free_map_rect(), obstacles)
 	elif _touch:
-		tip.place_at_top(_hud.free_map_rect())
+		tip.place_at_top(_hud.free_map_rect(), obstacles)
 	else:
-		tip.place_near(_cursor, _hud.get_viewport().get_visible_rect().size, _hud.free_map_rect())
+		tip.place_near(_cursor, _hud.get_viewport().get_visible_rect().size, _hud.free_map_rect(), obstacles)
 
 
 func _ground_xz(screen_pos: Vector2) -> Dictionary:

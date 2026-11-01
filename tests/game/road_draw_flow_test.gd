@@ -1,3 +1,4 @@
+# gdlint:disable=max-public-methods
 extends GdUnitTestSuite
 ## T-042 adım 3 (CAN-04, D-008/D-009, WLD-01) · Yol çizimi gerçek viewport yayılımıyla
 ## (`Viewport.push_input`): "Yol çiz" düğmesi -> yola dokun -> imleçle önizleme (geçerli/ret nedeni) -> ikinci
@@ -86,7 +87,8 @@ func _build(start_in_metro: bool = false) -> Dictionary:
 	rig.input_profile.select_requested.connect(func(p: Vector2) -> void:
 		if not ctrl.handle_select(p):
 			_fallthrough_selects += 1)
-	_scene = {"rig": rig, "hud": hud, "ctrl": ctrl, "facade": f, "net": net, "sync": sync, "roads": roads}
+	_scene = {"rig": rig, "hud": hud, "ctrl": ctrl, "facade": f, "net": net, "sync": sync, "roads": roads,
+		"ctx": run["ctx"]}
 	_focus(FOCUS.x, FOCUS.y, _street_distance(rig) if not start_in_metro else _band_distance(rig, &"metro"))
 	await get_tree().process_frame
 	return _scene
@@ -561,3 +563,88 @@ func test_side_panel_is_not_rebuilt_on_every_hover_step_but_catches_up() -> void
 	ctrl.process()
 	assert_object(ctrl.panel().confirm_button()).override_failure_message("bekleyen çizim yetişmeli").is_not_same(before)
 	assert_str(ctrl.panel().joined_text()).contains(UiText.t(&"road.valid"))
+
+
+## B-012: dünya görünümü yol işini bitirince (sim'in `busy` reddi kalkınca) panel KENDİLİĞİNDEN yenilenir ve "Son yolu
+## yık" belirir; sim olayı gelmez (duraklatılmış oyunda da). Kök neden: panel imzası ret nedenini içerir ama yenileme
+## yalnız araç/olay/HUD tetikleriyle çağrılıyordu; "dünya hazırlanıyor" -> "hazır" geçişi hiçbirini tetiklemez.
+func test_demolish_button_appears_by_itself_when_the_world_view_finishes_the_road() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	var sync: RoadEditSync = _scene["sync"]
+	var f: SimFacadeImpl = _scene["facade"]
+	f.set_speed(SimFacade.SPEED_PAUSED)
+	((_scene["ctx"]) as PublicWorksContext).busy_probe = sync.world_busy
+	await _open_tool()
+	_click(_screen(A))
+	_click(_screen(B_OK))
+	await _settle()
+	_click(_center(ctrl.panel().confirm_button()))
+	_tick_and_deliver()
+	ctrl.process()  # oyun her karede çağırır: olay kaynaklı bekleyen çizim burada tüketilir (hâlâ meşgul)
+	await _settle()
+	assert_bool(sync.world_busy()).override_failure_message("kurulum: görünüm yolu henüz işlemedi").is_true()
+	assert_object(ctrl.panel().demolish_button()).is_null()
+	assert_str(ctrl.panel().joined_text()).contains(UiText.t(&"public_work.reject.busy"))
+	sync.sync()
+	assert_bool(sync.world_busy()).is_false()
+	for i in 4:  # oyun karesi: her karede `process` (olay yok, yalnız zaman geçer)
+		await get_tree().create_timer(0.15).timeout
+		ctrl.process()
+	await _settle()
+	assert_object(ctrl.panel().demolish_button()).override_failure_message(
+		"dünya hazır, ama panel 'Dünya hazırlanıyor' satırında bayat kaldı").is_not_null()
+	assert_str(ctrl.panel().joined_text()).not_contains(UiText.t(&"public_work.reject.busy"))
+
+
+func _strip_event(command_id: int) -> SimEvent:
+	var e := SimEvent.new()
+	e.kind = SimEvent.KIND_PUBLIC_WORK_BUILT
+	e.message_key = &"event.road.built"
+	e.args = {"length_m": 100, "units_total": 10}
+	e.command_id = command_id
+	return e
+
+
+## B-014: ipucu kartı imleç bildirim satırlarının üstündeyken bile onlara binmez.
+func test_cursor_tip_never_covers_the_notification_strip_rows() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	var hud: HudRoot = _scene["hud"]
+	hud.strip.push_events([_strip_event(1), _strip_event(2)] as Array[SimEvent])
+	await _open_tool()
+	await _settle()
+	var rows := hud.occupied_rects()
+	assert_int(rows.size()).override_failure_message("kurulum: şeritte görünür satır yok").is_greater(0)
+	_move(_screen(A))
+	await _settle()
+	await get_tree().create_timer(0.1).timeout
+	_move(rows[0].get_center())
+	await get_tree().create_timer(0.1).timeout
+	await _settle()
+	ctrl.process()
+	await _settle()
+	assert_bool(ctrl.tip.visible).is_true()
+	var tip_rect := Rect2(ctrl.tip.position, ctrl.tip.size)
+	for r in hud.occupied_rects():
+		assert_bool(tip_rect.intersects(r)).override_failure_message(
+			"ipucu %s bildirim satırına %s biniyor" % [tip_rect, r]).is_false()
+
+
+## B-014: yol paneli yerini başka bir panele (gündem/gerekçe) bırakınca ipucu kartı da çekilir (araç artık dokunuş
+## beklemiyor); kart bildirim düğmelerini örtmeye devam etmez.
+func test_cursor_tip_leaves_when_another_panel_takes_the_panel_slot() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	var hud: HudRoot = _scene["hud"]
+	await _open_tool()
+	_move(_screen(A))
+	await _settle()
+	assert_bool(ctrl.tip.visible).override_failure_message("kurulum: ipucu görünmeli").is_true()
+	hud.open_panel(&"agenda", &"agenda.title", func(c: UiContext) -> Control:
+		var l := UiFactory.label("gündem", &"", true)
+		l.theme = UiTheme.build(c)
+		return l)
+	await _settle()
+	ctrl.process()
+	assert_bool(ctrl.tip.visible).override_failure_message("başka panel açık: yol ipucu kalmamalı").is_false()
