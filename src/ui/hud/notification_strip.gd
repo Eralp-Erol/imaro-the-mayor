@@ -215,8 +215,11 @@ func set_max_height(h: float) -> void:
 	_fit_rows()
 
 
-## Yüksekliğe sığmayan alt satırları gizler (en az ilk satır kalır). Satır asgari yüksekliği o anki genişliğe bağlıdır;
-## genişlik/içerik değişince `minimum_size_changed` -> HudRoot yeniden yerleşimi bu işlevi tekrar çağırır.
+## Yüksekliğe sığmayan satırları gizler (en az bir satır kalır). Gerekçe düğmesi olan satır ("Nedenini gör", SIM-12)
+## düğmesiz satırdan ÖNCE korunur: 800x600'de yıkım sonrası "Yol yıkıldı" satırının nedeni, üstündeki düğmesiz
+## "Komut uygulandı" satırı yüzünden gizlenmesin (3B kare, B-019). Kalan satırlar özgün sırayla gösterilir.
+## Satır asgari yüksekliği o anki genişliğe bağlıdır; genişlik/içerik değişince `minimum_size_changed` -> HudRoot
+## yeniden yerleşimi bu işlevi tekrar çağırır.
 func _fit_rows() -> void:
 	for c in _fit_hidden:
 		if is_instance_valid(c):
@@ -225,19 +228,38 @@ func _fit_rows() -> void:
 	if _max_height <= 0.0:
 		return
 	var sep := float(get_theme_constant(&"separation"))
-	var used := 0.0
-	var shown := 0
+	var rows: Array[Control] = []
 	for child in get_children():
 		var c := child as Control
-		if c == null or not c.visible:
-			continue
-		var need := c.get_combined_minimum_size().y + (sep if shown > 0 else 0.0)
-		if shown > 0 and used + need > _max_height:
-			c.visible = false
-			_fit_hidden.append(c)
+		if c != null and c.visible:
+			rows.append(c)
+	var order: Array[Control] = []
+	for r in rows:
+		if _has_reason_button(r):
+			order.append(r)
+	for r in rows:
+		if not order.has(r):
+			order.append(r)
+	var used := 0.0
+	var keep: Array[Control] = []
+	for c in order:
+		var need := c.get_combined_minimum_size().y + (sep if not keep.is_empty() else 0.0)
+		if not keep.is_empty() and used + need > _max_height:
 			continue
 		used += need
-		shown += 1
+		keep.append(c)
+	for c in rows:
+		if not keep.has(c):
+			c.visible = false
+			_fit_hidden.append(c)
+
+
+static func _has_reason_button(row: Control) -> bool:
+	var box := row.get_child(0) as HBoxContainer if row.get_child_count() > 0 else null
+	if box == null or box.get_child_count() < 2:
+		return false   # özet satırları: düğmesiz
+	var why := box.get_child(1) as Button
+	return why != null and why.visible
 
 
 func _rebuild() -> void:

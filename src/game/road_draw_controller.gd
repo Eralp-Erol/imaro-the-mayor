@@ -80,6 +80,7 @@ static func attach(hud: HudRoot, camera: CameraRig, net: WorldNetwork, facade: S
 	view_root.add_child(c.preview)
 	c.tip = RoadCursorTip.create()
 	overlay.add_child(c.tip)
+	c.tip.follow_hud(hud)   # B-019: yüzen kart değişince ipucu yeniden yerleşir (tek yerleşim mantığı)
 	c.chip = RoadConfirmChip.create(hud.ctx)
 	overlay.add_child(c.chip)
 	c.chip.confirm_requested.connect(c.confirm)

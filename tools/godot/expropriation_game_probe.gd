@@ -96,6 +96,12 @@ func run() -> void:
 	await _shot("2-after-road")
 	if _args.has("ui") and _args.has("reopen"):
 		await _reopen_tool()
+	if _args.has("ui") and _args.has("demolish-card"):
+		await _demolish_card()
+		if _args.get("demolish-card", "") == "confirm":
+			await _demolish_confirm_and_reason()
+			quit(0)
+			return
 	if _args.has("ui"):
 		await _undo_ui(facade)
 	else:
@@ -223,6 +229,44 @@ func _focus_on(a: Vector2, b: Vector2, distance: float) -> void:
 	cam.apply_state(st, true)
 	for _i in 6:
 		await _frame()
+	if _args.has("map-center"):
+		await _recenter(mid, _args["map-center"])
+
+
+## Yan paneli olan profillerde (1024x768 dokunmatik) yol uçları panelin altına düşmesin: odağı, yolun orta noktası
+## ekranda `--map-center=fx,fy` (pencere oranı) olacak biçimde sayısal Jacobian ile kaydırır.
+func _recenter(mid: Vector2, spec: String) -> void:
+	var cam: CameraRig = _scene._camera
+	var f := spec.split(",")
+	var want := Vector2(float(f[0]) * root.size.x, float(f[1]) * root.size.y)
+	for _it in 3:
+		var st := cam.target_state()
+		var s0 := _screen(mid)
+		st.focus_x += 20.0
+		cam.apply_state(st, true)
+		await _frame()
+		var sx := (_screen(mid) - s0) / 20.0
+		st.focus_x -= 20.0
+		st.focus_z += 20.0
+		cam.apply_state(st, true)
+		await _frame()
+		var sz := (_screen(mid) - s0) / 20.0
+		st.focus_z -= 20.0
+		cam.apply_state(st, true)
+		await _frame()
+		var d := want - s0
+		var det := sx.x * sz.y - sz.x * sx.y
+		if absf(det) < 0.0001:
+			return
+		var dx := (d.x * sz.y - sz.x * d.y) / det
+		var dz := (sx.x * d.y - d.x * sx.y) / det
+		st = cam.target_state()
+		st.focus_x += dx
+		st.focus_z += dz
+		cam.apply_state(st, true)
+		for _i in 3:
+			await _frame()
+	print("XPROBE_RECENTER mid_screen=%s want=%s" % [str(_screen(mid)), str(want)])
 
 
 func _drive_road(facade: SimFacadeImpl, cand: Dictionary) -> void:
@@ -287,7 +331,7 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 	var a: Vector2 = cand["a"]
 	var b: Vector2 = cand["b"]
 	_scene._camera.input_profile.select_requested.connect(func(p: Vector2) -> void: print("XPROBE_SELECT ", p))
-	await _click(_screen(a))
+	await _world_press(_screen(a))
 	await _frame()
 	_set_stage("hover")
 	print("XPROBE_UI after A step=%d start=%s msg=%s screen=%s win=%s cam_band=%s" % [tool.step, str(tool.start),
@@ -297,11 +341,11 @@ func _drive_road_ui(facade: SimFacadeImpl, cand: Dictionary) -> void:
 		await _frame()
 		await _frame()
 	_set_stage("click_b")
-	await _click(_screen(b))
+	await _world_press(_screen(b))
 	for _i in 4:
 		await _frame()
 	var verdict_key: String = tool.verdict.reason_key if tool.verdict != null else "-"
-	print("XPROBE_UI after B step=%d verdict=%s offer=%s" % [tool.step, verdict_key,
+	print("XPROBE_UI after B screenB=%s step=%d verdict=%s offer=%s" % [str(_screen(b)), tool.step, verdict_key,
 			str(not tool.offer().is_empty())])
 	await _shot("1b-offer")
 	_set_stage("accept")
@@ -363,6 +407,52 @@ func _reopen_tool() -> void:
 	print("XPROBE_REOPEN tool_active=%s" % str(ctrl.is_active()))
 
 
+## Yıkım onay kartı + [Nedenini gör] paneli kareleri (yıkım yapılmaz: "Vazgeç" ile kapanır).
+func _demolish_card() -> void:
+	_set_stage("demolish_card")
+	var open_btn := _find_button(UiText.t(&"road.demolish_last"))
+	if open_btn == null:
+		push_error("probe: 'Yolu yık' düğmesi yok")
+		return
+	await _shot("2c-strip")
+	await _click(open_btn.get_global_rect().get_center())
+	for _i in 4:
+		await _frame()
+	await _shot("2d-demolish-card")
+	var keep := _find_button(UiText.t(&"road.demolish_keep"))
+	if keep != null:
+		print("XPROBE_DEMOLISH keep_rect=%s yes_rect=%s" % [str(keep.get_global_rect()),
+				str(_find_button(UiText.t(&"road.demolish_confirm")).get_global_rect())])
+		await _click(keep.get_global_rect().get_center())
+		for _i in 3:
+			await _frame()
+
+
+## "Evet, yık" -> tick -> yıkım şeridi satırı -> [Nedenini gör] paneli (gerçek HUD, gerçek sim gerekçesi).
+func _demolish_confirm_and_reason() -> void:
+	var facade: SimFacadeImpl = _scene._facade as SimFacadeImpl
+	var open_btn := _find_button(UiText.t(&"road.demolish_last"))
+	await _click(open_btn.get_global_rect().get_center())
+	for _i in 3:
+		await _frame()
+	var yes := _find_button(UiText.t(&"road.demolish_confirm"))
+	await _click(yes.get_global_rect().get_center())
+	await _frame()
+	facade.advance(1)
+	for _i in 40:
+		await _frame()
+	print("XPROBE_DEMOLISH works_after=%d" % facade.public_works().size())
+	await _shot("2e-after-demolish-strip")
+	var why := _find_button(UiText.t(&"alert.open_reason"))
+	if why == null:
+		print("XPROBE_DEMOLISH nedenini-gor-yok")
+		return
+	await _click(why.get_global_rect().get_center())
+	for _i in 6:
+		await _frame()
+	await _shot("2f-reason-panel")
+
+
 ## Geri al: "Son yolu geri al" -> "Evet, geri al" -> tick.
 func _undo_ui(facade: SimFacadeImpl) -> void:
 	var tool: RoadDrawTool = _scene._pr.ctrl.tool
@@ -407,6 +497,17 @@ func _screen(world_xz: Vector2) -> Vector2:
 	return Support.screen_of(_scene, world_xz)
 
 
+## Dünya dokunuşu (touch profili): gerçek `InputEventScreenTouch`; düğmeler `_click` (fare) ile basılır.
+func _tap(pos: Vector2) -> void:
+	for pressed in [true, false]:
+		var e := InputEventScreenTouch.new()
+		e.index = 0
+		e.pressed = pressed
+		e.position = pos
+		root.push_input(e)
+		await _frame()
+
+
 func _click(pos: Vector2) -> void:
 	for pressed in [true, false]:
 		var e := InputEventMouseButton.new()
@@ -418,6 +519,13 @@ func _click(pos: Vector2) -> void:
 		root.push_input(e)
 		_input_ms += (Time.get_ticks_usec() - t0) / 1000.0
 		await _frame()
+
+
+func _world_press(pos: Vector2) -> void:
+	if str(_args.get("imaro-input-profile", "")) == "touch":
+		await _tap(pos)
+	else:
+		await _click(pos)
 
 
 func _move(pos: Vector2) -> void:

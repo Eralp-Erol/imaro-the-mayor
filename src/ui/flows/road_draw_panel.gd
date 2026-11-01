@@ -168,13 +168,17 @@ func _render() -> void:
 		_add_buttons()
 	elif review_offer:   # T-042b: teklif kabul düğmesi de en üstte (kart altta okunur)
 		_add_buttons()
+	# Adım 1 (yol çizilmiş, yeni çizim bekleniyor): yönetim fiilleri (Geri al / Yolu yık) açıklama ve planlama ipucundan
+	# ÖNCE gelir; ikincil metin sonra (B-019 3B kare: 800x600 ve dikey alt sayfada düğmeler çizginin altındaydı).
+	var buttons_early := tool.step == RoadDrawTool.Step.PICK_A
+	if buttons_early:
+		_add_buttons()
 	_body.add_child(UiFactory.label(UiText.t(_step_key()), &"", true))
 	if tool.step == RoadDrawTool.Step.SENDING and _facade.speed() == SimFacade.SPEED_PAUSED:
 		_body.add_child(UiFactory.label(UiText.t(&"road.step.sending_paused"), UiTheme.V_LABEL_DANGER, true))
 	_add_message()
 	if tool.step == RoadDrawTool.Step.PICK_A and _plan_hint_needed():
-		var plan_hint := UiFactory.label(UiText.t(&"plan.hint.after_road"), UiTheme.V_LABEL_HEADING, true)
-		plan_hint.add_theme_color_override("font_color", _ctx.tokens.color("ok"))
+		var plan_hint := UiFactory.label(UiText.t(&"plan.hint.after_road"), UiTheme.V_LABEL_OK, true)
 		_tag(plan_hint, "plan_hint")
 		_body.add_child(plan_hint)
 		if _ctx.is_touch():
@@ -182,7 +186,7 @@ func _render() -> void:
 	if tool.step == RoadDrawTool.Step.PICK_B or tool.step == RoadDrawTool.Step.REVIEW \
 			or tool.step == RoadDrawTool.Step.SENDING:
 		_add_preview_card()
-	if not review_confirmable and not review_offer:
+	if not review_confirmable and not review_offer and not buttons_early:
 		_add_buttons()
 	_body.add_child(_muted(UiText.t(&"road.no_building")))
 	if not _ctx.is_touch():
@@ -363,6 +367,11 @@ func _resettlement_policy() -> int:
 
 
 func _add_buttons() -> void:
+	if tool.step == RoadDrawTool.Step.PICK_A:
+		# Adım 1'de onaylanacak/iptal edilecek taslak yok: devre dışı Onayla/İptal satırı yer kaplar ve yönetim fiillerini
+		# (Geri al / Yolu yık) 800x600'de kaydırma çizgisinin altına iterdi (B-019, 3B kare). Ölü düğme de yok.
+		_add_undo_row()
+		return
 	var row := _button_row()
 	var offer := tool.offer()
 	if not offer.is_empty() and tool.step == RoadDrawTool.Step.REVIEW:
@@ -548,16 +557,9 @@ func _add_demolish_confirm(last: PublicWorkView) -> void:
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
 	inner.add_child(UiFactory.label(UiText.t(&"road.demolish_title"), UiTheme.V_LABEL_HEADING, true))
-	inner.add_child(UiFactory.label(UiText.t(&"road.demolish_effect", {
-			"length": UiText.number(int(args.get("length_m", 0))), "units": int(args.get("units_total", 0))}), &"", true))
-	var taken := int(args.get("taken_parcels", 0))
-	var warning_text := UiText.t(&"road.demolish_warning")
-	if bool(args.get("expropriated", false)) and taken > 0:
-		warning_text = UiText.t(&"road.demolish_warning_taken", {"parcels": taken})
-	var warning := UiFactory.label(warning_text, UiTheme.V_LABEL_DANGER, true)
-	_tag(warning, "road_demolish_warning")
-	inner.add_child(warning)
-	inner.add_child(_muted(_demolish_cost_text(args)))
+	# Dokunmatikte (dikey alt sayfa ~196 px) karar düğmeleri başlıktan hemen sonra gelir, açıklama/uyarı/maliyet altında:
+	# oyuncu kaydırmadan "Evet, yık / Vazgeç" görür (B-019). Masaüstünde sıra: başlık, açıklama, düğmeler.
+	var buttons_first := _ctx.is_touch()
 	var row := _button_row()
 	_demolish_yes_button = UiFactory.button(_ctx, UiText.t(&"road.demolish_confirm"), true)
 	_tag(_demolish_yes_button, "road_demolish_confirm")
@@ -572,7 +574,20 @@ func _add_demolish_confirm(last: PublicWorkView) -> void:
 		_demolish_target = SimContract.NO_ID
 		refresh())
 	row.add_child(_demolish_keep_button)
-	inner.add_child(row)
+	if buttons_first:
+		inner.add_child(row)
+	inner.add_child(UiFactory.label(UiText.t(&"road.demolish_effect", {
+			"length": UiText.number(int(args.get("length_m", 0))), "units": int(args.get("units_total", 0))}), &"", true))
+	var taken := int(args.get("taken_parcels", 0))
+	var warning_text := UiText.t(&"road.demolish_warning")
+	if bool(args.get("expropriated", false)) and taken > 0:
+		warning_text = UiText.t(&"road.demolish_warning_taken", {"parcels": taken})
+	var warning := UiFactory.label(warning_text, UiTheme.V_LABEL_DANGER, true)
+	_tag(warning, "road_demolish_warning")
+	inner.add_child(warning)
+	inner.add_child(_muted(_demolish_cost_text(args)))
+	if not buttons_first:
+		inner.add_child(row)
 	_body.add_child(parts[0])
 
 

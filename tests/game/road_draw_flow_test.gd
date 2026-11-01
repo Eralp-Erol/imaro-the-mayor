@@ -631,6 +631,31 @@ func test_cursor_tip_never_covers_the_notification_strip_rows() -> void:
 			"ipucu %s bildirim satırına %s biniyor" % [tip_rect, r]).is_false()
 
 
+## B-019 (3B karede bulundu): oyundaki `RoadDrawController` ipucu kartını HUD'a bağlamıyordu (`follow_hud` yalnız UI
+## testinde çağrılıyordu). Araç açıkken şeride satır gelince (kart yerleştikten SONRA) kart satırlara binmemeli.
+func test_cursor_tip_reflows_when_strip_rows_arrive_after_it_was_placed() -> void:
+	await _build()
+	var ctrl: RoadDrawController = _scene["ctrl"]
+	var hud: HudRoot = _scene["hud"]
+	await _open_tool()
+	_move(hud.strip.global_position + Vector2(40.0, 20.0))   # imleç şeridin yerinde: satırlar gelince tam üstüne düşer
+	await _settle()
+	await get_tree().create_timer(0.1).timeout
+	_move(hud.strip.global_position + Vector2(41.0, 21.0))
+	await _settle()
+	ctrl.process()
+	await _settle()
+	assert_bool(ctrl.tip.visible).is_true()
+	hud.strip.push_events([_strip_event(1), _strip_event(2), _strip_event(3)] as Array[SimEvent])
+	for i in 6:
+		await get_tree().process_frame
+	var tip_rect := Rect2(ctrl.tip.position, ctrl.tip.size)
+	assert_int(hud.occupied_rects().size()).override_failure_message("kurulum: şerit satırı yok").is_greater(0)
+	for r in hud.occupied_rects():
+		assert_bool(tip_rect.intersects(r)).override_failure_message(
+			"ipucu %s sonradan gelen satıra %s biniyor (floaters_changed bağlı değil)" % [tip_rect, r]).is_false()
+
+
 ## B-014: yol paneli yerini başka bir panele (gündem/gerekçe) bırakınca ipucu kartı da çekilir (araç artık dokunuş
 ## beklemiyor); kart bildirim düğmelerini örtmeye devam etmez.
 func test_cursor_tip_leaves_when_another_panel_takes_the_panel_slot() -> void:

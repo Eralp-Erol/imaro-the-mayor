@@ -152,6 +152,24 @@ func _check_confirm_visible(s: Dictionary, tag: String) -> void:
 				"%s: '%s' ekran dışında %s" % [tag, b.text, r]).is_true()
 
 
+## 3B karede bulundu (800x600 dokunmatik): uzun planlama ipucu "Yolu yık" düğmesini kaydırma çizgisinin altına itiyordu.
+## Yönetim fiili (yol çizilmiş, yeni çizim bekleniyor) panel kaydırılmadan görünür olmalı (yatay + dikey dokunmatik).
+func test_demolish_verb_visible_without_scrolling_when_plan_hint_is_shown() -> void:
+	for c: Array in CASES:
+		if c[0] != &"touch":
+			continue
+		var tag := "yık düğmesi %s" % c[1]
+		var s: Dictionary = await _scene(c[0], c[1], true, false)
+		var p: RoadDrawPanel = s["panel"]
+		var hud: HudRoot = s["hud"]
+		var btn := p.demolish_button()
+		assert_object(btn).override_failure_message(tag + ": 'Yolu yık' düğmesi yok").is_not_null()
+		var view: Rect2 = hud.panel.scroll_view_rect()
+		var r := btn.get_global_rect()
+		assert_bool(view.grow(0.5).encloses(r)).override_failure_message(
+				"%s: %s kaydırmadan görünmüyor (görünür alan %s)" % [tag, r, view]).is_true()
+
+
 func test_no_overlap_nothing_offscreen_with_strip_hint_and_tip() -> void:
 	for c: Array in CASES:
 		var tag := "%s %s" % [c[0], c[1]]
@@ -166,9 +184,8 @@ func test_no_overlap_with_demolish_confirm_open() -> void:
 		var tag := "onay %s %s" % [c[0], c[1]]
 		var s: Dictionary = await _scene(c[0], c[1], true, true)
 		_check_rects(s, tag)
-		# Dikey dokunmatik alt sayfa (196 px görünür alan) onay kartından kısa: orada kart kaydırılarak görülür
-		# (rapor: B-019 açık not); yatay profillerde kaydırmasız tam görünür olmalı.
-		if s["hud"].layout.panel_mode == HudLayout.MODE_SIDE:
+		# Dikey dokunmatik alt sayfada da (196 px görünür alan) "Evet, yık / Vazgeç" kaydırmadan görünür (B-019 açık not).
+		if s["hud"].layout.panel_mode == HudLayout.MODE_SIDE or s["hud"].layout.panel_mode == HudLayout.MODE_SHEET:
 			_check_confirm_visible(s, tag)
 
 
@@ -199,3 +216,38 @@ func test_strip_never_overlaps_toolbar_even_when_overfull() -> void:
 			if row != null and row.visible:
 				assert_bool(row.size.y <= 130.0).override_failure_message(
 						"%s: şerit satırı %.0f px yüksek (harf harf sarma)" % [tag, row.size.y]).is_true()
+
+
+## 3B karede bulundu (800x600): şerit yüksekliği dar olunca üstteki düğmesiz "Komut uygulandı" satırı, altındaki
+## "Nedenini gör" düğmeli satırı gizliyordu. Gerekçe düğmeli satır korunur (SIM-12), düğmesizler önce gizlenir.
+func test_strip_height_cap_keeps_the_row_with_the_reason_button() -> void:
+	var strip := NotificationStrip.create(UiContext.for_profile_name(&"touch"))
+	add_child(strip)
+	auto_free(strip)
+	var why_row := SimEvent.new()
+	why_row.kind = SimEvent.KIND_PUBLIC_WORK_BUILT
+	why_row.command_id = 11
+	why_row.message_key = &"event.road.built"
+	why_row.args = {"length_m": 134, "units_total": 13}
+	why_row.seq = 1
+	var plain := SimEvent.new()
+	plain.kind = &"command.applied"
+	plain.command_id = 12
+	plain.message_key = &"event.command.applied"
+	plain.seq = 2
+	strip.push_events([why_row, plain] as Array[SimEvent])
+	await get_tree().process_frame
+	var heights: Array[float] = []
+	for c in strip.get_children():
+		heights.append((c as Control).get_combined_minimum_size().y)
+	assert_int(heights.size()).is_equal(2)
+	strip.set_max_height(maxf(heights[0], heights[1]) + 1.0)   # yalnız bir satır sığar
+	var shown := 0
+	var why_visible := false
+	for c in strip.get_children():
+		var row := c as Control
+		if row.visible:
+			shown += 1
+			why_visible = why_visible or NotificationStrip._has_reason_button(row)
+	assert_int(shown).is_equal(1)
+	assert_bool(why_visible).override_failure_message("yalnız bir satır sığarken gerekçe düğmeli satır gizlendi").is_true()
