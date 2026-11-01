@@ -46,6 +46,7 @@ static func attach(hud: HudRoot, facade: SimFacade, prefs: PlayableHintPrefs = n
 	hud.register_occupant(h)  # yol ipucu kartı gibi yüzen etiketler bu kartın üstüne binmez (B-014)
 	hud.events_received.connect(h._on_events)
 	hud.layout_changed.connect(h._place)
+	hud.floaters_changed.connect(h._place)
 	hud.speed_changed.connect(h._on_speed_changed)
 	return h
 
@@ -94,7 +95,7 @@ func dismiss() -> void:
 
 func _process(delta: float) -> void:
 	# Bildirim şeridi olaylarla büyüyüp küçülür; yalnız "şeridin altına in" kipinde konum onun yüksekliğine bağlıdır.
-	var strip_rect := Rect2(_hud.strip.position, _hud.strip.size)
+	var strip_rect := _hud.strip.get_global_rect()
 	if strip_rect != _strip_rect:
 		_strip_rect = strip_rect
 		_place()
@@ -166,6 +167,17 @@ func _build() -> void:
 	row.add_child(_close)
 
 
+func _content_min_width() -> float:
+	if get_child_count() == 0:
+		return 0.0
+	var col := get_child(0) as Control
+	var row_min := 0.0
+	for c in col.get_children():
+		if c is HBoxContainer:
+			row_min = maxf(row_min, (c as Control).get_combined_minimum_size().x)
+	return row_min + get_theme_stylebox(&"panel").get_minimum_size().x
+
+
 ## Kök neden (iPad 1024x768): eski kart etiket + iki düğmeyi TEK satıra koyuyor ve genişliği harita alanının %0.4'ü
 ## (~250 px) tutuyordu; düğmelerin asgari genişliği toplamı bunu aştığı için sarmalı etiket 1 harf genişliğine
 ## ezildi. Şimdi etiket üstte, düğmeler altta; genişlik bildirim sütununun SAĞINDAki boşluktan hesaplanır, MIN_WIDTH
@@ -177,7 +189,9 @@ func _place() -> void:
 	var notif_end := _hud.layout.notifications.end.x
 	var free_right := area.end.x - MARGIN - (notif_end + MARGIN)
 	var width := minf(MAX_WIDTH, free_right)
-	var below_strip := width < MIN_WIDTH
+	# Gerçek asgari genişlik: iki düğmenin yan yana asgarisi (dokunmatikte ölçekli) MIN_WIDTH'ten büyük olabilir; kart
+	# içeriğinden dar kurulursa kendiliğinden genişleyip bildirim şeridine biner (B-019).
+	var below_strip := width < maxf(MIN_WIDTH, _content_min_width())
 	if below_strip:
 		width = minf(MAX_WIDTH, maxf(0.0, area.size.x - 2.0 * MARGIN))
 	custom_minimum_size = Vector2(width, 0.0)
@@ -190,6 +204,9 @@ func _place() -> void:
 	size = Vector2(width, get_combined_minimum_size().y)
 	var y := area.position.y + MARGIN
 	if below_strip:
-		y = maxf(y, _hud.strip.position.y + _hud.strip.size.y + MARGIN)
+		# Şerit çerçeveye (güvenli alan kaydırması) göre yerel konumdadır; `area` HUD köküne göre: küresel dikdörtgenden
+		# HUD köküne çevrilir (B-019: yerel konum kullanmak kartı kaydırma kadar şeridin İÇİNE koyuyordu).
+		var strip_bottom := _hud.strip.get_global_rect().end.y - _hud.global_position.y
+		y = maxf(y, strip_bottom + MARGIN)
 		y = minf(y, maxf(area.position.y, area.end.y - size.y - MARGIN))
 	position = Vector2(area.end.x - width - MARGIN, y)

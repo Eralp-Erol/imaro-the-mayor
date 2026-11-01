@@ -72,6 +72,10 @@ func content_height() -> float:
 	return pad + _header.get_combined_minimum_size().y + sep + state_view.get_combined_minimum_size().y + 4.0
 
 
+func scroll_view_rect() -> Rect2:
+	return _scroll.get_global_rect()
+
+
 func set_title(text: String) -> void:
 	_title.text = text
 

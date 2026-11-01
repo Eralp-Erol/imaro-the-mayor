@@ -142,6 +142,12 @@ func _render() -> void:
 	var standing := tool.last_road()
 	if standing == null or standing.command_id != _demolish_target:
 		_demolish_target = SimContract.NO_ID   # hedef yol artık yok/değişti: onay bekleme
+	# B-019 · Yıkım onayı panelin EN ÜSTÜNDE (Onayla düğmesiyle aynı ilke): dokunmatikte kart panelin altında kalıp
+	# "Evet, yık / Vazgeç" kaydırmadan görünmüyordu. Onay beklerken diğer eylemler (geri al/yık) onayın altında kalır.
+	if _demolish_target != SimContract.NO_ID and standing != null:
+		_add_demolish_confirm(standing)
+		if _demolish_target != SimContract.NO_ID:
+			_scroll_to_top.call_deferred()
 	if not tool.band_active:
 		_body.add_child(UiFactory.label(UiText.t(&"road.zoom_in"), UiTheme.V_LABEL_DANGER, true))
 		_add_undo_row()
@@ -427,8 +433,7 @@ func _add_undo_row() -> void:
 	if last == null:
 		return
 	if _demolish_target != SimContract.NO_ID:
-		_add_demolish_confirm(last)
-		return
+		return   # onay kartı panelin üstünde çizildi (`_render`)
 	if tool.has_undoable_road():
 		_add_undo_controls(last)
 	else:
@@ -569,3 +574,14 @@ func _add_demolish_confirm(last: PublicWorkView) -> void:
 	row.add_child(_demolish_keep_button)
 	inner.add_child(row)
 	_body.add_child(parts[0])
+
+
+## Onay kartı ilk görünür satır olsun: panelin kaydırma kabı varsa en üste alınır (kart kaydırmadan görünür).
+func _scroll_to_top() -> void:
+	var n: Node = get_parent()
+	while n != null:
+		var sc := n as ScrollContainer
+		if sc != null:
+			sc.scroll_vertical = 0
+			return
+		n = n.get_parent()

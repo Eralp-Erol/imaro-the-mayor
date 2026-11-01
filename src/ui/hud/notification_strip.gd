@@ -16,6 +16,8 @@ const _CODE_INFRA := "infrastructure_exhausted"
 const PRIO_BACKGROUND := 0
 const PRIO_NORMAL := 1
 const PRIO_PLAYER := 2
+## Satır metninin asgari genişliği (px, ölçekten önce).
+const ROW_TEXT_MIN_WIDTH := 140.0
 
 var _ctx: UiContext = null
 var _max_rows: int = 3
@@ -30,6 +32,10 @@ var _infra_summary: PanelContainer = null
 ## T-042b · Aynı komutun `public_work.expropriated` olayı: "Yol yapıldı" satırına yıkım özeti olarak eklenir (iki satır
 ## yerine tek; komut kimliği -> olay). Yalnız şerit sunumudur; olay günlüğü ikisini de tutar.
 var _demolition: Dictionary = {}
+## B-019 · Yerleşimin verdiği en büyük yükseklik (0 = sınırsız). Sığmayan (eski) satırlar yalnız GÖSTERİMDE gizlenir;
+## olay günlüğü ve gerekçe ekranları etkilenmez. Şerit hiçbir koşulda araç çubuğuna binmez/ekran dışına taşmaz.
+var _max_height: float = 0.0
+var _fit_hidden: Array[Control] = []
 
 
 static func create(ctx: UiContext) -> NotificationStrip:
@@ -201,6 +207,39 @@ func row_texts() -> PackedStringArray:
 	return out
 
 
+## Yerleşim yöneticisi (HudRoot) çağırır. Yeni olay üstte olduğundan sığmayan satırlar en alttakilerdir.
+func set_max_height(h: float) -> void:
+	if is_equal_approx(h, _max_height):
+		return
+	_max_height = h
+	_fit_rows()
+
+
+## Yüksekliğe sığmayan alt satırları gizler (en az ilk satır kalır). Satır asgari yüksekliği o anki genişliğe bağlıdır;
+## genişlik/içerik değişince `minimum_size_changed` -> HudRoot yeniden yerleşimi bu işlevi tekrar çağırır.
+func _fit_rows() -> void:
+	for c in _fit_hidden:
+		if is_instance_valid(c):
+			c.visible = true
+	_fit_hidden.clear()
+	if _max_height <= 0.0:
+		return
+	var sep := float(get_theme_constant(&"separation"))
+	var used := 0.0
+	var shown := 0
+	for child in get_children():
+		var c := child as Control
+		if c == null or not c.visible:
+			continue
+		var need := c.get_combined_minimum_size().y + (sep if shown > 0 else 0.0)
+		if shown > 0 and used + need > _max_height:
+			c.visible = false
+			_fit_hidden.append(c)
+			continue
+		used += need
+		shown += 1
+
+
 func _rebuild() -> void:
 	visible = not _events.is_empty() or not _unplanned.is_empty() or not _infra.is_empty()
 	var shown := _events.size()
@@ -233,6 +272,7 @@ func _rebuild() -> void:
 		move_child(_infra_summary, -1)
 	elif _infra_summary.get_parent() != null:
 		remove_child(_infra_summary)
+	_fit_rows()
 
 
 func _make_row() -> PanelContainer:
@@ -241,7 +281,11 @@ func _make_row() -> PanelContainer:
 	row.mouse_filter = Control.MOUSE_FILTER_STOP
 	var box := HBoxContainer.new()
 	row.add_child(box)
-	box.add_child(UiFactory.label("", &"", true))
+	var text := UiFactory.label("", &"", true)
+	# Dar şeritte etiket 1-4 harf/satıra ezilmesin (B-019): asgari okunur genişlik; düğme sağda kalır.
+	text.custom_minimum_size.x = _ctx.px(ROW_TEXT_MIN_WIDTH)
+	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	box.add_child(text)
 	var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), false)
 	why.pressed.connect(func() -> void: reason_requested.emit(row.get_meta(_EVENT_META)))
 	box.add_child(why)

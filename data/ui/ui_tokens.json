@@ -35,6 +35,7 @@
 		"bar_toolbar": 56,
 		"panel_width": 400,
 		"notif_width": 420,
+		"notif_min_width": 240,
 		"toolbar_max_width": 760,
 		"sheet_max_height": 560,
 		"map_margin": 8
@@ -44,6 +45,7 @@
 		"panel_frac_side_touch": 0.38,
 		"sheet_frac": 0.45,
 		"sheet_frac_expanded": 0.8,
+		"notif_height_frac": 0.4,
 		"center_visible_min": 0.5
 	},
 	"floors": {

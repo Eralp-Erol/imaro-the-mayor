@@ -31,6 +31,9 @@ signal layout_changed
 ## `refresh()` snapshot'ı yeniledi (tick/olay/hız değişti) ve sırada işlenmemiş yeni olaylar (varsa) şerite itildi.
 signal refreshed
 signal events_received(events: Array[SimEvent])
+## Yüzen kartların (bildirim satırları, hız ipucu, yol ipucu) kapladığı bölgeler değişti: yüzen kartlar yerlerini TEK
+## yerden (bu sinyal) yeniden hesaplar. Yerleşim yöneticisi budur (B-019): kartlar kendi başlarına yarışmaz.
+signal floaters_changed
 
 var ctx: UiContext = null
 var input: InputProfile = null
@@ -70,6 +73,7 @@ var _extra_tools: Dictionary = {}
 ## Harita boşluğunda yüzen, HUD dışı kartlar (hız ipucu gibi): imleç/ipucu etiketleri bunların üstüne binmesin diye
 ## `occupied_rects`e girer.
 var _occupants: Array[Control] = []
+var _float_sig: int = 0
 
 
 func setup(facade_in: SimFacade, platform: PlatformProfile) -> void:
@@ -197,6 +201,17 @@ func _process(_delta: float) -> void:
 	if input != null and not _input_shared:
 		input.process(_delta)
 	poll()
+	_poll_floaters()
+
+
+## Satır boyları kare sonunda oturur (konteyner yerleşimi bir kare geç yetişir); kapladığı bölgeler değişince sinyal.
+func _poll_floaters() -> void:
+	if layout == null:
+		return
+	var sig := occupied_rects().hash()
+	if sig != _float_sig:
+		_float_sig = sig
+		floaters_changed.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -303,12 +318,13 @@ func _relayout() -> void:
 	_frame.size = frame_size
 	top_bar.set_wrapped(top_bar.single_row_min_width() > frame_size.x)
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
-		top_bar.get_combined_minimum_size().y, sheet_expanded)
+		top_bar.get_combined_minimum_size().y, sheet_expanded, strip.get_combined_minimum_size().x)
 	toolbar.set_rows(layout.toolbar_rows)
 	_place(top_bar, layout.top)
 	if banner.visible:
 		_place(banner, layout.banner)
 	_place(strip, layout.notifications)
+	strip.set_max_height(layout.notifications_max_h)
 	_place(toolbar, layout.toolbar)
 	if is_panel_open():
 		panel.set_expand_available(layout.panel_mode == HudLayout.MODE_SHEET, sheet_expanded)
@@ -338,6 +354,7 @@ func free_map_rect() -> Rect2:
 func register_occupant(card: Control) -> void:
 	if card != null and not _occupants.has(card):
 		_occupants.append(card)
+		floaters_changed.emit.call_deferred()
 
 
 ## Serbest harita dikdörtgeninin içinde şu an DOLU olan bölgeler (ekran koordinatı): bildirim şeridinin görünür

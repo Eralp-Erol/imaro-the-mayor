@@ -12,10 +12,16 @@ const MAX_WIDTH := 340.0
 const GAP := 8.0
 ## Bu uzunluğa dek metin tek satırdır (ekran: ~ MAX_WIDTH'e sığar).
 const SHORT_CHARS := 36
+const MODE_TOP := &"top"
+const MODE_NEAR := &"near"
 
 var _label: Label = null
 var _step_label: Label = null
 var _valid: bool = true
+var _hud: HudRoot = null
+var _mode: StringName = &""
+var _cursor: Vector2 = Vector2.ZERO
+var _bounds: Vector2 = Vector2.ZERO
 
 
 static func create() -> RoadCursorTip:
@@ -38,6 +44,26 @@ static func create() -> RoadCursorTip:
 	tip._label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(tip._label)
 	return tip
+
+
+## Tek yerleşim mantığı (B-019): HUD'un yüzen kartları (bildirim satırları, hız ipucu) değişince, ya da düzen değişince
+## kart son yerleştirme kipiyle (imleç yanı / üst-orta) yeniden yerleşir. Çağıran yalnız imleç/hedef değişince
+## yerleştirir.
+func follow_hud(hud: HudRoot) -> void:
+	_hud = hud
+	if not hud.floaters_changed.is_connected(_reflow):
+		hud.floaters_changed.connect(_reflow)
+		hud.layout_changed.connect(_reflow)
+
+
+func _reflow() -> void:
+	if _hud == null or not visible or _mode == &"":
+		return
+	var obstacles := _hud.occupied_rects()
+	if _mode == MODE_TOP:
+		place_at_top(_hud.free_map_rect(), obstacles)
+	else:
+		place_near(_cursor, _bounds, _hud.free_map_rect(), obstacles)
 
 
 func text() -> String:
@@ -76,6 +102,9 @@ func hide_tip() -> void:
 ## araç çubuğu/panel/yardım alanlarına binmesin diye bu dikdörtgenin içinde tutulur. `obstacles`: dolu HUD kartları
 ## (bildirim satırları, hız ipucu); kart bunların üstüne binmez (B-014).
 func place_near(cursor: Vector2, bounds: Vector2, area: Rect2 = Rect2(), obstacles: Array[Rect2] = []) -> void:
+	_mode = MODE_NEAR
+	_cursor = cursor
+	_bounds = bounds
 	var sz := get_combined_minimum_size()
 	var pos := cursor + CURSOR_OFFSET
 	pos.x = clampf(pos.x, 0.0, maxf(0.0, bounds.x - sz.x))
@@ -90,6 +119,7 @@ func place_near(cursor: Vector2, bounds: Vector2, area: Rect2 = Rect2(), obstacl
 
 ## Sabit yer: verilen dikdörtgenin üst-ortası (dokunmatik); `obstacles` doluysa boş bir yere kayar.
 func place_at_top(area: Rect2, obstacles: Array[Rect2] = []) -> void:
+	_mode = MODE_TOP
 	var sz := get_combined_minimum_size()
 	var pos := Vector2(area.position.x + maxf(0.0, (area.size.x - sz.x) * 0.5), area.position.y + 8.0)
 	position = _clear_spot(pos, sz, area, obstacles, area.get_center())

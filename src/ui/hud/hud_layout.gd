@@ -17,7 +17,10 @@ const TOOLBAR_ROWS_PORTRAIT := 2
 var panel_mode: StringName = MODE_SIDE
 var top: Rect2 = Rect2()
 var banner: Rect2 = Rect2()
+## Bildirim şeridi: genişlik burada, yükseklik 0 (içeriğe göre) ama `notifications_max_h` ile sınırlı (şerit sığmayan
+## satırları gizler; geçmişte kalırlar).
 var notifications: Rect2 = Rect2()
+var notifications_max_h: float = 0.0
 var toolbar: Rect2 = Rect2()
 var toolbar_rows: int = 1
 ## Açık değilse boyutu sıfır.
@@ -27,10 +30,11 @@ var map_region: Rect2 = Rect2()
 
 ## `top_min_height`: üst şeridin içeriğinden gelen asgari yükseklik (iki satıra sarıldıysa tabandan
 ## büyüktür).
+## `strip_min_width`: bildirim şeridinin içeriğinden gelen asgari genişlik (0 = bilinmiyor).
 ## `sheet_expanded`: yalnız alt sayfa kipinde (dikey dokunmatik); oyuncu "Genişlet" derse sayfa `sheet_frac_expanded`
 ## kadar yükselir (varsayılan %45 değişmez; şehri örtme kararı oyuncunundur).
 static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banner: bool,
-		top_min_height: float = 0.0, sheet_expanded: bool = false) -> HudLayout:
+		top_min_height: float = 0.0, sheet_expanded: bool = false, strip_min_width: float = 0.0) -> HudLayout:
 	var l := HudLayout.new()
 	var tk := ctx.tokens
 	var margin := ctx.edge_margin()
@@ -60,7 +64,15 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 	var tb_x := l.map_region.position.x + (l.map_region.size.x - tb_w) * 0.5
 	l.toolbar = Rect2(tb_x, frame.y - margin - toolbar_h, tb_w, toolbar_h)
 
-	l.notifications = Rect2(margin, y + gap, minf(ctx.px(tk.size("notif_width")), l.map_region.size.x * 0.45), 0.0)
+	# Şerit genişliği: ideal `notif_width`; harita bölgesinin %45'i okunur asgarinin (`notif_min_width`) altına düşerse
+	# asgariye çıkar (dar profilde 223 px'e ezilip satırların 1-4 harf/satır kırılması B-019'un kök nedeniydi), ama
+	# bölgeyi iki kenar boşluğuyla aşmaz.
+	var avail_w := maxf(0.0, l.map_region.size.x - 2.0 * margin)
+	# `strip_min_width`: şeridin gerçek asgari genişliği (satır metni + düğme); yerleşim ondan dar vermez (şerit kendi
+	# başına genişleyip komşu kartlara binmesin).
+	var floor_w := minf(maxf(ctx.px(tk.size("notif_min_width")), strip_min_width), avail_w)
+	var notif_w := maxf(l.map_region.size.x * 0.45, floor_w)
+	l.notifications = Rect2(margin, y + gap, minf(ctx.px(tk.size("notif_width")), notif_w), 0.0)
 
 	if panel_open:
 		if l.panel_mode == MODE_SIDE:
@@ -73,6 +85,14 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 				sheet_h = minf(ctx.px(tk.size("sheet_max_height")), sheet_h)
 			sheet_h = maxf(sheet_h, 0.0)
 			l.panel = Rect2(0.0, l.toolbar.position.y - gap - sheet_h, frame.x, sheet_h)
+	# Şerit yüksekliği: harita boşluğunun (üst şerit/banner altı ile araç çubuğu/alt sayfa üstü arası) en çok
+	# `notif_height_frac`'ı; kalanı hız ipucu + yol ipucu kartlarının. Böylece şerit araç çubuğunu örtemez/ekran dışına
+	# taşamaz.
+	var bottom := l.toolbar.position.y
+	if panel_open and l.panel_mode == MODE_SHEET:
+		bottom = l.panel.position.y
+	var free_h := maxf(0.0, bottom - gap - l.notifications.position.y)
+	l.notifications_max_h = floorf(free_h * tk.limit("notif_height_frac"))
 	return l
 
 
