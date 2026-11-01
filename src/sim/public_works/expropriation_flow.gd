@@ -62,10 +62,20 @@ static func _problem(ctx: PublicWorksContext, state: GameState, params: Dictiona
 	out["taken"] = taken
 	if taken.is_empty():  # bu yol parsel almıyor: düz yol gibi (bayrak zararsız)
 		var plain := ctx.draft(points_cm, road_class, at_submit and ctx.is_busy())
-		out["draft"] = plain
-		if not bool(plain["ok"]):
-			out["code"] = StringName(plain["key"])
-			out["args"] = PublicWorkRoadHandler.reject_args_of(plain)
+		if bool(plain["ok"]) or plain["key"] != RoadDraftCheck.key_of(RoadDraftCheck.REASON_CROSSES_PARCELS):
+			out["draft"] = plain
+			if not bool(plain["ok"]):
+				out["code"] = StringName(plain["key"])
+				out["args"] = PublicWorkRoadHandler.reject_args_of(plain)
+			return out
+		# Alınan parsel yok ama şerit parselli bir blokta (örn. yıkılan yolun boşalttığı şerit, B-015, Ek J takip d): düz
+		# `add_road` bloğu BAŞTAN parsellerdi (yeni numara). Yol havuzlu kurulur; sıfır planlı teklif çıkar.
+		var none := ParcelExpropriation.plan(state, ctx.economy.static_columns(), taken, ctx.config.household_fate)
+		if not bool(none["ok"]):
+			out["code"] = CODE_CHANGED
+			return out
+		out["plan"] = none
+		out["nearby"] = {"parcels": 0, "households": 0, "by_region": {}}
 		return out
 	var protected_ids := _protected_in(ctx, taken)
 	if ctx.config.protect_heritage and not protected_ids.is_empty():
@@ -135,6 +145,8 @@ static func apply(ctx: PublicWorksContext, state: GameState, params: Dictionary,
 	var plan: Dictionary = p["plan"]
 	var draft: Dictionary = p["draft"]
 	var result := ctx.expropriation.commit(draft, road_class)
+	if (p["taken"] as PackedInt64Array).is_empty():  # sıfır alınan: havuzlu kurulan düz yol (B-015)
+		return _finish_pooled_plain(ctx, state, command_id, road_class, draft, result)
 	if not bool(result["ok"]):
 		push_error("ExpropriationFlow: doğrulanan kamulaştırmalı yol uygulanamadı (%s); durum değişmedi" %
 			str(result.get("error", "")))
@@ -165,6 +177,28 @@ static func apply(ctx: PublicWorksContext, state: GameState, params: Dictionary,
 	SimEventLog.emit(state, SimEvent.KIND_PUBLIC_WORK_EXPROPRIATED, &"event.road.expropriated",
 		ExpropriationSummary.subjects(command_id, summary), args, reason_ids, command_id)
 	PublicWorkRoadHandler.emit_built(state, command_id, road_class, draft)  # expropriated -> built -> applied
+	return &""
+
+
+## Sıfır parsel alan ama parselli bloktan geçen yol (B-015): dünya işlemi havuzlu kurdu (kimlikler korunur), sim
+## kaydı DÜZ yoldur (`expropriation` satırı, `expropriated` olayı ve tepki yok: alınan, bozulan, anımsanacak bir şey
+## yok). Geri alma/yıkma/yükleme op'taki `expropriate` bayrağından dünya köprüsüne gider.
+static func _finish_pooled_plain(ctx: PublicWorksContext, state: GameState, command_id: int, road_class: StringName,
+		draft: Dictionary, result: Dictionary) -> StringName:
+	if not bool(result["ok"]):
+		push_error("ExpropriationFlow: doğrulanan havuzlu yol uygulanamadı (%s); durum değişmedi" %
+			str(result.get("error", "")))
+		return CODE_CHANGED
+	if not (result["removed"] as PackedInt64Array).is_empty():  # dünya önizlemeden farklı küme aldı
+		var undone := ctx.expropriation.undo()
+		if not bool(undone["ok"]):
+			push_error("ExpropriationFlow: AĞ BOZULDU: sapan havuzlu yol geri alınamadı (%s)" %
+				str(undone.get("error", "")))
+		return CODE_CHANGED
+	var work := {"command_id": command_id, "tick": state.tick, "road_class": String(road_class),
+		"length_cm": draft["length_cm"], "region_units": draft["region_units"]}
+	PublicWorksState.append_work(state, ctx.net.base_hash, ctx.net.peek_last_op(), ctx.net.graph_hash(), work)
+	PublicWorkRoadHandler.emit_built(state, command_id, road_class, draft)
 	return &""
 
 

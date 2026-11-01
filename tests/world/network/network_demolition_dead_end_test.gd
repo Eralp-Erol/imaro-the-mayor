@@ -7,7 +7,7 @@ extends GdUnitTestSuite
 ## ÜRETİLEMEDİ: ada kalan yüz, imzası ve köşe anahtarı aynı kaldığı için eski bloğa eşlenir (`kind` korunur, parseller
 ## yerinde) ve yıkım temiz biter. Bu testler o davranışın KORUMASIDIR (kırmızı değil; yeşil kalmalı).
 ## `DemolitionPlan.next_edge` bu yüzden DEĞİŞMEDİ.
-## Ayrıca (d): yıkılan yolun boş şeridine aynı yolu yeniden çizmenin dünya tarafı ölçümü sabitlenir.
+## Ayrıca (d, B-015): yıkılan yolun boş şeridine aynı yolu yeniden çizmenin dünya tarafı (havuzlu, sıfır alınan).
 
 const DX := 160.0
 const DZ := 100.0
@@ -184,11 +184,8 @@ func test_random_dead_ends_demolish_without_touching_the_parcel_set_in_both_draw
 	assert_array(failures).is_empty()
 
 
-## (d) ÖLÇÜM: yıkılan kamulaştırmalı yolun boş şeridine aynı yol yeniden çizilirse dünya tarafı ne diyor? Alınan parsel
-## yok (`taken_parcels` boş), ama birleşen blok parselli olduğu için DÜZ denetim yine `crosses_parcels` verir (blok
-## tabanlı, `RoadDraftCheck._in_parcelized_block`). BİLİNEN SINIRLAMA (ADR-0005 Ek J takip d): sim akışı `taken` boşsa
-## düz yola düşer ve oyuncu aynı şeride yol çizemez. Düzeltilirse bu test bilerek değişir.
-func test_known_limitation_redrawing_over_a_freed_strip_still_reports_crosses_parcels() -> void:
+## Yıkılan kamulaştırmalı yolun boş şeridini döndürür: [ağ, şerit]. Şerit gerçekten boştur (`taken_parcels` = 0).
+func _freed_strip() -> Array:
 	var net := _grid()
 	var strip := PackedVector2Array(THROUGH)
 	var drawn := net.add_road_expropriating(strip, LOCAL)
@@ -197,9 +194,47 @@ func test_known_limitation_redrawing_over_a_freed_strip_still_reports_crosses_pa
 	var run := DemolitionPlan.run(net, net.peek_last_op(), false)
 	assert_bool(run["ok"]).is_true()
 	assert_int(NetworkExpropriation.taken_parcels(net, strip, net.rules.width_of(LOCAL)).size()).is_equal(0)
+	return [net, strip]
+
+
+## (d) B-015 (ADR-0005 Ek J takip d): yıkılan kamulaştırmalı yolun boş şeridine aynı yol yeniden çizilir. Alınan
+## parsel yok, ama birleşen blok parselli olduğu için DÜZ denetim `crosses_parcels` verir (doğru: düz `add_road`
+## havuzsuz). Sim akışı bu durumda yolu HAVUZLU (sıfır alınan) kurar: kimlikler ve nesneler korunur, yeni numara
+## harcanmaz, geri alma bit-eşit.
+func test_redrawing_over_a_freed_strip_builds_pooled_with_zero_taken_and_keeps_every_parcel() -> void:
+	var freed := _freed_strip()
+	var net: WorldNetwork = freed[0]
+	var strip: PackedVector2Array = freed[1]
 	var allow := RoadDraftRules.new()
 	allow.crossing_parcels = RoadDraftRules.CROSSING_ALLOW
 	assert_bool(RoadDraftCheck.check(net, strip, LOCAL, allow)["ok"]).is_true()
 	var plain := RoadDraftCheck.check(net, strip, LOCAL, RoadDraftRules.new())
-	assert_bool(plain["ok"]).is_false()
 	assert_str(String(plain["reason"])).is_equal(String(RoadDraftCheck.REASON_CROSSES_PARCELS))
+	var parcels := net.parcels.duplicate()
+	var counter: int = NetworkRestore.counters(net)["parcel"]
+	var state_before := net.state_hash()
+	var redraw := net.add_road_expropriating(strip, LOCAL)
+	assert_bool(redraw["ok"]).override_failure_message(str(redraw["error"])).is_true()
+	assert_int((redraw["added_parcels"] as Array).size()).is_equal(0)
+	assert_int((redraw["removed_parcels"] as Array).size()).is_equal(0)
+	assert_array(net.parcels.keys()).contains_exactly_in_any_order(parcels.keys())
+	for pid: int in parcels:
+		assert_object(net.parcels[pid]).is_same(parcels[pid])
+	assert_int(NetworkRestore.counters(net)["parcel"]).is_equal(counter)
+	assert_array(NetworkInvariants.check_graph_integrity(net)).is_empty()
+	assert_array(NetworkInvariants.check_parcels(net)).is_empty()
+	assert_bool(net.undo_last_op()["ok"]).is_true()
+	assert_str(net.state_hash()).is_equal(state_before)
+
+
+## Kök neden kanıtı: AYNI şeride düz `add_road` (havuzsuz) bloğu baştan parseller; parsel kümesi değişir. Bu yüzden düz
+## yol havuzlanmaz, havuzlu kurma yalnız kamulaştırma onayıyla (sıfır alınan da dahil) yapılır.
+func test_plain_add_road_over_a_freed_strip_changes_the_parcel_set_which_is_why_it_is_not_pooled() -> void:
+	var freed := _freed_strip()
+	var net: WorldNetwork = freed[0]
+	var before := net.parcels.keys()
+	var plain := net.add_road(freed[1], LOCAL)
+	assert_bool(plain["ok"]).is_true()
+	var changed := not (plain["added_parcels"] as Array).is_empty() \
+			or not (plain["removed_parcels"] as Array).is_empty() or net.parcels.keys() != before
+	assert_bool(changed).override_failure_message("düz yol parsel kümesini değiştirmedi").is_true()
