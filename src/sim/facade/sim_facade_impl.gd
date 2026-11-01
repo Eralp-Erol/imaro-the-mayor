@@ -189,6 +189,12 @@ func public_works() -> Array[PublicWorkView]:
 			v.taken_res_units = record["res_units"]
 			v.taken_com_units = record["com_units"]
 			v.displaced_households = record["households"]
+			var allocation: Dictionary = record.get("resettlement", {})  # v1.7: yalnız tahsis kaydı varsa
+			if not allocation.is_empty():
+				v.resettlement_applied = true
+				v.rehoused_households = allocation["rehoused"]
+				v.unplaced_households = allocation["unplaced"]
+				v.resettlement_cost = allocation["cost"]
 		out.append(v)
 	return out
 

@@ -1,9 +1,9 @@
 class_name ResettlementTestBase
 extends "res://tests/sim/politics/reaction_world_base.gd"
 ## T-065 Aşama 1 ortak taban sınıfı (test paketi değildir). `ReactionWorldBase` kamulaştırma dünyası + yeniden iskân
-## ayarları: yol DIAGONAL, parsel 1-3'ü alır (D1: 16 konut birimi yıkılır, 16 hane yerinden edilir; başlangıçta her
-## bölgede 400 hane, D1'de 22, D2'de 8 konut). Yeniden iskân hedefi D2: testler D2'ye boş ev verir (bölge sütunu; BİNA
-## yaratılmaz).
+## ayarları: yol DIAGONAL, parsel 1-3'ü alır (D1: 16 konut birimi yıkılır, 16 hane yerinden edilir;
+## başlangıçta D1 420 hane / 22 konut, D2 407 hane / 8 konut).
+## Yeniden iskân hedefi D2: testler D2'ye boş ev verir (bölge sütunu; BİNA yaratılmaz).
 ## Dünya köprüsü test ikizidir (parsel 1-3 köşegende; ikinci yol `SPUR` parsel 6'yı alır).
 
 const SOURCE := "D1"
@@ -43,8 +43,10 @@ func _f(run: Dictionary) -> SimFacadeImpl:
 func _set_region(run: Dictionary, code: String, latent: int, res_built: int) -> void:
 	var regions: Dictionary = EconomyState.data(_h(run).state())["regions"]
 	var r := (regions["codes"] as PackedStringArray).find(code)
-	(regions["latent_hh"] as PackedInt64Array)[r] = latent
-	(regions["res_built"] as PackedInt64Array)[r] = res_built
+	var latent_col: PackedInt64Array = regions["latent_hh"]  # paylaşılan sütun: tür dönüşümü kopya yapar, yazmaz
+	var built_col: PackedInt64Array = regions["res_built"]
+	latent_col[r] = latent
+	built_col[r] = res_built
 
 
 func _latent(run: Dictionary, code: String) -> int:

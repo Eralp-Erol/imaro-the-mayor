@@ -76,11 +76,13 @@ static func reaction_signals(state: GameState, ctx: PoliticsContext, rows: Array
 	if not PublicWorksState.has_reactions(state):
 		return out
 	var window := int(ctx.politics.blocs["reaction_window"])
+	var rehoused := ReactionRehousing.index(state)  # T-065: yerleşen hane bölge sinyalinden de aynı noktada düşer
 	for row in rows:
 		var code := String(row["code"])
 		var latent := int(row["latent_hh"])
 		out[code] = {
-			"displacement": BlocSignals.reaction_pm(PublicWorksState.reaction_rows(state, "displaced", code),
+			"displacement": BlocSignals.reaction_pm(ReactionRehousing.relieved_rows(code,
+				PublicWorksState.reaction_rows(state, "displaced", code), rehoused),
 				state.tick, window, latent, BlocSignals.SCALE),
 			"proximity": BlocSignals.reaction_pm(PublicWorksState.reaction_rows(state, "nearby", code),
 				state.tick, window, latent, 1),

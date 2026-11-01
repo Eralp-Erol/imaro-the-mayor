@@ -13,6 +13,8 @@ extends RefCounted
 const FACTOR_DISPLACED := &"reason.factor.displaced_households"
 const FACTOR_PROXIMITY := &"reason.factor.road_proximity"
 const FACTOR_COUNT := &"reason.factor.displaced_household_count"
+const FACTOR_REHOUSED := &"reason.factor.rehoused_households"
+const FACTOR_UNPLACED := &"reason.factor.unplaced_households"
 const CODE := &"road_expropriation"
 
 
@@ -73,8 +75,12 @@ static func record_local(state: GameState, ctx: PoliticsContext, key: String, re
 			"weight": int(cfg["weights"]["displaced_households"]), "source_ref": ref},
 		{"name": FACTOR_PROXIMITY, "value": int(reading["proximity_pm"]),
 			"weight": int(cfg["weights"]["road_proximity"]), "is_estimate": true, "source_ref": ref},
-		{"name": FACTOR_COUNT, "value": int(reading["households"]), "weight": 0, "source_ref": ref},
+		{"name": FACTOR_COUNT, "value": int(reading.get("displaced_total", reading["households"])), "weight": 0,
+			"source_ref": ref},
 	]
+	if reading.has("rehoused"):  # yeniden iskân tahsisi var (T-065): gerçek sayılar, tahmin değil (ağırlık 0)
+		factors.append({"name": FACTOR_REHOUSED, "value": int(reading["rehoused"]), "weight": 0, "source_ref": ref})
+		factors.append({"name": FACTOR_UNPLACED, "value": int(reading["unplaced"]), "weight": 0, "source_ref": ref})
 	var id := state.record_reason(StringName(key), StringName(cfg["decision"]), factors, int(cfg["threshold"]), CODE,
 		subjects)
 	if id < 1:
