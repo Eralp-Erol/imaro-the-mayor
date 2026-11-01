@@ -48,6 +48,9 @@ var _hover_pending: bool = false
 var _have_cursor: bool = false
 var _last_panel_msec: int = -PANEL_HOVER_INTERVAL_MSEC
 var _panel_pending: bool = false
+## Son imleç önizlemesinin çalıştığı kare: panel yeniden çizimi (düğüm kurulumu ~6-13 ms) AYNI karede yapılmaz,
+## sonraki kareye kayar (ilk imleç hareketi karesi: sim kuru koşusu + önizleme ağı + panel tek karede ~30-40 ms'ydi).
+var _hover_frame: int = -1
 var _click_in_progress: bool = false
 ## Sim olayı (yol yapıldı/geri alındı) panel yenilemesini SONRAKİ kareye bırakır: HUD yoklama karesi (tick'li
 ## kare) zaten
@@ -160,7 +163,8 @@ func process() -> void:
 		_place_chip()
 		if _hover_pending and Time.get_ticks_msec() - _last_hover_msec >= hover_interval_msec():
 			_apply_hover()
-		if _panel_pending and Time.get_ticks_msec() - _last_panel_msec >= PANEL_HOVER_INTERVAL_MSEC:
+		if _panel_pending and Time.get_ticks_msec() - _last_panel_msec >= PANEL_HOVER_INTERVAL_MSEC \
+				and Engine.get_process_frames() > _hover_frame:
 			_refresh_panel()
 		elif _panel_due:
 			_refresh_panel()
@@ -201,6 +205,7 @@ func _apply_hover() -> void:
 	if world.is_empty():
 		return
 	var t_cost := Time.get_ticks_usec()
+	_hover_frame = Engine.get_process_frames()
 	tool.hover_at(world["p"], _snap_radius_m(_cursor))
 	_hover_cost_msec = (Time.get_ticks_usec() - t_cost) / 1000.0
 	if not tip.visible:
@@ -260,7 +265,8 @@ func _on_tool_changed() -> void:
 	# İmleç önizlemesinde panel her adımda yeniden kurulmaz (ölçüm: ~6,6 ms/adım); en çok PANEL_HOVER_INTERVAL_MSEC'te bir.
 	# Dokunuş/onay/iptal adımlarında (PICK_B dışı ya da tıklama) hemen çizilir.
 	if tool.step == RoadDrawTool.Step.PICK_B and not _click_in_progress \
-			and Time.get_ticks_msec() - _last_panel_msec < PANEL_HOVER_INTERVAL_MSEC:
+			and (Time.get_ticks_msec() - _last_panel_msec < PANEL_HOVER_INTERVAL_MSEC
+			or Engine.get_process_frames() == _hover_frame):
 		_panel_pending = true
 		return
 	_refresh_panel()

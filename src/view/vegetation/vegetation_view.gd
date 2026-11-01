@@ -655,26 +655,40 @@ func _start_blob_jobs() -> void:
 		started += 1
 
 
-## Biten iş parçacığı görevlerini yükler. Dönüş: bir şey yapıldı mı.
+## Biten iş parçacığı görevlerini yükler. Kurulum (`add_surface_from_arrays`: ~0,2 ms / 1000 köşe, en büyük parça
+## ~125 bin köşe) pahalıdır; kamera hareketi birkaç parçayı aynı anda bitirince hepsi tek karede kurulurdu (ölçüm: 13
+## parça ~110 ms, yol aracının ilk tıklama karesine denk geldi). Bu yüzden kurulum `blob_install_budget_ms` ile kare
+## dilimlidir (karede en az 1 parça); kalanlar `_blob_jobs`ta bitmiş olarak bekler (maske yazımı için "çalışıyor"
+## sayılmazlar, bir sonraki karede devam ederler). Atılacak (eskimiş/artık gerekmeyen) parçalar bütçe yemez.
+## Dönüş: bir şey yapıldı mı.
 func _poll_blobs() -> bool:
 	var done: Array[Vector2i] = []
 	for key: Vector2i in _blob_jobs:
 		var job: _BlobJob = _blob_jobs[key]
 		if job.is_done():
 			done.append(key)
+	var t_start := Time.get_ticks_usec()
+	var budget_us := 1 << 60 if _unlimited else int(config.blob_install_budget_ms * 1000.0)
+	var installed := 0
+	var handled := 0
 	for key in done:
 		var job: _BlobJob = _blob_jobs[key]
+		var needed := not job.stale and int(job.result.get("tris", 0)) > 0 \
+				and VegetationWindow.chunk_needed(layout, key.x, key.y, _cam, config.lod1_end_m, config.blob_end_m,
+				config.blob_unload_margin_m, config.blob_chunk_cells)
+		if needed and installed > 0 and Time.get_ticks_usec() - t_start >= budget_us:
+			continue   # bütçe doldu: bu parça sonraki karede kurulur
 		job.join()
 		_blob_jobs.erase(key)
-		if not job.stale and int(job.result.get("tris", 0)) > 0 \
-				and VegetationWindow.chunk_needed(layout, key.x, key.y, _cam, config.lod1_end_m, config.blob_end_m,
-				config.blob_unload_margin_m, config.blob_chunk_cells):
+		handled += 1
+		if needed:
 			_install_blob(key, job.result)
+			installed += 1
 		elif not job.stale and _blob_replace.has(key):
 			_close_blob(key)   # yeni maskeyle parçada çizilecek bitki kalmadı (ya da parça artık gerekmiyor)
 		if not job.stale:
 			_blob_replace.erase(key)
-	return not done.is_empty()
+	return handled > 0
 
 
 func _install_blob(key: Vector2i, built: Dictionary) -> void:

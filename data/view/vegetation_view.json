@@ -32,6 +32,7 @@
 		"load_margin_m": 200.0,
 		"unload_margin_m": 700.0,
 		"max_chunks_built_per_frame": 2,
+		"install_budget_ms": 2.0,
 		"clump_m": 24.0,
 		"radius_mult": 1.0,
 		"max_clump_radius_m": 8.0,

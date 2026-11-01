@@ -33,6 +33,9 @@ var blob_end_m: float = 2200.0
 var blob_load_margin_m: float = 200.0
 var blob_unload_margin_m: float = 700.0
 var blob_max_chunks_per_frame: int = 2
+## Biten leke parçalarının sahneye kurulumu (ArrayMesh + GPU yükleme) karede bu kadar ms'yi aşmaz (en az 1 parça).
+## Ölçüm: kurulum ~0,2 ms / 1000 köşe; kamera hareketinden sonra 13 parça aynı karede biterse tek karede ~110 ms'ydi.
+var blob_install_budget_ms: float = 2.0
 var blob_clump_m: float = 32.0
 var blob_radius_mult: float = 0.95
 var blob_max_clump_radius_m: float = 15.0
@@ -105,6 +108,8 @@ func problems() -> PackedStringArray:
 	if blob_enabled:
 		if blob_fade_begin_m <= lod1_end_m or blob_end_m <= blob_fade_begin_m:
 			out.append("blob: lod1_end_m < fade_begin_m < end_m olmalı")
+		if blob_install_budget_ms <= 0.0:
+			out.append("blob: install_budget_ms > 0 olmalı")
 		if blob_chunk_cells < 1 or blob_chunk_cells > 16:
 			out.append("blob: chunk_cells 1..16 olmalı")
 		if blob_sides < SHAPE_SIDES_MIN or blob_sides > SHAPE_SIDES_MAX:
@@ -149,6 +154,7 @@ func _read_blob(b: Dictionary) -> void:
 	blob_load_margin_m = float(b.get("load_margin_m", blob_load_margin_m))
 	blob_unload_margin_m = float(b.get("unload_margin_m", blob_unload_margin_m))
 	blob_max_chunks_per_frame = int(b.get("max_chunks_built_per_frame", blob_max_chunks_per_frame))
+	blob_install_budget_ms = float(b.get("install_budget_ms", blob_install_budget_ms))
 	blob_clump_m = float(b.get("clump_m", blob_clump_m))
 	blob_radius_mult = float(b.get("radius_mult", blob_radius_mult))
 	blob_max_clump_radius_m = float(b.get("max_clump_radius_m", blob_max_clump_radius_m))
