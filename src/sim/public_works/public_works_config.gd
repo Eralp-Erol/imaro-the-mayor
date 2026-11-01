@@ -10,7 +10,7 @@ extends RefCounted
 const DEFAULT_PATH := "res://data/sim/public_works/road_works.json"
 const CM_PER_KM := 100000
 const _EXPROPRIATION_KEYS: Array[String] = ["_note", "enabled", "protect_heritage", "household_fate",
-	"proximity_radius_m", "reaction_keep_days"]
+	"proximity_radius_m", "reaction_keep_days", "resettlement"]
 
 var error: String = ""
 ## Sınıf (StringName) -> {"infra_units_per_km": int}.
@@ -23,6 +23,9 @@ var protect_heritage: bool = true
 var household_fate: StringName = ParcelExpropriation.FATE_RETURN
 var proximity_radius_m: int = 0
 var reaction_keep_days: int = 720
+## T-065 · Yeniden iskân çalışma sayıları (`expropriation.resettlement`); bölüm yoksa `available == false`
+## (özellik kurulu değil: `policy.set` `system.not_built`).
+var resettlement: ResettlementConfig = ResettlementConfig.new()
 
 
 static func load_default() -> PublicWorksConfig:
@@ -102,6 +105,11 @@ func _read_expropriation(raw: Variant) -> String:
 	var fate := StringName(str(section.get("household_fate", household_fate)))
 	var radius: Variant = section.get("proximity_radius_m", 0)
 	var keep: Variant = section.get("reaction_keep_days", reaction_keep_days)
+	if section.has("resettlement"):
+		var resettlement_cfg := ResettlementConfig.from_dict(section["resettlement"])
+		if not resettlement_cfg.error.is_empty():
+			return resettlement_cfg.error
+		resettlement = resettlement_cfg
 	expropriation_enabled = bool(section.get("enabled", false))
 	protect_heritage = bool(section.get("protect_heritage", true))
 	household_fate = fate

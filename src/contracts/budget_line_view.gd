@@ -2,6 +2,9 @@ class_name BudgetLineView
 extends SimDto
 ## Belediye bütçesinin bir kalemi. Tutarlar birimsiz tamsayıdır (Q-003); kalem sözlüğü sim yapılandırmasındadır.
 
+## v1.7 (T-065): yeniden iskân bedeli kalemi (gösterge). Kalem YALNIZ yeniden iskân tahsis edilmişse görünür.
+const KEY_RESETTLEMENT := &"budget.line.resettlement"
+
 ## Kalem anahtarı = metin anahtarı (örn. `budget.line.roads`).
 var line_key: StringName = &""
 ## Yürürlükteki (onaylı) tutar ve bekleyen önerideki tutar (öneri yoksa = amount).

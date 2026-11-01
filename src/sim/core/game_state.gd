@@ -171,6 +171,9 @@ static func validate_dict(data: Variant) -> String:
 	var works_error := PublicWorksState.validate_data(data["systems"].get(PublicWorksState.KEY, null))
 	if not works_error.is_empty():  # T-042: oyuncu yolu bölümü (yoksa geçerli)
 		return works_error
+	var policy_error := PolicyState.validate_data(data["systems"].get(PolicyState.KEY, null))
+	if not policy_error.is_empty():  # T-065: kalıcı politika bölümü (yoksa geçerli = kapalı)
+		return policy_error
 	for key in ["pending_commands", "command_log"]:
 		var entries: Variant = data.get(key, null)
 		if not (entries is Array):

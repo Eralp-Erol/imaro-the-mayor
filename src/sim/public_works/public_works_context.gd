@@ -122,7 +122,8 @@ func draft_expropriating(points_cm: PackedInt64Array, road_class: StringName, bu
 
 ## Komut kuyruğuna girecek işleyiciler (facade `attach_public_works` kaydeder).
 func handlers() -> Array[CommandHandler]:
-	return [PublicWorkRoadHandler.new(self), PublicWorkUndoHandler.new(self), PublicWorkDemolishHandler.new(self)]
+	return [PublicWorkRoadHandler.new(self), PublicWorkUndoHandler.new(self), PublicWorkDemolishHandler.new(self),
+		PolicySetHandler.new(self)]
 
 
 ## Ağın yol listesi sim durumuyla tutarlı mı? (Bu bağlam dışında ağa delta yazılmamış olmalı.)

@@ -20,6 +20,9 @@ const KIND_PUBLIC_WORK_UNDO_LAST := &"public_work.undo_last"
 ## v1.6 (T-042c, D-014 §1): duran bir oyuncu yolunu YIK (her zaman mümkün, maliyeti var; alınan
 ## parselleri/binaları geri GETİRMEZ). Yalnız koşulu değiştirir, özel bina doğurmaz (CAN-03).
 const KIND_PUBLIC_WORK_DEMOLISH := &"public_work.demolish"
+## v1.7 (T-065, D-016): kalıcı belediye politikasını aç/kapa (şimdilik `resettlement`: kamulaştırmada yeniden iskân
+## yükümlülüğü). Politika bir SEÇİMDİR (CAN-10): yalnız koşulu değiştirir, özel bina doğurmaz (CAN-03).
+const KIND_POLICY_SET := &"policy.set"
 ## v1.5 isteğe bağlı ek (ADR-0005 Ek F): oyuncunun gündem öğesine yanıtı. `AgendaItemView.options` listesindeki bir
 ## seçeneği seçer; etkisi yalnız mevcut sistem durumlarına (şikâyet, güven, yatırımcı riski ...) zamana yayılarak
 ## yazılır, özel bina doğurmaz (CAN-03).
@@ -54,6 +57,10 @@ const CATALOG := {
 	},
 	&"agenda.respond": {
 		"required": {"item_id": TYPE_INT, "option_id": TYPE_STRING_NAME},
+		"optional": {},
+	},
+	&"policy.set": {
+		"required": {"policy_id": TYPE_STRING_NAME, "enabled": TYPE_BOOL},
 		"optional": {},
 	},
 }
@@ -102,6 +109,11 @@ static func public_work_undo_last() -> SimCommand:
 ## v1.6 (T-042c) · Duran yolu yık: `command_id` = `PublicWorkView.command_id` (>= 1).
 static func public_work_demolish(road_command_id: int) -> SimCommand:
 	return make(KIND_PUBLIC_WORK_DEMOLISH, {"command_id": road_command_id})
+
+
+## v1.7 (T-065) · Politikayı aç/kapa: `policy_id` = `PolicyView.policy_id` (örn. `PolicyView.ID_RESETTLEMENT`).
+static func policy_set(policy_id: StringName, enabled: bool) -> SimCommand:
+	return make(KIND_POLICY_SET, {"policy_id": policy_id, "enabled": enabled})
 
 
 ## v1.5 (isteğe bağlı ek) · Gündem öğesine yanıt: `item_id` = `AgendaItemView.item_id`, `option_id` =

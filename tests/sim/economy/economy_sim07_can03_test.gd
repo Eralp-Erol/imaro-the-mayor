@@ -210,6 +210,7 @@ func test_every_catalog_command_leaves_development_to_actor_decisions() -> void:
 		&"public_work.undo_last": {},
 		&"public_work.demolish": {"command_id": 1},  # yol ağda yok: gerekçeli ret, yine bina yok
 		&"agenda.respond": {"item_id": 1, "option_id": &"listen"},  # siyaset kurulu değil: gerekçeli ret, yine bina yok
+		&"policy.set": {"policy_id": &"resettlement", "enabled": true},  # kamulaştırma kurulu değil: ret, yine bina yok
 	}
 	for kind: StringName in SimCommand.CATALOG:
 		assert_bool(sample.has(kind)).override_failure_message("katalogda örneği olmayan komut: %s" % kind).is_true()

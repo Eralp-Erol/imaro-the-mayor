@@ -32,8 +32,9 @@ static func requested(params: Dictionary) -> bool:
 static func problem(ctx: PublicWorksContext, state: GameState, params: Dictionary, at_submit: bool) -> Dictionary:
 	if at_submit and ctx.is_busy():  # "dünya meşgul" cevabı çalışma zamanına bağlı: önbelleğe girmez
 		return _problem(ctx, state, params, at_submit)
-	var key := "%d|%d|%d|%d|%s|%s" % [state.get_instance_id(), state.tick, ctx.net.graph_version,
-		PublicWorksState.taken_count(state), params["road_class"], str(params["points_cm"])]
+	var key := "%d|%d|%d|%d|%s|%s|%d" % [state.get_instance_id(), state.tick, ctx.net.graph_version,
+		PublicWorksState.taken_count(state), params["road_class"], str(params["points_cm"]),
+		1 if resettlement_on(ctx, state) else 0]  # politika bayrağı: bayat tahsis planı olmaz (T-065)
 	if ctx.problem_memo_key != key:
 		ctx.problem_memo = _problem(ctx, state, params, at_submit)
 		ctx.problem_memo_key = key
@@ -41,7 +42,8 @@ static func problem(ctx: PublicWorksContext, state: GameState, params: Dictionar
 
 
 static func _problem(ctx: PublicWorksContext, state: GameState, params: Dictionary, at_submit: bool) -> Dictionary:
-	var out := {"code": &"", "args": {}, "draft": {}, "plan": {}, "nearby": {}, "taken": PackedInt64Array()}
+	var out := {"code": &"", "args": {}, "draft": {}, "plan": {}, "nearby": {}, "taken": PackedInt64Array(),
+		"resettlement": {}}
 	if not ctx.expropriation_available():
 		out["code"] = CODE_DISABLED
 		return out
@@ -83,7 +85,19 @@ static func _problem(ctx: PublicWorksContext, state: GameState, params: Dictiona
 	summary["nearby_parcels"] = nearby["parcels"]
 	out["plan"] = plan
 	out["nearby"] = nearby
+	if resettlement_on(ctx, state):
+		var allocation := ResettlementPlanner.plan(state, cols, plan, _points_of(points_cm), ctx.config.resettlement,
+			ctx.economy.config())
+		out["resettlement"] = allocation
+		if not allocation.is_empty() and plan["fate"] == ParcelExpropriation.FATE_LEAVE:
+			# ayrılma kaderinde yalnız YERLEŞEMEYEN ayrılır; yerleşenler `moves` ile taşınır (çift düşüm yok)
+			plan["latent_removed"] = (allocation["unplaced_by"] as Dictionary).duplicate()
 	return out
+
+
+## Yeniden iskân politikası AÇIK ve kurulu mu (T-065). Kapalıyken akış bugünkü gibidir.
+static func resettlement_on(ctx: PublicWorksContext, state: GameState) -> bool:
+	return ctx.config.resettlement.available and PolicyState.enabled(state, PolicyView.ID_RESETTLEMENT)
 
 
 ## `crosses_parcels` reddine eklenecek TEKLİF: kamulaştırarak geçilirse ne olacağı (sim'in sayısı). Korunan yapı varsa
@@ -95,7 +109,9 @@ static func offer_args(ctx: PublicWorksContext, state: GameState, params: Dictio
 	asked["expropriate"] = true
 	var p := problem(ctx, state, asked, false)
 	if p["code"] == &"" and not (p["plan"] as Dictionary).is_empty():
-		return ExpropriationSummary.preview_args((p["plan"] as Dictionary)["summary"])
+		var args := ExpropriationSummary.preview_args((p["plan"] as Dictionary)["summary"])
+		args.merge(ExpropriationSummary.resettlement_args(p["resettlement"]))
+		return args
 	if p["code"] == CODE_PROTECTED:
 		return {"protected_parcels": p["args"]["protected_parcels"]}
 	return {}
@@ -104,7 +120,11 @@ static func offer_args(ctx: PublicWorksContext, state: GameState, params: Dictio
 ## Önizleme argümanları (düz yol bilgisine eklenir). Parsel almayan yolda boş.
 static func preview_args(p: Dictionary) -> Dictionary:
 	var plan: Dictionary = p.get("plan", {})
-	return {} if plan.is_empty() else ExpropriationSummary.preview_args(plan["summary"])
+	if plan.is_empty():
+		return {}
+	var args := ExpropriationSummary.preview_args(plan["summary"])
+	args.merge(ExpropriationSummary.resettlement_args(p.get("resettlement", {})))
+	return args
 
 
 ## Kamulaştırmalı yolu uygular. `p`: `problem` sonucu (kod boş, plan dolu). Dönüş: &"" ya da ret kodu (durum
@@ -127,7 +147,11 @@ static func apply(ctx: PublicWorksContext, state: GameState, params: Dictionary,
 		return CODE_CHANGED
 	var snapshots := ParcelExpropriation.apply(state, plan)
 	var summary: Dictionary = plan["summary"]
+	var allocation: Dictionary = p.get("resettlement", {})
 	var record := _record_of(summary, snapshots, plan)
+	if not allocation.is_empty():  # yalnız `latent_hh` taşınır; bina/birim YARATILMAZ (CAN-03)
+		ResettlementPlanner.apply_moves(state, allocation)
+		record["resettlement"] = allocation.duplicate(true)
 	var units: Dictionary = draft["region_units"]
 	var work := {"command_id": command_id, "tick": state.tick, "road_class": String(road_class),
 		"length_cm": draft["length_cm"], "region_units": units, "expropriation": record}
@@ -136,7 +160,7 @@ static func apply(ctx: PublicWorksContext, state: GameState, params: Dictionary,
 		ctx.config.reaction_keep_days)
 	var reason_ids := _record_reasons(state, command_id, snapshots)
 	ctx.pending_notes.append_array(summary["parcel_ids"])
-	var args := ExpropriationSummary.event_args(summary)
+	var args := ExpropriationSummary.event_args(summary, allocation)
 	args["work_id"] = PublicWorksState.work_count(state)
 	SimEventLog.emit(state, SimEvent.KIND_PUBLIC_WORK_EXPROPRIATED, &"event.road.expropriated",
 		ExpropriationSummary.subjects(command_id, summary), args, reason_ids, command_id)
@@ -148,6 +172,8 @@ static func apply(ctx: PublicWorksContext, state: GameState, params: Dictionary,
 static func revert(ctx: PublicWorksContext, state: GameState, work: Dictionary, command_id: int) -> void:
 	var record: Dictionary = work["expropriation"]
 	ParcelExpropriation.restore(state, record)
+	var allocation: Dictionary = record.get("resettlement", {})
+	var returned := ResettlementPlanner.revert_moves(state, allocation) if not allocation.is_empty() else 0
 	var summary := summary_of(record)
 	var ids := ExpropriationSummary.sorted_ids(summary)
 	ctx.pending_notes.append_array(ids)
@@ -161,6 +187,8 @@ static func revert(ctx: PublicWorksContext, state: GameState, work: Dictionary, 
 			reason_ids.append(rid)
 	var args := ExpropriationSummary.event_args(summary)
 	args["removed_command_id"] = work["command_id"]
+	if not allocation.is_empty():
+		args["rehoused_returned"] = returned  # hedef bölge arada azaldıysa kırpılmış gerçek sayı
 	SimEventLog.emit(state, SimEvent.KIND_PUBLIC_WORK_RESTORED, &"event.road.restored",
 		ExpropriationSummary.subjects(command_id, summary), args, reason_ids, command_id)
 

@@ -14,6 +14,9 @@ extends SimSystem
 ##   uygulanır, sistem aynı tick'te eşitler.
 ## - Yol YIKILIRSA (T-042c, D-014 §1; `PublicWorksState.works[i].demolished_by`) yıkım gideri BİR KEZ yazılır: yolun
 ##   uzunluğu (m) x `road.demolish_cost_per_m`; yapım gideri iade EDİLMEZ, `charged` satırının tutarına eklenir.
+## - Yeniden iskân bedeli (T-065; `works[i].expropriation.resettlement.cost` > 0): yolla birlikte BİR KEZ ayrı kalem
+##   olarak yazılır (`charged[i].resettlement`, tembel `resettlement_net`); yol geri alınınca iade edilir. Bedel yol
+##   kalemine katılmaz ve hiçbir komutu engellemez.
 ## - Her kalem gerekçe kaydı taşır (`actor.municipality.1`; faktör `budget.factor.amount` tutarı, ağırlığı 0 olan
 ##   faktörler girdileri gösterir) ve kalem defterine yazılır. Tüm sayılar `BudgetConfig`tedir.
 ## Sistem DURUM TUTMAZ: kalıcı veri `state.systems["budget"]`; nesnedeki alanlar yalnız değişmez yapılandırmadır.
@@ -24,6 +27,8 @@ const DECISION_TAX := &"decision.budget.tax_revenue"
 const DECISION_ROAD_COST := &"decision.budget.road_cost"
 const DECISION_ROAD_REFUND := &"decision.budget.road_refund"
 const DECISION_ROAD_DEMOLISH := &"decision.budget.road_demolish"
+const DECISION_RESETTLEMENT := &"decision.budget.resettlement"
+const DECISION_RESETTLEMENT_REFUND := &"decision.budget.resettlement_refund"
 const LINE_ROADS := &"budget.line.roads"
 const FACTOR_AMOUNT := &"budget.factor.amount"
 const _EVENT_COMPLETED := "event.construction.completed"
@@ -113,6 +118,10 @@ func view(state: GameState) -> BudgetView:
 	var line := BudgetLineView.make(LINE_ROADS, roads)
 	line.actual = roads
 	v.lines.append(line)
+	if d.has("resettlement_net"):  # yalnız bedel yazıldıysa (politika hiç bedel doğurmadıysa satır yok)
+		var resettlement_line := BudgetLineView.make(BudgetLineView.KEY_RESETTLEMENT, int(d["resettlement_net"]))
+		resettlement_line.actual = int(d["resettlement_net"])
+		v.lines.append(resettlement_line)
 	return v
 
 
@@ -146,6 +155,8 @@ func _reconcile_roads(state: GameState, d: Dictionary) -> void:
 	while charged.size() > common:  # geri alınan yollar, LIFO iade
 		var entry: Dictionary = charged.pop_back()
 		_book_road(state, d, int(entry["command_id"]), int(entry["amount"]), true, 0)
+		if entry.has("resettlement"):
+			_book_resettlement(state, d, int(entry["command_id"]), int(entry["resettlement"]), true)
 	for i in common:  # yıkılan yollar: yıkım gideri bir kez
 		if (works[i] as Dictionary).has("demolished_by") and not bool((charged[i] as Dictionary).get("demolished", false)):
 			_book_demolition(state, d, charged[i], works[i])
@@ -153,8 +164,13 @@ func _reconcile_roads(state: GameState, d: Dictionary) -> void:
 		var work: Dictionary = works[i]
 		var units := PublicWorksState.total_units(work["region_units"])
 		var amount := road_cost(units)
-		charged.append({"command_id": int(work["command_id"]), "amount": amount})
+		var entry := {"command_id": int(work["command_id"]), "amount": amount}
+		charged.append(entry)
 		_book_road(state, d, int(work["command_id"]), amount, false, units)
+		var cost := PublicWorksState.resettlement_cost(work)
+		if cost > 0:
+			entry["resettlement"] = cost
+			_book_resettlement(state, d, int(work["command_id"]), cost, false)
 
 
 func _book_demolition(state: GameState, d: Dictionary, entry: Dictionary, work: Dictionary) -> void:
@@ -170,6 +186,19 @@ func _book_demolition(state: GameState, d: Dictionary, entry: Dictionary, work: 
 	d["roads_net"] = int(d["roads_net"]) + cost
 	d["balance"] = int(d["balance"]) - cost
 	BudgetState.add_ledger(d, state.tick, BudgetState.KIND_ROAD_DEMOLISH, cost, ref, reason_id, _cfg.ledger_max)
+
+
+## Yeniden iskân bedeli (T-065): ayrı kalem, ayrı gerekçe, `resettlement_net` tembel yaratılır.
+func _book_resettlement(state: GameState, d: Dictionary, command_id: int, cost: int, refund: bool) -> void:
+	var ref := String(SimContract.ref(SimContract.REF_COMMAND, command_id))
+	var factors: Array = [{"name": FACTOR_AMOUNT, "value": cost, "source_ref": ref}]
+	var reason_id := state.record_reason(ACTOR, DECISION_RESETTLEMENT_REFUND if refund else DECISION_RESETTLEMENT,
+		factors, 0, &"resettlement_refund" if refund else &"resettlement", PackedStringArray([ref]))
+	var sign := -1 if refund else 1
+	d["resettlement_net"] = int(d.get("resettlement_net", 0)) + sign * cost
+	d["balance"] = int(d["balance"]) - sign * cost
+	BudgetState.add_ledger(d, state.tick, BudgetState.KIND_RESETTLEMENT_REFUND if refund
+		else BudgetState.KIND_RESETTLEMENT, cost, ref, reason_id, _cfg.ledger_max)
 
 
 func _book_road(state: GameState, d: Dictionary, command_id: int, amount: int, refund: bool,

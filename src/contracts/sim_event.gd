@@ -25,6 +25,9 @@ const KIND_PUBLIC_WORK_RESTORED := &"public_work.restored"
 ## `command.<yıkım>`, `command.<yol>`, `region.<kod>`…; `args.target_command_id`, `length_cm`, `edges`, `units.<kod>`
 ## (kaybolan kapasite).
 const KIND_PUBLIC_WORK_DEMOLISHED := &"public_work.demolished"
+## v1.7 (T-065, D-016): kalıcı belediye politikası açıldı/kapandı. `subjects`: `command.<N>`; `args.policy_id`,
+## `args.enabled` (bool), `args.previous` (bool).
+const KIND_POLICY_CHANGED := &"policy.changed"
 
 var seq: int = SimContract.NO_ID
 var tick: int = 0

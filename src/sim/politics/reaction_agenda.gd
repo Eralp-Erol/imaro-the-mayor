@@ -121,6 +121,7 @@ static func local_reading(cfg: Dictionary, displaced_milli: int, nearby_milli: i
 @warning_ignore("integer_division")
 static func local_readings(state: GameState, window: int, cfg: Dictionary) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
+	var rehoused := ReactionRehousing.index(state)  # TEK noktadan rahatlama (T-065); kayıt yoksa boş
 	var book: Dictionary = PublicWorksState.data(state).get("displaced", {})
 	var codes: Array = book.keys()
 	codes.sort()
@@ -144,7 +145,7 @@ static func local_readings(state: GameState, window: int, cfg: Dictionary) -> Ar
 		for command_id: int in commands:
 			var entry: Dictionary = by_command[command_id]
 			var total := int(entry["households"])
-			var kept := ReactionRehousing.still_unhoused(code, command_id, total)  # TEK karar noktası
+			var kept := ReactionRehousing.still_unhoused(code, command_id, total, rehoused)  # TEK karar noktası
 			if kept < total:
 				entry["displaced"] = int(entry["displaced"]) * kept / total
 				entry["households"] = kept
@@ -154,6 +155,10 @@ static func local_readings(state: GameState, window: int, cfg: Dictionary) -> Ar
 			reading["code"] = code
 			reading["command_id"] = command_id
 			reading["households"] = int(entry["households"])
+			var detail := ReactionRehousing.detail(code, command_id, rehoused)
+			if not detail.is_empty():  # yalnız tahsis kaydı olan okumada (politika açıkken): neden kaydı için gerçek sayılar
+				reading["rehoused"] = int(detail["rehoused"])
+				reading["unplaced"] = int(detail["unplaced"])
 			out.append(reading)
 	return out
 

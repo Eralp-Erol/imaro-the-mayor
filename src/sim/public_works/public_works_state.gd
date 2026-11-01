@@ -77,6 +77,30 @@ static func is_standing_road(entry: Dictionary) -> bool:
 	return not is_demolition(entry) and not entry.has("demolished_by")
 
 
+## Yolun yeniden iskân tahsis kaydı ({} = yok: politika kapalıydı ya da yerinden edilen yoktu).
+static func resettlement_of(work: Dictionary) -> Dictionary:
+	return (work.get("expropriation", {}) as Dictionary).get("resettlement", {})
+
+
+## Yolun yeniden iskân bedeli (kayıt yoksa 0).
+static func resettlement_cost(work: Dictionary) -> int:
+	return int(resettlement_of(work).get("cost", 0))
+
+
+## Tahsis kaydı olan yollar {komut kimliği: kayıt}. YIKILMIŞ yol da sayılır (tepki satırları yıkımda silinmez, rahatlama
+## sürer); geri alınmış yol `works`ta yoktur. Kayıt yoksa BOŞ sözlük.
+static func resettlement_records(state: GameState) -> Dictionary:
+	var out := {}
+	var d := data(state)
+	if d.is_empty():
+		return out
+	for work: Dictionary in d["works"]:
+		var record := resettlement_of(work)
+		if not is_demolition(work) and not record.is_empty():
+			out[int(work["command_id"])] = record
+	return out
+
+
 ## Ayakta duran oyuncu yolu satırları (eskiden yeniye; değer kopyası DEĞİL, bölümdeki sözlükler).
 static func standing_roads(state: GameState) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
@@ -427,6 +451,42 @@ static func _expropriation_problem(x: Variant) -> String:
 				or typeof(snap.get("stage", null)) != TYPE_INT or typeof(snap.get("units", null)) != TYPE_INT \
 				or typeof(snap.get("region", null)) != TYPE_STRING:
 			return "kamulaştırma anlık görüntüsü geçersiz"
+	return _resettlement_problem(x["resettlement"], int(x["households"])) if x.has("resettlement") else ""
+
+
+## Yeniden iskân tahsis kaydı (T-065) iç tutarlılığı: `moves` [kaynak, hedef, hane > 0] (kaynak != hedef),
+## rehoused = Σ moves, unplaced = Σ unplaced_by, rehoused + unplaced = yerinden edilen hane, partial <= rehoused,
+## cost >= 0.
+static func _resettlement_problem(r: Variant, households: int) -> String:
+	if not (r is Dictionary):
+		return "yeniden iskân kaydı sözlük değil"
+	for field_name in ["rehoused", "unplaced", "partial", "cost", "residual_pm"]:
+		if typeof(r.get(field_name, null)) != TYPE_INT or int(r[field_name]) < 0:
+			return "yeniden iskân.%s negatif olmayan tamsayı değil" % field_name
+	for field_name in ["unplaced_by", "effective"]:
+		if not (r.get(field_name, null) is Dictionary):
+			return "yeniden iskân.%s sözlük değil" % field_name
+	if not (r.get("moves", null) is Array):
+		return "yeniden iskân.moves dizi değil"
+	var moved := 0
+	for move: Variant in r["moves"]:
+		if not (move is Array) or (move as Array).size() != 3 or typeof(move[0]) != TYPE_STRING \
+				or typeof(move[1]) != TYPE_STRING or typeof(move[2]) != TYPE_INT or int(move[2]) <= 0 \
+				or move[0] == move[1]:
+			return "yeniden iskân satırı [kaynak, hedef, hane > 0] değil"
+		moved += int(move[2])
+	var unplaced := 0
+	for code: Variant in r["unplaced_by"]:
+		if typeof(code) != TYPE_STRING or typeof(r["unplaced_by"][code]) != TYPE_INT or int(r["unplaced_by"][code]) <= 0:
+			return "yeniden iskân.unplaced_by satırı geçersiz"
+		unplaced += int(r["unplaced_by"][code])
+	for code: Variant in r["effective"]:
+		if typeof(code) != TYPE_STRING or typeof(r["effective"][code]) != TYPE_INT or int(r["effective"][code]) < 0:
+			return "yeniden iskân.effective satırı geçersiz"
+	if moved != int(r["rehoused"]) or unplaced != int(r["unplaced"]):
+		return "yeniden iskân toplamları satırlarla uyuşmuyor"
+	if int(r["rehoused"]) + int(r["unplaced"]) != households or int(r["partial"]) > int(r["rehoused"]):
+		return "yeniden iskân hane toplamı yerinden edilenle uyuşmuyor"
 	return ""
 
 

@@ -131,6 +131,13 @@ func demolish_cost(_command_id: int) -> int:
 	return -1
 
 
+## v1.7 (T-065, D-016) · Belediyenin kalıcı politikaları ve güncel durumları (şimdilik yalnız `resettlement`), kimlik
+## sıralı. Politika `policy.set` komutuyla değişir; hiç değiştirilmediyse kapalıdır (`changed_tick == -1`). Salt okunur,
+## değer kopyası. Varsayılan (kaynak politika sunmuyorsa): boş (uydurma satır yok). Uygulama geçersiz kılar.
+func policies() -> Array[PolicyView]:
+	return []
+
+
 ## v1.5 (T-042b, isteğe bağlı ek) · Sim'in açtığı AÇIK gündem öğeleri (olay motoru; PE-01 yerinden edilme dahil), kimlik
 ## artan. Meclis oylamaları burada değil, `snapshot().council` içindedir. Değer kopyası; sim durumunu DEĞİŞTİRMEZ.
 ## Varsayılan (kaynak olay sistemi sunmuyorsa): boş (uydurma öğe yok). Uygulama geçersiz kılar.
