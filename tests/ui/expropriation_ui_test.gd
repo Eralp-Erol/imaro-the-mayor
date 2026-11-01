@@ -132,6 +132,10 @@ func test_accepting_the_offer_asks_the_sim_again_and_requires_a_distinct_demolit
 	assert_str(text).contains("2 bina yıkılacak, 11 hane yerinden edilecek.")
 	assert_str(text).contains("Bedel: henüz kurulmadı.")
 	assert_str(text).contains(UiText.t(&"expropriation.undo_note"))
+	# B-013: eski söz ("başka bir yol yapana kadar") tutulmuyordu; metin kısa süre + kapanma koşullarını söyler.
+	assert_str(UiText.t(&"expropriation.undo_note")).not_contains("yapana kadar")
+	assert_str(UiText.t(&"expropriation.undo_note")).contains("kısa bir süre")
+	assert_str(UiText.t(&"expropriation.undo_note")).contains("halkın tepkisi işlenince")
 	assert_str(text).contains(UiText.t(&"expropriation.valid_title"))
 	# Hiçbir komut sim'e gitmedi (mock kuyruğu boş).
 	assert_int(_facade.public_works().size()).is_equal(0)

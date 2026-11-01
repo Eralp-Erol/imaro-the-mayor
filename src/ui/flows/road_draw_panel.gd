@@ -33,6 +33,15 @@ var _demolish_keep_button: Button = null
 var _undo_pending: bool = false
 ## D-014 §1 · Yolu yıkma ek onay adımı: hedef yol komut kimliği (NO_ID = beklemiyor). Yıkım geri alınamaz.
 var _demolish_target: int = SimContract.NO_ID
+## Her ayakta duran yol için yıkım listesi açık mı (D-014 §1: "yolu ayrıca yıkma seçeneği hep olsun").
+var _list_open: bool = false
+## Yıkım kuru koşuları (sim `validate_command`) ağı geçici değiştirip geri alır; liste açıkken her yeniden çizimde
+## YOL SAYISI kadar koşmasın diye (gün, yol sayısı) anahtarıyla önbelleklenir. "Dünya hazırlanıyor" (`busy`) yanıtı
+## geçicidir: önbelleğe ALINMAZ.
+var _probe_key: String = ""
+var _probe_cache: Dictionary = {}
+var _list_toggle_button: Button = null
+var _row_buttons: Array[Button] = []
 ## İpucu önbelleği: (son yol komutu, gün/PLAN_HINT_DAYS) -> bölgede plansız parsel var mı (ilk bulunanda durur).
 var _hint_key: String = ""
 var _hint_value: bool = false
@@ -96,6 +105,19 @@ func demolish_keep_button() -> Button:
 	return _demolish_keep_button
 
 
+## Yıkım listesini açan/kapatan düğme ve listedeki "Yol N" yıkım düğmeleri (en yeniden eskiye; yoksa boş).
+func demolish_list_button() -> Button:
+	return _list_toggle_button
+
+
+func demolish_row_buttons() -> Array[Button]:
+	return _row_buttons
+
+
+func demolish_target() -> int:
+	return _demolish_target
+
+
 func demolish_pending() -> bool:
 	return _demolish_target != SimContract.NO_ID
 
@@ -137,11 +159,13 @@ func _render() -> void:
 	_demolish_button = null
 	_demolish_yes_button = null
 	_demolish_keep_button = null
+	_list_toggle_button = null
+	_row_buttons = []
 	if not tool.has_undoable_road():
 		_undo_pending = false
-	var standing := tool.last_road()
-	if standing == null or standing.command_id != _demolish_target:
-		_demolish_target = SimContract.NO_ID   # hedef yol artık yok/değişti: onay bekleme
+	var standing := _work_by_id(_demolish_target)
+	if standing == null:
+		_demolish_target = SimContract.NO_ID   # hedef yol artık yok: onay bekleme
 	# B-019 · Yıkım onayı panelin EN ÜSTÜNDE (Onayla düğmesiyle aynı ilke): dokunmatikte kart panelin altında kalıp
 	# "Evet, yık / Vazgeç" kaydırmadan görünmüyordu. Onay beklerken diğer eylemler (geri al/yık) onayın altında kalır.
 	if _demolish_target != SimContract.NO_ID and standing != null:
@@ -332,8 +356,8 @@ func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: 
 	_add_resettlement_rows(inner, args)
 	inner.add_child(_muted(UiText.t(&"expropriation.react_note")))
 	if accepted:
-		# TODO(B-013 / Q-030): metin "başka bir yol yapana kadar" vaat ediyor; sim pencereyi ilk haftalık taramada
-		# kapatabiliyor. Karar gelene dek metin DEĞİŞTİRİLMEDİ; kural B kalırsa düzeltilecek (production/bugs/B-013.md).
+		# B-013 / Q-030: kural kararı BEKLİYOR; metin bugünkü gerçek davranışı söyler (kısa süre açık, tepki işlenince
+		# ya da başka yol yapılınca kapanır). Kesin ret nedeni geri alma kapanınca sim'den (`road.undo_closed`) gelir.
 		inner.add_child(_muted(UiText.t(&"expropriation.undo_note")))
 
 
@@ -458,11 +482,39 @@ static func _is_busy_reason(reason_key: StringName) -> bool:
 
 
 func _demolish_signature() -> String:
-	var last := tool.last_road() if tool != null else null
-	if last == null:
+	var works := _facade.public_works() if tool != null else []
+	if works.is_empty():
 		return "-"
-	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
-	return "%d|%d|%s|%d" % [last.command_id, int(probe.args.get("cost", -1)), String(probe.reason_key), _demolish_target]
+	var parts: Array[String] = [str(_demolish_target), str(_list_open)]
+	var last := works[works.size() - 1]
+	var shown: Array = works if _list_open else [last]
+	for w: PublicWorkView in shown:
+		var probe := _demolish_probe(w.command_id)
+		parts.append("%d:%d:%s" % [w.command_id, int(probe.args.get("cost", -1)), String(probe.reason_key)])
+	parts.append(str(works.size()))
+	return "|".join(parts)
+
+
+func _demolish_probe(command_id: int) -> CommandResult:
+	var key := "%d|%d" % [_facade.current_tick(), _facade.public_works().size()]
+	if key != _probe_key:
+		_probe_key = key
+		_probe_cache = {}
+	if _probe_cache.has(command_id):
+		return _probe_cache[command_id]
+	var probe := _facade.validate_command(SimCommand.public_work_demolish(command_id))
+	if not (probe.is_rejected() and _is_busy_reason(probe.reason_key)):
+		_probe_cache[command_id] = probe
+	return probe
+
+
+func _work_by_id(command_id: int) -> PublicWorkView:
+	if command_id == SimContract.NO_ID:
+		return null
+	for w in _facade.public_works():
+		if w.command_id == command_id:
+			return w
+	return null
 
 
 func _add_undo_controls(last: PublicWorkView) -> void:
@@ -523,11 +575,12 @@ func _add_undo_confirm(last: PublicWorkView) -> void:
 ## D-014 §1 · Yolu yık: her zaman bulunur (geri alma penceresi kapansa da), maliyeti görünür. Yalnız en son duran yol
 ## hedeflenir (sim önizlemesi `public_work.demolish`). Sim yıkımı reddediyorsa düğme yok, neden yazılır.
 func _add_demolish_controls(last: PublicWorkView) -> void:
-	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
+	var probe := _demolish_probe(last.command_id)
 	if probe.is_rejected():
 		_awaiting_world = _awaiting_world or _is_busy_reason(probe.reason_key)
 		_body.add_child(_muted(UiText.t(&"road.demolish_blocked",
 				{"reason": UiText.reject_reason(probe.reason_key, probe.args)})))
+		_add_demolish_list()
 		return
 	_demolish_button = UiFactory.button(_ctx, UiText.t(&"road.demolish_last"), false)
 	_tag(_demolish_button, "road_demolish")
@@ -537,6 +590,61 @@ func _add_demolish_controls(last: PublicWorkView) -> void:
 		refresh())
 	_body.add_child(_demolish_button)
 	_body.add_child(_muted(_demolish_cost_text(probe.args)))
+	_add_demolish_list()
+
+
+## D-014 §1 · Ayakta duran HER yol yıkılabilir: son yoldan başka yol varsa "Başka yolu yık" listeyi açar; her satır
+## bir yolun sim kaydından (sıra no, uzunluk, kapasite) ve sim yıkım önizlemesinden (maliyet / ret nedeni) gelir.
+## Yol sırası = sim `public_works()` sırası (yapım sırası); satırlar en yeniden eskiye. Satır düğmeleri `target_primary`
+## yüksekliğinde (dokunmatikte >= 44 pt). Sim reddeden yol için düğme yerine ret nedeni yazılır (ölü düğme yok).
+func _add_demolish_list() -> void:
+	var works := _facade.public_works()
+	if works.size() < 2:
+		return
+	_list_toggle_button = UiFactory.button(_ctx, UiText.t(
+			&"road.demolish_list_hide" if _list_open else &"road.demolish_list_show", {"count": works.size() - 1}), false)
+	_tag(_list_toggle_button, "road_demolish_list")
+	_list_toggle_button.pressed.connect(func() -> void:
+		_list_open = not _list_open
+		refresh())
+	_body.add_child(_list_toggle_button)
+	if not _list_open:
+		return
+	for i in range(works.size() - 2, -1, -1):
+		var w := works[i]
+		var probe := _demolish_probe(w.command_id)
+		var title := UiText.t(&"road.demolish_row", {"n": i + 1, "length": UiText.number(w.length_cm / 100),
+				"units": _units_of(w)})
+		if probe.is_rejected():
+			_awaiting_world = _awaiting_world or _is_busy_reason(probe.reason_key)
+			_body.add_child(_muted(UiText.t(&"road.demolish_row_blocked", {"n": i + 1,
+					"reason": UiText.reject_reason(probe.reason_key, probe.args)})))
+			continue
+		var b := UiFactory.button(_ctx, title, false)
+		_tag(b, "road_demolish_row")
+		b.disabled = tool.step == RoadDrawTool.Step.SENDING
+		var id := w.command_id
+		b.pressed.connect(func() -> void:
+			_demolish_target = id
+			refresh())
+		_row_buttons.append(b)
+		_body.add_child(b)
+		_body.add_child(_muted(_demolish_cost_text(probe.args)))
+
+
+func _work_number(w: PublicWorkView) -> int:
+	var works := _facade.public_works()
+	for i in works.size():
+		if works[i].command_id == w.command_id:
+			return i + 1
+	return 0
+
+
+static func _units_of(w: PublicWorkView) -> int:
+	var total := 0
+	for code: String in w.region_units:
+		total += int(w.region_units[code])
+	return total
 
 
 ## "Yıkım maliyeti: N birim" (sim `cost_available`) ya da "henüz kurulmadı"; birim para birimi değildir (Q-003).
@@ -548,15 +656,17 @@ static func _demolish_cost_text(args: Dictionary) -> String:
 
 ## Ek onay adımı: yıkım geri alınamaz; alınan parsel/bina dönmez, tepki kalır (sim önizlemesi `restores_nothing`).
 func _add_demolish_confirm(last: PublicWorkView) -> void:
-	var probe := _facade.validate_command(SimCommand.public_work_demolish(last.command_id))
-	if probe.is_rejected():   # onay beklerken durum değişti: bekleme biter, ret nedeni satırı çizilir
+	var probe := _demolish_probe(last.command_id)
+	if probe.is_rejected():   # onay beklerken durum değişti: bekleme biter, ret nedeni yol satırında yazılır
 		_demolish_target = SimContract.NO_ID
-		_add_demolish_controls(last)
+		_add_undo_row()
 		return
 	var args := probe.args
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
 	inner.add_child(UiFactory.label(UiText.t(&"road.demolish_title"), UiTheme.V_LABEL_HEADING, true))
+	inner.add_child(_muted(UiText.t(&"road.demolish_row", {"n": _work_number(last), "length": UiText.number(
+			last.length_cm / 100), "units": _units_of(last)})))
 	# Dokunmatikte (dikey alt sayfa ~196 px) karar düğmeleri başlıktan hemen sonra gelir, açıklama/uyarı/maliyet altında:
 	# oyuncu kaydırmadan "Evet, yık / Vazgeç" görür (B-019). Masaüstünde sıra: başlık, açıklama, düğmeler.
 	var buttons_first := _ctx.is_touch()
