@@ -17,6 +17,17 @@ Dal: `worktree-agent-aa3b6ef730d618210` (taban: `agent/handover-imaro-m01-349562
   Yol komutlarına dokunulmadı; çağıran: geri alma işleyicisi.
 - Kod varsayılanı kapalı/0 (`ReactionConfig`): dosyasız koşular ve GOLDEN A/B değişmez.
 
+## B-007 / B-008 (QA) — aynı gün
+- B-007 kök neden: `displacement = milli / 200` aşağı yuvarlama + günlük sönüm: 4 hane yaş >= 1 gün'de 19 pm < 20. Çözüm: yukarı
+  yuvarlama (yerinden edilen varsa en az 1) + `min_displacement_pm` 1 (1-4 hane dahil hiçbir yıkılan ev sessiz değil; 0 hane sessiz).
+- B-008 kök neden: PE-01 `mutex bloc_unrest` (açık öğe varken ikincisi açılamaz) + `cooldown_days 60` (`rearm_below 300`: yeni taban 600
+  bunu da tetikleyecekti). Çözüm: `local.independent_items` -> `EventEngine.can_open_direct/open_direct(..., independent)`: yerel öğe
+  mutex/bekleme aramaz (PE-01.json DEĞİŞMEDİ: digest/GOLDEN etkilenmez). Bölge ölçekli öğe açıldıysa aynı yol için ikinci (yerel) öğe
+  açılmaz (`_cover_local`). Tarama başına en çok bir öğe kuralı sürer (iki yol: ardışık haftalarda).
+- `qa_reaction_regions_probe.gd` (`--jurisdiction=game --regions=D2 --pool=250 --days=100`): tohum 1467 ve 2026 ikisinde `QA_SUMMARY checks 148, fails 0`
+  (QA raporu: düzeltme öncesi 6 başarısız).
+- Tepki kanalı: yerinden edilen hane sayısı yalnız `PublicWorksState.note_reactions` defterinden okunur (`ReactionAgenda.local_readings`).
+
 ## Önce / sonra: gerçek Ismeral D2 (tohum 1467, 400 gün, `expropriation_reaction_real_probe.gd`)
 | Yol | Yerinden edilen hane | Önce: PE-01 baskı | Sonra: PE-01 baskı | Konut-maliyeti şikâyeti (barınan kesim) önce -> sonra |
 |---|---|---|---|---|
