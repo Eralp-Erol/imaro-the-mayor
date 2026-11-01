@@ -248,7 +248,12 @@ func _precheck(command: SimCommand) -> Dictionary:
 	if command == null:
 		return {"reason_key": CommandResult.REJECT_UNKNOWN_KIND, "args": {}}
 	var shape := command.validate_shape()
-	return shape if not shape.is_empty() else _state_problem(command)
+	if not shape.is_empty():
+		return shape
+	if command.kind == SimCommand.KIND_PUBLIC_WORK_DEMOLISH:
+		# Mock yol geometrisi tutmaz; yıkımı uygulayamaz. Sessiz kabul yerine dürüst ret (ölü düğme yok).
+		return _problem(CommandResult.REJECT_DEMOLITION_MOCK, {})
+	return _state_problem(command)
 
 
 func _state_problem(command: SimCommand) -> Dictionary:

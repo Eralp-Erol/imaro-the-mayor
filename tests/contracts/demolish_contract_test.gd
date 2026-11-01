@@ -42,3 +42,21 @@ func test_default_cost_query_reports_unknown_for_a_facade_that_does_not_override
 
 func test_mock_undo_is_closed_before_any_road_exists() -> void:
 	assert_bool(S.facade(S.SCENARIO_POSITIVE).undo_available()).is_false()
+
+
+func test_mock_rejects_demolish_honestly_instead_of_accepting_a_dead_command() -> void:
+	# Mock yol geometrisi tutmaz, yıkımı uygulayamaz: "queued" demek ölü düğme olurdu. Ön doğrulama ve gönderim reddeder.
+	var f := S.facade(S.SCENARIO_POSITIVE)
+	var cmd := SimCommand.public_work_demolish(1)
+	var probe := f.validate_command(cmd)
+	assert_bool(probe.is_rejected()).is_true()
+	assert_str(String(probe.reason_key)).is_equal("public_work.reject.demolition_mock")
+	var sent := f.submit_command(cmd)
+	assert_bool(sent.is_rejected()).is_true()
+	assert_str(String(sent.reason_key)).is_equal("public_work.reject.demolition_mock")
+	# Neden oyuncuya Türkçe ve MOCK olarak söylenir (ham anahtar yok); yol paneli bunu "yıkılamaz" satırında kullanır.
+	UiText.reset()
+	UiText.report_missing = false
+	var text := UiText.reject_reason(probe.reason_key, probe.args)
+	assert_str(text).contains("MOCK")
+	assert_array(Array(UiText.missing_keys())).is_empty()

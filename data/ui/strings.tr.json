@@ -659,6 +659,7 @@
 	"public_work.reject.undo_window_closed": "Geri alma süresi bitti: başka bir yol yapıldı, yol zaten geri alındı ya da halkın tepkisi işlendi. Yolu yıkabilirsiniz.",
 	"public_work.reject.no_such_road": "Böyle bir yol yok ya da zaten yıkılmış.",
 	"public_work.reject.demolition_unavailable": "Bu yolun kenarı haritada bulunamadı ya da tamamen kaldırılamadı; yıkılamıyor.",
+	"public_work.reject.demolition_mock": "Örnek (MOCK) veri kipinde yol yıkımı uygulanmıyor; gerçek simülasyonda çalışır.",
 	"public_work.reject.demolition_changes_parcels": "Bu yol yıkılırsa çevredeki arsaların sınırı değişirdi; yıkım henüz yapılamıyor.",
 	"road.demolish_sent": "Yol yıkıma gönderildi.",
 	"public_work.reject.bad_class": "Bu yol sınıfı henüz çizilemez.",

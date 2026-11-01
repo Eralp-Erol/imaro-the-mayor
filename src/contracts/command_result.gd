@@ -35,6 +35,8 @@ const REJECT_NOTHING_TO_UNDO := &"public_work.reject.nothing_to_undo"
 const REJECT_PROTECTED_STRUCTURE := &"public_work.reject.protected_structure"
 const REJECT_EXPROPRIATION_DISABLED := &"public_work.reject.expropriation_disabled"
 const REJECT_EXPROPRIATION_CHANGED := &"public_work.reject.expropriation_changed"
+## Yalnız mock facade: yol yıkımı mock'ta uygulanmaz (gerçek sim uygular).
+const REJECT_DEMOLITION_MOCK := &"public_work.reject.demolition_mock"
 const REJECT_ECONOMY_NOT_STARTED := &"public_work.reject.economy_not_started"
 
 var command_id: int = SimContract.NO_ID

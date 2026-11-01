@@ -15,6 +15,8 @@ const ZONING_APPLIED_KEY := &"event.zoning.applied"
 const HIDE_AFTER_S := 30.0
 const MARGIN := 12.0
 const MAX_WIDTH := 460.0
+## Kartın asgari genişliği: düğmeler etiketin ALTINA dizilir; sığmazsa kart bildirim sütununun altına iner.
+const MIN_WIDTH := 220.0
 
 var _hud: HudRoot = null
 var _facade: SimFacade = null
@@ -24,6 +26,7 @@ var _remaining: float = 0.0
 var _label: Label = null
 var _faster: Button = null
 var _close: Button = null
+var _strip_rect: Rect2 = Rect2()
 
 
 static func attach(hud: HudRoot, facade: SimFacade, prefs: PlayableHintPrefs = null) -> PlayableSpeedHint:
@@ -72,6 +75,10 @@ func close_button() -> Button:
 	return _close
 
 
+func hint_label() -> Label:
+	return _label
+
+
 func hint_text() -> String:
 	return _label.text if _label != null else ""
 
@@ -85,6 +92,11 @@ func dismiss() -> void:
 
 
 func _process(delta: float) -> void:
+	# Bildirim şeridi olaylarla büyüyüp küçülür; yalnız "şeridin altına in" kipinde konum onun yüksekliğine bağlıdır.
+	var strip_rect := Rect2(_hud.strip.position, _hud.strip.size)
+	if strip_rect != _strip_rect:
+		_strip_rect = strip_rect
+		_place()
 	_remaining -= delta
 	if _remaining <= 0.0:
 		_hide()  # kalıcı kapatma değil: yalnız bu görünüm kapanır
@@ -138,10 +150,12 @@ func _build() -> void:
 		c.queue_free()
 	if _hud.theme != null:
 		theme = _hud.theme
-	var row := HBoxContainer.new()
-	add_child(row)
+	var col := VBoxContainer.new()
+	add_child(col)
 	_label = UiFactory.label(UiText.t(&"tempo.hint"), &"", true)
-	row.add_child(_label)
+	col.add_child(_label)
+	var row := HBoxContainer.new()
+	col.add_child(row)
 	var paused := _facade.speed() == SimFacade.SPEED_PAUSED
 	_faster = UiFactory.button(_hud.ctx, UiText.t(&"clock.resume" if paused else &"tempo.hint_faster"), true)
 	_faster.pressed.connect(_on_faster_pressed)
@@ -151,12 +165,30 @@ func _build() -> void:
 	row.add_child(_close)
 
 
+## Kök neden (iPad 1024x768): eski kart etiket + iki düğmeyi TEK satıra koyuyor ve genişliği harita alanının %0.4'ü
+## (~250 px) tutuyordu; düğmelerin asgari genişliği toplamı bunu aştığı için sarmalı etiket 1 harf genişliğine
+## ezildi. Şimdi etiket üstte, düğmeler altta; genişlik bildirim sütununun SAĞINDAki boşluktan hesaplanır, MIN_WIDTH
+## sığmazsa kart bildirim şeridinin ALTINA iner (çakışma yok).
 func _place() -> void:
 	if not visible or _hud.layout == null:
 		return
 	var area := _hud.free_map_rect()
-	var width := minf(MAX_WIDTH, maxf(0.0, area.size.x * 0.4))
+	var notif_end := _hud.layout.notifications.end.x
+	var free_right := area.end.x - MARGIN - (notif_end + MARGIN)
+	var width := minf(MAX_WIDTH, free_right)
+	var below_strip := width < MIN_WIDTH
+	if below_strip:
+		width = minf(MAX_WIDTH, maxf(0.0, area.size.x - 2.0 * MARGIN))
 	custom_minimum_size = Vector2(width, 0.0)
-	var h := get_combined_minimum_size().y
-	size = Vector2(width, h)
-	position = Vector2(area.end.x - width - MARGIN, area.position.y + MARGIN)
+	var inner := width - get_theme_stylebox(&"panel").get_minimum_size().x
+	# Sarmalı etiketin asgari yüksekliği genişliğe bağlıdır ve konteyner yerleşimi bir kare geç yetişir; etiketi gerçek
+	# genişliğe şimdi oturtup kartı ilk karede doğru boyda kuruyoruz.
+	_label.custom_minimum_size = Vector2(maxf(inner, 0.0), 0.0)
+	_label.size = Vector2(maxf(inner, 0.0), 0.0)
+	size = Vector2(width, 0.0)
+	size = Vector2(width, get_combined_minimum_size().y)
+	var y := area.position.y + MARGIN
+	if below_strip:
+		y = maxf(y, _hud.strip.position.y + _hud.strip.size.y + MARGIN)
+		y = minf(y, maxf(area.position.y, area.end.y - size.y - MARGIN))
+	position = Vector2(area.end.x - width - MARGIN, y)
