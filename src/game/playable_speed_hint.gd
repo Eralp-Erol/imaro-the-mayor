@@ -43,6 +43,7 @@ static func attach(hud: HudRoot, facade: SimFacade, prefs: PlayableHintPrefs = n
 	if layer == null:
 		layer = hud
 	layer.add_child(h)
+	hud.register_occupant(h)  # yol ipucu kartı gibi yüzen etiketler bu kartın üstüne binmez (B-014)
 	hud.events_received.connect(h._on_events)
 	hud.layout_changed.connect(h._place)
 	hud.speed_changed.connect(h._on_speed_changed)
