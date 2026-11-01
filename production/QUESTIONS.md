@@ -2,7 +2,7 @@
 
 Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Gruplanmış tutulur; her biri için stüdyonun beklerken ne yaptığı yazılıdır. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
-## EN GÜNCEL: sahibe 4 kart (2026-10-31, ölçümlerden; hiçbiri engellemiyor)
+## EN GÜNCEL: sahibe 4 kart — 2026-11-01 CEVAPLANDI → D-014 (aşağıdaki metin tarihî kayıt)
 Bunlar karar DEĞİLDİR; yanıtlanınca kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Sayılar yalnız kayıtlardan; "ölçülmedi" yazan yerde ölçüm yok. Aşağıdaki eski "Kart 2 (Q-025)" ve "Kart 3 (Q-014)" bunlarla örtüşür: Kart B, Q-014'ün güncel hâlidir; Kart C, Q-025'in "yolun yıkımı" kısmını somutlar.
 
 **Kart A · "Kararı gözden geçir" seçeneği yolu geri almıyor (Q-027)**
@@ -88,10 +88,10 @@ Durumlar:
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 | Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
 | Q-025 | Halk neye tepki versin? (D-008 son adımı, bugün sessiz) | **open** | — (engellemiyor) |
-| Q-026 | Şehirde kaç araç/yaya görünsün? (T-050 yaşam belirtisi yoğunluğu, araç renk çeşitliliği) | **open** | — (engellemiyor) |
-| Q-027 | Gündem Kararı gözden geçir seçeneği yolu geri almıyor (etiket / gerçek geri alma / kaldır) | **open** | — (engellemiyor) |
-| Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | **open** | — (engellemiyor) |
-| Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | **open** | — (engellemiyor) |
+| Q-026 | Şehirde kaç araç/yaya görünsün? (T-050 yaşam belirtisi yoğunluğu, araç renk çeşitliliği) | answered → D-014 | — |
+| Q-027 | Gündem Kararı gözden geçir seçeneği yolu geri almıyor (etiket / gerçek geri alma / kaldır) | answered → D-014 | — |
+| Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | answered → D-014 | — |
+| Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | answered → D-014 | — |
 | Q-019 | Görünüm modları: serbest 3D kamera tavanı, strateji haritasının görünümü, 3D↔harita geçişi, en yakın bakış, Anderva ölçeğinin yeri (Q-011 "zoom akışı" maddesini ayrıntılandırır) | **open** | — (engellemiyor; değerler veri) |
 
 ### Q-001 · Eski 8 POC referans görselinin statüsü  (status: answered → D-001)
