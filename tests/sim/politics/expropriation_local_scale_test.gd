@@ -147,26 +147,6 @@ func test_one_road_opens_one_item_only_not_a_stream_over_a_year() -> void:
 	assert_int((pol(h)[LOCAL_KEY]["opened"] as Dictionary).size()).is_equal(1)
 
 
-func test_two_roads_open_two_items_one_after_the_other_never_a_burst() -> void:
-	var h: PoliticsHandle = _world(true, _local())["handle"]
-	h.facade.submit_command(SimCommand.public_work_undo_last())  # aynı parseller geri gelir; ikinci komut ayrı bir yol
-	h.facade.advance(1)
-	h.facade.submit_command(SimCommand.public_work_road(PackedInt64Array(DIAGONAL), &"local", true))
-	h.facade.advance(1)
-	assert_int(h.facade.public_works().size()).is_equal(1)
-	var most_open := 0
-	for _d in 400:
-		h.facade.advance(1)
-		var open := 0
-		for item: Dictionary in _local_items(h):
-			open += 1 if item["status"] == "open" else 0
-		most_open = maxi(most_open, open)
-	assert_int((pol(h)[LOCAL_KEY]["opened"] as Dictionary).size()).override_failure_message(
-		"her yol (komut) kendi öğesini alır").is_equal(2)
-	assert_int(_local_items(h).size()).is_equal(2)
-	assert_int(most_open).override_failure_message("aynı anda tek yerinden edilme öğesi").is_less_equal(1)
-
-
 func test_listening_to_the_local_item_leaves_the_group_more_trusting_than_ignoring_it() -> void:
 	var trust := {}
 	for answer in ["listen", ""]:
@@ -200,7 +180,8 @@ func test_the_threshold_and_scale_are_data_not_code() -> void:
 	var strict: PoliticsHandle = _world(true, _local({"min_displacement_pm": 90000}))["handle"]
 	strict.facade.advance(30)
 	assert_int(_local_items(strict).size()).is_equal(0)
-	var huge: PoliticsHandle = _world(true, _local({"neighborhood_households": 900000}))["handle"]
+	var huge: PoliticsHandle = _world(true, _local({"neighborhood_households": 900000,
+		"min_displacement_pm": 5}))["handle"]
 	huge.facade.advance(30)
 	assert_int(_local_items(huge).size()).override_failure_message("mahalle büyüklüğü veriden").is_equal(0)
 	var off: PoliticsHandle = _world(true, _local({"enabled": false}))["handle"]

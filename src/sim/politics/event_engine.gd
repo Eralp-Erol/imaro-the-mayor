@@ -202,10 +202,15 @@ static func _fire(state: GameState, ctx: PoliticsContext, template: Dictionary, 
 ## T-042b · DOĞRUDAN nedenle (yerinden edilme) gündem öğesi açılabilir mi: tepki basamağı şartı aranmaz, ama kilometre
 ## taşı, kapalı etiket, silahlanma/bekleme ve karşılıklı dışlama kapıları aynıdır. Durumu (silahlanma kaydı hariç)
 ## değiştirmez.
-static func can_open_direct(state: GameState, ctx: PoliticsContext, template_id: String, pressure: int) -> bool:
+## `independent` (B-008): her yolun öğesi diğerinden bağımsızdır; silahlanma/bekleme ve karşılıklı dışlama aranmaz
+## (art arda iki yıkımlı yol = iki ayrı tepki, ikincisi ilk öğenin kapanmasını beklemez).
+static func can_open_direct(state: GameState, ctx: PoliticsContext, template_id: String, pressure: int,
+		independent: bool = false) -> bool:
 	var template := ctx.politics.template(template_id)
 	if template.is_empty() or not ctx.politics.milestone_open(template["min_milestone"]) or _blocked(ctx, template):
 		return false
+	if independent:
+		return true
 	var events: Dictionary = PoliticsState.data(state)["events"]
 	return _is_armed(state, events, template, pressure) and not _mutex_active(events, ctx, template)
 
@@ -213,8 +218,8 @@ static func can_open_direct(state: GameState, ctx: PoliticsContext, template_id:
 ## T-042b · Doğrudan nedenli öğeyi açar (`can_open_direct` doğruysa). Çekiliş yok: neden doğrudan ve görünür (yerinden
 ## edilen hane); ateşleme gerekçesi `causes` (önceden yazılmış neden kaydı) ebeveynli yazılır. Dönüş: açıldı mı.
 static func open_direct(state: GameState, ctx: PoliticsContext, template_id: String, trigger_bloc: String,
-		pressure: int, source: String, causes: PackedInt64Array) -> bool:
-	if not can_open_direct(state, ctx, template_id, pressure):
+		pressure: int, source: String, causes: PackedInt64Array, independent: bool = false) -> bool:
+	if not can_open_direct(state, ctx, template_id, pressure, independent):
 		return false
 	var template := ctx.politics.template(template_id)
 	var events: Dictionary = PoliticsState.data(state)["events"]

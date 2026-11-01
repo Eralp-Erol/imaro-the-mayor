@@ -39,6 +39,8 @@ static func scan(state: GameState, ctx: PoliticsContext) -> int:
 	var opened := _scan_region(state, ctx)
 	if opened == 0:
 		opened = _scan_local(state, ctx, readings)
+	elif bool(cfg.get("independent_items", false)):
+		_cover_local(state, readings)  # bölge öğesi bu yolları zaten açıklar: ikinci (yerel) öğe açılmaz
 	if bool(cfg["enabled"]) and (int(cfg["district_floor"]) > 0 or int(cfg["district_gain"]) > 0):
 		_district_grievance(state, ctx, readings, cfg)
 	return opened
@@ -99,7 +101,7 @@ static func _queue_story(state: GameState, key: String, bloc: Dictionary, pressu
 @warning_ignore("integer_division")
 static func local_reading(cfg: Dictionary, displaced_milli: int, nearby_milli: int) -> Dictionary:
 	var size := maxi(int(cfg["neighborhood_households"]), 1)
-	var displacement := displaced_milli / size
+	var displacement := (displaced_milli + size - 1) / size  # yukarı yuvarla: yerinden edilen varsa en az 1 (B-007)
 	var proximity := nearby_milli / size
 	var level := displacement + proximity * int(cfg["proximity_share_pm"]) / SCALE
 	var pressure := clampi(level * SCALE / maxi(int(cfg["full_displacement_pm"]), 1), 0, SCALE)
@@ -176,7 +178,8 @@ static func _scan_local(state: GameState, ctx: PoliticsContext, readings: Array[
 	if best.is_empty():
 		return 0
 	var template := str(ctx.politics.reactions["agenda"]["template"])
-	if not EventEngine.can_open_direct(state, ctx, template, int(best["pressure"])):
+	var solo := bool(cfg.get("independent_items", false))
+	if not EventEngine.can_open_direct(state, ctx, template, int(best["pressure"]), solo):
 		return 0  # kapılar kapalıyken neden kaydı yazılmaz (kayıt hacmi)
 	var cause := ReactionCause.record_local(state, ctx, key, best)
 	if cause.is_empty():
@@ -185,7 +188,7 @@ static func _scan_local(state: GameState, ctx: PoliticsContext, readings: Array[
 	var events: Dictionary = pol["events"]
 	var item_id := int(events["next_item"])
 	if not EventEngine.open_direct(state, ctx, template, key, int(best["pressure"]), SOURCE,
-			PackedInt64Array([cause["id"]])):
+			PackedInt64Array([cause["id"]]), solo):
 		return 0
 	var topic := _displacement_topic(ctx, str(cfg["cohort"]))
 	var item := EventEngine.item_by_id(state, item_id)
@@ -200,6 +203,17 @@ static func _scan_local(state: GameState, ctx: PoliticsContext, readings: Array[
 	_queue_story(state, key, pol["blocs"][key], int(best["pressure"]), cause, topic,
 		"displacement|%s|%s" % [key, best["key"]])  # her yol ayrı haber (tekrar sönümü yalnız aynı yolda)
 	return 1
+
+
+## Bölge ölçekli öğe açıldıysa, eşikteki yerel okumalar "açıldı" sayılır (aynı yol için iki öğe olmaz).
+static func _cover_local(state: GameState, readings: Array[Dictionary]) -> void:
+	var pol := PoliticsState.data(state)
+	for reading in readings:
+		if not bool(reading["opens"]) or pol.get(LOCAL_KEY, {}).get("opened", {}).has(reading["key"]):
+			continue
+		if not pol.has(LOCAL_KEY):
+			pol[LOCAL_KEY] = {"opened": {}}
+		pol[LOCAL_KEY]["opened"][reading["key"]] = state.tick
 
 
 ## Kohortu `cohort_id` olan kesimin anahtarı ("" = yok).

@@ -22,14 +22,18 @@ extends RefCounted
 ##          `floor_pressure_pm`: yerinden edilen hane varken öğe baskısının tabanı (evi yıkılan: yüksek tepki).
 ##          `district_floor` / `district_gain`: ilçe geneli, yerinden edilme sürerken haftalık küçük şikâyet
 ##          (puan/tarama) = max(district_floor, hane x district_gain / bölge hanesi); 0 = kapalı.
+##          `independent_items` (B-008): her yolun öğesi diğer açık PE-01 öğesinden ve bekleme süresinden
+##          bağımsız açılır (art arda iki yol = iki ayrı tepki, ikincisi gecikmeden); false = eski mutex/bekleme.
 ##          "Yeni ev sunuldu mu" kararı burada DEĞİL, tek noktada: `ReactionRehousing.still_unhoused` (şimdilik hep
 ##          "hâlâ barınamıyor": sim'de yeniden iskân mekanizması yok; sahip ayrıca karar verecek).
 
 const KEYS: Array[String] = ["schema", "window_days", "cohorts", "cause", "agenda", "local"]
 const LOCAL_KEYS: Array[String] = ["enabled", "cohort", "neighborhood_households", "min_displacement_pm",
-	"full_displacement_pm", "proximity_share_pm", "floor_pressure_pm", "district_floor", "district_gain"]
+	"full_displacement_pm", "proximity_share_pm", "floor_pressure_pm", "district_floor", "district_gain",
+	"independent_items"]
 ## Yüksek tepki / ilçe şikâyeti alanlarının KOD varsayılanı (eski davranış; yalnız `reactions.json` açar).
-const LOCAL_EXTRA_DEFAULTS := {"floor_pressure_pm": 0, "district_floor": 0, "district_gain": 0}
+const LOCAL_EXTRA_DEFAULTS := {"floor_pressure_pm": 0, "district_floor": 0, "district_gain": 0,
+	"independent_items": false}
 const CAUSE_FACTORS: Array[String] = ["displaced_households", "road_proximity"]
 
 
@@ -118,6 +122,11 @@ static func _local(raw: Variant, errors: PackedStringArray) -> Dictionary:
 	out["proximity_share_pm"] = ActorSchema.required_int(raw, "proximity_share_pm", 0, 1000, path, errors)
 	if raw.has("floor_pressure_pm"):
 		out["floor_pressure_pm"] = ActorSchema.required_int(raw, "floor_pressure_pm", 0, 1000, path, errors)
+	if raw.has("independent_items"):
+		if typeof(raw["independent_items"]) != TYPE_BOOL:
+			errors.append("%s.independent_items: true/false olmalı" % path)
+		else:
+			out["independent_items"] = raw["independent_items"]
 	for name: String in ["district_floor", "district_gain"]:
 		if raw.has(name):
 			out[name] = ActorSchema.required_int(raw, name, 0, 100000, path, errors)
