@@ -2,6 +2,32 @@
 
 Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Gruplanmış tutulur; her biri için stüdyonun beklerken ne yaptığı yazılıdır. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
+## T-065 Aşama 1 · yeniden iskân çalışma sayıları — sahibe 3 kart (2026-11-01; hiçbiri engellemiyor, sayılar veride)
+Bunlar karar DEĞİLDİR. Hepsi `data/sim/public_works/road_works.json` `expropriation.resettlement` içinde ayarlanabilir (F05-C); yanıt gelince kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Politika varsayılan KAPALI; oyuncu açana dek bugünkü oyun aynen sürer.
+
+**Kart R1 · Evi bulunan ailenin tepkisi ne kadar kalsın? (D-016 §2 "duruma göre biraz kalsın"; spec §6)**
+Şimdi: tam uygun ev bulunan ailenin tepkisi %20 kalır ve YUKARI yuvarlanır (16 aileden 4 kalır, sıfıra inmez); kira ya da yerden yalnız biri uygunsuz "kısmi ev"de %60 kalır; ev bulunamayan %100.
+- A) Önerilen: şimdiki ayar (%20 / %60 / %100).
+- B) Daha yumuşak (örn. %10 / %40): taşınan aile neredeyse susar; yeni değerler ölçülmedi.
+- C) Daha sert (örn. %40 / %80): taşınma tepkiyi az azaltır; yeni değerler ölçülmedi.
+- Bekleyen: `residual_reaction_pm` 200, `partial_relief_pm` 600; yukarı yuvarlama (en az 1 hane kalsın) kod kuralı, veride değil.
+
+**Kart R2 · "Yakın ve uygun kira" ne demek? (spec §4; D-015)**
+Şimdi: hedef bölgenin kirası kaynaktan en çok %25 pahalı ve hedefin yola en yakın yapılı konutu 800 m içinde ise ev "tam"; ikisi de aşılıyorsa ev sayılmaz. "Yer" ölçüsü yıkılan parselin merkezine değil YOLUN ÇİZGİSİNE göre (ucuz ve belirleyici); bir yol hedefin boş evlerinin en çok %30'unu alır.
+- A) Önerilen: şimdiki ayar (%25, 800 m, %30; yol çizgisine uzaklık).
+- B) Yıkılan parselin merkezine göre uzaklık: oyuncuya daha sezgisel gelebilir, ama parsel başına hesap gerekir (maliyet ölçülmedi).
+- C) Gevşek ya da sıkı eşikler (örn. %50 / 2 km / %50): sayılar ölçülmedi.
+- Bekleyen: `rent_tolerance_pm` 250, `max_distance_m` 800, `max_fill_pm` 300.
+
+**Kart R3 · Taşınma bedeli ve yardımı (Q-003 para birimi, T-014 bütçe)**
+Şimdi: bedel = taşınan hane x hedef bölgenin aylık konut kirası x 12 ay (gösterge; kasa kısıt değil, hiçbir komutu engellemez); taşınma yardımı 0 (sayı verilmedi). Bedel yol kaleminden AYRI "Yeniden iskân" satırında görünür, geri almada iade edilir.
+- A) Önerilen: şimdiki ayar (12 ay, yardım 0); para birimi ve gerçek bütçe kararı gelene dek.
+- B) Yardım ekle (hane başına sabit sayı): sayıyı siz söylersiniz; para birimi Q-003 açık.
+- C) Bedeli hiç yazma, yalnız hane sayısını göster: bütçe satırı kalkar.
+- Bekleyen: `support_months` 12, `move_grant` 0.
+
+Not (karar gerektirmeyen): politika paneli konumu UI işidir (`ui-engineer`); sim yalnız `policies()` ve `policy.set` verir.
+
 ## EN GÜNCEL: sahibe 4 kart — 2026-11-01 CEVAPLANDI → D-014 (aşağıdaki metin tarihî kayıt)
 Bunlar karar DEĞİLDİR; yanıtlanınca kullanıcının sözleriyle `design/decisions/D-NNN` yazılır. Sayılar yalnız kayıtlardan; "ölçülmedi" yazan yerde ölçüm yok. Aşağıdaki eski "Kart 2 (Q-025)" ve "Kart 3 (Q-014)" bunlarla örtüşür: Kart B, Q-014'ün güncel hâlidir; Kart C, Q-025'in "yolun yıkımı" kısmını somutlar.
 
