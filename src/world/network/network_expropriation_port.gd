@@ -56,6 +56,23 @@ func replay(op: Dictionary) -> Dictionary:
 			StringName(str(op["class"])), float(int(op["width_dm"])) * 0.1, op.get(NetworkExpropriation.KEY_TAKEN)))
 
 
+func available_land(source_op: int, parcel_ids: PackedInt64Array) -> Dictionary:
+	if not _enabled:
+		return {"ok": false, "error": "arsa geri açma desteklenmiyor", "parcel_ids": []}
+	return NetworkLandReuse.available(net, source_op, parcel_ids)
+
+
+func restore_land(source_op: int, parcel_ids: PackedInt64Array) -> Dictionary:
+	if not _enabled:
+		return {"ok": false, "error": "arsa geri açma desteklenmiyor", "restored": PackedInt64Array()}
+	var report := net.restore_parcels(source_op, parcel_ids)
+	return {"ok": report["ok"], "error": report["error"], "restored": PackedInt64Array(report["added_parcels"])}
+
+
+func archived_land(source_op: int, parcel_ids: PackedInt64Array) -> Array:
+	return NetworkLandReuse.archive_rows(net, source_op, parcel_ids) if _enabled else []
+
+
 ## `add_road_expropriating` raporu -> köprü sonucu. Yeni parsel çıkarsa (olmamalı) işlem geri alınır. Yeniden oynatmada
 ## alınan küme kayıttakinden farklıysa `add_road_expropriating` ağa dokunmadan hata verir.
 func _result_of(report: Dictionary) -> Dictionary:

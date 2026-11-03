@@ -6,6 +6,7 @@ extends RefCounted
 ##   {"op": "add_road", "pts_cm": [[x, y], ...], "class": "local", "width_dm": 100}
 ##   {"op": "remove_edge", "edge": 12}
 ##   {"op": "set_open", "edge": 12, "open": false}
+##   {"op": "restore_parcels", "source_op": 0, "parcel_ids": [4, 11]} (T-066; eski op'lara alan eklemez)
 ## Kenar kimlikleri, deltanın uygulandığı ağın o anki durumuna göredir (tabandan itibaren yeniden oynatma
 ## deterministiktir).
 

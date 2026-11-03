@@ -148,18 +148,19 @@ static func _retire_in_kept_blocks(net: WorldNetwork, j: NetworkOpJournal, stale
 		WorldNetwork.report_add(report, "removed_parcels", pid)
 
 
-## Yeni yüzün içinde merkezi kalan havuz parsellerini bloğa alır (parselli blok olur). Yüz deliklidir ya da hiç parsel
-## yoksa blok `NetworkBlockBuild.build_block`un verdiği türde (açık arazi/su/sliver) kalır.
+## Yeni yüzün içinde, deliklerin DIŞINDA merkezi kalan havuz parsellerini kimlikleriyle alır. B-016: yıkımın ara
+## adımında kopuk halka kalması dış yüzün mevcut parsellerini düşürmez. Yeni parsel üretilmez; delik içindeki
+## parseller kendi iç yüzüne aittir. Hiç parsel yoksa `build_block`un verdiği tür korunur.
 static func _claim(net: WorldNetwork, j: NetworkOpJournal, block: WorldBlock, face: Dictionary,
 		pool: Array[WorldParcel], claimed: Dictionary) -> void:
-	if pool.is_empty() or bool(face["holed"]) or not block.parcel_ids.is_empty():
+	if pool.is_empty() or not block.parcel_ids.is_empty():
 		return
 	var outline: PackedVector2Array = face["points"]
 	var rect := NetworkGeometry.bounds(outline)
 	var ids := PackedInt32Array()
 	for parcel in pool:
 		if not claimed.has(parcel.id) and rect.has_point(parcel.centroid) \
-				and NetworkGeometry.point_in_polygon(parcel.centroid, outline):
+				and NetworkGeometry.point_in_polygon(parcel.centroid, outline) and not _in_hole(parcel.centroid, face):
 			ids.append(parcel.id)
 	if ids.is_empty():
 		return
@@ -180,6 +181,13 @@ static func _claim(net: WorldNetwork, j: NetworkOpJournal, block: WorldBlock, fa
 		parcel.block_id = block.id
 		if not (block.edge_ids.has(parcel.frontage_edge) and NetworkBlockMatch.frontage_holds(net, parcel)):
 			_reassign_frontage(net, block, parcel)
+
+
+static func _in_hole(point: Vector2, face: Dictionary) -> bool:
+	for hole: PackedVector2Array in face.get("holes", []):
+		if NetworkGeometry.point_in_polygon(point, hole):
+			return true
+	return false
 
 
 ## Cephe kenarı artık bu bloğun sınırında değil ya da bölünmeyle kaydı: en yakın yol kenarı

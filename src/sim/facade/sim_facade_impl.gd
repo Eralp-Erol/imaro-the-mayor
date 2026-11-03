@@ -53,6 +53,8 @@ var _budget: BudgetSystem
 ## T-042: oyuncu yolu bağlamı (ağ + kurallar + sim verisi); `attach_public_works` ile takılır, yoksa yol komutları
 ## kayıtsızdır.
 var _public_works: PublicWorksContext
+var _zoning_system: ParcelZoningSystem
+var _zoning_handler: ZoningProposeHandler
 ## T-045: değişen-parsel sorgusunun durum kuşağı. Kayıt yüklenince artar (halka boşalır); durum/hash dışıdır.
 var _change_epoch: int = 0
 ## 2026-11-01 · `parcel_views` gerekçe dizini önbelleği (türetilmiştir; durum/hash/kayıt dışı, bkz. ReasonSubjectCache).
@@ -75,10 +77,12 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
 	impl._parcels = parcels
 	impl._facade_config = fc
 	impl._sim = Simulation.new()
-	impl._sim.add_system(ParcelZoningSystem.new())
+	impl._zoning_system = ParcelZoningSystem.new()
+	impl._sim.add_system(impl._zoning_system)
 	impl._snapshot_provider = snapshot_provider
 	impl._proposal_gate = proposal_gate
-	impl._sim.add_handler(ZoningProposeHandler.new(parcels, fc, proposal_gate))
+	impl._zoning_handler = ZoningProposeHandler.new(parcels, fc, proposal_gate)
+	impl._sim.add_handler(impl._zoning_handler)
 	impl._sim.add_handler(UnbuiltCommandHandler.new(SimCommand.KIND_BUDGET_PROPOSE, SECTION_BUDGET))
 	for system in extra_systems:
 		impl._sim.add_system(system)
@@ -113,6 +117,8 @@ func attach_public_works(ctx: PublicWorksContext) -> bool:
 	if not _sim.add_system(ExpropriationFlushSystem.new(ctx)):  # komut aşamasında alınan parseller halkaya girsin
 		return false
 	_public_works = ctx
+	_zoning_handler.municipal_context = ctx
+	_zoning_system.municipal_context = ctx
 	return true
 
 
@@ -166,6 +172,28 @@ func policies() -> Array[PolicyView]:
 
 
 ## v1.3 · Ağda DURAN oyuncu yolları, eskiden yeniye (sim durumundan; değer kopyası). Yıkılmış yol listede yoktur.
+func municipal_lands() -> Array[MunicipalLandView]:
+	var out: Array[MunicipalLandView] = []
+	if _public_works == null:
+		return out
+	var rows := _public_works.municipal_land_rows(_state)
+	var ids := PackedInt64Array()
+	for row: Dictionary in rows:
+		ids.append(int(row["id"]))
+	var views := {}
+	for parcel in parcel_views(ids):
+		views[parcel.id] = parcel
+	for row: Dictionary in rows:
+		var parcel: ParcelView = views.get(int(row["id"]))
+		if parcel == null:
+			continue
+		var data := row.duplicate()
+		data["region_code"] = parcel.region_code
+		data["area_m2"] = parcel.area_m2
+		out.append(MunicipalLandView.from_dict(data))
+	return out
+
+
 func public_works() -> Array[PublicWorkView]:
 	var out: Array[PublicWorkView] = []
 	var d := PublicWorksState.data(_state)
@@ -408,7 +436,7 @@ func plan_state(parcel_id: int) -> PlanStateView:
 ## kullandığı formül; ayrı hesap yok). `max_parcels` = teklif üst sınırı (sim yapılandırması), `council_required` =
 ## GERÇEK siyaset kapısı kararı (D-011 Soru 4: bayrak + bu planın büyüklüğü; kapı yoksa false). SALT OKUNUR.
 func plan_preview(parcel_ids: PackedInt64Array, land_use: StringName, density: int = -1,
-		max_height_m: int = -1) -> PlanPreviewView:
+		max_height_m: int = -1, municipal_reuse: bool = false) -> PlanPreviewView:
 	var council := _proposal_gate != null and _proposal_gate.requires_vote_for(_state, SimCommand.KIND_ZONING_PROPOSE,
 		{"parcel_ids": parcel_ids, "land_use": land_use, "density": density, "max_height_m": max_height_m})
 	var limit := _facade_config.plan_max_parcels_per_proposal
@@ -424,8 +452,14 @@ func plan_preview(parcel_ids: PackedInt64Array, land_use: StringName, density: i
 		none.council_min_parcels = min_parcels
 		none.council_min_units = min_units
 		return none
-	return PlanPreviewView.from_economy(_economy.plan_preview(_state, parcel_ids, land_use, density, max_height_m),
-		provenance(), land_use, limit, council, min_parcels, min_units)
+	var raw := _economy.plan_preview(_state, parcel_ids, land_use, density, max_height_m)
+	if municipal_reuse and not parcel_ids.is_empty():
+		var problem := {"code": &"municipal_land.world_unavailable"}
+		if _public_works != null:
+			problem = _public_works.land_preview_problem(_state, parcel_ids)
+		if problem["code"] != &"":
+			raw = {"ok": false, "reason": problem["code"]}
+	return PlanPreviewView.from_economy(raw, provenance(), land_use, limit, council, min_parcels, min_units)
 
 
 ## T-045 · `tick`ten sonra (tick, şimdi] değişen parseller; O(değişen), olay/gerekçe ufkundan BAĞIMSIZ (halka:

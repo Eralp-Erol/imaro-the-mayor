@@ -2,19 +2,19 @@
 
 Yalnızca kanondan çözülemeyen, gerçekten yaratıcı/ürün kararları. Gruplanmış tutulur; her biri için stüdyonun beklerken ne yaptığı yazılıdır. Cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
-## Geri al penceresi · halkın ilk tepkisi geri alınamıyor — sahibe 1 kart (2026-11-01; engellemiyor, mevcut davranışla ilerler)
+## Geri al penceresi · YANITLANDI (2026-11-03, D-017; aşağıdaki kart tarihî bağlam)
 Sözün (D-014 §1): "ta ki başka bir yol parçası yapılana kadar geri al seçeneği bulunsun." Bugün kamulaştırmalı yolda geri al, yolun halk tepkisi ilk haftalık taramaya girince (1-7 gün) kapanıyor. Nedenini ölçtüm (`production/log/2026-11-01-b009-b013.md`): tarama yalnız tepki satırı yazmıyor; halkın duygu defterine (başka etkenlerle karışık), gündem öğesine, haber adayına ve gerekçe kayıtlarına da iz bırakıyor. Satırı silmek bunları geri sarmıyor; "hiç yapılmamış gibi" geri alma yarım kalırdı. Yarım geri alma uydurmadım.
 
 **Kart G1 · Geri al, halk tepki verdikten sonra da açık kalsın mı? (Q-030)**
 - A) Önerilen: Evet, sözün gibi başka yol yapılana kadar açık kalsın. Geri alınca yol, binalar, açılmış gündem öğesi ve haber kalkar; ama halkın o haftalarda biriken öfkesi silinmez, birkaç haftada kendiliğinden söner ("hiç olmamış gibi" tam değil, dürüstçe böyle yazılır).
 - B) Şimdiki: halk tepki verince geri al kapanır, yalnız yıkma kalır. Tam tutarlı ama sözünle çelişir; kart metni "başka yol yapana kadar" demekten vazgeçer ("halk tepki verene kadar" der).
 - C) Tam "hiç olmamış gibi": halk, geri al açıkken tepki vermesin; yolu "kesinleştirince" (başka yol ya da yıkım) tepki başlasın. Tam temiz geri alma, ama oyuncu başka yol yapmazsa tepki hiç gelmez; bir süre sınırı (kaç gün?) ayrıca karar ister ve tepki zamanı değişir.
-- Beklerken: B (bugünkü davranış). Yalnız sim kuralı ve ret/onay metni değişir; veri değil kod, yanıt gelince kısa iş.
-- Ek (design-director, 2026-11-01; karar değil, HATA): beklerken de yıkımlı yol onay kartı (`expropriation.undo_note`) "Başka bir yol yapana kadar ... geri alabilirsiniz" diyor; bu bugünkü davranışla çelişen bir vaat. Karar gelene dek metin bugünkü kuralı söylemeli ("halk tepki verene kadar, en çok birkaç gün").
+- Karar: kullanıcı “cevabim: bugunku gibi.” dedi; **B**, mevcut davranış korunur (`design/decisions/D-017-geri-al-penceresi-bugunku-kural-2026-11-03.md`).
+- Ek (2026-11-03 kod incelemesi): önceki yanlış vaat zaten düzeltilmiş; `expropriation.undo_note` kısa süreyi ve halkın tepkisi işlenince kapanmayı söylüyor. Koruma `tests/ui/expropriation_ui_test.gd:134-138` içinde. Yeni sim kuralı uygulanmadı.
 
 ---
 
-## Yol yıkımı · yıkılan yolun yerinde ne olsun — sahibe 1 kart (2026-11-01; engellemiyor, mevcut davranışla ilerler)
+## Yol yıkımı · YANITLANDI (2026-11-03, D-018; aşağıdaki kart tarihî bağlam)
 Sözün (D-014 §1): "yolu yıkma seçeneği hep olsun." Artık evleri yıkarak geçen yol da yıkılabiliyor. Yol kalkınca çevredeki evler ve arsalar olduğu gibi kalır. Yol yapılırken yıktığı evler geri gelmez; onların yerinde boş bir şerit kalır. Sorulan tek şey: o boş şerit ne olsun? Ben seçmedim.
 
 **Kart Y1 · Yıkılan yolun yerinde kalan boş şerit ne olsun? (Q-031)**
@@ -22,6 +22,7 @@ Sözün (D-014 §1): "yolu yıkma seçeneği hep olsun." Artık evleri yıkarak 
 - B) Çim ve ağaç olsun. Yalnız görünüş değişir; gerçek park değildir (park kurmak senin kararın). Küçük görsel iş.
 - C) Yeniden arsa olsun, yatırımcılar oraya yine bina yapabilsin. Büyük iş: ekonomi ve oyun kaydı değişir.
 - Beklerken: A. Seçimin yıkma kuralını değiştirmez; B küçük bir görsel iş, C ayrı bir görev açar.
+- Yanıt (D-018): “Boş belediye arazisi olarak kalsın; belediye tekrar imar planiyla orayi arsa veya baska sekilde degerlendirebilir kararla.” Bugünkü boş arazi korunur; sonraki açık imar kararıyla değerlendirme hedefi T-066'dadır, çalışan akış henüz yoktur.
 
 ---
 
@@ -174,8 +175,8 @@ Durumlar:
 | Q-027 | Gündem Kararı gözden geçir seçeneği yolu geri almıyor (etiket / gerçek geri alma / kaldır) | answered → D-014 | — |
 | Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | answered → D-014 | — |
 | Q-029 | Yıkım yapan yolun halk tepkisi gücü (mahalle 200 hane, eşik 20 pm, tavan 200 pm) | answered → D-014 | — |
-| Q-030 | Geri al penceresi: halk tepki verdikten sonra da açık kalsın mı (A açık kalsın, iz söner / B bugünkü / C tepki beklesin) | **open** | — (engellemiyor) |
-| Q-031 | Yıkılan yolun yerinde kalan boş şerit ne olsun (A boş belediye arazisi / B çim ve ağaç / C yeniden arsa) | **open** | — (engellemiyor) |
+| Q-030 | Geri al penceresi: **B, bugünkü gibi** — halkın tepkisi işlenince geri al kapanır | **answered** | D-017 (2026-11-03) |
+| Q-031 | Boş belediye arazisi; sonraki imar kararıyla yeniden değerlendirilebilir | **answered** | D-018 (2026-11-03); akış takibi T-066 |
 | Q-032 | Ev bulunamayan aileler: bekleme listesi / ~1 yılda söner (bugünkü) / kira yardımı (Kart E1) | **open** | — (engellemiyor) |
 | Q-033 | Yolu yıkmanın bedeli: yapım kadar / metre başı 15 (bugünkü) / yapımın yarısı (Kart K1) | **open** | — (engellemiyor) |
 | Q-034 | Politikalar düğmesinin yeri: Yönetim sekmesi (bugünkü) / ilk kamulaştırmaya kadar gizli / bütçe-meclis içinde (Kart P1) | **open** | — (engellemiyor) |

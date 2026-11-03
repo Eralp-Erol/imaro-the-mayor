@@ -32,7 +32,8 @@ static func requested(params: Dictionary) -> bool:
 static func problem(ctx: PublicWorksContext, state: GameState, params: Dictionary, at_submit: bool) -> Dictionary:
 	if at_submit and ctx.is_busy():  # "dünya meşgul" cevabı çalışma zamanına bağlı: önbelleğe girmez
 		return _problem(ctx, state, params, at_submit)
-	var key := "%d|%d|%d|%d|%s|%s|%d" % [state.get_instance_id(), state.tick, ctx.net.graph_version,
+	var key := "%d|%d|%d|%d|%d|%s|%s|%d" % [state.get_instance_id(), state.tick, ctx.net.graph_version,
+		ctx.net.parcel_revision,
 		PublicWorksState.taken_count(state), params["road_class"], str(params["points_cm"]),
 		1 if resettlement_on(ctx, state) else 0]  # politika bayrağı: bayat tahsis planı olmaz (T-065)
 	if ctx.problem_memo_key != key:

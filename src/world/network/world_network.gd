@@ -42,6 +42,8 @@ var delta: NetworkDelta = NetworkDelta.new()
 var base_hash: String = ""
 var sealed: bool = false
 var graph_version: int = 0
+## T-066: yalnız parsel geri açma değişimleri; yol işçisi grafını veya durum hash'ini değiştirmez.
+var parcel_revision: int = 0
 ## true: delta işleminden sonra bloklar YEREL yenilenir (`NetworkLocalRefresh`); false: her zaman tam `refresh_blocks`
 ## (denetim/karşılaştırma). Sonuç aynıdır; yalnız süre farklıdır.
 var local_refresh_enabled: bool = true
@@ -266,6 +268,11 @@ func remove_edge(edge_id: int) -> Dictionary:
 	return _apply_op({"op": "remove_edge", "edge": edge_id}, true)
 
 
+## T-066: daha önce kamulaştırılmış parselleri açık imar kararı için aynı kimlikle boş olarak geri koyar.
+func restore_parcels(source_op: int, parcel_ids: PackedInt64Array) -> Dictionary:
+	return _apply_op({"op": "restore_parcels", "source_op": source_op, "parcel_ids": Array(parcel_ids)}, true)
+
+
 func set_edge_open(edge_id: int, is_open: bool) -> Dictionary:
 	return _apply_op({"op": "set_open", "edge": edge_id, "open": is_open}, true)
 
@@ -300,13 +307,21 @@ func _apply_op(op: Dictionary, record: bool) -> Dictionary:
 			_op_remove_edge(op, report)
 		"set_open":
 			_op_set_open(op, report)
+		"restore_parcels":
+			NetworkLandReuse.apply(self, op, journal, report)
 		_:
 			report["ok"] = false
 			report["error"] = "bilinmeyen op"
 	if not bool(report["ok"]):
 		_journal = null
 		return report
-	var refreshed := _refresh_after_op(journal)
+	var refreshed: Dictionary
+	if str(op.get("op", "")) == "restore_parcels":
+		parcel_revision += 1
+		refreshed = {"added_blocks": [], "removed_blocks": [],
+			"added_parcels": report["added_parcels"], "removed_parcels": []}
+	else:
+		refreshed = _refresh_after_op(journal)
 	_journal = null
 	for key in ["added_blocks", "removed_blocks", "added_parcels", "removed_parcels"]:
 		report[key] = refreshed[key]
@@ -370,8 +385,11 @@ func undo_last_op() -> Dictionary:
 	var op: Dictionary = delta.ops.pop_back()
 	var version_before := graph_version
 	var refreshed := journal.undo(self)
-	_touch()
-	NetworkComponents.restore(self, journal.components)  # ağ işlemden önceki ile aynı: bileşen önbelleği geri gelir
+	if str(op.get("op", "")) == "restore_parcels":
+		parcel_revision += 1
+	else:
+		_touch()
+		NetworkComponents.restore(self, journal.components)  # ağ işlemden önceki ile aynı: bileşen önbelleği geri gelir
 	_blocks_single_comp = journal.single_before
 	var change := NetworkChange.from_journal(self, journal, NetworkChange.KIND_UNDO, refreshed, journal.change)
 	change.op_index = delta.ops.size()

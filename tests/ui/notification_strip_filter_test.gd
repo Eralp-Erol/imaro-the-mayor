@@ -18,6 +18,13 @@ func _strip() -> NotificationStrip:
 	return auto_free(s)
 
 
+func test_an_idle_strip_keeps_no_unowned_summary_nodes() -> void:
+	var before := get_tree().root.get_orphan_node_ids().size()
+	var strip := _strip()
+	assert_bool(strip.visible).is_false()
+	assert_int(get_tree().root.get_orphan_node_ids().size()).is_equal(before)
+
+
 func _ev(seq: int, kind: StringName, key: StringName, parcel: int = 0, args: Dictionary = {},
 		command_id: int = 0) -> SimEvent:
 	var e := SimEvent.new()

@@ -9,7 +9,7 @@ const SIGNATURE_DIGITS := 100.0
 
 ## Dönüş: pozitif yüzlerin listesi (sıra: yarım kenar kimliği). Her yüz:
 ## {"points": PackedVector2Array, "edge_ids": PackedInt32Array (i -> i+1 kenarı), "spurs": PackedInt32Array,
-##  "area": float, "holed": bool, "signature": String}
+##  "area": float, "holed": bool, "signature": String, "holes": Array (varsa, kopuk bileşen dış çevrimleri)}
 static func extract(net: WorldNetwork) -> Array[Dictionary]:
 	var order := _rotation_order(net)
 	var edge_ids: Array = net.edges.keys()
@@ -186,6 +186,9 @@ static func _mark_holes(net: WorldNetwork, faces: Array[Dictionary], outer_faces
 				parent_area = float(face["area"])
 		if not parent.is_empty():
 			parent["holed"] = true
+			if not parent.has("holes"):
+				parent["holes"] = []
+			(parent["holes"] as Array).append(outer["points"])
 
 
 static func _components(net: WorldNetwork) -> Dictionary:

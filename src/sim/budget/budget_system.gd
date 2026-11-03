@@ -226,7 +226,7 @@ static func _works_of(state: GameState) -> Array:
 	if section.is_empty():
 		return out
 	for work: Dictionary in section["works"]:
-		if not PublicWorksState.is_demolition(work):
+		if PublicWorksState.is_road_work(work):
 			out.append(work)
 	return out
 

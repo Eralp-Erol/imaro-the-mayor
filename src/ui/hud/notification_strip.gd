@@ -44,14 +44,6 @@ static func create(ctx: UiContext) -> NotificationStrip:
 	s._max_rows = maxi(1, int(UiConfig.value("hud.notification_rows", 3)))
 	s.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	s.visible = false
-	s._summary = PanelContainer.new()
-	s._summary.theme_type_variation = UiTheme.V_HUD_BAR
-	s._summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	s._summary.add_child(UiFactory.label("", &"", true))
-	s._infra_summary = PanelContainer.new()
-	s._infra_summary.theme_type_variation = UiTheme.V_HUD_BAR
-	s._infra_summary.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	s._infra_summary.add_child(UiFactory.label("", &"", true))
 	return s
 
 
@@ -179,15 +171,6 @@ static func strip_text(event: SimEvent) -> String:
 	return text
 
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_PREDELETE and _summary != null and is_instance_valid(_summary) \
-			and _summary.get_parent() == null:
-		_summary.free()
-	if what == NOTIFICATION_PREDELETE and _infra_summary != null and is_instance_valid(_infra_summary) \
-			and _infra_summary.get_parent() == null:
-		_infra_summary.free()
-
-
 func clear() -> void:
 	_events.clear()
 	_unplanned.clear()
@@ -278,23 +261,28 @@ func _rebuild() -> void:
 	for k in shown:
 		_fill_row(_rows[k], _events[shown - 1 - k])
 	# Özet satırı en altta; yalnız gerçek plansız-parsel sayısından.
-	var want_summary := not _unplanned.is_empty()
-	if want_summary:
-		((_summary.get_child(0)) as Label).text = summary_text()
-		_summary.visible = true
-		if _summary.get_parent() == null:
-			add_child(_summary)
-		move_child(_summary, -1)
-	elif _summary.get_parent() != null:
-		remove_child(_summary)
-	if not _infra.is_empty():
-		((_infra_summary.get_child(0)) as Label).text = infra_summary_text()
-		if _infra_summary.get_parent() == null:
-			add_child(_infra_summary)
-		move_child(_infra_summary, -1)
-	elif _infra_summary.get_parent() != null:
-		remove_child(_infra_summary)
+	_summary = _sync_summary(_summary, not _unplanned.is_empty(), summary_text())
+	_infra_summary = _sync_summary(_infra_summary, not _infra.is_empty(), infra_summary_text())
 	_fit_rows()
+
+
+## Kullanılmayan özet sahipsiz beklemez. HUD değişince silinecek üst düğümüne bağlı kalır.
+func _sync_summary(row: PanelContainer, needed: bool, text: String) -> PanelContainer:
+	if not needed:
+		if row != null:
+			remove_child(row)
+			row.queue_free()
+		return null
+	if row == null:
+		row = PanelContainer.new()
+		row.theme_type_variation = UiTheme.V_HUD_BAR
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(UiFactory.label("", &"", true))
+		add_child(row)
+	(row.get_child(0) as Label).text = text
+	row.visible = true
+	move_child(row, -1)
+	return row
 
 
 func _make_row() -> PanelContainer:

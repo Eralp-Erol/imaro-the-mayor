@@ -44,9 +44,12 @@ extends RefCounted
 const KEY := "public_works"
 const VERSION := 1
 const VERSION_EXPROPRIATION := 2
+const VERSION_LAND_REUSE := 3
 const OP_ADD_ROAD := "add_road"
 const OP_REMOVE_EDGE := "remove_edge"
+const OP_RESTORE_PARCELS := "restore_parcels"
 const KIND_DEMOLISH := "demolish"
+const KIND_LAND_REUSE := "land_reuse"
 const COMMAND_PREFIX := "command."
 const REACTION_BOOKS: Array[String] = ["displaced", "nearby"]
 
@@ -72,9 +75,17 @@ static func is_demolition(entry: Dictionary) -> bool:
 	return str(entry.get("kind", "")) == KIND_DEMOLISH
 
 
+static func is_land_reuse(entry: Dictionary) -> bool:
+	return str(entry.get("kind", "")) == KIND_LAND_REUSE
+
+
+static func is_road_work(entry: Dictionary) -> bool:
+	return str(entry.get("kind", "")).is_empty()
+
+
 ## Satır, ağda duran bir oyuncu yolu mu (yıkım satırı da yıkılmış yol da değil)?
 static func is_standing_road(entry: Dictionary) -> bool:
-	return not is_demolition(entry) and not entry.has("demolished_by")
+	return is_road_work(entry) and not entry.has("demolished_by")
 
 
 ## Yolun yeniden iskân tahsis kaydı ({} = yok: politika kapalıydı ya da yerinden edilen yoktu).
@@ -96,7 +107,7 @@ static func resettlement_records(state: GameState) -> Dictionary:
 		return out
 	for work: Dictionary in d["works"]:
 		var record := resettlement_of(work)
-		if not is_demolition(work) and not record.is_empty():
+		if is_road_work(work) and not record.is_empty():
 			out[int(work["command_id"])] = record
 	return out
 
@@ -233,8 +244,24 @@ static func append_demolition(state: GameState, command_id: int, target_command_
 			"edge": int((ops[i] as Dictionary)["edge"]), "road_class": road_class, "length_cm": 0,
 			"region_units": {}})
 	for entry: Dictionary in d["works"]:
-		if not is_demolition(entry) and int(entry["command_id"]) == target_command_id:
+		if is_road_work(entry) and int(entry["command_id"]) == target_command_id:
 			entry["demolished_by"] = command_id
+	d["undo"] = {}
+	rebuild_derived(d)
+
+
+## D-018: ilk yeni imar yürürlüğünde v3. Dünya restore işlemleri yol/yıkım ile AYNI kronolojik deftere girer.
+static func append_land_reuse(state: GameState, command_id: int, source_op: int, ids: PackedInt64Array,
+		op: Dictionary, graph_hash_after: String) -> void:
+	var d := data(state)
+	var source_command: int = d["works"][source_op]["command_id"]
+	d["version"] = VERSION_LAND_REUSE
+	(d["ops"] as Array).append(op.duplicate(true))
+	(d["hashes"] as Array).append(graph_hash_after)
+	(d["works"] as Array).append({"id": (d["works"] as Array).size() + 1, "kind": KIND_LAND_REUSE,
+		"command_id": command_id, "tick": state.tick, "source_op": source_op,
+		"source_command_id": source_command, "parcel_ids": Array(ids), "road_class": "",
+		"length_cm": 0, "region_units": {}})
 	d["undo"] = {}
 	rebuild_derived(d)
 
@@ -300,6 +327,11 @@ static func derive(works: Array) -> Dictionary:
 	for work: Dictionary in works:
 		if is_demolition(work):
 			continue
+		if is_land_reuse(work):
+			for id: Variant in work["parcel_ids"]:
+				if int(taken.get(int(id), 0)) == int(work["source_command_id"]):
+					taken.erase(int(id))
+			continue
 		if work.has("expropriation"):
 			for id: Variant in work["expropriation"]["parcel_ids"]:
 				taken[int(id)] = int(work["command_id"])
@@ -336,7 +368,7 @@ static func validate_data(value: Variant) -> String:
 	if value == null:
 		return ""
 	var version: Variant = value.get("version", null) if value is Dictionary else null
-	if version != VERSION and version != VERSION_EXPROPRIATION:
+	if version != VERSION and version != VERSION_EXPROPRIATION and version != VERSION_LAND_REUSE:
 		return "durum.systems.public_works sürümü geçersiz"
 	if typeof(value.get("base_graph_hash", null)) != TYPE_STRING:
 		return "durum.systems.public_works.base_graph_hash dizge değil"
@@ -356,6 +388,10 @@ static func validate_data(value: Variant) -> String:
 			return "durum.systems.public_works[%d]: %s" % [i, problem]
 		if is_demolition(value["works"][i]) != (str(value["ops"][i].get("op", "")) == OP_REMOVE_EDGE):
 			return "durum.systems.public_works[%d]: satır türü işlemle uyuşmuyor" % i
+		if is_land_reuse(value["works"][i]) != (str(value["ops"][i].get("op", "")) == OP_RESTORE_PARCELS):
+			return "durum.systems.public_works[%d]: arazi satırı işlemle uyuşmuyor" % i
+		if is_land_reuse(value["works"][i]) and version != VERSION_LAND_REUSE:
+			return "durum.systems.public_works[%d]: arazi kullanımı v3 gerektirir" % i
 		if version == VERSION and (value["works"][i] as Dictionary).has("expropriation"):
 			return "durum.systems.public_works[%d]: v1 kayıtta kamulaştırma satırı olamaz" % i
 	var derived := derive(value["works"])
@@ -365,7 +401,10 @@ static func validate_data(value: Variant) -> String:
 	var window := _undo_problem(value) + _demolition_problem(value["works"])
 	if not window.is_empty():
 		return "durum.systems.public_works: %s" % window
-	return _expropriation_section_problem(value, derived) if version == VERSION_EXPROPRIATION else ""
+	var land_problem := _land_reuse_problem(value) if version == VERSION_LAND_REUSE else ""
+	if not land_problem.is_empty():
+		return "durum.systems.public_works: %s" % land_problem
+	return _expropriation_section_problem(value, derived) if version >= VERSION_EXPROPRIATION else ""
 
 
 ## v2 bölümü: `taken` türetilmişle aynı, tepki defterleri biçimli.
@@ -401,7 +440,7 @@ static func _undo_problem(value: Dictionary) -> String:
 	if works.is_empty():
 		return "undo penceresi açık ama yol yok"
 	var last: Dictionary = works[works.size() - 1]
-	if is_demolition(last) or last.has("demolished_by") or int(last["command_id"]) != int(window["command_id"]):
+	if not is_standing_road(last) or int(last["command_id"]) != int(window["command_id"]):
 		return "undo penceresi son yolu göstermiyor"
 	return ""
 
@@ -411,7 +450,7 @@ static func _undo_problem(value: Dictionary) -> String:
 static func _demolition_problem(works: Array) -> String:
 	var by_command := {}
 	for entry: Dictionary in works:
-		if not is_demolition(entry):
+		if is_road_work(entry):
 			by_command[int(entry["command_id"])] = entry
 	var marked := {}
 	for entry: Dictionary in works:
@@ -491,6 +530,10 @@ static func _resettlement_problem(r: Variant, households: int) -> String:
 
 
 static func _op_problem(op: Variant) -> String:
+	if op is Dictionary and str(op.get("op", "")) == OP_RESTORE_PARCELS:
+		if typeof(op.get("source_op", null)) != TYPE_INT or int(op["source_op"]) < 0:
+			return "arazi kaynak işlemi geçersiz"
+		return _land_ids_problem(op.get("parcel_ids", null))
 	if op is Dictionary and str(op.get("op", "")) == OP_REMOVE_EDGE:  # yıkım satırının işlemi
 		return "" if typeof(op.get("edge", null)) == TYPE_INT else "op kenar kimliği tamsayı değil"
 	if not (op is Dictionary) or str(op.get("op", "")) != OP_ADD_ROAD:
@@ -504,6 +547,52 @@ static func _op_problem(op: Variant) -> String:
 		if not (pair is Array) or (pair as Array).size() != 2 \
 				or typeof(pair[0]) != TYPE_INT or typeof(pair[1]) != TYPE_INT:
 			return "op noktası [x, z] tamsayı çifti değil"
+	return ""
+
+
+static func _land_ids_problem(ids: Variant) -> String:
+	if not (ids is Array) or (ids as Array).is_empty():
+		return "arazi parselleri boş ya da dizi değil"
+	var previous := 0
+	for id: Variant in ids:
+		if typeof(id) != TYPE_INT or int(id) <= previous:
+			return "arazi parselleri artan pozitif kimlik değil"
+		previous = int(id)
+	return ""
+
+
+## Kaynak arazi, o anda alınmış ve DAHA ÖNCE yıkılmış yolun parselidir. Sonraki kamulaştırma yeni sahipliktir.
+static func _land_reuse_problem(value: Dictionary) -> String:
+	var works: Array = value["works"]
+	var taken_from := {}
+	var demolished := {}
+	for i in works.size():
+		var work: Dictionary = works[i]
+		if is_demolition(work):
+			demolished[int(work["target_command_id"])] = true
+		elif is_land_reuse(work):
+			var op: Dictionary = value["ops"][i]
+			var source_op: Variant = work.get("source_op", null)
+			if typeof(source_op) != TYPE_INT or int(source_op) < 0 or int(source_op) >= i \
+					or source_op != op["source_op"]:
+				return "arazi kaynak işlemi önceki bir yol değil"
+			var source: Dictionary = works[int(source_op)]
+			if not is_road_work(source) or not source.has("expropriation") \
+					or not demolished.has(int(source["command_id"])) \
+					or work.get("source_command_id", null) != source["command_id"]:
+				return "arazi kaynağı yıkılmış kamulaştırmalı yol değil"
+			var ids_problem := _land_ids_problem(work.get("parcel_ids", null))
+			if not ids_problem.is_empty() or StateHash.of(work["parcel_ids"]) != StateHash.of(op["parcel_ids"]):
+				return "arazi parselleri işlemle uyuşmuyor"
+			for id: int in work["parcel_ids"]:
+				if int(taken_from.get(id, -1)) != int(source_op):
+					return "arazi parseli bu kaynakta alınmış değil ya da zaten açılmış"
+				taken_from.erase(id)
+		elif is_road_work(work) and work.has("expropriation"):
+			for id: int in work["expropriation"]["parcel_ids"]:
+				if taken_from.has(id):
+					return "alınmış parsel yeniden alınamaz"
+				taken_from[id] = i
 	return ""
 
 

@@ -35,3 +35,13 @@ func undo() -> Dictionary:
 
 func replay(_op: Dictionary) -> Dictionary:
 	return {"ok": false, "removed": PackedInt64Array(), "error": "kamulaştırma desteklenmiyor"}
+
+
+## D-018: kaynak kamulaştırma işleminin boş belediye arazisi yeniden kullanılabilir mi? Salt okunur.
+func available_land(_source_op: int, _ids: PackedInt64Array) -> Dictionary:
+	return {"ok": false, "error": "belediye arazisi desteklenmiyor", "parcel_ids": PackedInt64Array()}
+
+
+## Yalnız onaylanan plan yürürlüğe girerken: aynı kimlikli BOŞ parselleri kronolojik dünya işlemiyle geri koyar.
+func restore_land(_source_op: int, _ids: PackedInt64Array) -> Dictionary:
+	return {"ok": false, "error": "belediye arazisi desteklenmiyor", "restored": PackedInt64Array()}

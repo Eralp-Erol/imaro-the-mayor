@@ -7,6 +7,8 @@ extends GdUnitTestSuite
 ## ÜRETİLEMEDİ: ada kalan yüz, imzası ve köşe anahtarı aynı kaldığı için eski bloğa eşlenir (`kind` korunur, parseller
 ## yerinde) ve yıkım temiz biter. Bu testler o davranışın KORUMASIDIR (kırmızı değil; yeşil kalmalı).
 ## `DemolitionPlan.next_edge` bu yüzden DEĞİŞMEDİ.
+## B-016 (2026-11-03): kendini kesip halka kapatan taslakta ara yıkımın kopuk halkası dış yüzü delikli yapar.
+## Havuzdaki dış parseller artık korunur; halka içi dış yüze taşınmaz. Sabit vakalar + rastgele tarama bunu kapsar.
 ## Ayrıca (d, B-015): yıkılan yolun boş şeridine aynı yolu yeniden çizmenin dünya tarafı (havuzlu, sıfır alınan).
 
 const DX := 160.0
@@ -21,6 +23,11 @@ const FROM_FREE_END: Array = [Vector2(615, 575), Vector2(580, 545), Vector2(580,
 const LONG_SPUR: Array = [Vector2(500, 560), Vector2(540, 560), Vector2(570, 585), Vector2(600, 585)]
 ## İki ucundan ağa bağlı geçiş yolu (yaprağı yok: eski sıra, en küçük kimlik, korunur).
 const THROUGH: Array = [Vector2(580, 500), Vector2(580, 600)]
+## B-016: sabit tohum taramasından kaydedilen kendini kesen halkalar (9103, 9122).
+const LOOPS: Array = [
+	[Vector2(915.28, 600), Vector2(839.30, 571.47), Vector2(953.83, 567.67), Vector2(852.44, 583.52)],
+	[Vector2(820, 564.02), Vector2(752.38, 516.70), Vector2(800.54, 516.19), Vector2(708.54, 558.27)],
+	[Vector2(520, 500), Vector2(520, 590), Vector2(650, 515), Vector2(505, 515)]]
 
 var _world: WorldData
 
@@ -74,7 +81,7 @@ func _assert_clean_demolition(res: Dictionary) -> void:
 	assert_bool(run["ok"]).override_failure_message(str(run["error"])).is_true()
 	assert_int(run["added_parcels"]).is_equal(0)
 	assert_int(run["removed_parcels"]).is_equal(0)
-	assert_int((run["edges"] as Array).size()).is_equal((res["ids"] as Array).size())
+	assert_array(_delta_edge_ids(net)).is_empty()  # düğüm temizliği iki kenarı birleştirebilir; op sayısı şart değil
 	assert_str(net.graph_hash()).is_equal(res["base_graph"])  # taban grafı geri geldi, ada yok
 	assert_array(NetworkInvariants.check_graph_integrity(net)).is_empty()
 	assert_array(NetworkInvariants.check_parcels(net)).is_empty()
@@ -101,6 +108,48 @@ func test_three_edge_dead_end_attached_at_its_first_point_demolishes_cleanly() -
 	_assert_clean_demolition(_draw_and_demolish(LONG_SPUR, true))
 
 
+func test_self_crossing_loops_demolish_in_both_directions_and_refresh_modes() -> void:
+	for points: Array in LOOPS:
+		for reversed in [false, true]:
+			for local in [false, true]:
+				var pts := points.duplicate()
+				if reversed:
+					pts.reverse()
+				var net := _grid()
+				net.local_refresh_enabled = local
+				var base_state := net.state_hash()
+				var base_graph := net.graph_hash()
+				var base_parcels := net.parcels.keys()
+				var drawn := net.add_road_expropriating(PackedVector2Array(pts), LOCAL)
+				assert_bool(drawn["ok"]).is_true()
+				var ids := _delta_edge_ids(net)
+				var run := DemolitionPlan.run(net, net.peek_last_op(), true)
+				_assert_loop_replay(net, local)
+				_assert_clean_demolition({"net": net, "run": run, "ids": ids, "base_state": base_state,
+					"base_graph": base_graph, "base_parcels": base_parcels, "taken": drawn["removed_parcels"]})
+
+
+## Her kayıt adımı tekrar oynatılır: kopuk halkanın iç parsellerini dış yüz sahiplenemez.
+func _assert_loop_replay(net: WorldNetwork, local: bool) -> void:
+	var replay := _grid()
+	replay.local_refresh_enabled = local
+	for op in net.delta.ops:
+		var delta := NetworkDelta.new()
+		delta.base_hash = replay.base_hash
+		delta.ops.append(op.duplicate(true))
+		assert_bool(replay.apply_delta(delta)["ok"]).is_true()
+		assert_array(NetworkInvariants.check_parcels(replay)).is_empty()
+		for pid: int in replay.parcels:
+			var parcel: WorldParcel = replay.parcels[pid]
+			var owner: WorldBlock = replay.blocks[parcel.block_id]
+			for bid: int in replay.blocks:
+				var other: WorldBlock = replay.blocks[bid]
+				if NetworkGeometry.signed_area(other.outline) < NetworkGeometry.signed_area(owner.outline) - 0.01:
+					assert_bool(NetworkGeometry.point_in_polygon(parcel.centroid, other.outline)) \
+						.override_failure_message("iç yüzün parseli dış bloğa taşındı: %d" % pid).is_false()
+	assert_str(replay.state_hash()).is_equal(net.state_hash())
+
+
 func test_through_road_without_leaves_keeps_the_smallest_id_first_order() -> void:
 	var net := _grid()
 	assert_bool(net.add_road_expropriating(PackedVector2Array(THROUGH), LOCAL)["ok"]).is_true()
@@ -110,7 +159,7 @@ func test_through_road_without_leaves_keeps_the_smallest_id_first_order() -> voi
 
 
 ## Rastgele çıkmaz yol: bir blok seçilir, ilk nokta o bloğun çevresindeki yolda, kalanlar bloğun İÇİNDE (kenardan >= 12
-## m), kendini kesmez. Dönüş: nokta listesi ([] = üretilemedi).
+## m); B-016 koruması için kendini kesebilir. Dönüş: nokta listesi ([] = üretilemedi).
 func _random_dead_end(rng: RandomNumberGenerator) -> Array:
 	var col := rng.randi() % 3
 	var row := rng.randi() % 3
@@ -129,12 +178,9 @@ func _random_dead_end(rng: RandomNumberGenerator) -> Array:
 	var pts: Array = [start]
 	for _i in 2 + rng.randi() % 2:
 		pts.append(Vector2(x0 + rng.randf_range(12.0, DX - 12.0), y0 + rng.randf_range(12.0, DZ - 12.0)))
-	for i in pts.size() - 1:  # kendini kesen/çok kısa parça yok
+	for i in pts.size() - 1:  # çok kısa parça yok
 		if (pts[i] as Vector2).distance_to(pts[i + 1]) < 12.0:
 			return []
-		for j in range(i + 2, pts.size() - 1):
-			if Geometry2D.segment_intersects_segment(pts[i], pts[i + 1], pts[j], pts[j + 1]) != null:
-				return []
 	return pts
 
 
@@ -144,6 +190,7 @@ func test_random_dead_ends_demolish_without_touching_the_parcel_set_in_both_draw
 	var failures := PackedStringArray()
 	var tried := 0
 	var leaf_not_first := 0
+	var looped := 0
 	for s in SEEDS:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 9100 + s
@@ -159,13 +206,15 @@ func test_random_dead_ends_demolish_without_touching_the_parcel_set_in_both_draw
 			if not bool(checked["ok"]):
 				continue
 			var base_state := net.state_hash()
-			var blocks_before := net.blocks.size()
 			if not bool(net.add_road_expropriating(checked["points"], LOCAL)["ok"]):
 				continue
 			var ids := _delta_edge_ids(net)
-			if ids.size() < 2 or net.blocks.size() != blocks_before:
-				continue  # yalnız blok bölmeyen çok kenarlı çıkmaz yollar
+			if ids.size() < 2:
+				continue  # halkalı ve blok bölen taslaklar da sınanır (B-016)
 			tried += 1
+			if drawn_pts.size() == 4 and Geometry2D.segment_intersects_segment(
+					drawn_pts[0], drawn_pts[1], drawn_pts[2], drawn_pts[3]) != null:
+				looped += 1
 			if not _is_leaf(net, ids[0]):
 				leaf_not_first += 1
 			var run := DemolitionPlan.run(net, net.peek_last_op(), false)
@@ -177,9 +226,10 @@ func test_random_dead_ends_demolish_without_touching_the_parcel_set_in_both_draw
 			net.undo_last_op()
 			if net.state_hash() != base_state:
 				failures.append("%s: geri alma tabana bit-eşit dönmedi" % tag)
-	print("DEAD_END_PROPERTY tried=%d connected_edge_first=%d failures=%d" %
-			[tried, leaf_not_first, failures.size()])
+	print("DEAD_END_PROPERTY tried=%d connected_edge_first=%d looped=%d failures=%d" %
+			[tried, leaf_not_first, looped, failures.size()])
 	assert_int(tried).is_greater(SEEDS / 2)
+	assert_int(looped).is_greater(0)
 	assert_int(leaf_not_first).is_greater(tried / 4)  # sıra riski gerçekten sınanıyor (çizim yönü karışık)
 	assert_array(failures).is_empty()
 

@@ -21,14 +21,16 @@ extends RefCounted
 ##   komutu, `policy.changed` olayı, `SimFacade.policies()`/`PolicyView`, `public_work.road` önizlemesi ve
 ##   `PublicWorkView` isteğe bağlı yeniden iskân alanları (yalnız politika açıkken), `public_work.restored`
 ##   `rehoused_returned`, `budget.line.resettlement` metin anahtarı.
+##   1.8 (T-066, D-018): municipal_lands()/MunicipalLandView, zoning.propose isteğe bağlı municipal_reuse;
+##   yeni plan yürürlüğünde boş belediye arazisinin yatırım koşullarına açılması (CAN-03).
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 7
-const VERSION := "1.7"
+const VERSION_MINOR := 8
+const VERSION := "1.8"
 
 const FIXED_SCALE := 1000
 

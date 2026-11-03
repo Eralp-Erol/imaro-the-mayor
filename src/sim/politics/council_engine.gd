@@ -37,7 +37,7 @@ static func zoning_spec(ctx: PoliticsContext, params: Dictionary, command_id: in
 	codes.sort()
 	var council: Dictionary = ctx.politics.council
 	var stakes: Dictionary = council["proposal_effects"].get("zoning", {}).get(land_use, {})
-	return {
+	var spec := {
 		"kind": "zoning", "subject_ref": String(SimContract.ref(SimContract.REF_COMMAND, command_id)),
 		"proposal": {"kind": "zoning", "parcel_ids": parcel_ids, "land_use": land_use, "command_id": command_id,
 			"density": int(params.get("density", ParcelZoningSystem.NO_VALUE)),
@@ -45,6 +45,9 @@ static func zoning_spec(ctx: PoliticsContext, params: Dictionary, command_id: in
 		"context": {"axes": (council["proposal_axes"].get("zoning", {}).get(land_use, {}) as Dictionary).duplicate(),
 			"stakes": stakes.duplicate(true), "regions": codes, "topic": dominant_topic(stakes)},
 	}
+	if bool(params.get("municipal_reuse", false)):
+		(spec["proposal"] as Dictionary)["municipal_reuse"] = true
+	return spec
 
 
 ## Bütçe önerisi belirtimi (T-014 bütçe sistemi kurulunca komut işleyicisi çağırır; şimdilik API/test). `context`:
@@ -185,7 +188,7 @@ static func _apply_zoning(state: GameState, ctx: PoliticsContext, vote: Dictiona
 	var due: int = state.tick + int(proposal["delay_days"]) + friction
 	for id: int in proposal["parcel_ids"]:
 		ParcelZoningSystem.set_pending(state, id, StringName(proposal["land_use"]), due, int(proposal["command_id"]),
-			int(proposal["density"]), int(proposal["max_height_m"]))
+			int(proposal["density"]), int(proposal["max_height_m"]), bool(proposal.get("municipal_reuse", false)))
 	vote["applied"] = true
 
 

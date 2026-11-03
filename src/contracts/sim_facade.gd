@@ -114,6 +114,12 @@ func public_works() -> Array[PublicWorkView]:
 	return []
 
 
+## v1.8 (T-066, D-018): yeni imar kararı için belediye arazileri ve gerçek dünya uygunluğu.
+## Salt okunur değer kopyaları. Bu kaynağı sunmayan facade (mock dahil) boş döner.
+func municipal_lands() -> Array[MunicipalLandView]:
+	return []
+
+
 ## v1.6 (T-042c, D-014 §1) · KLASİK GERİ AL açık mı? Başka bir yol/yıkım yapılana, geri alınana ya da
 ## o yolun halk tepkisi siyaset taramasına girene kadar en son yol geri alınabilir (`public_work.undo_last`). Ret nedeni
 ## ve ön izleme için `validate_command(SimCommand.public_work_undo_last())`
@@ -158,7 +164,7 @@ func plan_state(parcel_id: int) -> PlanStateView:
 ## aynı formülle potansiyel birim ve altyapı yükü. `density`/`max_height_m` < 0: imar varsayılanı / sınır yok. Salt
 ## okunur. Varsayılan: `ok == false`, `reason == plan.not_built` (uydurma sayı yok).
 func plan_preview(_parcel_ids: PackedInt64Array, land_use: StringName, _density: int = -1,
-		_max_height_m: int = -1) -> PlanPreviewView:
+		_max_height_m: int = -1, _municipal_reuse: bool = false) -> PlanPreviewView:
 	var v := PlanPreviewView.new()
 	v.provenance = provenance()
 	v.land_use = land_use

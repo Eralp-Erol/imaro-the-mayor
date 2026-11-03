@@ -37,7 +37,7 @@ const COORD_LIMIT_CM := 100_000_000
 const CATALOG := {
 	&"zoning.propose": {
 		"required": {"parcel_ids": TYPE_PACKED_INT64_ARRAY, "land_use": TYPE_STRING_NAME},
-		"optional": {"density": TYPE_INT, "max_height_m": TYPE_INT},
+		"optional": {"density": TYPE_INT, "max_height_m": TYPE_INT, "municipal_reuse": TYPE_BOOL},
 	},
 	&"budget.propose": {
 		"required": {"lines": TYPE_DICTIONARY},
@@ -81,8 +81,12 @@ static func make(command_kind: StringName, command_params: Dictionary = {}) -> S
 	return c
 
 
-static func zoning_propose(parcel_ids: PackedInt64Array, land_use: StringName) -> SimCommand:
-	return make(KIND_ZONING_PROPOSE, {"parcel_ids": parcel_ids, "land_use": land_use})
+static func zoning_propose(parcel_ids: PackedInt64Array, land_use: StringName, municipal_reuse: bool = false) \
+		-> SimCommand:
+	var params := {"parcel_ids": parcel_ids, "land_use": land_use}
+	if municipal_reuse:
+		params["municipal_reuse"] = true
+	return make(KIND_ZONING_PROPOSE, params)
 
 
 ## `lines`: bütçe kalemi anahtarı (StringName) → birimsiz tamsayı tutar (Q-003).

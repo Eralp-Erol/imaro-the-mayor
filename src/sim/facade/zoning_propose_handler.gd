@@ -7,6 +7,9 @@ extends CommandHandler
 
 const _SHAPE_PREFIX := "command.reject."
 
+## D-018: yalnız municipal_reuse:true akışının dünya/sim köprüsü. Eski imar davranışı aynı kalır.
+var municipal_context: PublicWorksContext = null
+
 var _parcels: ParcelSource
 var _config: FacadeConfig
 ## T-017: isteğe bağlı öneri kapısı (meclis oylaması). null = doğrudan yürürlük (önceki davranış).
@@ -47,7 +50,8 @@ func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> voi
 	var density: int = params.get("density", ParcelZoningSystem.NO_VALUE)
 	var height: int = params.get("max_height_m", ParcelZoningSystem.NO_VALUE)
 	for id in params["parcel_ids"] as PackedInt64Array:
-		ParcelZoningSystem.set_pending(state, id, params["land_use"], due, command_id, density, height)
+		ParcelZoningSystem.set_pending(state, id, params["land_use"], due, command_id, density, height,
+			bool(params.get("municipal_reuse", false)))
 
 
 ## {"code": ret kodu ya da &"", "args": ek argümanlar}.
@@ -63,6 +67,15 @@ func _problem(state: GameState, params: Dictionary) -> Dictionary:
 			return {"code": &"invalid_target", "args": {"ref": String(SimContract.parcel_ref(id))}}
 	if not _config.is_land_use(params["land_use"]):
 		return {"code": &"invalid_value", "args": {"param": "land_use"}}
+	return _late_problem(state, params)
+
+
+## Şekil/hedef denetiminden sonraki kapılar: belediye arazisi yeniden imarı (D-018), sonra öneri kapısı.
+func _late_problem(state: GameState, params: Dictionary) -> Dictionary:
+	if bool(params.get("municipal_reuse", false)):
+		var land_problem := MunicipalLandFlow.problem(municipal_context, state, params["parcel_ids"])
+		if not land_problem.is_empty():
+			return land_problem
 	if _gate != null:
 		var gated := _gate.precheck(state, command_type(), params)
 		if not gated.is_empty():

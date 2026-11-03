@@ -117,7 +117,8 @@ func _problem(state: GameState, params: Dictionary, at_submit: bool) -> Dictiona
 ## önizleme yol görünümüne sahte "bekleyen değişim" üretir, o iş sürerken sıradaki tick ağa yazabilir.
 func _dry_run(state: GameState, work: Dictionary) -> Dictionary:
 	var net := _ctx.net
-	var key := "%d|%d|%d" % [state.get_instance_id(), net.graph_version, int(work["command_id"])]
+	var key := "%d|%d|%d|%d" % [state.get_instance_id(), net.graph_version, net.parcel_revision,
+		int(work["command_id"])]
 	if _ctx.demolition_memo_key == key:
 		return _ctx.demolition_memo
 	var version_before := net.graph_version
@@ -129,7 +130,8 @@ func _dry_run(state: GameState, work: Dictionary) -> Dictionary:
 		net.graph_version = version_before
 		net.change_log = log_before
 	_ctx.demolition_memo = run
-	_ctx.demolition_memo_key = "%d|%d|%d" % [state.get_instance_id(), net.graph_version, int(work["command_id"])]
+	_ctx.demolition_memo_key = "%d|%d|%d|%d" % [state.get_instance_id(), net.graph_version, net.parcel_revision,
+		int(work["command_id"])]
 	return run
 
 

@@ -40,10 +40,12 @@ var demolition_memo_key: String = ""
 var demolition_memo: Dictionary = {}
 var _x_memo: Dictionary = {}
 var _x_memo_version: int = -1
+var _x_memo_parcel_revision: int = -1
 var _x_memo_class: StringName = &""
 var _x_memo_points := PackedInt64Array()
 var _memo: Dictionary = {}
 var _memo_version: int = -1
+var _memo_parcel_revision: int = -1
 var _memo_class: StringName = &""
 var _memo_points := PackedInt64Array()
 
@@ -78,6 +80,14 @@ func is_busy() -> bool:
 	return busy_probe.is_valid() and bool(busy_probe.call())
 
 
+func municipal_land_rows(state: GameState) -> Array[Dictionary]:
+	return MunicipalLandFlow.rows(self, state)
+
+
+func land_preview_problem(state: GameState, ids: PackedInt64Array) -> Dictionary:
+	return MunicipalLandFlow.problem(self, state, ids)
+
+
 ## T-042b · Kamulaştırma köprüsünü takar (dünya adımı gerçek bağdaştırıcıyı, testler kendi ikizini verir).
 func set_expropriation(port: ExpropriationPort) -> void:
 	expropriation = port
@@ -102,7 +112,8 @@ func expropriation_available() -> bool:
 ## Kamulaştırma kipinde taslak: `ExpropriationPort.check` + sim'in kapasite planı + `taken`. `draft` ile aynı önbellek
 ## kuralı (ağ sürümü + noktalar + sınıf). Port yoksa/desteklemiyorsa ret.
 func draft_expropriating(points_cm: PackedInt64Array, road_class: StringName, busy: bool = false) -> Dictionary:
-	if not busy and _x_memo_version == net.graph_version and _x_memo_class == road_class \
+	if not busy and _x_memo_version == net.graph_version and _x_memo_parcel_revision == net.parcel_revision \
+			and _x_memo_class == road_class \
 			and _x_memo_points == points_cm:
 		return _x_memo.duplicate()
 	var result := expropriation.check(points_cm, road_class, busy)
@@ -114,6 +125,7 @@ func draft_expropriating(points_cm: PackedInt64Array, road_class: StringName, bu
 	if not busy:
 		_x_memo = result
 		_x_memo_version = net.graph_version
+		_x_memo_parcel_revision = net.parcel_revision
 		_x_memo_class = road_class
 		_x_memo_points = points_cm.duplicate()
 		return result.duplicate()
@@ -138,7 +150,8 @@ func tracks(state: GameState) -> bool:
 ## (doğrulama, uygulama ve gönderim aynı taslağı ağ değişmeden sorar; denetim 5-14 ms). Ağ her değiştiğinde
 ## (`_touch`) sürüm artar, eski cevap verilmez. "Meşgul" cevabı ucuzdur ve önbelleğe alınmaz. Dönüş sığ kopyadır.
 func draft(points_cm: PackedInt64Array, road_class: StringName, busy: bool = false) -> Dictionary:
-	if not busy and _memo_version == net.graph_version and _memo_class == road_class and _memo_points == points_cm:
+	if not busy and _memo_version == net.graph_version and _memo_parcel_revision == net.parcel_revision \
+			and _memo_class == road_class and _memo_points == points_cm:
 		return _memo.duplicate()
 	var result := RoadDraftCheck.check(net, RoadDraftCheck.points_from_cm(points_cm), road_class, rules, busy)
 	if bool(result["ok"]) and not config.has_class(road_class):
@@ -149,6 +162,7 @@ func draft(points_cm: PackedInt64Array, road_class: StringName, busy: bool = fal
 	if not busy:
 		_memo = result
 		_memo_version = net.graph_version
+		_memo_parcel_revision = net.parcel_revision
 		_memo_class = road_class
 		_memo_points = points_cm.duplicate()
 		return result.duplicate()
@@ -184,16 +198,19 @@ func sync_to(target: GameState) -> String:
 	if not section.is_empty() and section["base_graph_hash"] != net.base_hash:
 		return "kayıt başka bir taban yol ağına ait (taban özeti uyuşmuyor)"
 	var current: Array = net.delta.ops.duplicate(true)
-	var original_hash := net.graph_hash()
+	var original_hash := net.state_hash()
 	var takens: Array = []
 	if not section.is_empty():
-		for work: Dictionary in section["works"]:
-			takens.append(work["expropriation"]["parcel_ids"] if work.has("expropriation") else null)
+		for i in (section["works"] as Array).size():
+			var work: Dictionary = section["works"][i]
+			# Sıfır alınanlı havuzlu yolun ayrı expropriation kaydı yoktur; beklenen küme yine BOŞTUR.
+			takens.append(work["expropriation"]["parcel_ids"] if work.has("expropriation") else
+				([] if bool((ops[i] as Dictionary).get("expropriate", false)) else null))
 	var problem := _move_to(ops, hashes, takens)
 	if problem.is_empty():
 		return ""
 	var restore := _move_to(current, [], [])  # geri getirme: özet karşılaştırması aşağıda tek sefer
-	if not restore.is_empty() or net.graph_hash() != original_hash:
+	if not restore.is_empty() or net.state_hash() != original_hash:
 		return "AĞ BOZULDU: %s; eski ağ geri getirilemedi (%s)" % [problem, restore]
 	return problem
 
@@ -228,6 +245,17 @@ func _applied_problem(i: int, op: Dictionary, report: Dictionary, hashes: Array,
 		return "%d. yol uygulanamadı (%s)" % [i + 1, str(report["error"])]
 	if not _same_op(net.peek_last_op(), op):
 		return "%d. yol uygulandıktan sonra op kayıttakinden farklı" % [i + 1]
+	if str(op.get("op", "")) == PublicWorksState.OP_REMOVE_EDGE and (
+			not (report["added_parcels"] as Array).is_empty() or not (report["removed_parcels"] as Array).is_empty()):
+		return "%d. yıkım parsel kümesini değiştirdi (network_mismatch)" % [i + 1]
+	if str(op.get("op", "")) == PublicWorksState.OP_RESTORE_PARCELS \
+			and not _same_taken(report.get("restored_parcels", null), op["parcel_ids"]):
+		return "%d. açılan belediye parselleri kayıttakinden farklı (network_mismatch)" % [i + 1]
+	return _applied_taken_hash_problem(i, report, hashes, takens)
+
+
+# `_applied_problem`ın son iki denetimi: alınan parseller ve graf özeti. Sorun metni ya da "".
+func _applied_taken_hash_problem(i: int, report: Dictionary, hashes: Array, takens: Array) -> String:
 	if i < takens.size() and takens[i] != null and not _same_taken(report.get("removed_parcels", null), takens[i]):
 		return "%d. yolun aldığı parseller kayıttakinden farklı (network_mismatch)" % [i + 1]
 	if not hashes.is_empty() and net.graph_hash() != str(hashes[i]):
@@ -250,6 +278,12 @@ func undo_live_op() -> Dictionary:
 func _replay_op(op: Dictionary) -> Dictionary:
 	if str(op.get("op", "")) == PublicWorksState.OP_REMOVE_EDGE:
 		return net.remove_edge(int(op["edge"]))
+	if str(op.get("op", "")) == PublicWorksState.OP_RESTORE_PARCELS:
+		if expropriation == null or not expropriation.available():
+			return {"ok": false, "error": "kayıtta belediye arazisi var ama dünya köprüsü yok"}
+		var restored := expropriation.restore_land(int(op["source_op"]), PackedInt64Array(op["parcel_ids"]))
+		return {"ok": bool(restored["ok"]), "error": restored.get("error", ""),
+			"restored_parcels": restored.get("restored", PackedInt64Array())}
 	if bool(op.get("expropriate", false)):
 		if expropriation == null or not expropriation.available():
 			return {"ok": false, "error": "kayıtta kamulaştırmalı yol var ama dünya köprüsü yok"}

@@ -18,6 +18,9 @@ extends SimSystem
 const SYSTEM := &"parcels"
 const NO_VALUE := -1
 
+## D-018: facade attach_public_works bağlar. Yalnız municipal_reuse:true bekleyen planlar kullanır.
+var municipal_context: PublicWorksContext = null
+
 
 func system_id() -> StringName:
 	return SYSTEM
@@ -34,6 +37,15 @@ func on_daily(state: GameState) -> void:
 		var entry: Dictionary = overlay[id]
 		if entry["pending_zone"] == &"" or state.tick < int(entry["due_tick"]):
 			continue
+		if bool(entry.get("municipal_reuse", false)):
+			var group := _municipal_group(overlay, int(entry["command_id"]))
+			var activated := MunicipalLandFlow.activate(municipal_context, state, group, int(entry["command_id"]))
+			if not bool(activated["ok"]):
+				_reject_municipal(state, overlay, group, int(entry["command_id"]),
+					StringName(activated["reason_key"]))
+				continue
+			for group_id in group:
+				(overlay[group_id] as Dictionary).erase("municipal_reuse")
 		entry["zone"] = entry["pending_zone"]
 		entry["pending_zone"] = &""
 		# yürürlükteki yoğunluk/yükseklik (NO_VALUE = imar varsayılanı); T-013 ekonomi okur
@@ -66,7 +78,7 @@ static func overlay_ref(state: GameState) -> Dictionary:
 
 ## `zoning.propose` etkisi: bekleyen öneriyi yazar (yürürlük `due_tick`'te).
 static func set_pending(state: GameState, parcel_id: int, land_use: StringName, due_tick: int, command_id: int,
-		density: int, max_height_m: int) -> void:
+		density: int, max_height_m: int, municipal_reuse: bool = false) -> void:
 	var overlay := _overlay(state)
 	var entry: Dictionary = overlay.get(parcel_id, {"zone": &""})
 	entry["pending_zone"] = land_use
@@ -74,9 +86,41 @@ static func set_pending(state: GameState, parcel_id: int, land_use: StringName, 
 	entry["command_id"] = command_id
 	entry["pending_density"] = density
 	entry["pending_max_height_m"] = max_height_m
+	if municipal_reuse:
+		entry["municipal_reuse"] = true
+	else:
+		entry.erase("municipal_reuse")
 	entry.erase("rejected_command")  # T-043A: yeniden teklif eski ret izini siler (yoksa etkisiz)
 	entry.erase("rejected_tick")
 	overlay[parcel_id] = entry
+
+
+static func _municipal_group(overlay: Dictionary, command_id: int) -> PackedInt64Array:
+	var ids := PackedInt64Array()
+	for id: int in overlay:
+		var entry: Dictionary = overlay[id]
+		if int(entry.get("command_id", 0)) == command_id and bool(entry.get("municipal_reuse", false)) \
+				and entry.get("pending_zone", &"") != &"":
+			ids.append(id)
+	ids.sort()
+	return ids
+
+
+## Onaylanmış plan yürürlükte artık uygulanamıyorsa bütün seçili arazi kapalı kalır; sahte applied sonucu yoktur.
+static func _reject_municipal(state: GameState, overlay: Dictionary, ids: PackedInt64Array,
+		command_id: int, reason: StringName) -> void:
+	var subjects := PackedStringArray()
+	var zone := &""
+	for id in ids:
+		var entry: Dictionary = overlay[id]
+		zone = StringName(entry["pending_zone"])
+		entry["pending_zone"] = &""
+		entry.erase("municipal_reuse")
+		entry["rejected_command"] = command_id
+		entry["rejected_tick"] = state.tick
+		subjects.append(String(SimContract.parcel_ref(id)))
+	SimEventLog.emit(state, SimEvent.KIND_PARCEL_CHANGED, &"event.zoning.plan_rejected", subjects,
+		{"parcels": ids.size(), "zone": String(zone), "why": String(reason)}, PackedInt64Array(), command_id)
 
 
 ## T-043A · Meclis planı reddetti: parselin yürürlükteki/bekleyen durumuna DOKUNMAZ (yoksa boş kayıt açar: imar yok,

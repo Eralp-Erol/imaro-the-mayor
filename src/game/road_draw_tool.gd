@@ -54,6 +54,7 @@ var _net: WorldNetwork = null
 var _facade: SimFacade = null
 var _verdict_key: String = ""
 var _verdict_version: int = -1
+var _verdict_parcel_revision: int = -1
 
 
 static func create(net: WorldNetwork, facade: SimFacade) -> RoadDrawTool:
@@ -323,7 +324,8 @@ func on_events(events: Array[SimEvent]) -> void:
 
 ## Ağ başka bir yoldan değiştiyse (ya da geri alma) açık taslağı yeniden doğrular.
 func refresh_if_graph_changed() -> void:
-	if (step == Step.PICK_B or step == Step.REVIEW) and _net.graph_version != _verdict_version:
+	if (step == Step.PICK_B or step == Step.REVIEW) and (
+			_net.graph_version != _verdict_version or _net.parcel_revision != _verdict_parcel_revision):
 		_revalidate()
 		changed.emit()
 
@@ -362,11 +364,13 @@ func _command() -> SimCommand:
 func _revalidate() -> void:
 	var cmd := _command()
 	var key := "%s|%s" % [str(cmd.params["points_cm"]), expropriate]
-	if key == _verdict_key and _net.graph_version == _verdict_version and verdict != null:
+	if key == _verdict_key and _net.graph_version == _verdict_version \
+			and _net.parcel_revision == _verdict_parcel_revision and verdict != null:
 		return
 	verdict = _facade.validate_command(cmd)
 	_verdict_key = key
 	_verdict_version = _net.graph_version
+	_verdict_parcel_revision = _net.parcel_revision
 
 
 func _reset_draft() -> void:
@@ -376,5 +380,6 @@ func _reset_draft() -> void:
 	expropriate = false
 	_verdict_key = ""
 	_verdict_version = -1
+	_verdict_parcel_revision = -1
 	sending_command_id = SimContract.NO_ID
 	hover = {"snapped": false, "pos": Vector2.ZERO, "kind": &""}

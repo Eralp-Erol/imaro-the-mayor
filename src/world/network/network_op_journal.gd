@@ -54,6 +54,9 @@ var parcels_retired: Array[WorldParcel] = []
 var block_parcels_before: Dictionary = {}
 ## İşlemden ÖNCEki bileşen önbelleği kopyası (NetworkComponents.remember; geri alınca geri konur; boş = kopya yok).
 var components: Dictionary = {}
+## T-066: parsel geri açma işleminin yarattığı klonlar ve değiştirdiği blok sunum geometrisi.
+var reactivated_parcels: Array[int] = []
+var land_blocks_before: Dictionary = {}
 
 
 static func begin(net: WorldNetwork, p_op: Dictionary) -> NetworkOpJournal:
@@ -180,6 +183,16 @@ func extends_existing_graph(net: WorldNetwork) -> bool:
 ## (kimlik listeleri: "removed" = işlemin YARATTIĞI ve şimdi silinenler, "restored" = geri gelenler).
 func undo(net: WorldNetwork) -> Dictionary:
 	var report := {"removed_blocks": [], "restored_blocks": [], "removed_parcels": [], "restored_parcels": []}
+	for pid in reactivated_parcels:
+		net.parcels.erase(pid)
+		net._parcel_grid.remove(pid)
+		report["removed_parcels"].append(pid)
+	for bid: int in land_blocks_before:
+		var block: WorldBlock = net.blocks[bid]
+		var saved: Dictionary = land_blocks_before[bid]
+		block.kind = saved["kind"]
+		block.buildable = saved["buildable"]
+		block.area = saved["area"]
 	var moved := {}  # kamulaştırma: yeni bloklara taşınan parseller geri alınca "silindi" sayılmaz (geri konur)
 	for rec: Array in parcels_moved:
 		moved[(rec[0] as WorldParcel).id] = true
