@@ -426,7 +426,7 @@ func plan_state(parcel_id: int) -> PlanStateView:
 	if _economy == null or _parcels.template(parcel_id) == null:
 		return view  # kurulu ekonomi yok ya da bilinmeyen parsel: plan kavramı yok (`untracked`)
 	var vote_id := _proposal_gate.pending_vote_for_parcel(_state, parcel_id) if _proposal_gate != null else 0
-	var freed := _public_works != null and MunicipalLandFlow.is_freed(_state, parcel_id)  # B-022: yıkılmış yolun boş arazisi
+	var freed := _public_works != null and MunicipalLandFlow.is_freed(_state, parcel_id)  # B-022
 	var raw := _economy.plan_state(_state, parcel_id, vote_id, freed)
 	view.state = raw["state"]
 	view.zone = raw["zone"]

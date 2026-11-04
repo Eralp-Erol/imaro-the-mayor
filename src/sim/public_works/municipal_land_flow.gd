@@ -23,8 +23,8 @@ static func rows(ctx: PublicWorksContext, state: GameState) -> Array[Dictionary]
 	return out
 
 
-## B-022 · Parsel YIKILMIŞ yolun şeridinde, hâlâ alınmış (`STAGE_TAKEN`) boş belediye arazisi mi? SAF, salt okunur, bağlam
-## gerektirmez (plan durumu etiketi için). Duran yolun şeridi false: orada yol vardır, imara açılamaz.
+## B-022 · Parsel YIKILMIŞ yolun şeridinde, hâlâ alınmış (`STAGE_TAKEN`) boş belediye arazisi mi? SAF, salt okunur,
+## bağlam gerektirmez (plan durumu etiketi için). Duran yolun şeridi false: orada yol vardır, imara açılamaz.
 static func is_freed(state: GameState, id: int) -> bool:
 	if not LandReuseEconomy.can_release(state, PackedInt64Array([id])):
 		return false

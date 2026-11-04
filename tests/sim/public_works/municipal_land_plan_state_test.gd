@@ -1,6 +1,6 @@
 extends "res://tests/sim/public_works/municipal_land_test_base.gd"
 ## B-022 · Yıkılan yolun boş belediye arazisi "Yapılı parsel" (existing) diye etiketlenmez: plan durumu `unplanned`
-## (yürürlükte plan yok, imara açılabilir). Yapılı parsel `existing` kalır. Yalnız türetilen etiket; durum/özet değişmez.
+## (yürürlükte plan yok, imara açılabilir). Yapılı parsel `existing` kalır. Yalnız türetilen etiket; durum değişmez.
 
 
 func _plan(run: Dictionary, id: int) -> PlanStateView:
