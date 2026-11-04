@@ -186,9 +186,12 @@ static func _apply_zoning(state: GameState, ctx: PoliticsContext, vote: Dictiona
 	var friction := maxi(int(ctx.politics.council["friction_days"])
 		+ int(PoliticsState.data(state)["council"]["friction_adjust"]), 0)
 	var due: int = state.tick + int(proposal["delay_days"]) + friction
+	var group := []
+	if bool(proposal.get("municipal_reuse", false)):
+		group = MunicipalLandFlow.sorted_ids(PackedInt64Array(proposal["parcel_ids"]))
 	for id: int in proposal["parcel_ids"]:
 		ParcelZoningSystem.set_pending(state, id, StringName(proposal["land_use"]), due, int(proposal["command_id"]),
-			int(proposal["density"]), int(proposal["max_height_m"]), bool(proposal.get("municipal_reuse", false)))
+			int(proposal["density"]), int(proposal["max_height_m"]), group)
 	vote["applied"] = true
 
 

@@ -46,6 +46,7 @@ func on_daily(state: GameState) -> void:
 				continue
 			for group_id in group:
 				(overlay[group_id] as Dictionary).erase("municipal_reuse")
+				(overlay[group_id] as Dictionary).erase("municipal_group")
 		entry["zone"] = entry["pending_zone"]
 		entry["pending_zone"] = &""
 		# yürürlükteki yoğunluk/yükseklik (NO_VALUE = imar varsayılanı); T-013 ekonomi okur
@@ -78,7 +79,7 @@ static func overlay_ref(state: GameState) -> Dictionary:
 
 ## `zoning.propose` etkisi: bekleyen öneriyi yazar (yürürlük `due_tick`'te).
 static func set_pending(state: GameState, parcel_id: int, land_use: StringName, due_tick: int, command_id: int,
-		density: int, max_height_m: int, municipal_reuse: bool = false) -> void:
+		density: int, max_height_m: int, municipal_group: Array = []) -> void:
 	var overlay := _overlay(state)
 	var entry: Dictionary = overlay.get(parcel_id, {"zone": &""})
 	entry["pending_zone"] = land_use
@@ -86,10 +87,13 @@ static func set_pending(state: GameState, parcel_id: int, land_use: StringName, 
 	entry["command_id"] = command_id
 	entry["pending_density"] = density
 	entry["pending_max_height_m"] = max_height_m
-	if municipal_reuse:
+	# D-018: belediye arazisi planı grubunun TAMAMI her üyede kayıtlıdır; yüklemede bütünlük denetlenir.
+	if not municipal_group.is_empty():
 		entry["municipal_reuse"] = true
+		entry["municipal_group"] = municipal_group.duplicate()
 	else:
 		entry.erase("municipal_reuse")
+		entry.erase("municipal_group")
 	entry.erase("rejected_command")  # T-043A: yeniden teklif eski ret izini siler (yoksa etkisiz)
 	entry.erase("rejected_tick")
 	overlay[parcel_id] = entry
@@ -106,6 +110,40 @@ static func _municipal_group(overlay: Dictionary, command_id: int) -> PackedInt6
 	return ids
 
 
+## Kayıt bütünlüğü (D-018): bekleyen belediye arazisi planı grubu bölünmemiş, aynı komut/bölge/vade ve kayıtlı grup
+## listesi gerçek üyelerle eşit olmalı. Sorun metni ya da "". Durumu değiştirmez.
+static func municipal_problem(state: GameState) -> String:
+	var overlay := overlay_ref(state)
+	var ids: Array = overlay.keys()
+	ids.sort()
+	var members := {}  # komut -> bekleyen parsel kimlikleri (sıralı)
+	for id: int in ids:
+		var entry: Dictionary = overlay[id]
+		if entry.get("pending_zone", &"") != &"":
+			var list: Array = members.get(int(entry.get("command_id", 0)), [])
+			list.append(id)
+			members[int(entry.get("command_id", 0))] = list
+		elif entry.has("municipal_reuse") or entry.has("municipal_group"):
+			return "belediye arazisi işareti bekleyen planı olmayan parselde (%d)" % id
+	for id: int in ids:
+		var entry: Dictionary = overlay[id]
+		var marked := entry.has("municipal_reuse") or entry.has("municipal_group")
+		if entry.get("pending_zone", &"") == &"" or not marked:
+			continue
+		var group: Variant = entry.get("municipal_group", null)
+		if not bool(entry.get("municipal_reuse", false)) or not (group is Array) or (group as Array).is_empty():
+			return "belediye arazisi planı işareti eksik (%d)" % id
+		var expected: Array = members[int(entry["command_id"])]
+		if group != expected or not expected.has(id):
+			return "belediye arazisi plan grubu bölünmüş ya da değiştirilmiş (%d)" % id
+		for member: int in expected:
+			var other: Dictionary = overlay[member]
+			if not bool(other.get("municipal_reuse", false)) or other["pending_zone"] != entry["pending_zone"] \
+					or int(other["due_tick"]) != int(entry["due_tick"]) or other.get("municipal_group", null) != group:
+				return "belediye arazisi plan grubu üyeleri uyuşmuyor (%d)" % member
+	return ""
+
+
 ## Onaylanmış plan yürürlükte artık uygulanamıyorsa bütün seçili arazi kapalı kalır; sahte applied sonucu yoktur.
 static func _reject_municipal(state: GameState, overlay: Dictionary, ids: PackedInt64Array,
 		command_id: int, reason: StringName) -> void:
@@ -116,6 +154,7 @@ static func _reject_municipal(state: GameState, overlay: Dictionary, ids: Packed
 		zone = StringName(entry["pending_zone"])
 		entry["pending_zone"] = &""
 		entry.erase("municipal_reuse")
+		entry.erase("municipal_group")
 		entry["rejected_command"] = command_id
 		entry["rejected_tick"] = state.tick
 		subjects.append(String(SimContract.parcel_ref(id)))

@@ -549,6 +549,8 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 		_parcels.parcel_count())  # T-013: ekonomi bölümü varsa biçimi/boyu denetlenir (yoksa "" döner)
 	if economy_problem.is_empty():  # T-042b: ekonomide TAKEN olan parseller = yol kayıtlarındaki alınanlar
 		economy_problem = ExpropriationFlow.consistency_problem(result.state)
+	if economy_problem.is_empty():  # T-066: bekleyen belediye arazisi planı grubu bütün olmalı
+		economy_problem = ParcelZoningSystem.municipal_problem(result.state)
 	if not economy_problem.is_empty():
 		var corrupt := SimSave.LoadResult.new()
 		corrupt.error_code = &"corrupt"

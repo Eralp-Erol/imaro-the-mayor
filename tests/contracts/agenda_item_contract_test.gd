@@ -24,8 +24,8 @@ func test_default_facade_methods_report_no_agenda_items_and_do_not_invent_any() 
 		assert_int(S.facade(scenario_name).agenda_items().size()).is_equal(0)
 
 
-func test_version_is_1_7_and_agenda_items_is_still_optional_with_an_empty_default() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.7")  # agenda_items 1.5 ile geldi; 1.6 yolu yık; 1.7 yeniden iskân
+func test_version_is_1_8_and_agenda_items_is_still_optional_with_an_empty_default() -> void:
+	assert_str(SimContract.VERSION).is_equal("1.8")  # agenda_items 1.5; ...; 1.7 yeniden iskân; 1.8 arazi
 	assert_bool(SimContract.REF_AGENDA == &"agenda").is_true()
 
 

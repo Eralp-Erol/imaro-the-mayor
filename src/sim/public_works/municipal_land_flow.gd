@@ -44,9 +44,10 @@ static func activate(ctx: PublicWorksContext, state: GameState, ids: PackedInt64
 	var grouped := {}
 	for id in _sorted(ids):
 		var source_op := int(_source(state, id)["source_op"])
-		if not grouped.has(source_op):
-			grouped[source_op] = PackedInt64Array()
-		(grouped[source_op] as PackedInt64Array).append(id)
+		# `as PackedInt64Array` Variant'tan KOPYA verir; ekleme sözlüğe yansımaz. Okuyup yeniden yazılır.
+		var bucket: PackedInt64Array = grouped.get(source_op, PackedInt64Array())
+		bucket.append(id)
+		grouped[source_op] = bucket
 	var sources := grouped.keys()
 	sources.sort()
 	var start_count := ctx.net.delta.ops.size()
@@ -116,3 +117,12 @@ static func _problem(reason: StringName, id: int) -> Dictionary:
 
 static func _sorted(ids: Variant) -> PackedInt64Array:
 	return ExpropriationSummary.sorted_ids({"parcel_ids": ids})
+
+
+## Kayıt için sıralı, tekrarsız kimlik listesi (Array[int]).
+static func sorted_ids(ids: PackedInt64Array) -> Array:
+	var out: Array = []
+	for id in _sorted(ids):
+		if out.is_empty() or out[-1] != id:
+			out.append(int(id))
+	return out

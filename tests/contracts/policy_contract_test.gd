@@ -14,11 +14,11 @@ func _policy(enabled: bool = true) -> SimCommand:
 
 # --- Sürüm ---
 
-func test_contract_version_is_1_7_and_older_documents_stay_compatible() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.7")
+func test_contract_version_is_1_8_and_older_documents_stay_compatible() -> void:
+	assert_str(SimContract.VERSION).is_equal("1.8")
 	assert_int(SimContract.VERSION_MAJOR).is_equal(1)
-	assert_int(SimContract.VERSION_MINOR).is_equal(7)
-	for older in ["1.0", "1.5", "1.6"]:
+	assert_int(SimContract.VERSION_MINOR).is_equal(8)
+	for older in ["1.0", "1.5", "1.6", "1.7"]:
 		assert_bool(SimContract.is_compatible(older)).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()
 

@@ -42,8 +42,8 @@ func _land_setup(council_mode: String = "direct", seed_value: int = LAND_P.SEED,
 	var source := ListParcelSource.create(&"municipal_land.qa", views)
 	var economy_patch := LAND_P.economy_patch({
 		String(LAND_P.CODE_A): E.favorable(), String(LAND_P.CODE_B): E.favorable()})
-	if isolate_investment:
-		economy_patch["decision"] = {"review_enabled": 0}
+	# Oynanabilir yapılandırma gibi (playable_economy.json): ret izi/olayı yalnız bu bayrakla yazılır.
+	economy_patch["decision"] = {"unplanned_land_enabled": 1, "review_enabled": 0 if isolate_investment else 1}
 	var economy_cfg := E.config(economy_patch)
 	var h := PoliticsBootstrap.create(seed_value, source, economy_cfg, ListStockSource.create(stock_rows),
 		config(), pol_valid(edit, config()))

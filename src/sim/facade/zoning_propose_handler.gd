@@ -49,9 +49,11 @@ func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> voi
 	var due := state.tick + _config.apply_delay_days
 	var density: int = params.get("density", ParcelZoningSystem.NO_VALUE)
 	var height: int = params.get("max_height_m", ParcelZoningSystem.NO_VALUE)
+	var group := []
+	if bool(params.get("municipal_reuse", false)):
+		group = MunicipalLandFlow.sorted_ids(params["parcel_ids"] as PackedInt64Array)
 	for id in params["parcel_ids"] as PackedInt64Array:
-		ParcelZoningSystem.set_pending(state, id, params["land_use"], due, command_id, density, height,
-			bool(params.get("municipal_reuse", false)))
+		ParcelZoningSystem.set_pending(state, id, params["land_use"], due, command_id, density, height, group)
 
 
 ## {"code": ret kodu ya da &"", "args": ek argümanlar}.
@@ -72,6 +74,12 @@ func _problem(state: GameState, params: Dictionary) -> Dictionary:
 
 ## Şekil/hedef denetiminden sonraki kapılar: belediye arazisi yeniden imarı (D-018), sonra öneri kapısı.
 func _late_problem(state: GameState, params: Dictionary) -> Dictionary:
+	var overlay := ParcelZoningSystem.overlay_ref(state)
+	for id in params["parcel_ids"] as PackedInt64Array:  # bekleyen belediye grubu sıradan planla bölünemez
+		var held: Variant = overlay.get(id, null)
+		if held is Dictionary and bool(held.get("municipal_reuse", false)) and held.get("pending_zone", &"") != &"":
+			return {"code": &"precondition", "args": {"why": String(MunicipalLandFlow.PLAN_PENDING),
+				"ref": String(SimContract.parcel_ref(id))}}
 	if bool(params.get("municipal_reuse", false)):
 		var land_problem := MunicipalLandFlow.problem(municipal_context, state, params["parcel_ids"])
 		if not land_problem.is_empty():
