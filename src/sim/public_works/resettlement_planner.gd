@@ -22,6 +22,10 @@ extends RefCounted
 ##   partial      rehoused'ın kısmi evlere giden payı  cost       gösterge bedel (hane x hedefin birim bedeli)
 ##   residual_pm  hesapta kullanılan tam-ev kalan tepkisi (‰)
 ##   unplaced_by  {kod: hane}  yalnız > 0      effective  {kod: tepki ağırlıklı hane}  yerinden edilen her kaynak kod
+##   weight_by    {kod: ‰ ağırlıklı hane}  effective'in yuvarlanmamış payı (effective = ceil(weight_by / 1000)); bekleme
+##                listesi (T-067) ev verildikçe bunu günceller, yuvarlama hatası birikmez
+##   served       [[tick, kaynak, hedef, hane, sınıf (0 tam, 1 kısmi), kaynaktan_düştü (0/1)]...] YALNIZ T-067 bekleme
+##                listesinden sonradan verilen evler (yoksa alan yok); rehoused = Σ moves + Σ served
 
 const PM := 1000
 const FAR := 9223372036854775807  # menzil dışı hedefin sıralama anahtarı (en sona)
@@ -33,7 +37,7 @@ const CLASS_PARTIAL := 1
 ## [{code, vacancy, rent, unit_cost, dist2}] (`dist2` < 0: yer şartı aşıldı). Sonuç: kayıt şeması (yukarıda).
 static func allocate(sources: Array, targets: Array, cfg: ResettlementConfig) -> Dictionary:
 	var out := {"moves": [], "rehoused": 0, "unplaced": 0, "partial": 0, "cost": 0,
-		"residual_pm": cfg.residual_reaction_pm, "unplaced_by": {}, "effective": {}}
+		"residual_pm": cfg.residual_reaction_pm, "unplaced_by": {}, "effective": {}, "weight_by": {}}
 	var ordered: Array = sources.filter(func(s: Dictionary) -> bool: return int(s["displaced"]) > 0)
 	ordered.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return String(a["code"]) < String(b["code"]))
 	var room := {}  # hedef kod -> bu yolun kalan payı (özgün boşluğun max_fill_pm'i; kaynaklar arasında ORTAK)
@@ -45,7 +49,7 @@ static func allocate(sources: Array, targets: Array, cfg: ResettlementConfig) ->
 		var left := int(s["displaced"])
 		var full := 0
 		var part := 0
-		for cand: Dictionary in _candidates(s, targets, cfg):
+		for cand: Dictionary in candidates(s, targets, cfg):
 			var target_code := String(cand["code"])
 			var take := mini(left, int(room[target_code]))
 			if take <= 0:
@@ -63,13 +67,15 @@ static func allocate(sources: Array, targets: Array, cfg: ResettlementConfig) ->
 		out["unplaced"] = int(out["unplaced"]) + left
 		if left > 0:
 			(out["unplaced_by"] as Dictionary)[code] = left
-		(out["effective"] as Dictionary)[code] = (left * PM + full * cfg.residual_reaction_pm + part * partial_weight
-			+ PM - 1) / PM
+		var weight := left * PM + full * cfg.residual_reaction_pm + part * partial_weight
+		(out["weight_by"] as Dictionary)[code] = weight
+		(out["effective"] as Dictionary)[code] = (weight + PM - 1) / PM
 	return out
 
 
 ## Bu kaynak için kullanılabilir hedefler, (sınıf, mesafe, kod) sırasıyla; ikisi de aşılanlar (ev sayılmaz) yok.
-static func _candidates(source: Dictionary, targets: Array, cfg: ResettlementConfig) -> Array:
+## `ResettlementQueue` (T-067) aynı kuralı bekleme listesi için kullanır.
+static func candidates(source: Dictionary, targets: Array, cfg: ResettlementConfig) -> Array:
 	var out: Array = []
 	for t: Dictionary in targets:
 		if int(t["vacancy"]) <= 0:
@@ -134,11 +140,24 @@ static func apply_moves(state: GameState, record: Dictionary) -> void:
 
 ## Geri alma: aktarım TERS sırada geri sarılır; hedef bölge arada azaldıysa dönen hane kırpılır (`latent_hh`
 ## negatife düşmez; ADR-0009 Değişiklik 2). Gerçekte dönen hane sayısı döner (olaydaki `rehoused_returned`).
+## Bekleme listesinden SONRADAN verilen evler (`served`, T-067) yol anındaki aktarımdan önce, ters sırada geri alınır.
 static func revert_moves(state: GameState, record: Dictionary) -> int:
 	var regions: Dictionary = EconomyState.data(state)["regions"]
 	var codes: PackedStringArray = regions["codes"]
 	var latent: PackedInt64Array = regions["latent_hh"]
 	var returned := 0
+	var served: Array = record.get("served", [])
+	for k in range(served.size() - 1, -1, -1):
+		var row: Array = served[k]
+		var source := codes.find(String(row[1]))
+		var target := codes.find(String(row[2]))
+		if source < 0 or target < 0:
+			continue
+		var back := mini(int(row[3]), int(latent[target]))
+		latent[target] -= back
+		if int(row[5]) == 1:  # aile kaynak bölgenin talebinden alınmıştı (ayrılma kaderinde alınmamıştı)
+			latent[source] += back
+		returned += back
 	var moves: Array = record["moves"]
 	for k in range(moves.size() - 1, -1, -1):
 		var source := codes.find(String((moves[k] as Array)[0]))
@@ -212,6 +231,10 @@ static func _rent_mult(econ: EconomyConfig, regions: Dictionary, r: int) -> int:
 	return EconomyMath.rent_mult_pm(demand, econ.p("rent_floor_pm"), econ.p("rent_cap_pm"))
 
 
-## Karşılaştırma ölçeği: birim kira x çarpan (binde birde; bölme yok).
+## Karşılaştırma ölçeği: birim kira x çarpan (binde birde; bölme yok). `ResettlementQueue` da kullanır.
+static func rent_of(econ: EconomyConfig, regions: Dictionary, r: int) -> int:
+	return _rent(econ, regions, r)
+
+
 static func _rent(econ: EconomyConfig, regions: Dictionary, r: int) -> int:
 	return econ.use_param(EconomyConfig.USE_RESIDENTIAL, "rent_per_unit_month") * _rent_mult(econ, regions, r)

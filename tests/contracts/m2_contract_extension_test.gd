@@ -52,8 +52,8 @@ func _outcome(tick: int, bump: int) -> EconomyOutcomeView:
 # --- Sürüm ---
 
 func test_contract_version_is_minor_bumped_and_old_major_one_documents_stay_compatible() -> void:
-	# 1.2 karar özeti, 1.3 yol, 1.4 plan sorguları, 1.5 kamulaştırma, 1.6 geri al/yık, 1.7 iskân, 1.8 arazi
-	assert_str(SimContract.VERSION).is_equal("1.8")
+	# 1.2 karar özeti, 1.3 yol, 1.4 plan sorguları, 1.5 kamulaştırma, 1.6 geri al/yık, 1.7 iskân, 1.8 arazi, 1.9 liste
+	assert_str(SimContract.VERSION).is_equal("1.9")
 	assert_bool(SimContract.is_compatible("1.0")).is_true()
 	assert_bool(SimContract.is_compatible("1.1")).is_true()
 	assert_bool(SimContract.is_compatible("1.2")).is_true()
@@ -63,6 +63,7 @@ func test_contract_version_is_minor_bumped_and_old_major_one_documents_stay_comp
 	assert_bool(SimContract.is_compatible("1.6")).is_true()
 	assert_bool(SimContract.is_compatible("1.7")).is_true()
 	assert_bool(SimContract.is_compatible("1.8")).is_true()
+	assert_bool(SimContract.is_compatible("1.9")).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()
 
 
