@@ -94,7 +94,7 @@ Son hat bazlı testler (`tools/lane.sh verify <hat>`, o günkü sonuçlar): sim 
 2. **T-028 topoloji haritası — YARIM** (commit'siz): `scenes/dev/topology_map.{gd,tscn}`, `src/world/topology_map/`, `tests/world/topology_map/`. Q-015 için etiketli harita; T-030'dan bağımsız.
 3. **T-029 kayıt/hash maliyeti** — başlanmadı: 10k parselde `state_hash` ≈9 sn, kayıt ≈16 MB (ReasonLog kaynaklı). Görev: `production/tasks/T-029.md`.
 4. **T-030 tam kapsam** — asgari demo var; eksikler: T0 stoku sim'e aktarılmamış (sim parselleri boş başlıyor), HUD imar paneli dünyadan parsel seçimine bağlı değil (eylem Z tuşu), imar sonucu sahnede yapı olarak görünmüyor, açılış ~4 dk (pencereli), `tools/smoke_playable.sh` yok, birleşik yük/kayıt-hash ölçümü yazılı değil (`artifacts/verify/m01-perf.json`), bağımsız QA yok.
-5. **T-012 açık kriterleri** (commit ≠ kabul): K8 LOD0↔LOD1 %9,54 (>%5); yerel evre yapı üçgeni ~1,27M (>900k); low-key ışık onayı (arazi V bandı); gerçek T0 verisiyle görsel kapı (VIS-04). Ayrıntı `production/tasks/T-012.md`.
+5. **T-012 açık kriterleri** (commit ≠ kabul): K8 LOD0↔LOD1 %2,6 (düzeltildi, ADR-0010); yerel evre yapı üçgeni (900k tavanı ertelendi, ADR-0010); low-key ışık onayı (arazi V bandı); gerçek T0 verisiyle görsel kapı (VIS-04). Ayrıntı `production/tasks/T-012.md`.
 6. **M1 kapısı T-006** — görev dosyası yok; yazılacak (bkz. NEXT_TASK).
 7. Backlog (başlatma): T-014, T-026, T-001a–c, kit v1, T-009, T-010 (M1 kapısında EKSİK raporlanır).
 

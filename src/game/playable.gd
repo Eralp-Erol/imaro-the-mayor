@@ -16,8 +16,8 @@ extends "res://scenes/dev/world_preview.gd"
 ##   --m2-batch=N     öneriye en yakın N boş uygun parsel katılır (varsayılan 1).  --m2-skip=K  ilk K adayı atla.
 ##   --m2-isolate     otonom yatırımcı taraması kapalı: yapı yalnız oyuncunun imar kararından doğar.
 ##   --demo-zone=Z    demo imar anahtarı (varsayılan zone.mixed).
-##   --no-smoke-save-load  --demo'nun kare 60'taki kayıt/yükleme smoke'unu atlar (ölçüm: yükleme sonrası tek
-##                    seferlik tam eşitleme sürekli-rejim kare maliyetinden ayrı raporlanabilsin).
+##   --smoke-save-load  --demo'nun kare 60'taki kayıt/yükleme smoke'u yalnız başsızda varsayılan; pencereli demoda bu
+##                    bayrakla açılır (B-028: ~1,7 sn donma). --no-smoke-save-load başsızda da atlar.
 ##   --no-view-warmup açılış ısınmasını (ViewWarmup: kamera dar bantları örtü altında gezer) kapatır. Dev/yakalama
 ##                    argümanları (--shot, --quit-after, --preset, --sweep, --heading/--pitch/--distance, --hide,
 ##                    --m2-advance, --m2-focus-new, --t47-flow) ve başsız çalışma ısınmayı zaten atlar.
@@ -762,10 +762,9 @@ func _process(delta: float) -> void:
 		_note_tick_cost(drive_us, Time.get_ticks_usec() - t_poll)
 	if _demo and _frames == 10 and not _args.has("m2-advance"):
 		_submit_demo()
-	# Başsız T-030 smoke, gerçek facade üzerinde kayıt baytını tekrar içe alıp
-	# kanonik hash'in korunduğunu denetler. Bu yalnız --demo ile çalışan bir
-	# doğrulama kancasıdır; normal oturumda kayıt durumu veya dosya üretmez.
-	if _demo and not _smoke_save_load_checked and _frames >= 60 and not _args.has("no-smoke-save-load"):
+	# Başsız T-030 smoke: kayıt baytı tekrar içe alınınca kanonik hash korunur. Yalnız --demo kancası; normal oturumda yok.
+	if _demo and not _smoke_save_load_checked and _frames >= 60 and not _args.has("no-smoke-save-load") \
+			and (DisplayServer.get_name() == "headless" or _args.has("smoke-save-load")):
 		_smoke_save_load_checked = true
 		_smoke_save_load()
 	if _status != null:

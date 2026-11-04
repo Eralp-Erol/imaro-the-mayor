@@ -6,7 +6,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 
 | # | Ölçüt | Durum | Dayanak / eksik |
 |---|---|---|---|
-| 1 | Mevcut yerleşim dokusu ve topografya hissedilir (boş grid değil) | KISMEN | T0 üreteci ve sanat kapıları kayıtlı (T-005, T-056..T-059 QA). Sahip görsel kabulü ve M1 açık ölçütleri (T-012 K8 LOD farkı %9,5 > %5, üçgen ~1,27M > 900k) kapanmadı. |
+| 1 | Mevcut yerleşim dokusu ve topografya hissedilir (boş grid değil) | KISMEN | T0 üreteci ve sanat kapıları kayıtlı (T-005, T-056..T-059 QA). Sahip görsel kabulü ve M1 açık ölçütleri: T-012 K8 LOD farkı düzeltilmiş (%2,6; bekçi olarak kalır), üçgen tavanı D-007 gereği ertelendi (ADR-0010; sayılar kayıtlardan, yeniden ölçülmedi); low-key ışık onayı ve VIS-04 görsel kapı açık. |
 | 2 | Yol/imar/kamu alanı kararı fiziksel 3D dünyada uygulanır | KANITLI (masaüstü) | Çalışan döngü: yol çiz → kamulaştır → imar; pencereli QA turları 2-3. Yeni "belediye arazisini imara aç" girişi pencerede henüz görülmedi (QA turu sürüyor). |
 | 3 | Yatırımcı/hane yanıtı kararla ilişkili ama otomatik değil | KANITLI | T-040 bağımsız QA 3. tur PASS; gerekçeli ret/kabul; CAN-03 testleri. |
 | 4 | Nüfus/iş/ulaşım/bütçe değişimi anlamlı ve görünür | KISMEN | Değişim akışı ve bütçe göstergesi var. Kare/perf kanıtı sakin makinede tam değil. Q-003 para birimi açık ("gösterge"). Kalabalık/yoğunluk görsel kabulü sahipte. |
@@ -23,12 +23,13 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 1. İki ilçe/başka tohumla başlatma: TEST YAZILDI (sim yarısı geçti). Başlangıç ilçesi: D-020 (hep D2) ile karara bağlandı.
 2. Pencereli QA turu: yeni imar akışı (sürüyor), eski yolu yıkma ekranı (sürüyor), sonuç kareleri.
 3. Meclis RED: senaryo bulundu ve test yazıldı (`production/log/2026-11-04-meclis-red-senaryosu.md`). Sahip kararı D-020: RED nadir kalsın. Kalan: pencereli RED karesi (isteğe bağlı).
-4. Perf serisi YAPILDI (bkz. yukarı). Kalan: kare bütçesi hedefi (teknik direktör), B-028, iPad cihaz ölçümü.
+4. Perf serisi YAPILDI (bkz. yukarı). Kare bütçesi hedefleri ADR-0010 ile konuldu (iPad satırları ön hedef, cihazda doğrulanmadı). B-028 düzeltildi (aşağıda). Kalan: iPad cihaz ölçümü (T-076), yol onayı takılması (T-075, sahip sorusu).
 5. iPad: AÇILIŞ KANITLI (sahip bildirimi). Kalan: cihazda kare süresi/dokunma ölçümü, release sürüm, gerçek ikon ve iOS ana sahne düzeni.
 6. M1'den taşınan görsel ölçütler (LOD farkı, üçgen bütçesi): art-director + technical-director kararı.
 7. Üç yönetici incelemesi (design / art / technical director) + `verify full` + kapanış kaydı.
 
 ## Sahip kararları (M2'yi engellemez, ama kapanış kartında sorulur)
+Yol onayında 0,1-0,2 sn takılma (130-207 ms; ADR-0010 tavanı 100 ms): M2'den önce düzeltilsin mi? Teknik direktör önerisi: 'bilinen açık' yaz, iPad'de ölç, >100 ms ise M2'ye al, değilse M3'ün ilk işi (T-075/T-076). SAHİP KARARI YOK; kayıt D-NNN olarak yazılmadı.
 Q-003 para birimi · Q-015 Ismeral coğrafya onayı · Q-025 halk neye tepki versin · Q-026 araç/yaya yoğunluğu (Kart D) · Q-014/Q-028 meclis eşiği (Kart B) · Q-018 sanat kütüphanesi şablonları · Q-027/Q-029 gündem kartı adı ve tepki sertliği · R1-R3 yeniden iskân varsayımları · T-065 Aşama 2.
 
 ## Doğrulanmadı
