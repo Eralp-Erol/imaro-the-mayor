@@ -20,4 +20,4 @@ Dal `worktree-agent-ad2b9cc1162b04d1c` (taban `931b3e5`, main'e ff). Push yok, m
 - `decision.municipal.resettlement_queue` ve üç `reason.factor.queue_*` anahtarının metin tablosu girdileri ui-engineer işi.
 
 ## Doğrulama
-Rapor ve komut çıktıları görev dosyası `production/tasks/T-067.md` "Kanıt" bölümündedir.
+Kanıt: `production/tasks/T-067.md` "Kanıt" bölümü (quick PASS 1942 test; full koşulmadı).
