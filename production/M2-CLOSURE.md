@@ -15,7 +15,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 | 7 | Örnek ilçe zorunlu başlangıç yeri olmaz | AÇIK | M2 satırı "en az iki ilçe kimliğiyle başlatma testi" ister. STATE: "başka tohum/bölge" TEST EDİLMEDİ. |
 
 ## M2 satırındaki ek koşullar
-- **iPad'de aynı dilim cihazda oynanır (dokunmatik profil, ölçüm):** YAPILMADI. Fiziksel iPad hiç denenmedi; simülatör/dokunma boyutları (1024x768, 800x600, 768x1024) görüldü.
+- **iPad'de aynı dilim cihazda oynanır (dokunmatik profil, ölçüm):** KISMEN. 2026-11-04 fiziksel iPad Pro 12,9" (6. nesil) üzerinde debug sürüm kuruldu ve oyun açıldı; sahip "istenildiği gibi çalışıyor" dedi (bildirim, ölçüm değil). Ölçüm (kare süresi, dokunma hassasiyeti, ısınma) YOK. Ayrıntı: `production/log/2026-11-04-ipad-gercek-cihaz.md`.
 - **Masaüstü profiliyle kabul:** kısmen; sahip kabulü yok.
 - **Performans:** kare sıçramaları ölçüldü (en kötü 117,92 ms; ~1,16 s tekrarlanmadı) ama sakin makinede ikinci seri ve bütçe kararı yok.
 
@@ -24,7 +24,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 2. Pencereli QA turu: yeni imar akışı (sürüyor), eski yolu yıkma ekranı (sürüyor), sonuç kareleri.
 3. Meclis RED yolunu gerçek oyunda üretecek senaryo (veri odaklı; karar gerektirmez).
 4. Sakin makinede perf serisi ve kare bütçesi hedefi (teknik direktör hedefi belirler).
-5. iPad: fiziksel cihaz gerekir — SAHİP bir iPad ile 15 dk denemeli ya da cihaz sağlanmalı.
+5. iPad: AÇILIŞ KANITLI (sahip bildirimi). Kalan: cihazda kare süresi/dokunma ölçümü, release sürüm, gerçek ikon ve iOS ana sahne düzeni.
 6. M1'den taşınan görsel ölçütler (LOD farkı, üçgen bütçesi): art-director + technical-director kararı.
 7. Üç yönetici incelemesi (design / art / technical director) + `verify full` + kapanış kaydı.
 
