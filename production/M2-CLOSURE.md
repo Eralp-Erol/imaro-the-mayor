@@ -10,7 +10,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 | 2 | Yol/imar/kamu alanı kararı fiziksel 3D dünyada uygulanır | KANITLI (masaüstü) | Çalışan döngü: yol çiz → kamulaştır → imar; pencereli QA turları 2-3. Yeni "belediye arazisini imara aç" girişi pencerede henüz görülmedi (QA turu sürüyor). |
 | 3 | Yatırımcı/hane yanıtı kararla ilişkili ama otomatik değil | KANITLI | T-040 bağımsız QA 3. tur PASS; gerekçeli ret/kabul; CAN-03 testleri. |
 | 4 | Nüfus/iş/ulaşım/bütçe değişimi anlamlı ve görünür | KISMEN | Değişim akışı ve bütçe göstergesi var. Kare/perf kanıtı sakin makinede tam değil. Q-003 para birimi açık ("gösterge"). Kalabalık/yoğunluk görsel kabulü sahipte. |
-| 5 | En az bir karar gerçek siyasi/toplumsal tepki üretir | KANITLI (sim) / KISMEN (görüş) | Yol/yıkım tepkisi, gündem kartı, meclis var. Meclis RED ekranı gerçek oyunda hiç üretilemedi (81 oylamanın hepsi kabul). |
+| 5 | En az bir karar gerçek siyasi/toplumsal tepki üretir | KANITLI (sim) / KISMEN (görüş) | Yol/yıkım tepkisi, gündem kartı, meclis var. Meclis RED yolu artık testle KANITLI (`tests/game/council_red_scenario_test.gd`: yeşil imar + dolu altyapı + ≥10 parsel, gürültüyle ~%5-8; UI/olay akışı hatasız); pencereli RED karesi ve sahibin 'RED nasıl görünsün' kararı (A/B/C) açık. |
 | 6 | Aynı alan farklı zoom'larda aynı dünya | KISMEN | Çok ölçekli kamera (T-003) var. Zoom geçişlerinde LOD farkı ölçütü açık (bkz. 1). |
 | 7 | Örnek ilçe zorunlu başlangıç yeri olmaz | KISMEN | Sim yarısı KANITLI (başsız test, gerçek Ismeral, 6 ilçe + 2. tohum: yol→imar→yatırımcı döngüsü, CAN-03, determinizm; `tests/game/m2_start_district_test.gd`). AÇIK: B-026 — yol yetkisi veride yalnız D2'ye bağlı, başka ilçede yol çizilemiyor (T-043 uygulanmadı); `--start-district` yalnız kamerayı taşıyor. Pencereli kanıt yok. |
 
@@ -22,7 +22,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 ## Kapanış için yapılacaklar (sırayla)
 1. İki ilçe/başka tohumla başlatma: TEST YAZILDI (sim yarısı geçti). Kalan: B-026 (yetki alanı başlangıç ilçesine bağlansın; T-043; ürün sorusu: başlangıç ilçesi oyuncu seçimi mi?).
 2. Pencereli QA turu: yeni imar akışı (sürüyor), eski yolu yıkma ekranı (sürüyor), sonuç kareleri.
-3. Meclis RED yolunu gerçek oyunda üretecek senaryo (veri odaklı; karar gerektirmez).
+3. Meclis RED: senaryo bulundu ve test yazıldı (`production/log/2026-11-04-meclis-red-senaryosu.md`). Kalan: pencereli RED karesi; sahip kararı: RED nadir mi kalsın (A, önerilen), yeşil+dolu altyapı zorlaşsın mı (B).
 4. Sakin makinede perf serisi ve kare bütçesi hedefi (teknik direktör hedefi belirler).
 5. iPad: AÇILIŞ KANITLI (sahip bildirimi). Kalan: cihazda kare süresi/dokunma ölçümü, release sürüm, gerçek ikon ve iOS ana sahne düzeni.
 6. M1'den taşınan görsel ölçütler (LOD farkı, üçgen bütçesi): art-director + technical-director kararı.
