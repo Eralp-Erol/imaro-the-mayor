@@ -17,13 +17,13 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 ## M2 satırındaki ek koşullar
 - **iPad'de aynı dilim cihazda oynanır (dokunmatik profil, ölçüm):** KISMEN. 2026-11-04 fiziksel iPad Pro 12,9" (6. nesil) üzerinde debug sürüm kuruldu ve oyun açıldı; sahip "istenildiği gibi çalışıyor" dedi (bildirim, ölçüm değil). Ölçüm (kare süresi, dokunma hassasiyeti, ısınma) YOK. Ayrıntı: `production/log/2026-11-04-ipad-gercek-cihaz.md`.
 - **Masaüstü profiliyle kabul:** kısmen; sahip kabulü yok.
-- **Performans:** kare sıçramaları ölçüldü (en kötü 117,92 ms; ~1,16 s tekrarlanmadı) ama sakin makinede ikinci seri ve bütçe kararı yok.
+- **Performans:** sakin makinede masaüstü serisi ÖLÇÜLDÜ (2026-11-05, i7-8850H/Radeon 560X, 1600x900, `--demo`, 4×6000 kare): ort ~7,1 ms, p95 ~8,8, p99 ~11,2; yol gönderimi anında en kötü kare 130-207 ms; çizim ~315 çağrı, ~431k üçgen (tepe 1,0M). `--demo` açılışında tekil donmalar (kare 1 ≈ 4 sn, kare 60 ≈ 1,7 sn = B-028 demo kayıt/yükleme kancası). iPad cihaz ölçümü YOK; kare bütçesi hedefini teknik direktör koymadı. Ayrıntı: `production/log/2026-11-05-perf-serisi.md`.
 
 ## Kapanış için yapılacaklar (sırayla)
 1. İki ilçe/başka tohumla başlatma: TEST YAZILDI (sim yarısı geçti). Başlangıç ilçesi: D-020 (hep D2) ile karara bağlandı.
 2. Pencereli QA turu: yeni imar akışı (sürüyor), eski yolu yıkma ekranı (sürüyor), sonuç kareleri.
 3. Meclis RED: senaryo bulundu ve test yazıldı (`production/log/2026-11-04-meclis-red-senaryosu.md`). Sahip kararı D-020: RED nadir kalsın. Kalan: pencereli RED karesi (isteğe bağlı).
-4. Sakin makinede perf serisi ve kare bütçesi hedefi (teknik direktör hedefi belirler).
+4. Perf serisi YAPILDI (bkz. yukarı). Kalan: kare bütçesi hedefi (teknik direktör), B-028, iPad cihaz ölçümü.
 5. iPad: AÇILIŞ KANITLI (sahip bildirimi). Kalan: cihazda kare süresi/dokunma ölçümü, release sürüm, gerçek ikon ve iOS ana sahne düzeni.
 6. M1'den taşınan görsel ölçütler (LOD farkı, üçgen bütçesi): art-director + technical-director kararı.
 7. Üç yönetici incelemesi (design / art / technical director) + `verify full` + kapanış kaydı.
