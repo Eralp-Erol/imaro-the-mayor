@@ -208,6 +208,9 @@ func _parcel_row(id: int, view: ParcelView) -> Control:
 	var head := HBoxContainer.new()
 	var plan := model.plan_state_of(id)
 	var plan_text := PlanStateText.label(plan, true)
+	if model.municipal_mode:
+		# Belediye arazisi yapılı değildir ("Yapılı parsel" yanlış olur): sim `municipal_lands()` satırı.
+		plan_text = UiText.t(&"zoning.municipal.row")
 	var title_text := UiText.humanize(SimContract.parcel_ref(id))
 	if plan_text != "":
 		title_text += " · " + plan_text

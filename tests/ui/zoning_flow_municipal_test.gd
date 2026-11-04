@@ -176,6 +176,9 @@ func test_municipal_mode_groups_parcels_into_one_summary_and_list_folds() -> voi
 	assert_float(toggle.get_combined_minimum_size().y).is_greater_equal(44.0)
 	toggle.pressed.emit()
 	assert_int(p.named_buttons("area_remove_").size()).is_equal(15)
+	# Açık listede satırlar "Yapılı parsel" değil "Boş belediye arazisi" der (gerçek pencere karesinde görülen hata).
+	assert_str(p.joined_text()).contains("Boş belediye arazisi")
+	assert_str(p.joined_text()).not_contains("Yapılı parsel")
 	p.named_buttons("municipal_list_toggle")[0].pressed.emit()
 	assert_int(p.named_buttons("area_remove_").size()).is_equal(0)
 	assert_object(p.use_button(&"zone.mixed")).is_not_null()
