@@ -29,6 +29,7 @@ var _status: Label = null
 var _warning: Label = null
 var _notes: Label = null
 var _use_buttons: Dictionary = {}
+var _parcels_open: bool = false
 
 
 static func create(ctx: UiContext, facade: SimFacade, flow: ZoningFlowModel) -> ZoningFlowPanel:
@@ -117,8 +118,11 @@ func _add_area() -> void:
 	var by_id := {}
 	for v in views:
 		by_id[v.id] = v
-	for id in model.parcel_ids:
-		_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
+	if model.municipal_mode:
+		_add_municipal_summary(by_id)
+	else:
+		for id in model.parcel_ids:
+			_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
 	if model.municipal_mode:
 		var mode_note := _muted(UiText.t(&"zoning.municipal.mode"))
 		_tag(mode_note, "municipal_mode")
@@ -153,9 +157,41 @@ func _add_municipal_entry() -> void:
 		_body.add_child(_muted(UiText.t(&"zoning.municipal.clear_first", {"n": UiText.number(n)})))
 		return
 	var b := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.open", {"n": UiText.number(n)}), false)
+	# B-024: uzun metin sarılır; asgari genişlik panel genişliğini aşmaz.
+	b.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tag(b, "municipal_open")
 	b.pressed.connect(open_municipal_land)
 	_body.add_child(b)
+
+
+## B-023: belediye arazisi tek özet satırı (parsel sayısı + sim `area_m2` toplamı); parsel listesi katlanabilir
+## (varsayılan kapalı) ki kullanım seçimi ve gönder düğmesi ilk ekranda kalsın.
+func _add_municipal_summary(by_id: Dictionary) -> void:
+	var total_m2 := 0
+	var wanted := {}
+	for id in model.parcel_ids:
+		wanted[id] = true
+	for land in _facade.municipal_lands():
+		if wanted.has(land.id):
+			total_m2 += land.area_m2
+	var n := UiText.number(model.parcel_ids.size())
+	var text := UiText.t(&"zoning.municipal.summary_area", {"n": n, "m2": UiText.number(total_m2)}) \
+		if total_m2 > 0 else UiText.t(&"zoning.municipal.summary", {"n": n})
+	var summary := UiFactory.label(text, &"", true)
+	_tag(summary, "municipal_summary")
+	_body.add_child(summary)
+	var toggle := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.hide_list" if _parcels_open
+		else &"zoning.municipal.show_list"), false, true)
+	toggle.button_pressed = _parcels_open
+	_tag(toggle, "municipal_list_toggle")
+	toggle.pressed.connect(func() -> void:
+		_parcels_open = not _parcels_open
+		_render())
+	_body.add_child(toggle)
+	if _parcels_open:
+		for id in model.parcel_ids:
+			_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
 
 
 func open_municipal_land() -> bool:
@@ -376,6 +412,8 @@ func _on_reason_pressed() -> void:
 
 
 func _area_text() -> String:
+	if model.municipal_mode:
+		return UiText.t(&"zoning.municipal.summary", {"n": UiText.number(model.parcel_ids.size())})
 	var parts := PackedStringArray()
 	for id in model.parcel_ids:
 		parts.append(UiText.humanize(SimContract.parcel_ref(id)))

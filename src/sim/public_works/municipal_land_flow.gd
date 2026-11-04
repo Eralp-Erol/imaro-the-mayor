@@ -23,6 +23,14 @@ static func rows(ctx: PublicWorksContext, state: GameState) -> Array[Dictionary]
 	return out
 
 
+## B-022 · Parsel YIKILMIŞ yolun şeridinde, hâlâ alınmış (`STAGE_TAKEN`) boş belediye arazisi mi? SAF, salt okunur, bağlam
+## gerektirmez (plan durumu etiketi için). Duran yolun şeridi false: orada yol vardır, imara açılamaz.
+static func is_freed(state: GameState, id: int) -> bool:
+	if not LandReuseEconomy.can_release(state, PackedInt64Array([id])):
+		return false
+	return bool(_source(state, id).get("demolished", false))
+
+
 ## Mevcut precondition sözleşmesi. own_command yalnız yürürlükte grubun kendi bekleyen planını dışlar.
 static func problem(ctx: PublicWorksContext, state: GameState, ids: PackedInt64Array,
 		own_command: int = 0) -> Dictionary:
