@@ -1,0 +1,863 @@
+{
+ "format": "imaro-game-set/1",
+ "table": "furniture",
+ "source_catalog": "data/library/catalog.json",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
+ "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+ "included_count": 8,
+ "unapproved": {
+  "count": 0,
+  "by_reason": {},
+  "entries": []
+ },
+ "items": [
+  {
+   "id": "fur_hero_bench_a",
+   "kind": "street_furniture",
+   "type": "bench",
+   "family": "hero_bench",
+   "variant": "a",
+   "label_tr": "Bank · ahşap oturak, metal ayak",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_bench_a_lod0.glb",
+     "sha256": "53d01613c769b4325a9a7406b2d3c790119d097080ad46c1592e4d0b5ec7f281",
+     "tris": 600,
+     "aabb_m": {
+      "min": [
+       -0.9,
+       0.0,
+       -0.285
+      ],
+      "max": [
+       0.9,
+       0.8005,
+       0.29
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_bench_a_lod1.glb",
+     "sha256": "4d6d15c93b202dfc037127716e721b3b874894b5e12a59ad165e4036a5c79f68",
+     "tris": 144,
+     "aabb_m": {
+      "min": [
+       -0.9,
+       0.0,
+       -0.285
+      ],
+      "max": [
+       0.9,
+       0.8,
+       0.28
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 600,
+    "LOD1": 144
+   },
+   "footprint_m": [
+    1.8,
+    0.575
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.9,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 0.8005,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 40,
+    "LOD1_max": 150,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "small",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_bike_rack_a",
+   "kind": "street_furniture",
+   "type": "bike_rack",
+   "family": "hero_bike_rack",
+   "variant": "a",
+   "label_tr": "Bisiklet park demiri · üç ters-U",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_bike_rack_a_lod0.glb",
+     "sha256": "c8d9c013db3ea72e10e0e70e6ef040fbb383f4ccf21962a71fe51fb0be710d0e",
+     "tris": 552,
+     "aabb_m": {
+      "min": [
+       -0.405,
+       0.0,
+       -0.955
+      ],
+      "max": [
+       0.405,
+       0.861,
+       0.955
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_bike_rack_a_lod1.glb",
+     "sha256": "405fb7ee1fd1b159c4f614bee8ebd5e91668be51081f38a87c631899997c02dd",
+     "tris": 120,
+     "aabb_m": {
+      "min": [
+       -0.371,
+       0.0,
+       -0.921
+      ],
+      "max": [
+       0.371,
+       0.8704,
+       0.921
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 552,
+    "LOD1": 120
+   },
+   "footprint_m": [
+    0.81,
+    1.91
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.955,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 0.861,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 40,
+    "LOD1_max": 150,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "small",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_bin_a",
+   "kind": "street_furniture",
+   "type": "bin",
+   "family": "hero_bin",
+   "variant": "a",
+   "label_tr": "Çöp kutusu · sekizgen sac gövde",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_bin_a_lod0.glb",
+     "sha256": "695088d9490d1619dc214f7b003a2babde0275d1a7760c1d338e96c9e570a9b0",
+     "tris": 256,
+     "aabb_m": {
+      "min": [
+       -0.25,
+       0.0,
+       -0.25
+      ],
+      "max": [
+       0.25,
+       0.9,
+       0.25
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_bin_a_lod1.glb",
+     "sha256": "6d5a0862967b4855591512e854ae824ad9ee8a2a01181d2a67178a39f78fb96b",
+     "tris": 90,
+     "aabb_m": {
+      "min": [
+       -0.23,
+       0.0,
+       -0.23
+      ],
+      "max": [
+       0.23,
+       0.88,
+       0.23
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 256,
+    "LOD1": 90
+   },
+   "footprint_m": [
+    0.5,
+    0.5
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.25,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 0.9,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 40,
+    "LOD1_max": 150,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "small",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_bollard_a",
+   "kind": "street_furniture",
+   "type": "bollard",
+   "family": "hero_bollard",
+   "variant": "a",
+   "label_tr": "Bollard · yaya alanı babası",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_bollard_a_lod0.glb",
+     "sha256": "673bbbc8701ffd06b96f42813d801569df812f79367eb1ba9a4c98e1d7e17012",
+     "tris": 138,
+     "aabb_m": {
+      "min": [
+       -0.1,
+       0.0,
+       -0.1
+      ],
+      "max": [
+       0.1,
+       0.87,
+       0.1
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_bollard_a_lod1.glb",
+     "sha256": "88d014eb5e5832f37e275e4e9c456f841348dd993c82a0576b17ef7726246a88",
+     "tris": 44,
+     "aabb_m": {
+      "min": [
+       -0.0758,
+       0.0,
+       -0.0758
+      ],
+      "max": [
+       0.0758,
+       0.87,
+       0.0758
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 138,
+    "LOD1": 44
+   },
+   "footprint_m": [
+    0.2,
+    0.2
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.1,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 0.87,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 40,
+    "LOD1_max": 150,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "small",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_bus_stop_a",
+   "kind": "street_furniture",
+   "type": "bus_stop",
+   "family": "hero_bus_stop",
+   "variant": "a",
+   "label_tr": "Otobüs durağı · cam/metal/ahşap, yazısız",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_bus_stop_a_lod0.glb",
+     "sha256": "d90a64a029fbb0d4e0c1d6b04f51e826bc7e7e97cba5fa3ffbefcb4522b30440",
+     "tris": 652,
+     "aabb_m": {
+      "min": [
+       -2.5,
+       0.0,
+       -0.8
+      ],
+      "max": [
+       2.5,
+       2.6,
+       0.8
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_bus_stop_a_lod1.glb",
+     "sha256": "5551608395ebd9a03c0dd400244916e9b1ae6876baa53feeebcf1c1257649bb0",
+     "tris": 158,
+     "aabb_m": {
+      "min": [
+       -2.5,
+       0.0,
+       -0.8
+      ],
+      "max": [
+       2.5,
+       2.6,
+       0.8
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 652,
+    "LOD1": 158
+   },
+   "footprint_m": [
+    5.0,
+    1.6
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 2.5,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 2.6,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 60,
+    "LOD1_max": 200,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "large",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_kiosk_a",
+   "kind": "street_furniture",
+   "type": "kiosk",
+   "family": "hero_kiosk",
+   "variant": "a",
+   "label_tr": "Markasız küçük kiosk · tentesi, kepenkli",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_kiosk_a_lod0.glb",
+     "sha256": "2f923ab0e15e65789954ee7dbd10a3765f5afbf38bdb65b78bdf3facea3c6b85",
+     "tris": 486,
+     "aabb_m": {
+      "min": [
+       -1.2,
+       0.0,
+       -1.0476
+      ],
+      "max": [
+       1.2,
+       2.68,
+       0.9524
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_kiosk_a_lod1.glb",
+     "sha256": "1c3b4b2c7391b2684b82f0ecd77263c2dddb36033999ae211d6d673e0452f4c0",
+     "tris": 142,
+     "aabb_m": {
+      "min": [
+       -1.2,
+       0.0,
+       -1.0476
+      ],
+      "max": [
+       1.2,
+       2.68,
+       0.9524
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 486,
+    "LOD1": 142
+   },
+   "footprint_m": [
+    2.4,
+    2.0
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 1.2,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 2.68,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 60,
+    "LOD1_max": 200,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "large",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_lamp_street_a",
+   "kind": "street_furniture",
+   "type": "lamp_street",
+   "family": "hero_lamp_street",
+   "variant": "a",
+   "label_tr": "Sokak direği · tek kollu armatür gövdesi (ışıksız)",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_lamp_street_a_lod0.glb",
+     "sha256": "cc3062604783bcab046b99643f180a67748d35e66f96b06195fcf85f5fba7e1b",
+     "tris": 390,
+     "aabb_m": {
+      "min": [
+       -0.14,
+       0.0,
+       -0.14
+      ],
+      "max": [
+       1.53,
+       8.002,
+       0.14
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_lamp_street_a_lod1.glb",
+     "sha256": "24752e21b86e908f2225f20a52ce0ee3e125290ea17a58ba56e2bf5b95b5827b",
+     "tris": 94,
+     "aabb_m": {
+      "min": [
+       -0.14,
+       0.0,
+       -0.14
+      ],
+      "max": [
+       1.53,
+       8.0019,
+       0.14
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 390,
+    "LOD1": 94
+   },
+   "footprint_m": [
+    1.67,
+    0.28
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 1.53,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 8.002,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 80,
+    "LOD1_max": 300,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "lamp",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  },
+  {
+   "id": "fur_hero_planter_a",
+   "kind": "street_furniture",
+   "type": "planter",
+   "family": "hero_planter",
+   "variant": "a",
+   "label_tr": "Taş saksı · toprak ve çalı",
+   "generator": "art/blender/furniture/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/furniture/fur_hero_planter_a_lod0.glb",
+     "sha256": "5a3244ab38a282318f42961adc74c0e51558c8db22b85e4775c1af631f409c32",
+     "tris": 304,
+     "aabb_m": {
+      "min": [
+       -0.6,
+       0.0,
+       -0.6
+      ],
+      "max": [
+       0.6,
+       1.34,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/furniture/fur_hero_planter_a_lod1.glb",
+     "sha256": "ee3cd178ad855d4f11696f626764d49a4388b2a632f0da291d3a80f9b4a4fe95",
+     "tris": 158,
+     "aabb_m": {
+      "min": [
+       -0.6,
+       0.0,
+       -0.6
+      ],
+      "max": [
+       0.6,
+       1.34,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_furniture_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 304,
+    "LOD1": 158
+   },
+   "footprint_m": [
+    1.2,
+    1.2
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 0.6,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 1.34,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/furniture/furniture_atlas.png",
+    "sha256": "3a09de47c3f8f605052cf0420d499a0ca57964044def35193d69b10760579281",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_furniture_atlas",
+    "layout": "res://assets/hero/furniture/atlas_layout.json",
+    "layout_sha256": "284d6176719783812d0d459ab2ce4b7006dbbb2a7c1873b6237145162829805d"
+   },
+   "material_policy": {
+    "material": "mat_furniture_atlas",
+    "alpha_mode": "OPAQUE",
+    "double_sided": false,
+    "roughness": 1,
+    "specular": 0,
+    "metallic": 0,
+    "texture": "one opaque RGB atlas Texture2D shared by every furniture GLB"
+   },
+   "lod_distances_m": {
+    "LOD0_max": 40,
+    "LOD1_max": 150,
+    "beyond_lod1": "cull (no far proxy for small furniture)",
+    "distance_class": "small",
+    "status": "working-model-not-integrated",
+    "note": "working value, not an integration decision"
+   },
+   "q018": "open: furniture style / placement is not a user decision"
+  }
+ ]
+}

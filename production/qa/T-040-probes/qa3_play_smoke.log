@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+WORLD_PREVIEW {"buildings":{"buildings":54889,"cells":168,"drawn":54889,"dropped_water":0,"hlod1_nodes":168,"hlod1_tris_all":649668,"hlod2_tris_all":133650,"last_build_ms":3773.8,"last_plan_ms":159.0,"last_rebuilt_cells":168,"lod0_tris_all":11549596,"lod1_tris_all":1579446,"mmi_nodes":5286,"network_ms":5281.5,"parcels":37341,"settlement_ms":18484.2,"supers":26,"view_ms":4062.4},"cell_size_m":100.0,"control_load_ms":2.1,"post_terrain_ms":27875.2,"preset":"district","seed":1467,"sweep_frames":0,"terrain":{"chunk_cells":40,"chunk_size_m":4000.0,"chunks_x":10,"chunks_z":10,"data_ms":1315.5,"land_chunks":96,"land_triangles":199647,"land_vertices":598941,"lod_stride":1,"mesh_ms":79.8,"palette_ms":527.5,"threaded":true,"water_chunks":56,"water_triangles":126938},"terrain_build_ms":1923.0,"world_generate_ms":2451.5,"world_samples":160801}
+PLAYABLE {"sim_parcels":37341,"sim_setup_ms":7252.7,"t0_stock_parcels":24898}
+PLAYABLE_ACTION parsel [5359] → zone.mixed: queued
+PLAYABLE_LOAD_RESYNC ms=1189.1 resync=true rows=15 full_sync_ms=1183.6 parcel_reads=12857
+PLAYABLE_SAVE_LOAD OK tick=15 bytes=2534596 hash=3a8746372a585383766145fc9990ea4b28e0e2f9b8cbaa4eb1a81754fcfd2456
+PLAYABLE_SMOKE tick=31 events=912 frames=120 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=63 events=2692 frames=240 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=95 events=4603 frames=360 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=127 events=6137 frames=480 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=159 events=6732 frames=600 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=191 events=8322 frames=720 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=223 events=9498 frames=840 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=255 events=10057 frames=960 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=287 events=10221 frames=1080 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=319 events=10248 frames=1200 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=351 events=10283 frames=1320 avg_frame_ms=16.7 max_frame_ms=16.7
+PLAYABLE_SMOKE tick=383 events=10304 frames=1440 avg_frame_ms=16.7 max_frame_ms=16.7
+QA3_PLAY frames=1500 ticks=0->399 wall_ms=26763 frames_per_day p50=4 min=3 max=4 full_sync_frames=1030 full_syncs=1
+QA3_PLAY t0_view_rebuild_signals=0 sim_view_rebuilds=131 sim_cells_max_per_rebuild=4
+QA3_PLAY lag_days n=138 p50=1 p95=3 max=3 never=0 never_sample=[]
+QA3_PLAY end truth=138 shown=138 missing=0 extra=0 backlog=0 unplaced=18 reasons={ "t0_merged": 17, "lot_too_small": 1 } truth_unplaceable=18

@@ -1,51 +1,68 @@
 {
   "mode": "full",
-  "started_at": "2026-10-20T11:53:09Z",
-  "git_head": "de1835ab5cc469caaedbe2a5c115be20d4fc7d45",
-  "fingerprint": "c7584fb20c14e4592661b4b2fddfb33b68dcdeed75463d30d18af3d5df929faa",
+  "started_at": "2026-11-04T11:48:43Z",
+  "git_head": "c3d2f049116d852fced07464e124fb7bbf6df453",
+  "fingerprint": "aa13a8816238e210e99730176a44460a784107051462da33b987b98653f95d0a",
   "steps": [
     {
       "name": "canon-check",
       "status": "pass",
-      "seconds": 1,
+      "seconds": 0,
       "summary": "canon-check: 11/11 dosya manifestle eşleşiyor"
     },
     {
       "name": "studio-check",
       "status": "pass",
-      "seconds": 1,
+      "seconds": 3,
       "summary": "studio-check: 12 ajan, 17 skill, kurallar/hook/MCP sağlam "
+    },
+    {
+      "name": "area-map",
+      "status": "pass",
+      "seconds": 243,
+      "summary": "area-map: 65 kural, 19 çekirdek belirteci, src dizinlerinin hepsi eşli"
     },
     {
       "name": "gdlint",
       "status": "pass",
-      "seconds": 1,
+      "seconds": 55,
       "summary": "Success: no problems found"
     },
     {
       "name": "import",
       "status": "pass",
-      "seconds": 15,
+      "seconds": 26,
       "summary": "içe aktarma temiz"
     },
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 4,
-      "summary": "36 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 1694,
+      "summary": "2943 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",
       "status": "pass",
-      "seconds": 106,
+      "seconds": 230,
       "summary": "  PASS  CLAUDE_PROJECT_DIR ana checkout'u gösterse bile oturum cwd'si kullanılıyor  canon-guard testi: 105 PASS, 0 FAIL "
     },
     {
       "name": "runtime-smoke",
-      "status": "skip",
-      "seconds": 0,
-      "summary": "no main scene yet"
+      "status": "pass",
+      "seconds": 6,
+      "summary": "180 kare hatasız"
     }
   ],
-  "result": "pass"
+  "result": "pass",
+  "scope": "full",
+  "scope_label": "tam",
+  "base": "",
+  "base_kind": "",
+  "areas": [],
+  "suites_run": 0,
+  "suites_total": 0,
+  "suites_skipped": 0,
+  "tests_skipped_estimate": 0,
+  "skipped": "",
+  "full_verification": true
 }

@@ -1,0 +1,27 @@
+{
+	"schema": 1,
+	"_notes": "PE-02 yatirim cekilmesi/gelmemesi (political-events 5, M2 agenda). T-013 yatirimci karari henuz 'political_risk' etkeni tasimiyor: sert kosul son penceredeki gerekceli olumsuz yatirimci karari sayisidir (rapor: T-013'e entegrasyon istegi).",
+	"id": "PE-02", "category": "investment", "min_milestone": "M2",
+	"hard": [{"src": "investor.declines_recent", "op": ">=", "value": 1}],
+	"drivers": [
+		{"name": "council_instability", "src": "politics.council_instability", "lo": 200, "hi": 800, "weight": 300},
+		{"name": "policy_reversal_count", "src": "politics.reversals_180d", "lo": 1, "hi": 5, "weight": 300},
+		{"name": "unrest_level", "src": "politics.unrest", "lo": 200, "hi": 800, "weight": 200},
+		{"name": "permit_delay", "src": "politics.permit_delay_days", "lo": 3, "hi": 30, "weight": 200}
+	],
+	"weight": 350, "gamma": 1, "cooldown_days": 90, "rearm_below": 250, "mutex": ["investor_confidence"],
+	"affected": {"type": "region", "from": "trigger"},
+	"delivery": "agenda", "reason_key": "event.pe02.reason", "tone_tags": [], "cause": "investor_decline",
+	"options": [
+		{"id": "incentive", "verb": "grant_incentive", "label_key": "event.pe02.opt.incentive", "costs": {"budget": 400},
+			"effects": [
+				{"target": "investor.political_risk", "scope": "district", "magnitude": -200, "delay_days": 30, "duration_days": 270, "curve": "decay", "attribution": 1000}]},
+		{"id": "commit_zoning", "verb": "council_commit", "label_key": "event.pe02.opt.commit",
+			"requires": {"authority": "council_vote"},
+			"effects": [
+				{"target": "investor.political_risk", "scope": "district", "magnitude": -300, "delay_days": 60, "duration_days": 360, "curve": "linear", "attribution": 1000}]},
+		{"id": "defer", "verb": "defer", "label_key": "event.defer", "effects": []}
+	],
+	"stages": [],
+	"expiry_days": 180
+}

@@ -1,0 +1,1182 @@
+diff --git a/data/view/sim_building_mapping.json b/data/view/sim_building_mapping.json
+index d824cc2..fbee8e5 100644
+--- a/data/view/sim_building_mapping.json
++++ b/data/view/sim_building_mapping.json
+@@ -3,7 +3,6 @@
+ 	"schema_version": 1,
+ 	"units_per_floor": 1,
+ 	"max_buildings_per_parcel": 3,
+-	"progress_poll_days": 4,
+ 	"fallback_zone": "dense",
+ 	"uses": {
+ 		"_notes": "families: bu kullanım için izinli kit aileleri (yerleşim kuralındaki zone adaylarıyla kesişir; kesişim boşsa fallback_zone adayları denenir). ground_shop: true ise zemin kat dükkân varyantı (_gf, FLAG_GROUND_SHOP) zorunlu.",
+@@ -13,7 +12,7 @@
+ 	"_notes": [
+ 		"units_per_floor: parsel birimi / bu sayı = hedef toplam kat. playable.gd'deki T0 stok adaptörü ile AYNI sözleşme (stokta birim = kat sayısı); ekonomi birimi ile kit katı arasında yeni bir oran uydurulmaz (1).",
+ 		"max_buildings_per_parcel: bir parsele yan yana en çok bu kadar yapı (cephe şeridi tek sıra). Parsel sığdırabildiği kadarı yerleşir; sığmayan birim görsele yansımaz (sim sayısı yine gerçek veridir).",
+-		"progress_poll_days: planlı/durmuş projelerin yoklama aralığı (gün) ve hız bilinmeyen inşaatın yedek aralığı. İnşaatta sonraki okuma günü, kat kademesinin değişeceği günden (iki okumadan ilerleme hızı + SimBuildingPlacer.next_stage_progress) hesaplanır; olaylar (onay, başlama, durma, bitiş) anında işlenir. Kare başına iş bütçesi kodda (playable.gd SIM_SYNC_BUDGET_US).",
++		"Değişim kaynağı: SimFacade.parcel_changes_since (onay, başlama, durma/devam, bitiş feed'den gelir). Yalnız inşaattaki parselin kat kademesi (progress_pm feed dışıdır) iki okumadan hız kestirimiyle zamanlı okunur (SimBuildingPlacer.next_stage_progress). Kare başına iş bütçesi kodda (playable.gd SIM_SYNC_BUDGET_US).",
+ 		"İnşaat kademesi: kitte iskele/inşaat modülü YOK. Yapı, nihai modülün ailesindeki daha az katlı modüllerle (aynı ön cephe hizası, orta eksen) kat kademesi olarak gösterilir; tamamda nihai modül. Aile içinde daha küçük modül yoksa (tek katlı) nihai modül inşaat başlayınca görünür.",
+ 		"fallback_zone: parselin T0 bölge dokusu (zone_by_parcel) bulunamazsa ya da dokunun adayları kullanıma uymazsa (ör. sanayi avlusu + konut) kullanılan doku."
+ 	]
+diff --git a/production/tasks/T-040.md b/production/tasks/T-040.md
+index 363adc3..1073eba 100644
+--- a/production/tasks/T-040.md
++++ b/production/tasks/T-040.md
+@@ -87,3 +87,9 @@ HUD sonuç paneli (ölçüt 5/6 gösterimi) BU turun işi DEĞİL: `playable.gd`
+ - **Yakalamalar (pencereli `tools/capture.sh`, tek Godot, 1600x900; `--demo --preset=district:D1 --m2-isolate --m2-batch=8 --m2-focus-new --m2-pause --m2-open-results`; yol `artifacts/screenshots/captures/`):** `20261021-224824-m2-t040-hud-pending.png` (`--m2-advance=41`: Parsel 5359 "Yürürlükte: Karma", "Yatırım yaptı (1. yıl, 23. gün)", "İnşaat sürüyor · Konut · 3 birim", ilerleme %16, "Öneri verilen 8 parsel: 7 yatırım aldı, 1 vazgeçildi", Bölge D1 yeni konut 0/yapımı süren 20 konut, Yatırım onayı +7 / reddi +1, "Belediye geliri: Henüz kurulmadı", Siyasi tepki: Grup 1 "Karşı çıkıyor" şiddet %40) ve `20261021-224917-m2-t040-hud-result.png` (`--m2-advance=121`: "Yapıldı · %100", yeni konut +20, tamamlanan proje +7, kira geliri +366 ¤, Grup 1 "Protesto ediyor" şiddet %48). Ek: `…-224711-m2-t040-hud-pending.png` (ilk sürüm, sıkıştırma öncesi), `…-225057-m2-t040-hud-result-1024x768.png` (masaüstü profil 1024 genişlik), `…-225015-m2-t040-hud-result-480x900.png` (masaüstü profil 480: yan panel genişlikçe %28 = 134 px, OKUNMUYOR; olay şeridi de bozuk — mevcut HudLayout sınırı, 480 px gerçek hedef dokunmatik dikey/alt sayfa), `…-225158/225242-…-touch-*.png` (aşağıdaki gözlem).
+ - **Görüntüde görülen:** metinler okunur ve çakışmasız (1600 ve 1024 genişlik); ham anahtar yok; sayılar başsız testte sim ile birebir doğrulanan aynı kod yolundan gelir (pencereli görüntüdeki sayılar ayrıca sim'e karşı elle karşılaştırılmadı); alt kısımdaki siyasi bölüm 900 px yükseklikte panel kaydırmasının altında (ilk grup satırı görünür).
+ - **Doğrulanmadı / gözlenen sorun:** (1) fiziksel iPad dokunması; dokunmatik yerleşim yalnız başsız düzen testleriyle. (2) macOS'ta `--imaro-input-profile=touch` + pencereli yakalamada HUD kendi başına bozuk (araç çubuğu görünmüyor, üst şerit 1252 px): `UiSafeArea.insets_from` Retina ekran/pencere piksel uyuşmazlığından yanlış güvenli alan alıyor — panelden bağımsız (panelsiz çıplak sahnede de aynı: `…-225429-m2-t040-dbg-touch-bare.png`); cihazda gerçek güvenli alanla doğrulanmadı, ayrı hata olarak ele alınmalı. (3) Masaüstü profil 480 px genişlikte yan panel kullanılamaz (mevcut HudLayout; dokunmatik dikey alt sayfa kipi bunu çözer). (4) Gerçek fare/dokunma ile elle denenmedi; girdi testleri sentetik `push_input`. (5) Bölge/hane farkı: dev `--m2-advance` yolunda başlangıç null (hane farkı gösterilmez); oyuncu akışında öneri anındaki başlangıç alınır (başsız testte doğrulandı, pencerede elle değil). (6) `smoke_playable.sh` koşulmadı. (7) Tek yatırımcı kararı ayrıntısı en çok 12 parselde; kalanlar yalnız sayılmaz.
++
++### HUD 3. tur (ui-engineer, 2026-10-22) — B-001 düzeltmesi (ölçüt 2'nin HUD payı)
++- Model: `src/ui/flows/m2_result_model.gd` karar bilgisini `ParcelView.decision/decision_code/decision_tick/decision_reason_id` alanlarından okur (günlük dönse de doğru); `reasons_for` ve faktörden ret nedeni türetme kaldırıldı (`cause_of_code`). `build(..., proposed_tick)`; `src/ui/flows/m2_results.gd` `proposed_tick` saklar (`track_parcels(ids, submitted_tick=-1)`).
++- Panel metinleri (`data/ui/strings.tr.json`): "Yatırım yaptı/Vazgeçti ({date})" + "Neden: …" ← `decision_code`; `reason_id>0` → "Nedenini gör"; `==0` → "Karar verildi — gerekçe kaydı kapasite nedeniyle budandı" (düğme yok); öneri öncesi → "Önceki değerlendirme (öneriden önce):" + "Yatırımcı öneriyi henüz değerlendirmedi"; özet yalnız öneri sonrası kararları sayar.
++- Testler: yeni `tests/ui/m2_result_default_regime_test.gd` (4) + güncellenen `m2_result_panel_test.gd`; `tools/lane.sh verify ux` 249/249; mutasyonla doğrulandı. Pencereli yakalamalar (varsayılan rejim): `…-m2-b001-fix-d30.png`, `…-m2-b001-fix-d60.png` (artifacts/screenshots/captures/20261022-0133xx/0134xx). Ayrıntı: production/bugs/B-001.md "Düzeltme".
++- Doğrulanmayan: fiziksel dokunma; gerçek pencerede düğme tıklaması; `verify playable` paralel render işine bağlı kırık.
+diff --git a/src/game/playable.gd b/src/game/playable.gd
+index e2ced95..a26aa9e 100644
+--- a/src/game/playable.gd
++++ b/src/game/playable.gd
+@@ -29,10 +29,6 @@ const NETWORK_PATH := "res://data/world/ismeral/network.json"
+ const DEMO_LAND_USE := &"zone.mixed"
+ ## Demo hedefi seçerken "bu parsele makul bir yapı sığar mı" sorusunun varsayılan birimi (sim gerçeğini kendisi verir).
+ const DEMO_PROBE_UNITS := 3
+-## Kare başına projector dilim bütçesi (µs): tick'li karede iş yapılmaz, sonraki karelere yayılır (T-040 ölçüt 10).
+-const SIM_SYNC_BUDGET_US := 1200
+-## Projector bu kadar sim günü geride kalırsa tick'li karede de dilim yürütülür.
+-const MAX_SYNC_BACKLOG_DAYS := 6
+ ## `--m2-advance` adım uzunluğu (gün): her adımdan sonra projector senkronlanır.
+ const M2_ADVANCE_STEP_DAYS := 1
+ const NOTE := "WASD/oklar: kaydır | Q/E: döndür | tekerlek/trackpad: yakınlaş | Boşluk: duraklat/sürdür\n" \
+@@ -56,7 +52,7 @@ var _settlement: SettlementResult = null
+ var _kit: BuildingKit = null
+ var _sim_buildings: BuildingView = null
+ var _projector: SimBuildingProjector = null
+-var _view_version: int = 0
++var _pump: SimBuildingPump = null
+ var _t0_occupied: Dictionary = {}
+ var _m2_target: int = -1
+ var _m2_targets: PackedInt64Array = PackedInt64Array()
+@@ -154,6 +150,8 @@ func _start_sim() -> void:
+ 	_projector = SimBuildingProjector.create(_facade, _settlement, SimBuildingMapping.load_default(), _world.world_seed)
+ 	if _projector == null:
+ 		push_error("playable: SimBuildingProjector kurulamadı; sim yapıları çizilmeyecek")
++	else:
++		_pump = SimBuildingPump.create(_projector)
+ 	sim_stats["sim_parcels"] = source.parcel_count()
+ 	sim_stats["t0_stock_parcels"] = stock.parcel_ids().size()
+ 
+@@ -272,34 +270,22 @@ func _m2_target_report(days: int) -> String:
+ 
+ ## Sim durumundan türeyen yapıları ikinci görünüme yansıtır. Sim'e yazmaz. İKİ kip:
+ ##  - `full = true` (dev `--m2-advance` adımları): bütçesiz tam senkron + görünüm kurulumu.
+-##  - `full = false` (kare yolu): KARE BAŞINA TEK iş: bekleyen sütunlar varsa görünümü kurar (`set_columns`), yoksa
+-##    projector'ın bütçeli dilimini (`SIM_SYNC_BUDGET_US`) yürütür. Tick'li karede sim zaten ağırdır: iş sonraki
+-##    karelere yayılır (kuyruk boşalana dek). `--m2-log` her görünüm kurulumunu yazdırır.
+-func _sync_sim_buildings(full: bool = false) -> void:
++##  - `full = false` (kare yolu): iş dağıtımı `SimBuildingPump`ta (testlerle ORTAK kural): tick'li karede iş yok, bekleyen
++##    sütun varsa görünüm kurulumu, aksi halde projector'ın bütçeli dilimi; geride kalındıkça bütçe büyür.
++##    `--m2-log` her görünüm kurulumunu yazdırır.
++func _sync_sim_buildings(full: bool = false, ticked: bool = false) -> void:
+ 	if _projector == null or _sim_buildings == null or _args.has("no-sim-buildings"):
+ 		return
+ 	var t_all := Time.get_ticks_usec()
+ 	var worked := false
+ 	if full:
+ 		_projector.sync()
++		if _pump.view_pending():
++			_apply_sim_view(_projector.columns(), _projector.version())
++			_pump.mark_view_version(_projector.version())
+ 		worked = true
+-	if _projector.version() != _view_version:
+-		var t0 := Time.get_ticks_usec()
+-		var res := _sim_buildings.set_columns(_projector.columns(), _projector.version())
+-		var view_ms := (Time.get_ticks_usec() - t0) / 1000.0
+-		_view_version = _projector.version()
+-		worked = true
+-		sim_stats["sim_buildings"] = _projector.columns().count
+-		sim_stats["view_ms_sum"] = float(sim_stats.get("view_ms_sum", 0.0)) + view_ms
+-		sim_stats["view_n"] = int(sim_stats.get("view_n", 0)) + 1
+-		if not bool(res.get("ok", false)):
+-			push_error("playable: sim yapı sütunları reddedildi: %s" % str(res.get("errors")))
+-		if _args.has("m2-log"):
+-			print("PLAYABLE_SIMBLD tick=%d rows=%d rebuilt_cells=%s view_ms=%.2f backlog=%d" % [
+-					_facade.current_tick(), _projector.columns().count, str(res.get("rebuilt", -1)), view_ms,
+-					_projector.backlog_ticks()])
+-	elif not full:
+-		worked = bool(_projector.step(SIM_SYNC_BUDGET_US).get("worked", false))
++	else:
++		worked = bool(_pump.frame(ticked, _apply_sim_view).get("worked", false))
+ 	if not worked:
+ 		return
+ 	var total_ms := (Time.get_ticks_usec() - t_all) / 1000.0
+@@ -307,27 +293,46 @@ func _sync_sim_buildings(full: bool = false) -> void:
+ 	sim_stats["sync_ms_sum"] = float(sim_stats.get("sync_ms_sum", 0.0)) + total_ms
+ 	sim_stats["sync_ms_max"] = maxf(float(sim_stats.get("sync_ms_max", 0.0)), total_ms)
+ 	# perf_probe raporu (`scene_build_stats`) için: işli karelerin sayısı/ortalaması/azami süresi (projector dilimi VEYA
+-	# görünüm kurulumu; kare başına tek iş), görünüm kurulumu ve kuyruk derinliği.
++	# görünüm kurulumu), görünüm kurulumu ve kuyruk derinliği.
+ 	var vn := maxi(int(sim_stats.get("view_n", 0)), 1)
+ 	build_stats["sim_sync"] = {"n": sim_stats["sync_n"],
+ 			"avg_ms": snappedf(float(sim_stats["sync_ms_sum"]) / int(sim_stats["sync_n"]), 0.01),
+ 			"max_ms": snappedf(float(sim_stats["sync_ms_max"]), 0.01),
+ 			"view_builds": int(sim_stats.get("view_n", 0)),
+ 			"view_avg_ms": snappedf(float(sim_stats.get("view_ms_sum", 0.0)) / vn, 0.01),
+-			"audits": int(_projector.stats.get("full_scans", 0)), "rows": _projector.columns().count,
++			"full_syncs": int(_projector.stats.get("full_syncs", 0)), "rows": _projector.columns().count,
++			"stage_polls": int(_projector.stats.get("stage_polls", 0)),
++			"unplaced": _projector.unplaced_count(),
+ 			"windows": int(_projector.stats.get("windows", 0)),
+ 			"parcel_reads": int(_projector.stats.get("parcel_reads", 0)),
+ 			"backlog_max": int(_projector.stats.get("backlog_max", 0)),
+ 			"step_max_ms": snappedf(float(_projector.stats.get("step_ms_max", 0.0)), 0.01),
+ 			"begin_max_ms": snappedf(float(_projector.stats.get("begin_ms_max", 0.0)), 0.01),
+-			"events_unit_max_ms": snappedf(float(_projector.stats.get("events_ms_max", 0.0)), 0.01),
+ 			"views_unit_max_ms": snappedf(float(_projector.stats.get("views_ms_max", 0.0)), 0.01),
++			"read_ms": snappedf(float(_projector.stats.get("read_us", 0)) / 1000.0, 0.1),
++			"apply_ms": snappedf(float(_projector.stats.get("apply_us", 0)) / 1000.0, 0.1),
+ 			"plan_n": int(_projector.stats.get("plan_n", 0)),
+ 			"plan_max_ms": snappedf(float(_projector.stats.get("plan_ms_max", 0.0)), 0.01),
+-			"plan_avg_ms": snappedf(float(_projector.stats.get("plan_ms_sum", 0.0))
++			"plan_avg_ms": snappedf(float(_projector.stats.get("plan_us", 0)) / 1000.0
+ 					/ maxi(int(_projector.stats.get("plan_n", 0)), 1), 0.01)}
+ 
+ 
++## Projector sütunlarını ikinci BuildingView'a kurar (`SimBuildingPump` çağırır).
++func _apply_sim_view(columns: BuildingColumns, version: int) -> void:
++	var t0 := Time.get_ticks_usec()
++	var res := _sim_buildings.set_columns(columns, version)
++	var view_ms := (Time.get_ticks_usec() - t0) / 1000.0
++	sim_stats["sim_buildings"] = columns.count
++	sim_stats["view_ms_sum"] = float(sim_stats.get("view_ms_sum", 0.0)) + view_ms
++	sim_stats["view_n"] = int(sim_stats.get("view_n", 0)) + 1
++	if not bool(res.get("ok", false)):
++		push_error("playable: sim yapı sütunları reddedildi: %s" % str(res.get("errors")))
++	if _args.has("m2-log"):
++		print("PLAYABLE_SIMBLD tick=%d rows=%d rebuilt_cells=%s view_ms=%.2f backlog=%d" % [
++				_facade.current_tick(), columns.count, str(res.get("rebuilt", -1)), view_ms,
++				_projector.backlog_ticks()])
++
++
+ func _process(delta: float) -> void:
+ 	super._process(delta)
+ 	if _facade == null:
+@@ -338,11 +343,9 @@ func _process(delta: float) -> void:
+ 	_max_ms = maxf(_max_ms, delta * 1000.0)
+ 	var tick_before := _facade.current_tick()
+ 	_facade.drive_usec(int(delta * 1000000.0))
+-	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır; kuyruk çok derinleşirse (yavaş kareler)
+-	# tick'li karede de bir dilim yürür (sonsuz birikme yok).
+-	var behind := _projector != null and _projector.backlog_ticks() > MAX_SYNC_BACKLOG_DAYS
+-	if _facade.current_tick() == tick_before or behind:
+-		_sync_sim_buildings()
++	# Tick'li karede sim zaten ağır: yapı senkronu sonraki karelere yayılır (SimBuildingPump kuralı); kuyruk çok
++	# derinleşirse (yavaş kareler) tick'li karede de iş yürür (sonsuz birikme yok).
++	_sync_sim_buildings(false, _facade.current_tick() != tick_before)
+ 	if _facade.current_tick() != _seen_tick:
+ 		_seen_tick = _facade.current_tick()
+ 		if _hud != null:
+@@ -372,9 +375,10 @@ func _process(delta: float) -> void:
+ 	if _args.has("quit-after") and _frames >= maxi(1, int(str(_args["quit-after"]))):
+ 		var n := int(sim_stats.get("sync_n", 0))
+ 		if n > 0:
+-			print("PLAYABLE_SIMBLD_SYNC n=%d avg_ms=%.2f max_ms=%.2f rows=%d audits=%d" % [n,
++			print("PLAYABLE_SIMBLD_SYNC n=%d avg_ms=%.2f max_ms=%.2f rows=%d full_syncs=%d unplaced=%d %s" % [n,
+ 					float(sim_stats["sync_ms_sum"]) / n, float(sim_stats["sync_ms_max"]),
+-					_projector.columns().count, int(_projector.stats.get("full_scans", 0))])
++					_projector.columns().count, int(_projector.stats.get("full_syncs", 0)),
++					_projector.unplaced_count(), JSON.stringify(_projector.unplaced_reason_counts())])
+ 		print("PLAYABLE_QUIT frames=%d tick=%d" % [_frames, _facade.current_tick()])
+ 		get_tree().quit()
+ 
+diff --git a/src/view/buildings/sim_building_mapping.gd b/src/view/buildings/sim_building_mapping.gd
+index 0fc4560..cf7ac8b 100644
+--- a/src/view/buildings/sim_building_mapping.gd
++++ b/src/view/buildings/sim_building_mapping.gd
+@@ -8,8 +8,6 @@ const DEFAULT_PATH := "res://data/view/sim_building_mapping.json"
+ 
+ var units_per_floor: int = 1
+ var max_buildings: int = 3
+-## Devam eden inşaatların ilerleme yoklama dönemi (gün): her gün 1/dönem kadarı okunur.
+-var progress_poll_days: int = 4
+ var fallback_zone: StringName = &"dense"
+ ## Kullanım adı (String) -> {"families": PackedStringArray, "ground_shop": bool}.
+ var uses: Dictionary = {}
+@@ -28,7 +26,6 @@ static func from_dict(d: Dictionary) -> SimBuildingMapping:
+ 		return m
+ 	m.units_per_floor = maxi(1, int(d.get("units_per_floor", 1)))
+ 	m.max_buildings = clampi(int(d.get("max_buildings_per_parcel", 3)), 1, 8)
+-	m.progress_poll_days = maxi(1, int(d.get("progress_poll_days", 4)))
+ 	m.fallback_zone = StringName(str(d.get("fallback_zone", "dense")))
+ 	var uses_in: Dictionary = d.get("uses", {})
+ 	for key: String in uses_in:
+diff --git a/src/view/buildings/sim_building_placer.gd b/src/view/buildings/sim_building_placer.gd
+index 5d684fd..bc363c2 100644
+--- a/src/view/buildings/sim_building_placer.gd
++++ b/src/view/buildings/sim_building_placer.gd
+@@ -17,6 +17,19 @@ const SHORE_FAST_PATH_M := 150.0
+ const FIT_EPS := 1.0e-4
+ const FULL := 1000
+ 
++## `plan_failure()` kodları (yerleşememe nedeni; HUD/rapor için sayısal gruplama).
++const FAIL_NONE := &""
++const FAIL_UNKNOWN_USE := &"unknown_use"
++const FAIL_NO_PARCEL := &"no_parcel"
++## Çok parselli T0 yapısına katılmış parsel (T0 geometrisi zaten o parseli kaplıyor).
++const FAIL_T0_MERGED := &"t0_merged"
++const FAIL_NO_LOT := &"no_lot"
++const FAIL_NO_CANDIDATES := &"no_candidates"
++## Hiçbir kit modülü parselin cephe/derinlik/geri çekilme sınırına sığmıyor.
++const FAIL_LOT_TOO_SMALL := &"lot_too_small"
++## Sığan modül var ama ayak izi su/eğim/meydan denetiminden geçmedi.
++const FAIL_SITE_BLOCKED := &"site_blocked"
++
+ var _net: WorldNetwork
+ var _world: WorldData
+ var _rules: SettlementRules
+@@ -30,6 +43,13 @@ var _back_margin: float = 0.6
+ var _max_slope_deg: float = 14.0
+ var _cand_cache: Dictionary = {}
+ var _family_cache: Dictionary = {}
++var _fail: StringName = FAIL_NONE
++## `_pack` sırasında: geometrik olarak sığıp site denetiminde elenen modül görüldü mü.
++var _site_blocked: bool = false
++## true: ilk iki deneme başarısızsa EK denemeler (hedef katı sığan en uzun modüle indirme; zonun geri çekme aralığındaki en
++## sığ değer). Sığdırma kuralları (sınır, geri çekme aralığı, site denetimi) GEVŞETİLMEZ; daha önce yerleşenlerin sonucu
++## değişmez. false: yalnız eski iki deneme (karşılaştırma/ölçüm için).
++var extra_attempts: bool = true
+ 
+ 
+ ## Parsel için hesaplanmış nihai yerleşim (parça listesi); ilerleme `rows_for` ile uygulanır.
+@@ -108,35 +128,63 @@ static func create(settlement: SettlementResult, mapping: SimBuildingMapping, wo
+ 	return p
+ 
+ 
++## Son `plan()` çağrısı null döndüyse nedeni (`FAIL_*`); başarılıysa `FAIL_NONE`.
++func plan_failure() -> StringName:
++	return _fail
++
++
+ ## Parsel + kullanım + birim için nihai yerleşim; yerleşemiyorsa (parsel yok, çok parselli T0 yapısına katılmış,
+-## meydan, su/eğim, hiçbir modül sığmıyor) null.
++## meydan, su/eğim, hiçbir modül sığmıyor) null ve nedeni `plan_failure()`.
+ func plan(parcel_id: int, use: StringName, units: int) -> Plan:
++	_fail = FAIL_NONE
+ 	if units < 1 or not _mapping.knows(use):
++		_fail = FAIL_UNKNOWN_USE
+ 		return null
+ 	var parcel: WorldParcel = _net.parcels.get(parcel_id)
+-	if parcel == null or _consumed.has(parcel_id):
++	if parcel == null:
++		_fail = FAIL_NO_PARCEL
++		return null
++	if _consumed.has(parcel_id):
++		_fail = FAIL_T0_MERGED
+ 		return null
+ 	var lot := SettlementLot.from_parcel(parcel)
+ 	if lot == null:
++		_fail = FAIL_NO_LOT
+ 		return null
+ 	var zone := _zone_with_candidates(parcel_id, use)
+ 	if zone == null:
+ 		zone = _rules.zone(_mapping.fallback_zone)
+ 		if zone == null:
++			_fail = FAIL_NO_CANDIDATES
+ 			return null
++	var seed_text := "sim_building.%d.%s.%d" % [_seed, String(use), units]
+ 	var rng := RandomNumberGenerator.new()
+-	rng.seed = NetworkRules.stream_seed(parcel.detail, "sim_building.%d.%s.%d" % [_seed, String(use), units])
++	rng.seed = NetworkRules.stream_seed(parcel.detail, seed_text)
+ 	var v0 := rng.randf_range(zone.setback_min, zone.setback_max)
+-	var cand := _candidates(zone, use)
+-	var result := _pack(parcel_id, use, units, lot, zone, cand, v0, rng)
++	_site_blocked = false
++	var zone_cands := _candidates(zone, use)
++	var result := _pack(parcel_id, use, units, lot, zone, zone_cands, v0, rng)
+ 	if result == null:
+ 		# Doku adayları bu parsele sığmadı: kullanıma uyan TÜM kit modülleri (küçük ev/dükkân dahil) denenir.
+ 		result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), v0, rng)
++	if result == null and extra_attempts:
++		# Sim'in birimi en uzun modülden çok büyükse (kat tercihi ağırlığı sıfıra çöker) hedef kat sığan en uzun modüle
++		# indirilir: geometri/site kuralları aynı, yalnız yumuşak tercih.
++		result = _pack(parcel_id, use, units, lot, zone, zone_cands, v0, rng, true)
++		if result == null:
++			result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), v0, rng, true)
++	if result == null and extra_attempts and v0 > zone.setback_min + 1.0e-6:
++		# Rastgele çekilen geri çekme sığ parseli kaçırmış olabilir: kural aralığının en sığ değeri (rastgelelik
++		# kullanılmaz: sonuç yine yalnız dünya + tohum + parsel + kullanım + birime bağlıdır).
++		rng.seed = NetworkRules.stream_seed(parcel.detail, seed_text + ".min_setback")
++		result = _pack(parcel_id, use, units, lot, zone, _all_candidates(use), zone.setback_min, rng, true)
++	if result == null:
++		_fail = FAIL_SITE_BLOCKED if _site_blocked else FAIL_LOT_TOO_SMALL
+ 	return result
+ 
+ 
+ func _pack(parcel_id: int, use: StringName, units: int, lot: SettlementLot, zone: SettlementZone, cand: Dictionary,
+-		v0: float, rng: RandomNumberGenerator) -> Plan:
++		v0: float, rng: RandomNumberGenerator, cap_target: bool = false) -> Plan:
+ 	var mods: Array[SettlementModule] = cand["mods"]
+ 	var weights: PackedFloat32Array = cand["weights"]
+ 	var target_total := maxi(1, units / _mapping.units_per_floor)
+@@ -147,19 +195,27 @@ func _pack(parcel_id: int, use: StringName, units: int, lot: SettlementLot, zone
+ 	result.lot = lot
+ 	var cursor := -INF
+ 	var placed_floors := 0
++	var spans := _spans(lot, mods, v0)   # imleç/kalan kat bağımsız: bir kez
+ 	while result.pieces.size() < _mapping.max_buildings and placed_floors < target_total:
+ 		var remaining := target_total - placed_floors
+ 		var opt_idx: Array[int] = []
+ 		var opt_u: Array[float] = []
+ 		var opt_w := PackedFloat32Array()
++		var fit_idx: Array[int] = []
++		var fit_u: Array[float] = []
+ 		for ci in mods.size():
+ 			var m := mods[ci]
+-			var span := usable(lot, m, v0)
++			var span := spans[ci]
+ 			if span.x > span.y:
+ 				continue
+ 			var u0 := maxf(span.x, cursor)
+-			if u0 + m.w > span.y + FIT_EPS or not site_ok(lot, m, u0, v0):
++			if u0 + m.w > span.y + FIT_EPS:
+ 				continue
++			if not site_ok(lot, m, u0, v0):
++				_site_blocked = true
++				continue
++			fit_idx.append(ci)
++			fit_u.append(u0)
+ 			var df := (float(m.floors) - float(remaining)) / zone.floors_sigma
+ 			var w := weights[ci] * exp(-0.5 * df * df)
+ 			if w <= 1.0e-6:
+@@ -167,6 +223,22 @@ func _pack(parcel_id: int, use: StringName, units: int, lot: SettlementLot, zone
+ 			opt_idx.append(ci)
+ 			opt_u.append(u0)
+ 			opt_w.append(w)
++		if cap_target and opt_idx.is_empty() and result.pieces.is_empty() and not fit_idx.is_empty():
++			# Sığan modül var ama kat tercihi ağırlığı sıfıra çöktü (sim'in birimi en uzun modülden çok büyük:
++			# 5 hektarlık tarla parseline 267 birim): hedef kat, sığan en uzun modüle indirilir. Yalnız İLK parça ve
++			# yalnız önceki denemeler başarısızsa (`plan`); daha önce yerleşebilen hiçbir parselin sonucu değişmez.
++			# Geometri/site kuralları aynı.
++			var tallest := 0
++			for ci in fit_idx:
++				tallest = maxi(tallest, mods[ci].floors)
++			for k in fit_idx.size():
++				var ci := fit_idx[k]
++				var df2 := (float(mods[ci].floors) - float(tallest)) / zone.floors_sigma
++				var w2 := weights[ci] * exp(-0.5 * df2 * df2)
++				if w2 > 1.0e-6:
++					opt_idx.append(ci)
++					opt_u.append(fit_u[k])
++					opt_w.append(w2)
+ 		if opt_idx.is_empty():
+ 			break
+ 		var pick := _weighted(opt_w, rng)
+@@ -205,6 +277,19 @@ func rows_for(p: Plan, progress_pm: int) -> Array[Row]:
+ 	return out
+ 
+ 
++## Görünen kat kademesinin imzası (parça başına hedef kat; tamamda nihai kat). Aynı imza => aynı satırlar: ilerleme
++## aşama içinde değişse de satır üretimi (pahalı) gerekmez. `rows_for` ile aynı hedef formülü.
++func stage_key(p: Plan, progress_pm: int) -> String:
++	var parts := PackedStringArray()
++	for piece in p.pieces:
++		var f := piece.module.floors
++		var target := f
++		if progress_pm < FULL and f > 1:
++			target = clampi((f * maxi(progress_pm, 0) + FULL - 1) / FULL, 1, f - 1)
++		parts.append(str(target))
++	return ",".join(parts)
++
++
+ ## İlerleme `progress_pm`'den SONRA, görünen kat hedefinin değişeceği ilk ilerleme (‰; en çok FULL). Yoklama zamanlaması
+ ## için: kademe değişmeden satırlar değişmez, parsel okunmasına gerek yoktur.
+ func next_stage_progress(p: Plan, progress_pm: int) -> int:
+@@ -227,6 +312,28 @@ func usable(lot: SettlementLot, m: SettlementModule, v0: float) -> Vector2:
+ 	var front := lot.interval_at(v0 + FRONT_PROBE_M)
+ 	var rear := lot.interval_at(v0 + m.d)
+ 	var mid := lot.interval_at(minf(v0 + MID_PROBE_M, back))
++	return _span_from(front, rear, mid)
++
++
++## `usable`ın modül listesi için toplu hâli: ön/orta kesitler modülden bağımsızdır (bir kez), arka kesit derinliğe göre
++## önbelleklenir. Sonuç `usable` ile bit-bit aynıdır.
++func _spans(lot: SettlementLot, mods: Array[SettlementModule], v0: float) -> Array[Vector2]:
++	var back := lot.v_max - _back_margin
++	var front := lot.interval_at(v0 + FRONT_PROBE_M)
++	var mid := lot.interval_at(minf(v0 + MID_PROBE_M, back))
++	var rear_by_depth := {}
++	var out: Array[Vector2] = []
++	for m in mods:
++		if v0 + m.d > back:
++			out.append(Vector2(INF, -INF))
++			continue
++		if not rear_by_depth.has(m.d):
++			rear_by_depth[m.d] = lot.interval_at(v0 + m.d)
++		out.append(_span_from(front, rear_by_depth[m.d], mid))
++	return out
++
++
++func _span_from(front: Vector2, rear: Vector2, mid: Vector2) -> Vector2:
+ 	if front.x > front.y or rear.x > rear.y or mid.x > mid.y:
+ 		return Vector2(INF, -INF)
+ 	return Vector2(maxf(maxf(front.x, rear.x), mid.x) + _margin, minf(minf(front.y, rear.y), mid.y) - _margin)
+diff --git a/src/view/buildings/sim_building_projector.gd b/src/view/buildings/sim_building_projector.gd
+index b5a1996..93b49dd 100644
+--- a/src/view/buildings/sim_building_projector.gd
++++ b/src/view/buildings/sim_building_projector.gd
+@@ -1,95 +1,89 @@
+ class_name SimBuildingProjector
+ extends RefCounted
+-## Sim aşaması -> BuildingColumns (T-040; CAN-03, WLD-01). Render tarafı: sim'e YAZMAZ, yalnız `SimFacade` okur
+-## (`events_since`, `parcel_views`, `economy_outcome`). Oyuncu girdisi bu sınıfa hiçbir yoldan ulaşmaz; yapı satırı
++## Sim aşaması -> BuildingColumns (T-040, B-002; CAN-03, WLD-01). Render tarafı: sim'e YAZMAZ, yalnız `SimFacade` okur
++## (`parcel_changes_since`, `parcel_views`, `parcel_ids`). Oyuncu girdisi bu sınıfa hiçbir yoldan ulaşmaz; yapı satırı
+ ## kaynağı yalnız sim'in `ParcelView`'ıdır (`developed_by_sim` + `development` + `use` + `units` + `progress_pm`).
+ ##
+ ## Projeksiyon kuralı: yalnız `developed_by_sim` ve development in {under_construction, built, stalled}.
+ ## vacant/planned/declined için yapı YOK; stalled'da sim'in dondurduğu ilerlemedeki yapı; T0 stoku
+ ## (`developed_by_sim == false`) için satır üretilmez (T0 yapıları zaten T0 BuildingColumns'tadır).
+ ##
+-## İş modeli (kare maliyeti, T-040 ölçüt 10): sync bir PENCERE (sim günü) işidir ve küçük DİLİMLERE bölünür; sahne
+-## her karede `step(bütçe_us)` çağırır, tick'li karede iş yapılmaz (yalnız sonraki karelerde sürer). Dilimler:
+-## olay okuma (24 olay), parsel okuma (10 parsel), sütun kurma. `sync(exact)` aynı işi bütçesiz bitirir (test/dev).
+-## Okunacak parseller: onay olayları + zamanı gelen devam eden projeler. Zaman, kat kademesinin değişeceği günden
+-## tahmin edilir (ilerleme hızı iki okumadan; `SimBuildingPlacer.next_stage_progress`): kademe değişmeden parsel
+-## okunmaz. Kare yolunda tüm parsellerin taranması YOK; gizlenen onaylar (aşağıda) için dilimli denetim vardır.
+-## Çıktı yoldan bağımsızdır: parsel kimliğine göre sıralı satırlar; `sync(true)` sonrası aynı sim durumu -> aynı sütun.
++## DEĞİŞİM KAYNAĞI (ADR-0005 Ek D, B-002): `SimFacade.parcel_changes_since(tick)`. Olay günlüğüne, onay sayacına ya da
++## tam taramaya BAKILMAZ; olay saklama ufku burada hiçbir şey gizleyemez. Protokol (`ParcelChangeFeed`):
++##  1. İlk bağlanma: `parcel_changes_since(-1)` TAM ise yalnız o kimlikler okunur (yeni oyun: ~hiç); değilse TEK tam
++##     eşitleme (T0 dışı tüm parseller, dilimli).
++##  2. Sonra her yeni sim gününde `parcel_changes_since(son_up_to_tick)`: yalnız değişen kimlikler okunur.
++##  3. `not feed.complete` ya da `feed.epoch` değişti (kayıt yüklendi / geri sarma / geçmiş bilinmiyor) => TEK tam
++##     eşitleme, sonra yine yalnız feed.
++## Feed kapsamı DIŞI olan tek alan `progress_pm`dir (aşama içinde her gün ilerler): inşaattaki parseller için kat
++## kademesinin değişeceği gün iki okumadan tahmin edilir (`SimBuildingPlacer.next_stage_progress`) ve yalnız o gün
++## okunur. Planlı/durmuş parseller yoklanmaz (ilerleme donuk; başlama/durma/devam feed'de).
+ ##
+-## Sim'in olay saklama ufku kuralı (ADR-0005 §5): eski gerekçeye işaret eden TAMAMLANMA olayı öncesini gizler; aynı
+-## penceredeki yeni ONAYLAR da kaybolabilir. Onay sayacı (`economy_outcome().investments_approved`) görülen onay
+-## olaylarından büyükse eksik kadar parsel dilimli denetim taramasıyla aranır (en çok MAX_AUDIT_PASSES geçiş).
+-
+-enum Phase { IDLE, EVENTS, VIEWS }
+-
+-const SUBJECT_PREFIX := "parcel."
+-const KIND_DECIDED := &"actor.decided"
+-const KIND_CHANGED := &"parcel.changed"
+-## Yapı durumunu değiştirmeyen karar olayı (vacant parsel vacant kalır): parsel okunmaz. Günlüğü baskın olay türü.
+-const MSG_DECLINED := &"event.investor.declined"
+-const MSG_APPROVED := &"event.investor.develop"
+-const EVENT_CHUNK := 24
+-const VIEW_CHUNK := 10
++## İş modeli (kare maliyeti, T-040 ölçüt 10): sync bir PENCERE (yeni sim günü) işidir ve küçük DİLİMLERE bölünür; sahne
++## her karede `step(bütçe_us)` çağırır, tick'li karede iş yapılmaz (yalnız sonraki kareler). Birden çok gün geride kalan
++## pencere TEK pencerede birleşir (feed `son_up_to_tick`ten bugüne birleşik). `sync(exact)` aynı işi bütçesiz bitirir.
++## Çıktı yoldan bağımsızdır: parsel kimliğine göre sıralı satırlar; `sync(true)` sonrası aynı sim durumu -> aynı sütun
++## (sıfırdan kurulan projector ile bit-bit eşit).
++##
++## Sığmayan parsel: sim "built/under_construction" dese de yerleşim yoksa SESSİZ DEĞİLDİR: `unplaced_parcel_ids()`,
++## `unplaced_count()`, `unplaced_reason(pid)` (HUD "Yapıldı · yapı çizilemedi" diyebilsin).
++
++enum Phase { IDLE, VIEWS }
++
++## Okunmuş parsel dilimi (normal pencere): birim başına parsel.
++const VIEW_CHUNK := 16
++## Tam eşitlemede birim başına okunan ham kimlik sayısı (T0 dışı sayıdan küçük olabilir).
++const RESYNC_CHUNK := 64
+ ## Okunmuş görünümlerin uygulanması (yerleşim hesabı dahil) birim başına en çok bu kadar µs.
+ const APPLY_UNIT_US := 700
+ const EXACT_CHUNK := 400
+-## Denetim taraması pencere başına en çok bu kadar parsel.
+-const AUDIT_SLICE := 20
+-## Eksik onay bulunamazsa en çok bu kadar tam geçiş yapılır.
+-const MAX_AUDIT_PASSES := 2
+-## İki yoklama arasındaki en uzun aralık (gün): ilerleme hızı değişirse (durma/devam) güvenlik ağı.
+-const MAX_POLL_GAP := 10
++## İki yoklama arasındaki en uzun aralık (gün): ilerleme hızı kestirimi sapmasına karşı güvenlik ağı.
++const MAX_POLL_GAP := 16
++## Yoklama gerekmeyen inşaat (son kat kademesi): bir daha asla zamanı gelmez.
++const NEVER := 1 << 30
+ 
+ ## Son sync ölçümleri ve sayaçlar (perf_probe / test okur).
+-var stats: Dictionary = {"syncs": 0, "windows": 0, "changed_windows": 0, "full_scans": 0, "unplaced": 0,
+-		"last_ms": 0.0, "last_parcels": 0, "last_events": 0, "unresolved_missing": 0, "steps": 0, "step_ms_max": 0.0,
+-		"parcel_reads": 0, "backlog_max": 0}
++var stats: Dictionary = {"syncs": 0, "windows": 0, "changed_windows": 0, "full_syncs": 0, "unplaced": 0,
++		"last_ms": 0.0, "last_parcels": 0, "last_feed_ids": 0, "steps": 0, "step_ms_max": 0.0,
++		"parcel_reads": 0, "stage_polls": 0, "backlog_max": 0, "units": 0}
+ 
+ var _facade: SimFacade = null
+ var _placer: SimBuildingPlacer = null
+-var _mapping: SimBuildingMapping = null
+ var _t0_occupied: Dictionary = {}
+-var _cursor: int = 0
+ var _last_tick: int = -1
+-## pid -> {"use", "units", "plan"} (nihai yerleşim önbelleği; ilerlemeden bağımsız).
++## Son tüketilen feed: `up_to_tick` (-1 = hiç) ve `epoch` (-1 = bilinmiyor).
++var _feed_tick: int = -1
++var _feed_epoch: int = -1
++## pid -> {"use", "units", "plan", "reason"} (nihai yerleşim önbelleği; ilerlemeden bağımsız).
+ var _plans: Dictionary = {}
+ ## pid -> {"rows": Array[Row], "sig": String, "key": String} (şu an görünen satırlar).
+ var _shown: Dictionary = {}
+-## Sim gelişimi sürenler (planlı, inşaatta, durmuş): pid -> true. `_due`: sonraki okuma günü;
++## İnşaattaki parseller (kat kademesi zamanlı yoklaması): pid -> true. `_due`: sonraki okuma günü;
+ ## `_sample`: (gün, ilerleme).
+-var _inflight: Dictionary = {}
++var _staged: Dictionary = {}
+ var _due: Dictionary = {}
+ var _sample: Dictionary = {}
+-var _audit_ids: PackedInt32Array = PackedInt32Array()
+-var _audit_pos: int = 0
+-## Sim'in kümülatif onay sayacı; -1 = bilinmiyor.
+-var _approved_total: int = -1
+-## Sayaçta görünüp olay olarak görülemeyen (gizlenmiş) onay sayısı: denetim bunları bulana dek sürer.
+-var _pending_missing: int = 0
+-## true: geçmiş bilinmiyor (yükleme/geri sarma/ilk bağlanma) -> tüm geçiş; false: eksik onaylar bulunana dek.
+-var _audit_full: bool = false
+-var _audit_passes: int = 0
++var _clock: SimBuildingStageClock = SimBuildingStageClock.new()
++## Sim "yapıldı/inşaatta" dedi ama yerleşemeyen parseller: pid -> neden (`SimBuildingPlacer.plan_failure`).
+ var _unplaced: Dictionary = {}
+ var _columns: BuildingColumns = BuildingColumns.new()
+ var _version: int = 0
+ # --- pencere (sürmekte olan sync) durumu ---
+ var _phase: int = Phase.IDLE
+ var _w_tick: int = 0
+-var _w_seq: int = 0
+-var _w_approved: int = -1
+ var _w_exact: bool = false
+-var _w_counted: bool = false
+-var _w_seen_approvals: int = 0
+-var _w_dirty: Dictionary = {}
+-var _w_event_ids: Dictionary = {}
+-var _w_fresh: PackedInt32Array = PackedInt32Array()
+-var _w_ids: Array = []
++var _w_full: bool = false
++var _w_all: PackedInt64Array = PackedInt64Array()
++var _w_ids: PackedInt64Array = PackedInt64Array()
++var _w_feed: Dictionary = {}
++## Tam eşitlemede henüz görülmemiş görünür parseller (sim'de yoksa sonunda silinir).
++var _w_stale: Dictionary = {}
++var _w_read: int = 0
+ var _w_pos: int = 0
+ var _w_fetched: Array[ParcelView] = []
+ var _w_fpos: int = 0
+ var _w_fetch_tick: int = 0
+ var _w_changed: bool = false
+-var _w_events: int = 0
+ var _w_work_us: int = 0
+ 
+ 
+@@ -103,7 +97,6 @@ static func create(facade: SimFacade, settlement: SettlementResult, mapping: Sim
+ 	var p := SimBuildingProjector.new()
+ 	p._facade = facade
+ 	p._placer = placer
+-	p._mapping = mapping
+ 	for pid in settlement.columns.occupied_parcels():
+ 		p._t0_occupied[int(pid)] = true
+ 	return p
+@@ -129,20 +122,43 @@ func parcel_ids() -> PackedInt32Array:
+ 	return PackedInt32Array(ids)
+ 
+ 
+-## Sim "built/under_construction" dedi ama yerleşemeyen parseller (parsel -> neden).
++## Sim "built/under_construction/stalled" dedi ama yerleşemeyen parseller (parsel -> neden kodu). Salt okunur kullanın.
+ func unplaced() -> Dictionary:
+ 	return _unplaced
+ 
+ 
+-## Denetim taraması bitti mi (bekleyen dilim yok)?
+-func audit_idle() -> bool:
+-	return _audit_ids.is_empty()
++## Yerleşemeyen parsel kimlikleri, artan (HUD "Yapıldı · yapı çizilemedi" için; facade'den bağımsız okuma yüzeyi).
++func unplaced_parcel_ids() -> PackedInt32Array:
++	var ids: Array = _unplaced.keys()
++	ids.sort()
++	return PackedInt32Array(ids)
++
++
++func unplaced_count() -> int:
++	return _unplaced.size()
++
++
++func is_unplaced(parcel_id: int) -> bool:
++	return _unplaced.has(parcel_id)
++
++
++## Yerleşememe nedeni (`SimBuildingPlacer.FAIL_*`); yerleşebiliyorsa/bilinmiyorsa `&""`.
++func unplaced_reason(parcel_id: int) -> StringName:
++	return StringName(_unplaced.get(parcel_id, &""))
++
++
++## Neden -> parsel sayısı.
++func unplaced_reason_counts() -> Dictionary:
++	var out := {}
++	for pid: int in _unplaced:
++		var r := String(_unplaced[pid])
++		out[r] = int(out.get(r, 0)) + 1
++	return out
+ 
+ 
+-## Sürmekte olan pencere ya da başlamamış iş var mı (tick/olay ilerlemiş, denetim sürüyor).
++## Sürmekte olan pencere ya da başlamamış iş var mı (yeni sim günü, feed tam değil/epoch değişti).
+ func busy() -> bool:
+-	return _phase != Phase.IDLE or _facade.current_tick() != _last_tick or _facade.last_event_seq() != _cursor \
+-			or not _audit_ids.is_empty()
++	return _phase != Phase.IDLE or _facade.current_tick() != _last_tick or _needs_full(_facade.parcel_changes_since(_feed_tick))
+ 
+ 
+ ## Projector'ın işlediği son sim günü ile şimdiki gün arasındaki fark (kuyruk derinliği).
+@@ -160,7 +176,7 @@ func step(budget_us: int) -> Dictionary:
+ 				break
+ 			worked = true
+ 			if Time.get_ticks_usec() - t0 >= budget_us:
+-				break   # pencere açılışı (sayaç okuma) bütçeyi bitirdi: dilimler sonraki karede
++				break   # pencere açılışı bütçeyi bitirdi: dilimler sonraki karede
+ 		_run_unit()
+ 		worked = true
+ 		if Time.get_ticks_usec() - t0 >= budget_us:
+@@ -170,199 +186,159 @@ func step(budget_us: int) -> Dictionary:
+ 		stats["steps"] += 1
+ 		stats["step_ms_max"] = maxf(float(stats["step_ms_max"]), ms)
+ 		stats["backlog_max"] = maxi(int(stats["backlog_max"]), backlog_ticks())
+-	return {"worked": worked, "busy": busy(), "ms": ms}
++	return {"worked": worked, "busy": _phase != Phase.IDLE, "ms": ms}
+ 
+ 
+-## BÜTÇESİZ tam senkron (testler, dev ilerletme, yükleme). Dönüş: {changed, resync, parcels, events, ms}.
+-## `exact`: sürmekte olan TÜM projelerin ilerlemesini şimdi okur ve bekleyen denetimi bitirir.
++## BÜTÇESİZ tam senkron (testler, dev ilerletme, yükleme). Dönüş: {changed, resync, parcels, feed_ids, ms}.
++## `exact`: inşaattaki TÜM projelerin ilerlemesini şimdi okur.
+ func sync(exact: bool = false) -> Dictionary:
+ 	var t0 := Time.get_ticks_usec()
+ 	var v0 := _version
+-	var report := {"changed": false, "resync": false, "parcels": 0, "events": 0, "ms": 0.0}
++	var report := {"changed": false, "resync": false, "parcels": 0, "feed_ids": 0, "ms": 0.0}
+ 	stats["syncs"] += 1
++	var resynced := false
+ 	while _phase != Phase.IDLE or _begin(false):
++		resynced = resynced or _w_full
+ 		_run_unit()
+ 	if exact and _begin(true):
+ 		while _phase != Phase.IDLE:
+ 			_run_unit()
+ 	report["changed"] = _version != v0
+ 	report["parcels"] = int(stats["last_parcels"])
+-	report["events"] = int(stats["last_events"])
+-	report["resync"] = bool(stats.get("last_resync", false))
++	report["feed_ids"] = int(stats["last_feed_ids"])
++	report["resync"] = resynced
+ 	report["ms"] = (Time.get_ticks_usec() - t0) / 1000.0
+ 	return report
+ 
+ 
+ # --- pencere ----------------------------------------------------------------------------------------------------
+ 
++## Tam eşitleme gerekir mi: geçmiş bilinmiyor (feed eksik), kayıt yüklendi (epoch) ya da geri sarma.
++func _needs_full(feed: ParcelChangeFeed) -> bool:
++	return not feed.complete or (_feed_epoch >= 0 and feed.epoch != _feed_epoch)
++
++
+ ## Yeni pencere açar; yapılacak iş yoksa false.
+ func _begin(exact: bool) -> bool:
+ 	var tick := _facade.current_tick()
+-	var seq := _facade.last_event_seq()
+-	if not exact and tick == _last_tick and seq == _cursor and _audit_ids.is_empty():
++	var feed := _facade.parcel_changes_since(_feed_tick)
++	var full := _needs_full(feed)
++	if not exact and not full and tick == _last_tick:
+ 		return false
+ 	var t0 := Time.get_ticks_usec()
+ 	_w_tick = tick
+-	_w_seq = seq
+ 	_w_exact = exact
+-	_w_dirty = {}
+-	_w_event_ids = {}
+-	_w_fresh = PackedInt32Array()
+-	_w_seen_approvals = 0
+-	_w_events = 0
+-	_w_changed = false
++	_w_full = full
++	_w_all = PackedInt64Array()
++	_w_feed = {}
++	_w_stale = {}
++	_w_read = 0
++	_w_pos = 0
+ 	_w_fetched = []
+ 	_w_fpos = 0
+-	_w_pos = 0
+-	stats["last_resync"] = false
+-	var outcome := _facade.economy_outcome()
+-	_w_counted = outcome.available
+-	_w_approved = outcome.investments_approved if _w_counted else -1
+-	var rewound := seq < _cursor or tick < _last_tick
+-	# İlk bağlanma: saklanan olaylar tüm geçmişi kapsıyorsa (budanma yok) denetim gerekmez.
+-	var first_attach := _last_tick < 0 and tick > 0 and _facade.first_retained_event_seq() > 1
+-	if rewound or first_attach:
+-		# Geçmiş bilinmiyor (yükleme/geri sarma/ilk bağlanma): T0 stoku dışındaki tüm parseller DİLİMLİ okunur.
+-		stats["last_resync"] = true
+-		_start_audit(true)
+-		_pending_missing = 0
+-		for pid: int in _shown:
+-			_w_dirty[pid] = true
+-		for pid: int in _inflight:
+-			_w_dirty[pid] = true
+-		if rewound:
+-			_cursor = seq
+-			_approved_total = -1
+-	_phase = Phase.EVENTS
++	_w_changed = false
++	var dirty := {}
++	if full:
++		stats["full_syncs"] += 1
++		_w_all = _facade.parcel_ids()
++		_w_stale = _shown.duplicate()
++		_staged = {}
++		_due = {}
++		_sample = {}
++		_clock.reset()
++	else:
++		for id in feed.ids:
++			if not _t0_occupied.has(int(id)):
++				dirty[int(id)] = true
++				_w_feed[int(id)] = true
++		for pid: int in _staged:
++			if exact or int(_due.get(pid, 0)) <= tick:
++				if not dirty.has(pid):
++					stats["stage_polls"] += 1
++				dirty[pid] = true
++	stats["last_feed_ids"] = _w_feed.size()
++	var keys: Array = dirty.keys()
++	keys.sort()
++	_w_ids = PackedInt64Array(keys)
++	_feed_tick = feed.up_to_tick
++	_feed_epoch = feed.epoch
++	_phase = Phase.VIEWS
+ 	_w_work_us = Time.get_ticks_usec() - t0
+ 	_note_max("begin_ms_max", _w_work_us)
+ 	return true
+ 
+ 
+-## Bir iş birimi (olay dilimi / parsel dilimi) yürütür.
++## Bir iş birimi (parsel dilimi okuma / okunmuşları uygulama) yürütür.
+ func _run_unit() -> void:
+ 	var t0 := Time.get_ticks_usec()
+-	stats["units"] = int(stats.get("units", 0)) + 1
+-	var which := "events_ms_max" if _phase == Phase.EVENTS else "views_ms_max"
+-	if _phase == Phase.EVENTS:
+-		_events_unit()
+-	elif _phase == Phase.VIEWS:
+-		_views_unit()
++	stats["units"] += 1
++	_views_unit()
+ 	_w_work_us += Time.get_ticks_usec() - t0
+-	_note_max(which, Time.get_ticks_usec() - t0)
+-
+-
+-func _events_unit() -> void:
+-	if _cursor >= _w_seq:
+-		_finish_events()
+-		return
+-	var events := _facade.events_since(_cursor, EVENT_CHUNK)
+-	if events.is_empty():
+-		_cursor = _w_seq   # saklama ufku dışında kalanlar (gizli); onay sayacı eksiği yakalar
+-		_finish_events()
+-		return
+-	for e in events:
+-		if e.seq > _w_seq:
+-			_cursor = _w_seq
+-			break
+-		_cursor = e.seq
+-		_w_events += 1
+-		if (e.kind != KIND_DECIDED and e.kind != KIND_CHANGED) or e.message_key == MSG_DECLINED:
+-			continue
+-		if e.message_key == MSG_APPROVED:
+-			_w_seen_approvals += 1
+-		for subject in e.subjects:
+-			if subject.begins_with(SUBJECT_PREFIX):
+-				var pid := subject.substr(SUBJECT_PREFIX.length()).to_int()
+-				_w_dirty[pid] = true
+-				_w_event_ids[pid] = true
+-	if _cursor >= _w_seq:
+-		_finish_events()
+-
+-
+-## Olaylar bitti: onay sayacı denetimi, zamanı gelen yoklamalar, denetim dilimi -> okunacak parsel listesi.
+-func _finish_events() -> void:
+-	if _w_counted:
+-		if _approved_total >= 0 and _w_approved - _approved_total > _w_seen_approvals:
+-			_pending_missing += _w_approved - _approved_total - _w_seen_approvals
+-			stats["last_resync"] = true
+-		_approved_total = _w_approved
+-	elif _w_tick - _last_tick > 1 and _last_tick >= 0:
+-		# Sayaç yok (örn. mock): çok günlük pencerede ufuk kaybı olabilir; güvenli taraf denetimdir.
+-		_pending_missing = maxi(_pending_missing, 1)
+-		stats["last_resync"] = true
+-	if _pending_missing > 0 and _audit_ids.is_empty():
+-		_start_audit(false)
+-	if _w_exact:
+-		for pid: int in _inflight:
+-			_w_dirty[pid] = true
+-	else:
+-		for pid: int in _inflight:
+-			if int(_due.get(pid, 0)) <= _w_tick:
+-				_w_dirty[pid] = true
+-	var slice_end := _audit_ids.size() if _w_exact else mini(_audit_pos + AUDIT_SLICE, _audit_ids.size())
+-	while _audit_pos < slice_end:
+-		var pid := _audit_ids[_audit_pos]
+-		_w_dirty[pid] = true
+-		if not _shown.has(pid) and not _inflight.has(pid) and not _w_event_ids.has(pid):
+-			_w_fresh.append(pid)
+-		_audit_pos += 1
+-	_w_ids = _w_dirty.keys()
+-	_w_ids.sort()
+-	_w_pos = 0
+-	_phase = Phase.VIEWS
++	_note_max("views_ms_max", Time.get_ticks_usec() - t0)
+ 
+ 
+ func _views_unit() -> void:
+ 	if _w_fpos < _w_fetched.size():
+ 		# Okunmuş görünümleri uygula: yerleşim hesabı (plan) pahalı olabilir -> birim başına zaman sınırı.
+ 		var t0 := Time.get_ticks_usec()
++		var t_apply := t0
+ 		while _w_fpos < _w_fetched.size():
+-			_w_changed = _apply(_w_fetched[_w_fpos], _w_fetch_tick) or _w_changed
++			var v := _w_fetched[_w_fpos]
++			stats["applied"] = int(stats.get("applied", 0)) + 1
++			if _w_full or _w_feed.has(v.id):
++				_sample.erase(v.id)   # aşama/karar değişti (durma/devam dahil): hız kestirimi yeniden öğrenilir
++			_w_changed = _apply(v, _w_fetch_tick) or _w_changed
+ 			_w_fpos += 1
+ 			if not _w_exact and Time.get_ticks_usec() - t0 >= APPLY_UNIT_US:
+ 				break
+-		if _w_fpos >= _w_fetched.size() and _w_pos >= _w_ids.size():
++		stats["apply_us"] = int(stats.get("apply_us", 0)) + Time.get_ticks_usec() - t_apply
++		if _w_fpos >= _w_fetched.size() and _w_pos >= _w_total():
+ 			_finish_window()
+ 		return
+-	if _w_pos >= _w_ids.size():
++	if _w_pos >= _w_total():
+ 		_finish_window()
+ 		return
+-	var chunk_size := EXACT_CHUNK if _w_exact else VIEW_CHUNK
+ 	var chunk := PackedInt64Array()
+-	for pid in _w_ids.slice(_w_pos, mini(_w_pos + chunk_size, _w_ids.size())):
+-		chunk.append(int(pid))
+-	_w_pos += chunk.size()
++	if _w_full:
++		var take := EXACT_CHUNK if _w_exact else RESYNC_CHUNK
++		for raw in _w_all.slice(_w_pos, mini(_w_pos + take, _w_all.size())):
++			if not _t0_occupied.has(int(raw)):
++				chunk.append(raw)
++		_w_pos = mini(_w_pos + take, _w_all.size())
++	else:
++		var take := EXACT_CHUNK if _w_exact else VIEW_CHUNK
++		chunk = _w_ids.slice(_w_pos, mini(_w_pos + take, _w_ids.size()))
++		_w_pos += chunk.size()
++	if chunk.is_empty():
++		if _w_pos >= _w_total():
++			_finish_window()
++		return
+ 	_w_fetch_tick = _facade.current_tick()
+ 	var seen := {}
++	var t_read := Time.get_ticks_usec()
+ 	_w_fetched = _facade.parcel_views(chunk)
++	stats["read_us"] = int(stats.get("read_us", 0)) + Time.get_ticks_usec() - t_read
+ 	_w_fpos = 0
+ 	stats["parcel_reads"] += chunk.size()
++	_w_read += chunk.size()
+ 	for v in _w_fetched:
+ 		seen[v.id] = true
+ 	for pid in chunk:
+-		if not seen.has(int(pid)) and _shown.has(int(pid)):
+-			_drop(int(pid))
+-			_w_changed = true
++		if not seen.has(int(pid)):
++			if _shown.has(int(pid)):
++				_w_changed = true
++			_forget(int(pid))
++
++
++func _w_total() -> int:
++	return _w_all.size() if _w_full else _w_ids.size()
+ 
+ 
+ func _finish_window() -> void:
+-	for pid in _w_fresh:
+-		if _inflight.has(pid) or _shown.has(pid):
+-			_pending_missing = maxi(0, _pending_missing - 1)
+-	if not _audit_ids.is_empty() and not _audit_full and _pending_missing == 0:
+-		_audit_ids = PackedInt32Array()   # eksik onayların hepsi bulundu: geçiş erken biter
+-		_audit_pos = 0
+-	elif _audit_pos >= _audit_ids.size() and not _audit_ids.is_empty():
+-		_audit_ids = PackedInt32Array()
+-		_audit_pos = 0
+-		if _pending_missing > 0:
+-			_audit_passes += 1
+-			if _audit_passes >= MAX_AUDIT_PASSES:
+-				stats["unresolved_missing"] += _pending_missing   # bulunamadı: sonsuz tarama yok, kayda geçer
+-				_pending_missing = 0
+-			else:
+-				_start_audit(false, false)  # geçiş bitti ama hâlâ eksik var: yeni geçiş
++	for pid: int in _w_stale.keys():
++		_forget(pid)   # tam eşitleme: sim'in artık tanımadığı parseller
++		_w_changed = true
++	_w_stale = {}
+ 	if _w_changed:
+ 		_rebuild_columns()
+ 		stats["changed_windows"] += 1
+@@ -370,11 +346,10 @@ func _finish_window() -> void:
+ 	_phase = Phase.IDLE
+ 	stats["windows"] += 1
+ 	stats["last_ms"] = _w_work_us / 1000.0
+-	stats["last_parcels"] = _w_ids.size()
+-	stats["last_events"] = _w_events
+-	_w_dirty = {}
+-	_w_event_ids = {}
+-	_w_ids = []
++	stats["last_parcels"] = _w_read
++	_w_all = PackedInt64Array()
++	_w_ids = PackedInt64Array()
++	_w_feed = {}
+ 	_w_fetched = []
+ 	_w_fpos = 0
+ 
+@@ -383,66 +358,42 @@ func _note_max(key: String, usec: int) -> void:
+ 	stats[key] = maxf(float(stats.get(key, 0.0)), usec / 1000.0)
+ 
+ 
+-func _start_audit(full: bool, new_cycle: bool = true) -> void:
+-	_audit_full = full
+-	if new_cycle:
+-		_audit_passes = 0
+-	var ids := PackedInt32Array()
+-	for pid in _facade.parcel_ids():
+-		if not _t0_occupied.has(int(pid)):
+-			ids.append(int(pid))
+-	_audit_ids = ids
+-	_audit_pos = 0
+-	stats["full_scans"] += 1
+-
+-
+ # --- parsel -> satır ---------------------------------------------------------------------------------------------
+ 
+ ## Tek parsel görünümünü uygular; satırlar değiştiyse true. `now`: okumanın yapıldığı sim günü.
+ func _apply(v: ParcelView, now: int) -> bool:
+ 	var pid := v.id
++	_w_stale.erase(pid)
+ 	var building := v.developed_by_sim and v.use != ParcelView.USE_NONE and v.units > 0 \
+ 			and (v.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION \
+ 			or v.development == ParcelView.DEVELOPMENT_BUILT or v.development == ParcelView.DEVELOPMENT_STALLED)
+-	var in_flight := v.developed_by_sim and (v.development == ParcelView.DEVELOPMENT_PLANNED \
+-			or v.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION \
+-			or v.development == ParcelView.DEVELOPMENT_STALLED)
+-	if not in_flight:
+-		_inflight.erase(pid)
++	var constructing := v.developed_by_sim and v.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION
++	if not constructing:
++		_staged.erase(pid)
+ 		_due.erase(pid)
+ 		_sample.erase(pid)
+-	else:
+-		_inflight[pid] = true
+ 	if not building:
+-		if in_flight:
+-			_schedule(pid, v, now, null)
+-		return _drop(pid)
+-	# Sim durumu önceki okumayla aynıysa satır üretimi atlanır.
+-	var key := "%s|%s|%d|%d" % [v.development, v.use, v.units, v.progress_pm]
+-	if _shown.has(pid) and _shown[pid]["key"] == key:
+-		if in_flight:
+-			_schedule(pid, v, now, (_plans.get(pid, {}) as Dictionary).get("plan"))
+-		return false
+-	var cached: Dictionary = _plans.get(pid, {})
+-	if cached.is_empty() or cached["use"] != v.use or int(cached["units"]) != v.units:
+-		var t_plan := Time.get_ticks_usec()
+-		cached = {"use": v.use, "units": v.units, "plan": _placer.plan(pid, v.use, v.units)}
+-		var plan_ms := (Time.get_ticks_usec() - t_plan) / 1000.0
+-		stats["plan_n"] = int(stats.get("plan_n", 0)) + 1
+-		stats["plan_ms_sum"] = float(stats.get("plan_ms_sum", 0.0)) + plan_ms
+-		stats["plan_ms_max"] = maxf(float(stats.get("plan_ms_max", 0.0)), plan_ms)
+-		_plans[pid] = cached
++		_unplaced.erase(pid)
++		stats["unplaced"] = _unplaced.size()
++		if v.developed_by_sim and v.development == ParcelView.DEVELOPMENT_PLANNED and v.use != ParcelView.USE_NONE \
++				and v.units > 0:
++			_plan_for(pid, v)   # onaylandı, inşaat ~plan_days sonra başlar: yerleşim şimdiden (kritik yolda değil)
++		return _drop_rows(pid)
++	var cached := _plan_for(pid, v)
+ 	var plan: SimBuildingPlacer.Plan = cached["plan"]
+-	if in_flight:
++	if constructing:
+ 		_schedule(pid, v, now, plan)
+ 	if plan == null:
+-		if not _unplaced.has(pid):
+-			_unplaced[pid] = "no_fit"
+-			stats["unplaced"] = _unplaced.size()
+-		return _drop(pid)
++		_unplaced[pid] = cached["reason"]
++		stats["unplaced"] = _unplaced.size()
++		return _drop_rows(pid)
+ 	_unplaced.erase(pid)
+ 	stats["unplaced"] = _unplaced.size()
+ 	var progress := ParcelView.PROGRESS_FULL if v.development == ParcelView.DEVELOPMENT_BUILT else v.progress_pm
++	# Görünen kat kademesi aynıysa satır üretimi atlanır (ilerleme aşama içinde her gün değişir).
++	var key := "%s|%d|%s" % [v.use, v.units, _placer.stage_key(plan, progress)]
++	if _shown.has(pid) and _shown[pid]["key"] == key:
++		return false
+ 	var rows := _placer.rows_for(plan, progress)
+ 	var parts := PackedStringArray()
+ 	for r in rows:
+@@ -454,33 +405,66 @@ func _apply(v: ParcelView, now: int) -> bool:
+ 	return not unchanged
+ 
+ 
+-## Sonraki okuma günü: inşaatta, iki okumadan ilerleme hızı çıkarılır ve kat kademesinin değişeceği güne kurulur
+-## (tamsayı hesap); hız bilinmiyorsa ertesi gün (hızı öğrenmek için); planlı/durmuş için `progress_poll_days`.
++## Nihai yerleşim (önbellekli; kullanım/birim değişirse yeniden): {"use", "units", "plan", "reason"}.
++func _plan_for(pid: int, v: ParcelView) -> Dictionary:
++	var cached: Dictionary = _plans.get(pid, {})
++	if not cached.is_empty() and cached["use"] == v.use and int(cached["units"]) == v.units:
++		return cached
++	var t_plan := Time.get_ticks_usec()
++	var fresh_plan := _placer.plan(pid, v.use, v.units)
++	cached = {"use": v.use, "units": v.units, "plan": fresh_plan,
++			"reason": &"" if fresh_plan != null else _placer.plan_failure()}
++	var plan_us := Time.get_ticks_usec() - t_plan
++	stats["plan_us"] = int(stats.get("plan_us", 0)) + plan_us
++	stats["plan_n"] = int(stats.get("plan_n", 0)) + 1
++	stats["plan_ms_max"] = maxf(float(stats.get("plan_ms_max", 0.0)), plan_us / 1000.0)
++	_plans[pid] = cached
++	return cached
++
++
++## İnşaattaki parselin sonraki okuma günü. Kat kademesi başka değişmeyecekse (tek/son kademe) parsel HİÇ yoklanmaz
++## (tamamlanma feed'den gelir). Aksi halde kademenin değişeceği gün `SimBuildingStageClock`tan (iki okumadan öğrenilen
++## toplam inşaat süresi); süre bilinmiyorsa iki okumadan hız ÜST sınırıyla (geç kalmaz, gerekirse erken yoklar) ve hız
++## hiç bilinmiyorsa ertesi gün (öğrenmek için).
+ func _schedule(pid: int, v: ParcelView, now: int, plan: SimBuildingPlacer.Plan) -> void:
+-	var gap := _mapping.progress_poll_days
+-	if v.development == ParcelView.DEVELOPMENT_UNDER_CONSTRUCTION:
+-		var smp: Vector2i = _sample.get(pid, Vector2i(-1, 0))
+-		if plan != null and smp.x >= 0 and now > smp.x and v.progress_pm > smp.y:
++	_staged[pid] = true
++	var smp: Vector2i = _sample.get(pid, Vector2i(-1, 0))
++	_sample[pid] = Vector2i(now, v.progress_pm)
++	var next_progress := _placer.next_stage_progress(plan, v.progress_pm) if plan != null else ParcelView.PROGRESS_FULL
++	if next_progress >= ParcelView.PROGRESS_FULL:
++		_due[pid] = NEVER
++		return
++	var gap := _clock.gap("%s|%d" % [v.use, v.units], smp, now, v.progress_pm, next_progress)
++	if gap < 0:
++		gap = 1
++		if smp.x >= 0 and now > smp.x and v.progress_pm >= smp.y:
++			# ‰ = floor(geçen_gün * 1000 / toplam): iki okuma arasındaki artış gerçek hızdan en çok 1 ‰ sapar.
+ 			var dp := v.progress_pm - smp.y
+-			var dt := now - smp.x
+-			var need := _placer.next_stage_progress(plan, v.progress_pm) - v.progress_pm
+-			gap = clampi((need * dt + dp - 1) / dp, 1, MAX_POLL_GAP)
+-		else:
+-			gap = 1
+-		_sample[pid] = Vector2i(now, v.progress_pm)
+-	else:
+-		_sample.erase(pid)
+-	_due[pid] = now + gap
++			var need := next_progress - v.progress_pm
++			gap = maxi(need - 1, 0) * (now - smp.x) / (dp + 1)
++	_due[pid] = now + clampi(gap, 1, MAX_POLL_GAP)
+ 
+ 
+-func _drop(pid: int) -> bool:
++## Satırları kaldırır (yerleşim önbelleği kalır: planlıdan inşaata geçişte tekrar hesaplanmaz). Değiştiyse true.
++func _drop_rows(pid: int) -> bool:
+ 	if not _shown.has(pid):
+ 		return false
+ 	_shown.erase(pid)
+-	_plans.erase(pid)
+ 	return true
+ 
+ 
++## Sim'de artık görünmeyen parsel: tüm izleri sil.
++func _forget(pid: int) -> void:
++	_staged.erase(pid)
++	_due.erase(pid)
++	_sample.erase(pid)
++	_unplaced.erase(pid)
++	_w_stale.erase(pid)
++	_plans.erase(pid)
++	stats["unplaced"] = _unplaced.size()
++	_drop_rows(pid)
++
++
+ func _rebuild_columns() -> void:
+ 	var cols := BuildingColumns.new()
+ 	for pid in parcel_ids():
+diff --git a/tests/game/m2_causal_loop_test.gd b/tests/game/m2_causal_loop_test.gd
+index 2f59bfa..429a374 100644
+--- a/tests/game/m2_causal_loop_test.gd
++++ b/tests/game/m2_causal_loop_test.gd
+@@ -258,9 +258,9 @@ func test_rewinding_the_same_facade_to_an_older_save_restores_the_older_rows() -
+ 	assert_str(proj.columns().state_hash()).is_equal(early_hash)
+ 
+ 
+-func test_hidden_events_are_recovered_through_the_approval_counter_audit() -> void:
+-	# Saklama ufku çok dar: onay olayları pencerede gizlenir; projector sim'in onay sayacından eksiği anlar ve
+-	# denetim taramasıyla bulur. Sonuç, sıfırdan (tam denetimle) kurulan projector ile aynıdır.
++func test_hidden_events_do_not_matter_the_feed_is_independent_of_the_event_horizon() -> void:
++	# Saklama ufku çok dar: onay olayları pencerede gizlenir (B-002). Feed olay günlüğünden bağımsızdır: seyrek
++	# senkronla bile hiçbir onay kaçmaz, tam eşitleme GEREKMEZ ve sonuç sıfırdan kurulan projector ile aynıdır.
+ 	var h := M2RenderSupport.handle(ISOLATE, M2RenderSupport.SEED, M2RenderSupport.tiny_log_config(20))
+ 	var f := h.facade
+ 	var proj := M2RenderSupport.projector(f)
+@@ -273,17 +273,18 @@ func test_hidden_events_are_recovered_through_the_approval_counter_audit() -> vo
+ 		f.advance(1)
+ 		if day % 6 == 5:
+ 			proj.sync()
++	assert_int(f.first_retained_event_seq()).override_failure_message("olay ufku daralmadı: senaryo anlamsız") \
++			.is_greater(1)
+ 	proj.sync(true)
+-	assert_int(int(proj.stats["full_scans"])).override_failure_message("denetim hiç başlamadı").is_greater(0)
+-	assert_int(int(proj.stats["unresolved_missing"])).is_equal(0)
++	assert_int(int(proj.stats["full_syncs"])).override_failure_message("tam eşitleme gerekmemeliydi").is_equal(0)
+ 	var fresh := M2RenderSupport.projector(f)
+-	fresh.sync(true)   # ilk bağlanma + budanmış günlük: tam denetim (referans)
++	fresh.sync(true)   # ilk bağlanma: pencere tüm geçmişi kapsamıyorsa tam eşitleme, kapsıyorsa feed(-1) (referans)
+ 	assert_int(fresh.columns().count).is_greater(0)
+ 	assert_str(proj.columns().state_hash()).override_failure_message(
+-			"gizlenen onaylar bulunamadı (%d / %d satır)" % [proj.columns().count, fresh.columns().count]) \
+-			.is_equal(fresh.columns().state_hash())
++			"feed güdümlü satırlar sıfırdan kurulandan farklı (%d / %d satır)" % [proj.columns().count,
++			fresh.columns().count]).is_equal(fresh.columns().state_hash())
+ 
+ 
+-func test_normal_log_needs_no_audit_when_synced_daily() -> void:
++func test_normal_log_needs_no_full_sync_when_synced_daily() -> void:
+ 	var run := _scenario(ISOLATE, 6, 120)
+-	assert_int(int((run["proj"] as SimBuildingProjector).stats["full_scans"])).is_equal(0)
++	assert_int(int((run["proj"] as SimBuildingProjector).stats["full_syncs"])).is_equal(0)
+diff --git a/tests/game/m2_sync_budget_test.gd b/tests/game/m2_sync_budget_test.gd
+index e78b8c6..616ecc7 100644
+--- a/tests/game/m2_sync_budget_test.gd
++++ b/tests/game/m2_sync_budget_test.gd
+@@ -34,7 +34,8 @@ func _scenario(n: int = 6) -> Dictionary:
+ 
+ 
+ func test_zero_budget_runs_at_most_one_unit_per_step_and_the_queue_drains() -> void:
+-	var run := _scenario()
++	# 40 parsel: günlerce birikmiş iş TEK pencerede birleşir (feed), ama VIEW_CHUNK'tan büyük olduğu için dilimlenir.
++	var run := _scenario(40)
+ 	var f: SimFacade = run["facade"]
+ 	var proj: SimBuildingProjector = run["proj"]
+ 	f.advance(25)   # 25 günlük iş birikti (zoning + onay + planlı)
+@@ -66,7 +67,7 @@ func test_budgeted_framed_run_settles_to_the_exact_and_to_a_fresh_projectors_row
+ 	var fresh := M2RenderSupport.projector(f)
+ 	fresh.sync(true)
+ 	assert_str(fresh.columns().state_hash()).is_equal(settled)
+-	assert_int(int(proj.stats["unresolved_missing"])).is_equal(0)
++	assert_int(int(proj.stats["full_syncs"])).override_failure_message("feed ile tam eşitleme gerekmemeliydi").is_equal(0)
+ 
+ 
+ func test_few_frames_per_day_still_settle_and_do_not_fall_behind_forever() -> void:

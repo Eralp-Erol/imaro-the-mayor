@@ -1,0 +1,64 @@
+{
+ "note": "T-048 geçici görünüm; sanat yönetmeni kabulü bekliyor. width_scale ağdaki gerçek genişliği korur. T-062 A4: yüzey onaylı zemin katmanlarından (LibraryGate): sınıf başına taban/eskimiş katman ve eskimiş payı; seçim kenar kimliği hash'iyle (deterministik). brightness = köşe rengi G kanalı (x2 çarpan). vegetation_clear_margin_m: oyuncu yolu koridorundan bitki gizleme payı (m; koridor = yarı genişlik + bordür curb_m + bu pay; T-042 sanat düzeltmesi, ÇM). sidewalk_m: yol kenarı kaldırım bandı (m, kesit içi; sidewalk_cobble); 0 = yok. Ek geometri yok: köşe UV'si (eksene yanal ofset, yarım genişlik) + köşe rengi B = sidewalk_m / 8.",
+ "chunk_m": 2000.0,
+ "vegetation_clear_margin_m": 1.0,
+ "surface_offset_m": 0.12,
+ "metro_begin_m": 14000.0,
+ "near_step_m": 40.0,
+ "metro_step_m": 200.0,
+ "metro_width_scale": 0.55,
+ "classes": {
+  "arterial": {
+   "width_scale": 1.0,
+   "surface": {
+    "base": "gnd_tex_asphalt_new",
+    "worn": "gnd_tex_asphalt_worn",
+    "worn_share": 0.15
+   },
+   "brightness": 1.05,
+   "sidewalk_m": 2.4
+  },
+  "collector": {
+   "width_scale": 1.0,
+   "surface": {
+    "base": "gnd_tex_asphalt_new",
+    "worn": "gnd_tex_asphalt_worn",
+    "worn_share": 0.3
+   },
+   "brightness": 1.0,
+   "sidewalk_m": 2.0
+  },
+  "local": {
+   "width_scale": 1.0,
+   "surface": {
+    "base": "gnd_tex_asphalt_new",
+    "worn": "gnd_tex_asphalt_worn",
+    "worn_share": 0.45
+   },
+   "brightness": 0.97,
+   "sidewalk_m": 1.6
+  },
+  "field": {
+   "width_scale": 1.0,
+   "surface": {
+    "base": "gnd_tex_gravel",
+    "worn": "gnd_tex_dirt_courtyard",
+    "worn_share": 0.5
+   },
+   "brightness": 1.0,
+   "sidewalk_m": 0.0
+  }
+ },
+ "surface": {
+  "seed": 4802,
+  "detail_far_m": 400.0,
+  "fade_to_mean_m": [
+   450.0,
+   1500.0
+  ],
+  "fallback": "gnd_tex_asphalt_new",
+  "sidewalk_layer": "gnd_tex_sidewalk_cobble",
+  "curb_m": 0.2,
+  "curb_dark": 0.7
+ }
+}

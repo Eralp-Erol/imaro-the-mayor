@@ -1,0 +1,3277 @@
+{
+ "schema": "t057-lod2-provenance-v1",
+ "spec": "production/qa/T-057-technical-review.md Teknik karar 4 / 4.2",
+ "inputs": {
+  "veg_hero_plane_a_lod1.glb": "2e5c465e313fd57cc9a2445ebfc2a796cfb6b986fcdbacbd9a2920c3613b9d6a",
+  "vegetation_atlas.png": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+  "atlas_layout.json": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb",
+  "build.py": "4e5068ae0bc7fcef23556214799bcfccc99d1cbf82e00bb05de0ad2a54b3b55b"
+ },
+ "constants": {
+  "views": [
+   [
+    0,
+    12
+   ],
+   [
+    45,
+    12
+   ],
+   [
+    90,
+    12
+   ],
+   [
+    135,
+    12
+   ],
+   [
+    180,
+    12
+   ],
+   [
+    225,
+    12
+   ],
+   [
+    270,
+    12
+   ],
+   [
+    315,
+    12
+   ],
+   [
+    0,
+    40
+   ],
+   [
+    45,
+    40
+   ],
+   [
+    90,
+    40
+   ],
+   [
+    135,
+    40
+   ],
+   [
+    180,
+    40
+   ],
+   [
+    225,
+    40
+   ],
+   [
+    270,
+    40
+   ],
+   [
+    315,
+    40
+   ],
+   [
+    0,
+    90
+   ]
+  ],
+  "px_per_m": 24,
+  "alpha_cut": 0.45,
+  "alpha_byte_min": 115,
+  "coverage_min": 0.98,
+  "cluster_min": 0.9,
+  "wood_min": 0.95,
+  "view_convention": "Blender Z-up; camera direction d=(cos el cos az, cos el sin az, sin el); view 0 = az0/el12 (\"front\" for albedo diagnostic)",
+  "alpha_model": "alpha-passing fragments (nearest texel, base level, >=115/255) write depth/ID; failing fragments neither cover nor occlude"
+ },
+ "structure": {
+  "leaf_components": 64,
+  "wood_components": 20,
+  "tri_per_leaf": 2,
+  "tri_per_wood": 8,
+  "trunk_chain": [
+   0,
+   1,
+   2,
+   3
+  ],
+  "branch_chains": [
+   [
+    4,
+    5
+   ],
+   [
+    14,
+    15
+   ],
+   [
+    24,
+    25
+   ],
+   [
+    34,
+    35
+   ],
+   [
+    44,
+    45
+   ],
+   [
+    54,
+    55
+   ],
+   [
+    64,
+    65
+   ],
+   [
+    74,
+    75
+   ]
+  ],
+  "max_branch_base_z_blender": 5.300000190734863,
+  "cluster_sizes": [
+   [
+    0,
+    8
+   ],
+   [
+    1,
+    7
+   ],
+   [
+    2,
+    8
+   ],
+   [
+    3,
+    8
+   ],
+   [
+    4,
+    7
+   ],
+   [
+    5,
+    9
+   ],
+   [
+    6,
+    8
+   ],
+   [
+    7,
+    9
+   ]
+  ]
+ },
+ "elements": [
+  {
+   "id": 0,
+   "type": "wood_segment",
+   "role": "trunk",
+   "cluster": null,
+   "triangles": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "parent": null,
+   "pinned": "touches ground",
+   "score_history": [
+    12305,
+    12305,
+    12305,
+    12305
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 1,
+   "type": "wood_segment",
+   "role": "trunk",
+   "cluster": null,
+   "triangles": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+   ],
+   "parent": 0,
+   "pinned": "trunk proximal end below highest branch base",
+   "score_history": [
+    12308,
+    12308,
+    12308,
+    12308
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 2,
+   "type": "wood_segment",
+   "role": "trunk",
+   "cluster": null,
+   "triangles": [
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23
+   ],
+   "parent": 1,
+   "pinned": "trunk proximal end below highest branch base",
+   "score_history": [
+    2712,
+    2716,
+    2716,
+    2716
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 3,
+   "type": "wood_segment",
+   "role": "trunk",
+   "cluster": null,
+   "triangles": [
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+   ],
+   "parent": 2,
+   "pinned": null,
+   "score_history": [
+    994,
+    998,
+    998,
+    998
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 4,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 0,
+   "triangles": [
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    3170,
+    3170,
+    3170,
+    3177
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 5,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 0,
+   "triangles": [
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+   ],
+   "parent": 4,
+   "pinned": null,
+   "score_history": [
+    1193,
+    1193,
+    1193,
+    1193
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 6,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    48,
+    49
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2591,
+    2591,
+    2597,
+    2597
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 7,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    50,
+    51
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    393,
+    393
+   ],
+   "removed_step": 1
+  },
+  {
+   "id": 8,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    52,
+    53
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3279,
+    3279,
+    3279,
+    3279
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 9,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    54,
+    55
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    6520,
+    6520,
+    6593,
+    6593
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 10,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    56,
+    57
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    4201,
+    4201,
+    4220,
+    4220
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 11,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    58,
+    59
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3859,
+    3859,
+    3915,
+    3915
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 12,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    60,
+    61
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7002,
+    7002,
+    7010,
+    7010
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 13,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 0,
+   "triangles": [
+    62,
+    63
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    8436,
+    8436,
+    8475,
+    8475
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 14,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 1,
+   "triangles": [
+    64,
+    65,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    2979,
+    2979,
+    2979,
+    3037
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 15,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 1,
+   "triangles": [
+    72,
+    73,
+    74,
+    75,
+    76,
+    77,
+    78,
+    79
+   ],
+   "parent": 14,
+   "pinned": null,
+   "score_history": [
+    598,
+    598,
+    598
+   ],
+   "removed_step": 2
+  },
+  {
+   "id": 16,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    80,
+    81
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2829,
+    2829,
+    2829,
+    2829
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 17,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    82,
+    83
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    856,
+    856,
+    907,
+    907
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 18,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    84,
+    85
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    5755,
+    5755,
+    5776,
+    5780
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 19,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    86,
+    87
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2149,
+    2149,
+    2150,
+    2223
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 20,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    88,
+    89
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    6875,
+    6875,
+    6875,
+    6875
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 21,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    90,
+    91
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    4907,
+    4907,
+    4911,
+    4912
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 22,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    92,
+    93
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    10810,
+    10810,
+    10810,
+    10810
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 23,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 1,
+   "triangles": [
+    94,
+    95
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    5196,
+    5196,
+    5196,
+    5212
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 24,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 2,
+   "triangles": [
+    96,
+    97,
+    98,
+    99,
+    100,
+    101,
+    102,
+    103
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    2862,
+    2862,
+    2862,
+    2863
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 25,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 2,
+   "triangles": [
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111
+   ],
+   "parent": 24,
+   "pinned": null,
+   "score_history": [
+    1288,
+    1288,
+    1288,
+    1288
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 26,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    112,
+    113
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    10286,
+    10286,
+    10286,
+    10286
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 27,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    114,
+    115
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    15959,
+    15959,
+    15959,
+    15959
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 28,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    116,
+    117
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    9146,
+    9146,
+    9146,
+    9146
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 29,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    118,
+    119
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2375,
+    2375,
+    2375,
+    2375
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 30,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    120,
+    121
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3930,
+    3930,
+    3930,
+    3930
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 31,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    122,
+    123
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2009,
+    2009,
+    2009,
+    2009
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 32,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    124,
+    125
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1209,
+    1209,
+    1209,
+    1209
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 33,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 2,
+   "triangles": [
+    126,
+    127
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7017,
+    7017,
+    7017,
+    7017
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 34,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 3,
+   "triangles": [
+    128,
+    129,
+    130,
+    131,
+    132,
+    133,
+    134,
+    135
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    3919,
+    3919,
+    3919,
+    3919
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 35,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 3,
+   "triangles": [
+    136,
+    137,
+    138,
+    139,
+    140,
+    141,
+    142,
+    143
+   ],
+   "parent": 34,
+   "pinned": null,
+   "score_history": [
+    1545,
+    1545,
+    1545,
+    1545
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 36,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    144,
+    145
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2047,
+    2047,
+    2047,
+    2047
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 37,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    146,
+    147
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7786,
+    7786,
+    7786,
+    7786
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 38,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    148,
+    149
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2988,
+    2988,
+    2988,
+    2988
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 39,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    150,
+    151
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3040,
+    3040,
+    3040,
+    3040
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 40,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    152,
+    153
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    5190,
+    5190,
+    5190,
+    5190
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 41,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    154,
+    155
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    12814,
+    12814,
+    12814,
+    12814
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 42,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    156,
+    157
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    6690,
+    6690,
+    6690,
+    6690
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 43,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 3,
+   "triangles": [
+    158,
+    159
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3250,
+    3250,
+    3250,
+    3250
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 44,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 4,
+   "triangles": [
+    160,
+    161,
+    162,
+    163,
+    164,
+    165,
+    166,
+    167
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    2567,
+    2567,
+    2567,
+    2567
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 45,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 4,
+   "triangles": [
+    168,
+    169,
+    170,
+    171,
+    172,
+    173,
+    174,
+    175
+   ],
+   "parent": 44,
+   "pinned": null,
+   "score_history": [
+    1754,
+    1754,
+    1754,
+    1754
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 46,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    176,
+    177
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2463,
+    2463,
+    2463,
+    2463
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 47,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    178,
+    179
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    4269,
+    4269,
+    4269,
+    4269
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 48,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    180,
+    181
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2537,
+    2537,
+    2537,
+    2537
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 49,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    182,
+    183
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    6729,
+    6729,
+    6729,
+    6729
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 50,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    184,
+    185
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    6017,
+    6017,
+    6017,
+    6017
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 51,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    186,
+    187
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    5000,
+    5000,
+    5000,
+    5000
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 52,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    188,
+    189
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7543,
+    7543,
+    7543,
+    7543
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 53,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 4,
+   "triangles": [
+    190,
+    191
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3345,
+    3345,
+    3345,
+    3345
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 54,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 5,
+   "triangles": [
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    198,
+    199
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    3044,
+    3044,
+    3044,
+    3044
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 55,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 5,
+   "triangles": [
+    200,
+    201,
+    202,
+    203,
+    204,
+    205,
+    206,
+    207
+   ],
+   "parent": 54,
+   "pinned": null,
+   "score_history": [
+    792,
+    792,
+    792,
+    792
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 56,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    208,
+    209
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7319,
+    7319,
+    7319,
+    7319
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 57,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    210,
+    211
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1998,
+    1998,
+    1998,
+    1998
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 58,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    212,
+    213
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2775,
+    2775,
+    2775,
+    2775
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 59,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    214,
+    215
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2971,
+    2971,
+    2971,
+    2971
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 60,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    216,
+    217
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7901,
+    7901,
+    7901,
+    7901
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 61,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    218,
+    219
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2969,
+    2969,
+    2969,
+    2969
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 62,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    220,
+    221
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2879,
+    2879,
+    2879,
+    2879
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 63,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 5,
+   "triangles": [
+    222,
+    223
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7216,
+    7216,
+    7216,
+    7216
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 64,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 6,
+   "triangles": [
+    224,
+    225,
+    226,
+    227,
+    228,
+    229,
+    230,
+    231
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    1053,
+    1053,
+    1053,
+    1056
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 65,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 6,
+   "triangles": [
+    232,
+    233,
+    234,
+    235,
+    236,
+    237,
+    238,
+    239
+   ],
+   "parent": 64,
+   "pinned": null,
+   "score_history": [
+    1598,
+    1602,
+    1602,
+    1602
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 66,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    240,
+    241
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    7970,
+    7970,
+    7970,
+    7970
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 67,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    242,
+    243
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    9270,
+    9270,
+    9270,
+    9270
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 68,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    244,
+    245
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    4442,
+    4442,
+    4442,
+    4442
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 69,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    246,
+    247
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    4668,
+    4668,
+    4668,
+    4668
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 70,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    248,
+    249
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    6544,
+    6544,
+    6544,
+    6544
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 71,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    250,
+    251
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    10801,
+    10801,
+    10801,
+    10801
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 72,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    252,
+    253
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    8596,
+    8596,
+    8596,
+    8596
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 73,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 6,
+   "triangles": [
+    254,
+    255
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3784,
+    3784,
+    3784,
+    3784
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 74,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 7,
+   "triangles": [
+    256,
+    257,
+    258,
+    259,
+    260,
+    261,
+    262,
+    263
+   ],
+   "parent": null,
+   "pinned": "first branch segment attached to trunk",
+   "score_history": [
+    1091,
+    1116,
+    1116,
+    1125
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 75,
+   "type": "wood_segment",
+   "role": "branch",
+   "cluster": 7,
+   "triangles": [
+    264,
+    265,
+    266,
+    267,
+    268,
+    269,
+    270,
+    271
+   ],
+   "parent": 74,
+   "pinned": null,
+   "score_history": [
+    214
+   ],
+   "removed_step": 0
+  },
+  {
+   "id": 76,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    272,
+    273
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    3574,
+    3574,
+    3581,
+    3581
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 77,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    274,
+    275
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1483,
+    1483,
+    1483,
+    1483
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 78,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    276,
+    277
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1526,
+    1526,
+    1526,
+    1526
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 79,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    278,
+    279
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    897,
+    897,
+    897,
+    897
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 80,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    280,
+    281
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    2443,
+    2444,
+    2444,
+    2686
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 81,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    282,
+    283
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1458,
+    1467,
+    1498,
+    1539
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 82,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    284,
+    285
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1882,
+    1902,
+    1902,
+    1910
+   ],
+   "removed_step": null
+  },
+  {
+   "id": 83,
+   "type": "leaf_card",
+   "role": "card",
+   "cluster": 7,
+   "triangles": [
+    286,
+    287
+   ],
+   "parent": null,
+   "pinned": null,
+   "score_history": [
+    1045,
+    1045,
+    1050,
+    1058
+   ],
+   "removed_step": null
+  }
+ ],
+ "removal_order": [
+  {
+   "step": 0,
+   "element": 75,
+   "score": 214,
+   "tris_after": 280
+  },
+  {
+   "step": 1,
+   "element": 7,
+   "score": 393,
+   "tris_after": 278
+  },
+  {
+   "step": 2,
+   "element": 15,
+   "score": 598,
+   "tris_after": 270
+  }
+ ],
+ "stop": {
+  "step": 3,
+  "reason": "next removal would violate fixed coverage condition",
+  "candidate": 55,
+  "candidate_score": 792,
+  "violations": [
+   {
+    "cond": "c_wood_front",
+    "view": 16,
+    "base": 339,
+    "now": 316
+   }
+  ]
+ },
+ "lod1": {
+  "triangles": 288,
+  "vertices": 576,
+  "views": [
+   {
+    "view": [
+     0,
+     12
+    ],
+    "coverage": 21794,
+    "wood_front": 4555,
+    "cluster": {
+     "0": 2785,
+     "1": 3008,
+     "2": 4165,
+     "3": 3756,
+     "4": 2998,
+     "5": 4371,
+     "6": 3763,
+     "7": 2090
+    }
+   },
+   {
+    "view": [
+     45,
+     12
+    ],
+    "coverage": 20362,
+    "wood_front": 4130,
+    "cluster": {
+     "0": 4087,
+     "1": 2295,
+     "2": 2913,
+     "3": 3214,
+     "4": 4249,
+     "5": 3599,
+     "6": 3900,
+     "7": 3037
+    }
+   },
+   {
+    "view": [
+     90,
+     12
+    ],
+    "coverage": 22234,
+    "wood_front": 4567,
+    "cluster": {
+     "0": 4122,
+     "1": 3681,
+     "2": 3733,
+     "3": 3578,
+     "4": 3388,
+     "5": 4536,
+     "6": 3056,
+     "7": 3662
+    }
+   },
+   {
+    "view": [
+     135,
+     12
+    ],
+    "coverage": 21239,
+    "wood_front": 4064,
+    "cluster": {
+     "0": 3299,
+     "1": 4221,
+     "2": 4557,
+     "3": 3166,
+     "4": 2535,
+     "5": 5004,
+     "6": 3615,
+     "7": 2908
+    }
+   },
+   {
+    "view": [
+     180,
+     12
+    ],
+    "coverage": 21057,
+    "wood_front": 5189,
+    "cluster": {
+     "0": 2444,
+     "1": 2764,
+     "2": 3318,
+     "3": 2910,
+     "4": 3040,
+     "5": 4890,
+     "6": 4180,
+     "7": 2521
+    }
+   },
+   {
+    "view": [
+     225,
+     12
+    ],
+    "coverage": 20536,
+    "wood_front": 3756,
+    "cluster": {
+     "0": 3570,
+     "1": 2810,
+     "2": 2529,
+     "3": 3121,
+     "4": 4359,
+     "5": 4253,
+     "6": 3711,
+     "7": 3404
+    }
+   },
+   {
+    "view": [
+     270,
+     12
+    ],
+    "coverage": 24586,
+    "wood_front": 4836,
+    "cluster": {
+     "0": 3655,
+     "1": 4215,
+     "2": 4304,
+     "3": 4187,
+     "4": 3430,
+     "5": 5123,
+     "6": 3111,
+     "7": 3942
+    }
+   },
+   {
+    "view": [
+     315,
+     12
+    ],
+    "coverage": 22364,
+    "wood_front": 3821,
+    "cluster": {
+     "0": 3076,
+     "1": 4714,
+     "2": 5428,
+     "3": 4051,
+     "4": 2545,
+     "5": 5458,
+     "6": 3128,
+     "7": 3033
+    }
+   },
+   {
+    "view": [
+     0,
+     40
+    ],
+    "coverage": 22526,
+    "wood_front": 2800,
+    "cluster": {
+     "0": 3165,
+     "1": 3266,
+     "2": 4848,
+     "3": 4076,
+     "4": 2601,
+     "5": 3347,
+     "6": 3504,
+     "7": 2540
+    }
+   },
+   {
+    "view": [
+     45,
+     40
+    ],
+    "coverage": 20887,
+    "wood_front": 2431,
+    "cluster": {
+     "0": 4089,
+     "1": 2858,
+     "2": 3726,
+     "3": 3561,
+     "4": 3302,
+     "5": 2290,
+     "6": 3879,
+     "7": 3217
+    }
+   },
+   {
+    "view": [
+     90,
+     40
+    ],
+    "coverage": 21629,
+    "wood_front": 3424,
+    "cluster": {
+     "0": 4491,
+     "1": 2919,
+     "2": 2946,
+     "3": 2858,
+     "4": 3061,
+     "5": 3818,
+     "6": 3146,
+     "7": 3575
+    }
+   },
+   {
+    "view": [
+     135,
+     40
+    ],
+    "coverage": 20554,
+    "wood_front": 3150,
+    "cluster": {
+     "0": 3622,
+     "1": 3627,
+     "2": 2602,
+     "3": 1854,
+     "4": 2164,
+     "5": 4653,
+     "6": 3691,
+     "7": 3005
+    }
+   },
+   {
+    "view": [
+     180,
+     40
+    ],
+    "coverage": 20860,
+    "wood_front": 3150,
+    "cluster": {
+     "0": 2358,
+     "1": 3466,
+     "2": 2526,
+     "3": 2192,
+     "4": 2910,
+     "5": 4872,
+     "6": 4015,
+     "7": 2877
+    }
+   },
+   {
+    "view": [
+     225,
+     40
+    ],
+    "coverage": 21602,
+    "wood_front": 2166,
+    "cluster": {
+     "0": 2871,
+     "1": 3789,
+     "2": 3327,
+     "3": 3490,
+     "4": 3831,
+     "5": 4823,
+     "6": 3398,
+     "7": 3637
+    }
+   },
+   {
+    "view": [
+     270,
+     40
+    ],
+    "coverage": 24442,
+    "wood_front": 3155,
+    "cluster": {
+     "0": 3612,
+     "1": 3996,
+     "2": 4829,
+     "3": 4212,
+     "4": 3434,
+     "5": 5337,
+     "6": 2895,
+     "7": 3892
+    }
+   },
+   {
+    "view": [
+     315,
+     40
+    ],
+    "coverage": 23441,
+    "wood_front": 2453,
+    "cluster": {
+     "0": 3321,
+     "1": 4359,
+     "2": 5688,
+     "3": 4158,
+     "4": 2780,
+     "5": 5251,
+     "6": 2672,
+     "7": 2918
+    }
+   },
+   {
+    "view": [
+     0,
+     90
+    ],
+    "coverage": 23581,
+    "wood_front": 339,
+    "cluster": {
+     "0": 3578,
+     "1": 4196,
+     "2": 4295,
+     "3": 3785,
+     "4": 2294,
+     "5": 4017,
+     "6": 2779,
+     "7": 3676
+    }
+   }
+  ],
+  "fragment_area_px": 2182145,
+  "fragment_area_per_view": [
+   132935,
+   126422,
+   144684,
+   130890,
+   131816,
+   133137,
+   149705,
+   136643,
+   119246,
+   113470,
+   119593,
+   113221,
+   119401,
+   129670,
+   139891,
+   127124,
+   114297
+  ]
+ },
+ "lod2": {
+  "triangles": 270,
+  "vertices": 540,
+  "glb_bytes": 20368,
+  "views": [
+   {
+    "view": [
+     0,
+     12
+    ],
+    "coverage": 21688,
+    "wood_front": 4443,
+    "cluster": {
+     "0": 2656,
+     "1": 3008,
+     "2": 4165,
+     "3": 3756,
+     "4": 2998,
+     "5": 4371,
+     "6": 3763,
+     "7": 2090
+    }
+   },
+   {
+    "view": [
+     45,
+     12
+    ],
+    "coverage": 20362,
+    "wood_front": 4130,
+    "cluster": {
+     "0": 4082,
+     "1": 2295,
+     "2": 2913,
+     "3": 3214,
+     "4": 4249,
+     "5": 3599,
+     "6": 3900,
+     "7": 3037
+    }
+   },
+   {
+    "view": [
+     90,
+     12
+    ],
+    "coverage": 22234,
+    "wood_front": 4567,
+    "cluster": {
+     "0": 3941,
+     "1": 3681,
+     "2": 3733,
+     "3": 3578,
+     "4": 3388,
+     "5": 4536,
+     "6": 3056,
+     "7": 3662
+    }
+   },
+   {
+    "view": [
+     135,
+     12
+    ],
+    "coverage": 21217,
+    "wood_front": 4022,
+    "cluster": {
+     "0": 3141,
+     "1": 4221,
+     "2": 4557,
+     "3": 3166,
+     "4": 2535,
+     "5": 5004,
+     "6": 3615,
+     "7": 2908
+    }
+   },
+   {
+    "view": [
+     180,
+     12
+    ],
+    "coverage": 21003,
+    "wood_front": 5118,
+    "cluster": {
+     "0": 2434,
+     "1": 2764,
+     "2": 3318,
+     "3": 2910,
+     "4": 3040,
+     "5": 4890,
+     "6": 4180,
+     "7": 2521
+    }
+   },
+   {
+    "view": [
+     225,
+     12
+    ],
+    "coverage": 20527,
+    "wood_front": 3629,
+    "cluster": {
+     "0": 3570,
+     "1": 2810,
+     "2": 2529,
+     "3": 3121,
+     "4": 4359,
+     "5": 4253,
+     "6": 3711,
+     "7": 3404
+    }
+   },
+   {
+    "view": [
+     270,
+     12
+    ],
+    "coverage": 24583,
+    "wood_front": 4704,
+    "cluster": {
+     "0": 3549,
+     "1": 4215,
+     "2": 4304,
+     "3": 4187,
+     "4": 3430,
+     "5": 5123,
+     "6": 3111,
+     "7": 3942
+    }
+   },
+   {
+    "view": [
+     315,
+     12
+    ],
+    "coverage": 22344,
+    "wood_front": 3745,
+    "cluster": {
+     "0": 2796,
+     "1": 4714,
+     "2": 5428,
+     "3": 4051,
+     "4": 2545,
+     "5": 5458,
+     "6": 3128,
+     "7": 3033
+    }
+   },
+   {
+    "view": [
+     0,
+     40
+    ],
+    "coverage": 22465,
+    "wood_front": 2798,
+    "cluster": {
+     "0": 2980,
+     "1": 3266,
+     "2": 4848,
+     "3": 4076,
+     "4": 2601,
+     "5": 3347,
+     "6": 3504,
+     "7": 2540
+    }
+   },
+   {
+    "view": [
+     45,
+     40
+    ],
+    "coverage": 20851,
+    "wood_front": 2385,
+    "cluster": {
+     "0": 4056,
+     "1": 2858,
+     "2": 3726,
+     "3": 3561,
+     "4": 3302,
+     "5": 2290,
+     "6": 3879,
+     "7": 3217
+    }
+   },
+   {
+    "view": [
+     90,
+     40
+    ],
+    "coverage": 21624,
+    "wood_front": 3419,
+    "cluster": {
+     "0": 4354,
+     "1": 2919,
+     "2": 2946,
+     "3": 2858,
+     "4": 3061,
+     "5": 3818,
+     "6": 3146,
+     "7": 3575
+    }
+   },
+   {
+    "view": [
+     135,
+     40
+    ],
+    "coverage": 20553,
+    "wood_front": 3147,
+    "cluster": {
+     "0": 3577,
+     "1": 3627,
+     "2": 2602,
+     "3": 1854,
+     "4": 2164,
+     "5": 4653,
+     "6": 3691,
+     "7": 3005
+    }
+   },
+   {
+    "view": [
+     180,
+     40
+    ],
+    "coverage": 20853,
+    "wood_front": 3141,
+    "cluster": {
+     "0": 2357,
+     "1": 3466,
+     "2": 2526,
+     "3": 2192,
+     "4": 2910,
+     "5": 4872,
+     "6": 4015,
+     "7": 2877
+    }
+   },
+   {
+    "view": [
+     225,
+     40
+    ],
+    "coverage": 21596,
+    "wood_front": 2143,
+    "cluster": {
+     "0": 2871,
+     "1": 3789,
+     "2": 3327,
+     "3": 3490,
+     "4": 3831,
+     "5": 4823,
+     "6": 3398,
+     "7": 3637
+    }
+   },
+   {
+    "view": [
+     270,
+     40
+    ],
+    "coverage": 24442,
+    "wood_front": 3128,
+    "cluster": {
+     "0": 3591,
+     "1": 3996,
+     "2": 4829,
+     "3": 4212,
+     "4": 3434,
+     "5": 5337,
+     "6": 2895,
+     "7": 3892
+    }
+   },
+   {
+    "view": [
+     315,
+     40
+    ],
+    "coverage": 23434,
+    "wood_front": 2442,
+    "cluster": {
+     "0": 3145,
+     "1": 4359,
+     "2": 5688,
+     "3": 4158,
+     "4": 2780,
+     "5": 5251,
+     "6": 2672,
+     "7": 2918
+    }
+   },
+   {
+    "view": [
+     0,
+     90
+    ],
+    "coverage": 23572,
+    "wood_front": 328,
+    "cluster": {
+     "0": 3572,
+     "1": 4196,
+     "2": 4295,
+     "3": 3785,
+     "4": 2294,
+     "5": 4017,
+     "6": 2779,
+     "7": 3676
+    }
+   }
+  ],
+  "fragment_area_px": 2156004,
+  "fragment_area_per_view": [
+   131011,
+   125747,
+   142460,
+   128417,
+   129856,
+   132505,
+   147590,
+   134211,
+   117769,
+   112827,
+   117739,
+   111168,
+   117829,
+   129210,
+   138355,
+   125256,
+   114054
+  ],
+  "kept_triangle_indices": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63,
+   64,
+   65,
+   66,
+   67,
+   68,
+   69,
+   70,
+   71,
+   80,
+   81,
+   82,
+   83,
+   84,
+   85,
+   86,
+   87,
+   88,
+   89,
+   90,
+   91,
+   92,
+   93,
+   94,
+   95,
+   96,
+   97,
+   98,
+   99,
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125,
+   126,
+   127,
+   128,
+   129,
+   130,
+   131,
+   132,
+   133,
+   134,
+   135,
+   136,
+   137,
+   138,
+   139,
+   140,
+   141,
+   142,
+   143,
+   144,
+   145,
+   146,
+   147,
+   148,
+   149,
+   150,
+   151,
+   152,
+   153,
+   154,
+   155,
+   156,
+   157,
+   158,
+   159,
+   160,
+   161,
+   162,
+   163,
+   164,
+   165,
+   166,
+   167,
+   168,
+   169,
+   170,
+   171,
+   172,
+   173,
+   174,
+   175,
+   176,
+   177,
+   178,
+   179,
+   180,
+   181,
+   182,
+   183,
+   184,
+   185,
+   186,
+   187,
+   188,
+   189,
+   190,
+   191,
+   192,
+   193,
+   194,
+   195,
+   196,
+   197,
+   198,
+   199,
+   200,
+   201,
+   202,
+   203,
+   204,
+   205,
+   206,
+   207,
+   208,
+   209,
+   210,
+   211,
+   212,
+   213,
+   214,
+   215,
+   216,
+   217,
+   218,
+   219,
+   220,
+   221,
+   222,
+   223,
+   224,
+   225,
+   226,
+   227,
+   228,
+   229,
+   230,
+   231,
+   232,
+   233,
+   234,
+   235,
+   236,
+   237,
+   238,
+   239,
+   240,
+   241,
+   242,
+   243,
+   244,
+   245,
+   246,
+   247,
+   248,
+   249,
+   250,
+   251,
+   252,
+   253,
+   254,
+   255,
+   256,
+   257,
+   258,
+   259,
+   260,
+   261,
+   262,
+   263,
+   272,
+   273,
+   274,
+   275,
+   276,
+   277,
+   278,
+   279,
+   280,
+   281,
+   282,
+   283,
+   284,
+   285,
+   286,
+   287
+  ],
+  "glb_sha256": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6"
+ },
+ "ratios": [
+  {
+   "view": [
+    0,
+    12
+   ],
+   "az_el": [
+    0,
+    12
+   ],
+   "coverage_ratio": 0.9951362760392769,
+   "wood_ratio": 0.9754116355653129,
+   "cluster_ratio_min": 0.9536804308797128,
+   "cluster_ratio": {
+    "0": 0.9536804308797128,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    45,
+    12
+   ],
+   "az_el": [
+    45,
+    12
+   ],
+   "coverage_ratio": 1.0,
+   "wood_ratio": 1.0,
+   "cluster_ratio_min": 0.9987766087594813,
+   "cluster_ratio": {
+    "0": 0.9987766087594813,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    90,
+    12
+   ],
+   "az_el": [
+    90,
+    12
+   ],
+   "coverage_ratio": 1.0,
+   "wood_ratio": 1.0,
+   "cluster_ratio_min": 0.9560892770499757,
+   "cluster_ratio": {
+    "0": 0.9560892770499757,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    135,
+    12
+   ],
+   "az_el": [
+    135,
+    12
+   ],
+   "coverage_ratio": 0.9989641696878384,
+   "wood_ratio": 0.9896653543307087,
+   "cluster_ratio_min": 0.9521066989996969,
+   "cluster_ratio": {
+    "0": 0.9521066989996969,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    180,
+    12
+   ],
+   "az_el": [
+    180,
+    12
+   ],
+   "coverage_ratio": 0.9974355321270836,
+   "wood_ratio": 0.9863172094815957,
+   "cluster_ratio_min": 0.9959083469721768,
+   "cluster_ratio": {
+    "0": 0.9959083469721768,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    225,
+    12
+   ],
+   "az_el": [
+    225,
+    12
+   ],
+   "coverage_ratio": 0.9995617452278924,
+   "wood_ratio": 0.9661874334398296,
+   "cluster_ratio_min": 1.0,
+   "cluster_ratio": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    270,
+    12
+   ],
+   "az_el": [
+    270,
+    12
+   ],
+   "coverage_ratio": 0.9998779793378345,
+   "wood_ratio": 0.9727047146401985,
+   "cluster_ratio_min": 0.9709986320109439,
+   "cluster_ratio": {
+    "0": 0.9709986320109439,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    315,
+    12
+   ],
+   "az_el": [
+    315,
+    12
+   ],
+   "coverage_ratio": 0.9991057055982829,
+   "wood_ratio": 0.9801099188694059,
+   "cluster_ratio_min": 0.9089726918075423,
+   "cluster_ratio": {
+    "0": 0.9089726918075423,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    0,
+    40
+   ],
+   "az_el": [
+    0,
+    40
+   ],
+   "coverage_ratio": 0.9972920181124034,
+   "wood_ratio": 0.9992857142857143,
+   "cluster_ratio_min": 0.9415481832543444,
+   "cluster_ratio": {
+    "0": 0.9415481832543444,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    45,
+    40
+   ],
+   "az_el": [
+    45,
+    40
+   ],
+   "coverage_ratio": 0.9982764398908411,
+   "wood_ratio": 0.9810777457836282,
+   "cluster_ratio_min": 0.991929567131328,
+   "cluster_ratio": {
+    "0": 0.991929567131328,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    90,
+    40
+   ],
+   "az_el": [
+    90,
+    40
+   ],
+   "coverage_ratio": 0.9997688288871422,
+   "wood_ratio": 0.9985397196261683,
+   "cluster_ratio_min": 0.9694945446448452,
+   "cluster_ratio": {
+    "0": 0.9694945446448452,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    135,
+    40
+   ],
+   "az_el": [
+    135,
+    40
+   ],
+   "coverage_ratio": 0.9999513476695534,
+   "wood_ratio": 0.9990476190476191,
+   "cluster_ratio_min": 0.9875759249033683,
+   "cluster_ratio": {
+    "0": 0.9875759249033683,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    180,
+    40
+   ],
+   "az_el": [
+    180,
+    40
+   ],
+   "coverage_ratio": 0.9996644295302013,
+   "wood_ratio": 0.9971428571428571,
+   "cluster_ratio_min": 0.9995759117896522,
+   "cluster_ratio": {
+    "0": 0.9995759117896522,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    225,
+    40
+   ],
+   "az_el": [
+    225,
+    40
+   ],
+   "coverage_ratio": 0.9997222479400055,
+   "wood_ratio": 0.9893813481071099,
+   "cluster_ratio_min": 1.0,
+   "cluster_ratio": {
+    "0": 1.0,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    270,
+    40
+   ],
+   "az_el": [
+    270,
+    40
+   ],
+   "coverage_ratio": 1.0,
+   "wood_ratio": 0.9914421553090332,
+   "cluster_ratio_min": 0.9941860465116279,
+   "cluster_ratio": {
+    "0": 0.9941860465116279,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    315,
+    40
+   ],
+   "az_el": [
+    315,
+    40
+   ],
+   "coverage_ratio": 0.9997013779275629,
+   "wood_ratio": 0.9955156950672646,
+   "cluster_ratio_min": 0.9470039144835892,
+   "cluster_ratio": {
+    "0": 0.9470039144835892,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  },
+  {
+   "view": [
+    0,
+    90
+   ],
+   "az_el": [
+    0,
+    90
+   ],
+   "coverage_ratio": 0.9996183367965735,
+   "wood_ratio": 0.967551622418879,
+   "cluster_ratio_min": 0.9983230855226384,
+   "cluster_ratio": {
+    "0": 0.9983230855226384,
+    "1": 1.0,
+    "2": 1.0,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0
+   }
+  }
+ ],
+ "fragment_area_ratio": 0.9880205027621904,
+ "fragment_area_m2": {
+  "lod1": 3788.4461805555557,
+  "lod2": 3743.0625
+ },
+ "gain_gate": {
+  "cap": 172,
+  "tri_ok": false,
+  "fragment_ratio_max": 0.8,
+  "fragment_ok": false
+ },
+ "albedo_front_linear_mean": {
+  "lod1": {
+   "pixels": 21794,
+   "mean_rgb": [
+    0.13386603461869848,
+    0.18367594842368082,
+    0.07124170058484447
+   ]
+  },
+  "lod2": {
+   "pixels": 21688,
+   "mean_rgb": [
+    0.13351637090220866,
+    0.18377570528333373,
+    0.071064627947352
+   ]
+  }
+ }
+}

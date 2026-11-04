@@ -1,0 +1,122 @@
+{
+  "size": 1024,
+  "tile_px": 256,
+  "regions": {
+    "wood": [
+      0,
+      0,
+      256,
+      256
+    ],
+    "wood_aged": [
+      256,
+      0,
+      256,
+      256
+    ],
+    "metal_dark": [
+      512,
+      0,
+      256,
+      256
+    ],
+    "metal_green": [
+      768,
+      0,
+      256,
+      256
+    ],
+    "glass": [
+      0,
+      256,
+      256,
+      256
+    ],
+    "stone": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "concrete": [
+      512,
+      256,
+      256,
+      256
+    ],
+    "earth": [
+      768,
+      256,
+      256,
+      256
+    ],
+    "kiosk_green": [
+      0,
+      512,
+      256,
+      256
+    ],
+    "petrol": [
+      256,
+      512,
+      256,
+      256
+    ],
+    "shutter": [
+      512,
+      512,
+      256,
+      256
+    ],
+    "fabric": [
+      768,
+      512,
+      256,
+      256
+    ],
+    "shrub": [
+      0,
+      768,
+      256,
+      256
+    ],
+    "plaster": [
+      256,
+      768,
+      256,
+      256
+    ],
+    "roof": [
+      512,
+      768,
+      256,
+      256
+    ],
+    "terracotta": [
+      768,
+      768,
+      256,
+      256
+    ]
+  },
+  "world_m": {
+    "wood": 0.9,
+    "wood_aged": 0.9,
+    "metal_dark": 0.6,
+    "metal_green": 0.6,
+    "glass": 1.2,
+    "stone": 0.9,
+    "concrete": 1.2,
+    "earth": 0.8,
+    "kiosk_green": 1.0,
+    "petrol": 0.6,
+    "shutter": 0.6,
+    "fabric": 0.8,
+    "shrub": 0.7,
+    "plaster": 1.2,
+    "roof": 1.0,
+    "terracotta": 0.7
+  },
+  "seed_base": 58000,
+  "format": "RGB opaque (no alpha); matte; one shared Texture2D"
+}

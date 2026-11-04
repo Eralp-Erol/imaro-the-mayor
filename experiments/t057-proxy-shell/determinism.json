@@ -1,0 +1,12 @@
+{
+  "two_complete_source_generations": true,
+  "before": {
+    "assets/hero/vegetation/shell_experiment/plane_shell.glb": "98107cfb53c769c45999433dd5e7ba26289aa4f7879402650a9bb091bbbeb64a",
+    "experiments/t057-proxy-shell/provenance.json": "ce4aa35b284482d18fcf0e5fbfe0f8463f8815123bfd6dfa4c0d52db59fda4db"
+  },
+  "after": {
+    "assets/hero/vegetation/shell_experiment/plane_shell.glb": "98107cfb53c769c45999433dd5e7ba26289aa4f7879402650a9bb091bbbeb64a",
+    "experiments/t057-proxy-shell/provenance.json": "ce4aa35b284482d18fcf0e5fbfe0f8463f8815123bfd6dfa4c0d52db59fda4db"
+  },
+  "equal": true
+}

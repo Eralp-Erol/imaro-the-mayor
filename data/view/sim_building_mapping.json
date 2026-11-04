@@ -1,0 +1,19 @@
+{
+	"_header": "T-040 · SimBuildingProjector GEÇİCİ eşleme verisi (ÇM; sanat/oyun kararı DEĞİL). Sim'in verdiği (kullanım, birim, inşaat ilerlemesi) -> onaylı hero modülleri (T-062 A2). Modüller, aileler ve kat sayıları data/library/game_buildings.json + data/world/ismeral/settlement.json (family_roles, hero_family_map) kurallarından gelir; burada yalnız köprü sayıları var. Açık sorular: production/QUESTIONS.md Q-016.",
+	"schema_version": 1,
+	"units_per_floor": 1,
+	"max_buildings_per_parcel": 3,
+	"fallback_zone": "dense",
+	"uses": {
+		"_notes": "families: bu kullanım için izinli HERO aileleri (yerleşim kuralındaki zone adaylarıyla kesişir; kesişim boşsa fallback_zone adayları denenir). ground_shop: true ise zemin kat dükkân rolü (FLAG_GROUND_SHOP) zorunlu; rol YALNIZ hero_com_bazaar ailesindedir (Studio Director kararı 3, settlement.json family_roles). Eski kit eşlemesi: res_mid->hero_res_mid, res_late->hero_res_late, res_old/res_old_town->hero_old_core, res_house->hero_res_house, `_gf` dükkânlı varyantlar->hero_com_bazaar.",
+		"residential": {"families": ["hero_res_mid", "hero_res_late", "hero_old_core", "hero_res_house"], "ground_shop": false},
+		"commercial": {"families": ["hero_com_bazaar"], "ground_shop": true}
+	},
+	"_notes": [
+		"units_per_floor: parsel birimi / bu sayı = hedef toplam kat. playable.gd'deki T0 stok adaptörü ile AYNI sözleşme (stokta birim = kat sayısı); ekonomi birimi ile kit katı arasında yeni bir oran uydurulmaz (1).",
+		"max_buildings_per_parcel: bir parsele yan yana en çok bu kadar yapı (cephe şeridi tek sıra). Parsel sığdırabildiği kadarı yerleşir; sığmayan birim görsele yansımaz (sim sayısı yine gerçek veridir).",
+		"Değişim kaynağı: SimFacade.parcel_changes_since (onay, başlama, durma/devam, bitiş feed'den gelir). Yalnız inşaattaki parselin kat kademesi (progress_pm feed dışıdır) iki okumadan hız kestirimiyle zamanlı okunur (SimBuildingPlacer.next_stage_progress). Kare başına iş bütçesi kodda (playable.gd SIM_SYNC_BUDGET_US).",
+		"İnşaat kademesi: iskele/inşaat modülü YOK. Hero aileleri TEK boy/tek kat sayısıdır (a/b/c yalnız stil; Studio Director kararı 2): aile içinde daha az katlı modül olmadığından nihai modül inşaat başlayınca tam boy görünür (görünür davranış değişikliği; kademe görünümü A3/ayrı karar).",
+		"fallback_zone: parselin T0 bölge dokusu (zone_by_parcel) bulunamazsa ya da dokunun adayları kullanıma uymazsa (ör. sanayi avlusu + konut) kullanılan doku."
+	]
+}

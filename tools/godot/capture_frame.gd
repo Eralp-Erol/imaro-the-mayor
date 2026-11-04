@@ -1,8 +1,10 @@
 extends SceneTree
 ## Ana sahneyi pencereli çalıştırıp N kare sonra viewport'u PNG olarak kaydeder.
 ## Kullanım (tools/capture.sh sarar):
-##   godot --path . [--resolution WxH] --script res://tools/godot/capture_frame.gd -- --out=/abs/x.png --frames=30 [--scene=res://x.tscn] [oyun argümanları]
-## --scene yoksa run/main_scene kullanılır. --out/--frames/--scene dışındaki kullanıcı argümanları (ör. --visual-capture) oyuna olduğu gibi geçer.
+##   godot --path . [--resolution WxH] --script res://tools/godot/capture_frame.gd -- --out=/abs/x.png --frames=30
+##     [--scene=res://x.tscn] [oyun argümanları]
+## --scene yoksa run/main_scene kullanılır. --out/--frames/--scene dışındaki kullanıcı argümanları (ör.
+## --visual-capture) oyuna olduğu gibi geçer.
 ## --headless ile ÇALIŞMAZ: dummy renderer görüntü üretmez.
 
 

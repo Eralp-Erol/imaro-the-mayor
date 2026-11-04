@@ -1,0 +1,5 @@
+b001 exit 0
+sametick exit 0
+play exit 0
+loadhash exit 0
+ALLDONE

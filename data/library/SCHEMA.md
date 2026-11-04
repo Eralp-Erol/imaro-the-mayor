@@ -1,0 +1,125 @@
+# Varlık kataloğu şeması (`data/library/catalog.json`) — T-052
+
+Tek doğruluk kaynağı: oyunda ve kütüphanede bulunan her varlık burada bir kayıttır. Kit varlıkları
+`assets/models/buildings/kit_manifest.json` + GLB dosyalarından **türetilir** (`tools/library/build_catalog.py`);
+elle düzenlenmez. Kullanıcıya ait alanlar yeniden üretimde **korunur**.
+
+## Sahiplik (CAN-03 ile uyumlu)
+
+| Alan | Kim yazar | Not |
+|---|---|---|
+| `approval`, `approval_by`, `approval_date`, `user_note` (ve `user_*` anahtarları) | **Kullanıcı** | Betik yalnız YENİ kit kaydı için `provisional-in-use` + `approval_by: null` + bugünün tarihini yazar; var olan kaydın bu alanlarına dokunmaz. |
+| `approved` / `rejected` değerleri | **Yalnız kullanıcı** | Betik bu değerleri asla üretmez; doğrulayıcı bunlar için `approval_by == "user"` ve `approval_date` ister. |
+| `proposed` | Ajan | Şablon önerileri (insan, araç, yol kesiti…) bu durumla girer; GLB'si henüz olmayabilir (`glb: null`). |
+| `provisional-in-use` | Sistem | Mevcut kit v0/v1: oyunda kullanılıyor, **onaylı DEĞİL**. |
+| Diğer tüm alanlar | `build_catalog.py` | GLB'den ölçülür / manifestten gelir; elle değişiklik bir sonraki üretimde ezilir. |
+
+Kit kaynaklı olmayan kayıtlar (`source.kind != "kit"`, ör. ajan önerileri) betik tarafından **olduğu gibi** korunur.
+Manifestten düşen bir kit kaydı silinmez; `manifest_present: false` olur (doğrulayıcı: `provisional-in-use` ise hata,
+diğerlerinde uyarı).
+
+## Kök
+
+`catalog_version` (1), `schema`, `generated_by`, `generated_from` (manifest yolu), `kit_version`, `palette`,
+`categories[]` (`id`, `label_tr`), `entries[]`. Zaman damgası YOKTUR (idempotent çıktı).
+
+Kategoriler: `building`, `roof_equipment`, `vegetation`, `vehicle`, `human`, `road_section`, `ground`,
+`street_furniture`, `marking`.
+
+## Kayıt (`entries[]`)
+
+| Alan | Tür | Anlam |
+|---|---|---|
+| `id` | string `^[a-z][a-z0-9_]*$` | Benzersiz kimlik (kit için manifest kimliği, ör. `bld_res_mid_a_gf`). |
+| `category` | enum | Yukarıdaki kategorilerden biri. |
+| `family`, `variant` | string | Kit ailesi (`res_mid`…) ve varyant. |
+| `era` | `old\|mid\|late\|none` | Dönem etiketi (manifestten). |
+| `region` | string\|null | Bölge etiketi. **Henüz yok → `null`** (bölge karakteri art-director/kanon kararı; uydurulmaz). |
+| `tags` | string[] | `era:*`, `roof:*`, `ground-floor-shop`, `landmark`. |
+| `glb` | `res://…`\|null | GLB yolu; yalnız `proposed` kayıtta `null` olabilir. |
+| `glb_sha256` | string | Dosyadan hesaplanır (sürüklenme tespiti). |
+| `materials` | string[] | GLB'deki malzeme adları (`mat_kit`). |
+| `dimensions_m` | object | GLB LOD0 `POSITION` min/max'ından ÖLÇÜLÜR: `width_x`, `depth_z`, `height_above_ground`, `foundation_skirt_depth`, `bbox_min`, `bbox_max`. (Bina GLB'lerinde zemin altı 2,5 m etek vardır; yükseklik zeminden sayılır.) |
+| `triangles` | object | `LOD0`, `LOD1`, `PROXY` (GLB'den sayılır; yoksa `null`). |
+| `palette_rows` | object | Manifestteki duvar/çatı/aksan palet satırları (bilgi amaçlı). |
+| `source` | object | `kind` (`kit`\|`template`\|…), `generator` (üreteç betiği, diskte olmalı), `manifest`, `rebuild` (yeniden üretim komutu), `spec`. |
+| `manifest_present` | bool | Kit kaydının manifestte hâlâ olup olmadığı (türetilir). |
+| `approval` | enum | `proposed\|approved\|rejected\|provisional-in-use`. |
+| `approval_by` | `"user"`\|null | `approved/rejected` için zorunlu `"user"`; diğerlerinde `null`. |
+| `approval_date` | `YYYY-AA-GG`\|null | Durumun işaretlendiği tarih. |
+| `user_note` | string | Kullanıcı notu (boş başlar). |
+
+## Doğrulayıcı kuralları (`tools/library/validate_catalog.py`, testler `tests/library/`)
+
+Zorunlu alanlar · enum değerleri · çift kimlik · eksik GLB / üreteç dosyası · manifestteki her modül katalogda ·
+katalog değerleri GLB'den yeniden ölçülenle birebir (üçgen, boyut, sha256) · manifest üçgen sayısı = GLB · manifest
+bütçeleri (`max_lod0_tris`, `proxy_max_tris`) · `approved/rejected` ⇒ `approval_by == "user"` + tarih · `approval_by`
+diğer durumlarda `null`.
+
+## İş akışı
+
+```
+python3 tools/library/build_catalog.py --write     # manifest/GLB değişince
+python3 tools/library/validate_catalog.py          # doğrula
+tools/library/render_sheets.sh                     # sayfaları yeniden üret
+```
+
+## Hero LOD zinciri (T-056; yalnız kütüphane)
+
+Hero kayıtlarında isteğe bağlı `lod_chain` bulunur. `levels.LOD0|LOD1|PROXY`,
+`glb`, `sha256`, gerçek `triangles`, `bbox_min/max`, `materials` içerir. Kök
+`triangles` bu ölçümlerle eşleşir. `status: proposed`, mevcut bina onayını yeni
+LOD'lara taşımaz. `distances_m` 100/300 m çalışma değeridir; oyun entegrasyonu değildir.
+`atlas` LOD1'in kaynak dokusunu hash ile tanımlar. `proxy_atlas`, özgün LOD0'ın
+ışıksız ön ortografik albedo görüntüsünden, yan/arka kaynak tile korunarak aynı UV düzeninde üretilmiş
+256×256 PNG'yi ve kaynak GLB hash'ini izler; yeni doku/LOD kullanıcı onayı değildir.
+Üreteç `art/blender/hero/build_lods.py`; ölçüm/güncelleme
+`python3 tools/library/hero_lods.py --write`, bayatlık kontrolü `--check`.
+Ana katalog doğrulayıcı, zincirin dosya/hash/üçgen/doku sürüklenmesini ve bütçeyi
+(LOD1 ≤800, proxy ≤80 üçgen) denetler. `approval*`, `user_note`, `user_*` korunur.
+
+## Bitki hero zincirleri (T-057)
+
+`source.kind: hero_vegetation`, `category: vegetation`. Yeni kimlikler
+`veg_hero_<species>_a`; öneriler `approval: proposed` başlar. Mevcut81 kayıt
+ve kullanıcı alanları değiştirilmez. Bu kayıtların `lod_chain` yapısında üç
+seviye (`LOD0/LOD1/PROXY`) için GLB yolu, hash, gerçek bbox/üçgen/malzeme;
+`atlas` için ortak RGBA PNG/layout yolu ve hash; `material_policy` (MASK0.45,
+çift taraf, mat); `budgets` ve entegrasyon olmayan çalışma mesafeleri bulunur.
+Ana doğrulayıcı zinciri `source.kind` ile `vegetation_catalog.validate_chain`'e
+iletir; hero bina denetimine karıştırmaz. Bina araçları yalnız `source.kind: hero`
+kayıtlarını işler. Üretim `art/blender/vegetation/`; ölçüm/güncelleme
+`python3 tools/library/vegetation_catalog.py --write|--check`. Negatif drift,
+şema sınıflandırması, aynı Texture2D ve MASK/mipmap kontrolleri vardır.
+
+Bitki zinciri (T-057 Karar 5): palmiye dışı 8 türde `levels` yalnız LOD0/LOD1'dir;
+`proxy_source`/`proxy_runtime` ve PROXY seviyesi yoktur, eski proxy kalıntısı
+reddedilir. Palmiyelerde LOD0/LOD1/PROXY (40tri prosedürel) kalır. `import_policy`
+(`generate_lods:false`, post-import yok) ve `distances_m` (LOD0<120, LOD1<400 m,
+`working-model-not-integrated`) taşınır; atlas hash'i `atlas_regions.json` ile
+korunur. malformed source=None/string/list dispatch öncesi tanı verir. Bu alan kullanıcı onayı veya oyun LOD entegrasyonu değildir.
+
+## Sokak donatısı hero zincirleri (T-058)
+
+`source.kind: hero_furniture`, `category: street_furniture`. Yeni kimlikler
+`fur_hero_<tür>_a` (8 öneri: bank, çöp kutusu, sokak direği, bollard, bisiklet
+demiri, durak, saksı, kiosk); `approval: proposed` başlar. Mevcut 81 kit + 10 bitki
+kaydı ve kullanıcı alanları değiştirilmez. `lod_chain.levels` yalnız LOD0/LOD1'dir
+(≤1600 / ≤240 üçgen); uzak proxy yoktur, `distances_m` belgelenen çalışma
+kesme mesafeleridir (`beyond_lod1: cull`, `working-model-not-integrated`). `atlas`
+tek opak RGB Texture2D'yi (`furniture_atlas.png`) ve `atlas_layout.json`'ı hash ile
+izler; `material_policy` opak/tek yüzlü/mat, `import_policy` `generate_lods:false`.
+`template_ref` templates-v0 §f satırını ve ölçünün şablon mu çalışma değeri mi
+olduğunu taşır. Ana doğrulayıcı zinciri `source.kind` ile
+`furniture_catalog.validate_chain`'e iletir. Üretim `art/blender/furniture/`
+(`rebuild.sh`); ölçüm `python3 tools/library/furniture_catalog.py --write|--check`.
+Bu alanlar kullanıcı onayı veya oyun entegrasyonu değildir; Q-018 açıktır.
+
+## İnsan stil önerileri (T-059)
+
+`source.kind: hero_human`, `category: human`. Kimlikler `hum_hero_<stil>_<oran>_a` (stil `pawn|block|facet`, oran `neutral|broad`; 6 öneri,
+hiçbiri seçilmiş değil); `approval: proposed`. Mevcut 99 kayıt ve kullanıcı alanları değiştirilmez. `lod_chain.levels` yalnız LOD0/LOD1
+(≤900 / ≤100 üçgen; LOD1 sınırı LOD0 zarfı içinde), proxy yok, `distances_m` çalışma kesme mesafeleri (30/120 m, `working-model-not-integrated`).
+`atlas` tek opak RGB `human_atlas.png` (1024×512) ve `atlas_layout.json`; `palette_rows.human_rows` SK/HR/CL satırları. Etiketler izinli listeyle
+sınırlıdır (yüz, logo, yazı, üniforma, kültürel/dini giyim, adlı karakter, mevsim yok). Ana doğrulayıcı `human_catalog.validate_chain`'e iletir.
+Üretim `art/blender/human/` (`rebuild.sh`); ölçüm `python3 tools/library/human_catalog.py --write|--check`. Q-018 açıktır.

@@ -1,0 +1,232 @@
+{
+  "bld_civ_hall_a": {
+    "sheet": "building-08.png",
+    "row": 1,
+    "scale_m_per_image": 64
+  },
+  "bld_civ_hall_b": {
+    "sheet": "building-08.png",
+    "row": 2,
+    "scale_m_per_image": 64
+  },
+  "bld_civ_hall_c": {
+    "sheet": "building-08.png",
+    "row": 3,
+    "scale_m_per_image": 64
+  },
+  "bld_ind_heritage_a": {
+    "sheet": "building-07.png",
+    "row": 1,
+    "scale_m_per_image": 80
+  },
+  "bld_ind_heritage_b": {
+    "sheet": "building-07.png",
+    "row": 2,
+    "scale_m_per_image": 80
+  },
+  "bld_ind_shed_a": {
+    "sheet": "building-07.png",
+    "row": 3,
+    "scale_m_per_image": 80
+  },
+  "bld_ind_shed_b": {
+    "sheet": "building-07.png",
+    "row": 4,
+    "scale_m_per_image": 80
+  },
+  "bld_ind_shed_c": {
+    "sheet": "building-07.png",
+    "row": 5,
+    "scale_m_per_image": 80
+  },
+  "bld_lmk_clocktower": {
+    "sheet": "building-08.png",
+    "row": 4,
+    "scale_m_per_image": 64
+  },
+  "bld_res_house_a": {
+    "sheet": "building-05.png",
+    "row": 1,
+    "scale_m_per_image": 44
+  },
+  "bld_res_house_b": {
+    "sheet": "building-05.png",
+    "row": 2,
+    "scale_m_per_image": 44
+  },
+  "bld_res_house_c": {
+    "sheet": "building-05.png",
+    "row": 3,
+    "scale_m_per_image": 44
+  },
+  "bld_res_house_d": {
+    "sheet": "building-05.png",
+    "row": 4,
+    "scale_m_per_image": 44
+  },
+  "bld_res_house_e": {
+    "sheet": "building-05.png",
+    "row": 5,
+    "scale_m_per_image": 44
+  },
+  "bld_res_late_a": {
+    "sheet": "building-05.png",
+    "row": 6,
+    "scale_m_per_image": 44
+  },
+  "bld_res_late_a_gf": {
+    "sheet": "building-06.png",
+    "row": 1,
+    "scale_m_per_image": 44
+  },
+  "bld_res_late_b": {
+    "sheet": "building-06.png",
+    "row": 2,
+    "scale_m_per_image": 44
+  },
+  "bld_res_late_b_gf": {
+    "sheet": "building-06.png",
+    "row": 3,
+    "scale_m_per_image": 44
+  },
+  "bld_res_late_c": {
+    "sheet": "building-06.png",
+    "row": 4,
+    "scale_m_per_image": 44
+  },
+  "bld_res_mid_a": {
+    "sheet": "building-03.png",
+    "row": 1,
+    "scale_m_per_image": 36
+  },
+  "bld_res_mid_a_gf": {
+    "sheet": "building-03.png",
+    "row": 2,
+    "scale_m_per_image": 36
+  },
+  "bld_res_mid_b": {
+    "sheet": "building-03.png",
+    "row": 3,
+    "scale_m_per_image": 36
+  },
+  "bld_res_mid_b_gf": {
+    "sheet": "building-03.png",
+    "row": 4,
+    "scale_m_per_image": 36
+  },
+  "bld_res_mid_c": {
+    "sheet": "building-03.png",
+    "row": 5,
+    "scale_m_per_image": 36
+  },
+  "bld_res_mid_c_gf": {
+    "sheet": "building-03.png",
+    "row": 6,
+    "scale_m_per_image": 36
+  },
+  "bld_res_mid_d": {
+    "sheet": "building-04.png",
+    "row": 1,
+    "scale_m_per_image": 44
+  },
+  "bld_res_mid_e": {
+    "sheet": "building-04.png",
+    "row": 2,
+    "scale_m_per_image": 44
+  },
+  "bld_res_mid_e_gf": {
+    "sheet": "building-04.png",
+    "row": 3,
+    "scale_m_per_image": 44
+  },
+  "bld_res_mid_f": {
+    "sheet": "building-04.png",
+    "row": 4,
+    "scale_m_per_image": 44
+  },
+  "bld_res_mid_f_gf": {
+    "sheet": "building-04.png",
+    "row": 5,
+    "scale_m_per_image": 44
+  },
+  "bld_res_mid_g": {
+    "sheet": "building-04.png",
+    "row": 6,
+    "scale_m_per_image": 44
+  },
+  "bld_res_old_a": {
+    "sheet": "building-01.png",
+    "row": 1,
+    "scale_m_per_image": 24
+  },
+  "bld_res_old_a_gf": {
+    "sheet": "building-01.png",
+    "row": 2,
+    "scale_m_per_image": 24
+  },
+  "bld_res_old_b": {
+    "sheet": "building-01.png",
+    "row": 3,
+    "scale_m_per_image": 24
+  },
+  "bld_res_old_c": {
+    "sheet": "building-01.png",
+    "row": 4,
+    "scale_m_per_image": 24
+  },
+  "bld_res_old_c_gf": {
+    "sheet": "building-01.png",
+    "row": 5,
+    "scale_m_per_image": 24
+  },
+  "bld_res_old_d": {
+    "sheet": "building-01.png",
+    "row": 6,
+    "scale_m_per_image": 24
+  },
+  "bld_res_old_town_a": {
+    "sheet": "building-02.png",
+    "row": 1,
+    "scale_m_per_image": 30
+  },
+  "bld_res_old_town_a_gf": {
+    "sheet": "building-02.png",
+    "row": 2,
+    "scale_m_per_image": 30
+  },
+  "bld_res_old_town_b": {
+    "sheet": "building-02.png",
+    "row": 3,
+    "scale_m_per_image": 30
+  },
+  "bld_res_old_town_c": {
+    "sheet": "building-02.png",
+    "row": 4,
+    "scale_m_per_image": 30
+  },
+  "bld_res_old_town_c_gf": {
+    "sheet": "building-02.png",
+    "row": 5,
+    "scale_m_per_image": 30
+  },
+  "prop_chimney": {
+    "sheet": "roof_equipment-01.png",
+    "row": 1,
+    "scale_m_per_image": 44
+  },
+  "prop_human": {
+    "sheet": "human-01.png",
+    "row": 1,
+    "scale_m_per_image": 14
+  },
+  "veg_plane": {
+    "sheet": "vegetation-01.png",
+    "row": 1,
+    "scale_m_per_image": 24
+  },
+  "veh_car": {
+    "sheet": "vehicle-01.png",
+    "row": 1,
+    "scale_m_per_image": 14
+  }
+}

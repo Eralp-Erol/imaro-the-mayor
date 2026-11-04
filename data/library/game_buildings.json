@@ -1,0 +1,3311 @@
+{
+ "format": "imaro-game-set/1",
+ "table": "buildings",
+ "source_catalog": "data/library/catalog.json",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
+ "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+ "included_count": 21,
+ "unapproved": {
+  "count": 42,
+  "by_reason": {
+   "not_approved": 42
+  },
+  "entries": [
+   {
+    "id": "bld_civ_hall_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_civ_hall_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_civ_hall_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_ind_heritage_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_ind_heritage_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_ind_shed_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_ind_shed_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_ind_shed_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_lmk_clocktower",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_house_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_house_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_house_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_house_d",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_house_e",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_late_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_late_a_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_late_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_late_b_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_late_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_a_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_b_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_c_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_d",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_e",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_e_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_f",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_f_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_mid_g",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_a_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_c_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_d",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_town_a",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_town_a_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_town_b",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_town_c",
+    "reason": "not_approved",
+    "detail": "rejected"
+   },
+   {
+    "id": "bld_res_old_town_c_gf",
+    "reason": "not_approved",
+    "detail": "rejected"
+   }
+  ]
+ },
+ "modules": [
+  {
+   "id": "bld_hero_civ_hero_a",
+   "kind": "building",
+   "family": "hero_civ_hero",
+   "variant": "a",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_civic_a.glb",
+     "sha256": "4a972a59a35f049679e612280284a881e3bd2c2ccb98eaf3538a094d0ed86d05",
+     "tris": 4090,
+     "aabb_m": {
+      "min": [
+       -10.8627,
+       0.0,
+       -15.8627
+      ],
+      "max": [
+       10.8627,
+       24.6,
+       2.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_civic_a_lod1.glb",
+     "sha256": "08aecf33bcc228ddc2b4fef0e45e0a6a1884fec6cb50ad6a12c6f30b22679588",
+     "tris": 480,
+     "aabb_m": {
+      "min": [
+       -10.8627,
+       0.0,
+       -15.8627
+      ],
+      "max": [
+       10.8627,
+       23.9,
+       2.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_civic_a_proxy.glb",
+     "sha256": "5cdbe6cfa4747ac5cd3931557c96704de1623b3a0e6f6b5756a4ee5eb69d80f5",
+     "tris": 78,
+     "aabb_m": {
+      "min": [
+       -10.7,
+       0.0,
+       -15.7
+      ],
+      "max": [
+       10.7,
+       23.9,
+       0.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 4090,
+    "LOD1": 480,
+    "PROXY": 78
+   },
+   "footprint_m": [
+    21.7254,
+    18.5627
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 24.6,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    6.58135
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['civic']",
+    "upper_floors": 2,
+    "floors": 3,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 12.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.7,
+     "pitch": 18.0
+    },
+    "gf": {
+     "height_m": 4.2,
+     "storey_height_m": 4.0,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_civic_a_civic_a.png",
+    "sha256": "a929458542f158bbaefad11df40439836b84974959632cff861c8f28965fa019",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_civic_a.png",
+    "sha256": "fa02036b362a3bcdd9d73e2e06dbcba56f0a0dc3363a3d701f55cc25a5a9d56c",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 4090 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_civ_hero_b",
+   "kind": "building",
+   "family": "hero_civ_hero",
+   "variant": "b",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_civic_b.glb",
+     "sha256": "75dd0c0c04c6179c19e2b3f4b90159d4778c01ed28314fe534e03c5c07e66d27",
+     "tris": 4090,
+     "aabb_m": {
+      "min": [
+       -10.8627,
+       0.0,
+       -15.8627
+      ],
+      "max": [
+       10.8627,
+       24.6,
+       2.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_civic_b_lod1.glb",
+     "sha256": "c9b7dece0591a5e8fc69f151cb486d827ccbee337f00afc70af7264d4f7022d7",
+     "tris": 480,
+     "aabb_m": {
+      "min": [
+       -10.8627,
+       0.0,
+       -15.8627
+      ],
+      "max": [
+       10.8627,
+       23.9,
+       2.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_civic_b_proxy.glb",
+     "sha256": "2c300b8360e57661ceb239546d8ccf1603ccaed06b49f2f25eac54a649ca4621",
+     "tris": 78,
+     "aabb_m": {
+      "min": [
+       -10.7,
+       0.0,
+       -15.7
+      ],
+      "max": [
+       10.7,
+       23.9,
+       0.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 4090,
+    "LOD1": 480,
+    "PROXY": 78
+   },
+   "footprint_m": [
+    21.7254,
+    18.5627
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 24.6,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    6.58135
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['civic']",
+    "upper_floors": 2,
+    "floors": 3,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 12.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.7,
+     "pitch": 18.0
+    },
+    "gf": {
+     "height_m": 4.2,
+     "storey_height_m": 4.0,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_civic_b_civic_b.png",
+    "sha256": "c01e8645d523dfd37140b7ccf054af39cddb9ace7b6128863f277bfbd99d80d9",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_civic_b.png",
+    "sha256": "8e319fb0838302a56a041952b32fa25fd584c7ce0a9f6293fc29a641ce6ab451",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 4090 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_civ_hero_c",
+   "kind": "building",
+   "family": "hero_civ_hero",
+   "variant": "c",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_civic_c.glb",
+     "sha256": "1c4097ba852873a17f691355d147c8bce8e10a9849df6d402f1d9b3c4698640d",
+     "tris": 4090,
+     "aabb_m": {
+      "min": [
+       -10.8627,
+       0.0,
+       -15.8627
+      ],
+      "max": [
+       10.8627,
+       24.6,
+       2.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_civic_c_lod1.glb",
+     "sha256": "32dca219bf92c1a18f3395674acde909674e992f325c795128b43a2b9874b3ea",
+     "tris": 480,
+     "aabb_m": {
+      "min": [
+       -10.8627,
+       0.0,
+       -15.8627
+      ],
+      "max": [
+       10.8627,
+       23.9,
+       2.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_civic_c_proxy.glb",
+     "sha256": "7022ea68861bf4e801e083ff4577867485c3b606cffde745ffe77cb6412cc7e5",
+     "tris": 78,
+     "aabb_m": {
+      "min": [
+       -10.7,
+       0.0,
+       -15.7
+      ],
+      "max": [
+       10.7,
+       23.9,
+       0.7
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 4090,
+    "LOD1": 480,
+    "PROXY": 78
+   },
+   "footprint_m": [
+    21.7254,
+    18.5627
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 24.6,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    6.58135
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['civic']",
+    "upper_floors": 2,
+    "floors": 3,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 12.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.7,
+     "pitch": 18.0
+    },
+    "gf": {
+     "height_m": 4.2,
+     "storey_height_m": 4.0,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_civic_c_civic_c.png",
+    "sha256": "11731126613e77c7127b09507ca31d27e87b6e19e8f9d95f27e18a2bd513d05d",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_civic_c.png",
+    "sha256": "df50c4c835f832cf877eaa884763c8abe4f67f108f81e08b403c31bd2ea5977c",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 4090 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_com_bazaar_a",
+   "kind": "building",
+   "family": "hero_com_bazaar",
+   "variant": "a",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_bazaar_a.glb",
+     "sha256": "c6f2ebc2ebec8bbcf5749916477ead11fc504fda7d571f90508c1853c3b82d44",
+     "tris": 3065,
+     "aabb_m": {
+      "min": [
+       -6.1673,
+       0.0,
+       -12.7673
+      ],
+      "max": [
+       6.1673,
+       13.8961,
+       1.35
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_bazaar_a_lod1.glb",
+     "sha256": "635eceb839fb2cfbca237847019148685629b8bbbcf38dc0ae65dd312f4dec56",
+     "tris": 449,
+     "aabb_m": {
+      "min": [
+       -6.1673,
+       0.0,
+       -12.7673
+      ],
+      "max": [
+       6.1673,
+       13.5961,
+       1.35
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_bazaar_a_proxy.glb",
+     "sha256": "0c8d8378e97f297befc189d8846401629476b6fd4d6f572e655c231e300e7d6c",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -6.0,
+       0.0,
+       -12.6
+      ],
+      "max": [
+       6.0,
+       12.7842,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 3065,
+    "LOD1": 449,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    12.3346,
+    14.1173
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 13.8961,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    5.70865
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['bazaar']",
+    "upper_floors": 2,
+    "floors": 3,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 10.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.6,
+     "pitch": 22.0
+    },
+    "gf": {
+     "height_m": 4.2,
+     "storey_height_m": 3.0,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_bazaar_a_bazaar_a.png",
+    "sha256": "95f1bc177140fad97fb8c9fb01e22c1ca5a9748ec8a1b1c749eae660e33ac4a5",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_bazaar_a.png",
+    "sha256": "15b66099a66a691c4efc03ef4dbef7e2e75b077eb596aedff028edefe9ac1b2c",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 3065 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_com_bazaar_b",
+   "kind": "building",
+   "family": "hero_com_bazaar",
+   "variant": "b",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_bazaar_b.glb",
+     "sha256": "72f94fe35bc86c189d6f60e31283dbef8265f66d60ca7df7bcf60c904546d9e1",
+     "tris": 3065,
+     "aabb_m": {
+      "min": [
+       -6.1673,
+       0.0,
+       -12.7673
+      ],
+      "max": [
+       6.1673,
+       13.8961,
+       1.35
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_bazaar_b_lod1.glb",
+     "sha256": "bf51d316f894f8838a6eb9d45a01d2215f7300792a20d53c291fb2f9a08d4a3a",
+     "tris": 449,
+     "aabb_m": {
+      "min": [
+       -6.1673,
+       0.0,
+       -12.7673
+      ],
+      "max": [
+       6.1673,
+       13.5961,
+       1.35
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_bazaar_b_proxy.glb",
+     "sha256": "c0206a41ab9758f2db19d65b8c1bcf3ab2583c28e9c0c46e2237afb12e08b526",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -6.0,
+       0.0,
+       -12.6
+      ],
+      "max": [
+       6.0,
+       12.7842,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 3065,
+    "LOD1": 449,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    12.3346,
+    14.1173
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 13.8961,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    5.70865
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['bazaar']",
+    "upper_floors": 2,
+    "floors": 3,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 10.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.6,
+     "pitch": 22.0
+    },
+    "gf": {
+     "height_m": 4.2,
+     "storey_height_m": 3.0,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_bazaar_b_bazaar_b.png",
+    "sha256": "cb144b13b5e20596b68c68b70b23d50b574e731e9a29f78dcd4a9d088aa01c9a",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_bazaar_b.png",
+    "sha256": "0328b96ddf97c1cccd89d5dea25ecdd646cda23f851d73fff56458e0eeb5fd41",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 3065 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_com_bazaar_c",
+   "kind": "building",
+   "family": "hero_com_bazaar",
+   "variant": "c",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_bazaar_c.glb",
+     "sha256": "0a6c42a27f81a99dd254b73b08726f04ad90796a65e6dcf7e6538e2a4f5def2c",
+     "tris": 3065,
+     "aabb_m": {
+      "min": [
+       -6.1673,
+       0.0,
+       -12.7673
+      ],
+      "max": [
+       6.1673,
+       13.8961,
+       1.35
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_bazaar_c_lod1.glb",
+     "sha256": "ae50c058e06caf2f33d88d93b8bf6700b79a0de5102daefaaa2dd58485f3e6d7",
+     "tris": 449,
+     "aabb_m": {
+      "min": [
+       -6.1673,
+       0.0,
+       -12.7673
+      ],
+      "max": [
+       6.1673,
+       13.5961,
+       1.35
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_bazaar_c_proxy.glb",
+     "sha256": "664ccb10c8991ddcbf6bc7a3f5eac9b81984651fae374592196d161b86afe8f6",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -6.0,
+       0.0,
+       -12.6
+      ],
+      "max": [
+       6.0,
+       12.7842,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 3065,
+    "LOD1": 449,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    12.3346,
+    14.1173
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 13.8961,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    5.70865
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['bazaar']",
+    "upper_floors": 2,
+    "floors": 3,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 10.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.6,
+     "pitch": 22.0
+    },
+    "gf": {
+     "height_m": 4.2,
+     "storey_height_m": 3.0,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_bazaar_c_bazaar_c.png",
+    "sha256": "4f9fc7dbb90c9e9d29b32f2c59988191517bc530eef129f16a907314e5607ce7",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_bazaar_c.png",
+    "sha256": "4c4796085df1dd3a5e0325fe027fdf6e3373abd358adfbf24ded0c23e2144107",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 3065 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_ind_hero_a",
+   "kind": "building",
+   "family": "hero_ind_hero",
+   "variant": "a",
+   "era": "mid",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_industrial_a.glb",
+     "sha256": "30882a611aa49473cd6b22df5b6cb4cb2bacdfaef01c6c2af8fc22147c88263e",
+     "tris": 2350,
+     "aabb_m": {
+      "min": [
+       -11.04,
+       0.0,
+       -30.5
+      ],
+      "max": [
+       11.04,
+       15.35,
+       9.04
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_industrial_a_lod1.glb",
+     "sha256": "624070d12f979c1800eb8821803f0aa088562a79b67194324d7ed87c6b44f300",
+     "tris": 258,
+     "aabb_m": {
+      "min": [
+       -11.0,
+       0.0,
+       -30.5
+      ],
+      "max": [
+       11.0,
+       15.35,
+       9.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_industrial_a_proxy.glb",
+     "sha256": "d9a50f5ff1dbb52b9f04f34d1ff52246b7cecbc4c71e1af7cf1cdca57c8fdc6e",
+     "tris": 58,
+     "aabb_m": {
+      "min": [
+       -11.0,
+       0.0,
+       -30.3
+      ],
+      "max": [
+       11.0,
+       15.35,
+       9.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 2350,
+    "LOD1": 258,
+    "PROXY": 58
+   },
+   "footprint_m": [
+    22.08,
+    39.54
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 15.35,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    10.73
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['industrial']",
+    "upper_floors": 0,
+    "floors": "unknown",
+    "floors_note": "single-volume hall: SPEC GF=0 and NF=0, no storey structure in the generator",
+    "eave_height_m": 7.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "gable",
+    "roof": {
+     "over": 0.5,
+     "pitch": 14.0
+    },
+    "gf": {
+     "height_m": 0.0,
+     "storey_height_m": 0.0,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_industrial_a_industrial_a.png",
+    "sha256": "a75387daf1c4fa5763df99d9043a4cde85a3ec6eca7750579d857a1320f1d203",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_industrial_a.png",
+    "sha256": "fefcc29d95b3b05eea276e7ce203d91b2d70cda045e4f7b8dad76e6ecf5a1f73",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 2350 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_ind_hero_b",
+   "kind": "building",
+   "family": "hero_ind_hero",
+   "variant": "b",
+   "era": "mid",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_industrial_b.glb",
+     "sha256": "440bb0742283549bd40805883dec93d0d2301568aac9779035a853fb32e9ce81",
+     "tris": 2140,
+     "aabb_m": {
+      "min": [
+       -11.04,
+       0.0,
+       -30.3
+      ],
+      "max": [
+       11.04,
+       15.35,
+       9.04
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_industrial_b_lod1.glb",
+     "sha256": "c0c16d046f5bec5564e3f853dde4de0b0317d7f97814048da469396f73935a84",
+     "tris": 290,
+     "aabb_m": {
+      "min": [
+       -11.0,
+       0.0,
+       -30.3
+      ],
+      "max": [
+       11.0,
+       15.35,
+       9.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_industrial_b_proxy.glb",
+     "sha256": "c5b52f70eb6be6896bee5f6499a294133baaee83ed38c40fa7a41bddd732d831",
+     "tris": 74,
+     "aabb_m": {
+      "min": [
+       -11.0,
+       0.0,
+       -30.3
+      ],
+      "max": [
+       11.0,
+       15.35,
+       9.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 2140,
+    "LOD1": 290,
+    "PROXY": 74
+   },
+   "footprint_m": [
+    22.08,
+    39.34
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 15.35,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    10.63
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['industrial']",
+    "upper_floors": 0,
+    "floors": "unknown",
+    "floors_note": "single-volume hall: SPEC GF=0 and NF=0, no storey structure in the generator",
+    "eave_height_m": 7.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "gable",
+    "roof": {
+     "over": 0.5,
+     "pitch": 14.0
+    },
+    "gf": {
+     "height_m": 0.0,
+     "storey_height_m": 0.0,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_industrial_b_industrial_b.png",
+    "sha256": "658c8c76aefa8351d29c5aa3c32ab17c2f82072d22ba02df75e9faeded983d1c",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_industrial_b.png",
+    "sha256": "2b657944b9f57a5c1a23cd4816e49c6514822ed5614f8de69fc525aba4e19766",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "footprint differs from variant a of the same family ([22.08, 39.34] vs [22.08, 39.54])",
+    "LOD0 2140 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_ind_hero_c",
+   "kind": "building",
+   "family": "hero_ind_hero",
+   "variant": "c",
+   "era": "mid",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_industrial_c.glb",
+     "sha256": "b6dd917934df013cb09f29a26edc6378e88e051cd20b4b075a8c21f970ed280a",
+     "tris": 2360,
+     "aabb_m": {
+      "min": [
+       -11.04,
+       0.0,
+       -30.5
+      ],
+      "max": [
+       11.04,
+       15.35,
+       9.04
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_industrial_c_lod1.glb",
+     "sha256": "24cdb7f89006e684075fb0ddf9006625b5f6e2f169aa2f8dfe97496f0b077fb7",
+     "tris": 268,
+     "aabb_m": {
+      "min": [
+       -11.0,
+       0.0,
+       -30.5
+      ],
+      "max": [
+       11.0,
+       15.35,
+       9.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_industrial_c_proxy.glb",
+     "sha256": "6654f251732c4924cc30bc71568962611eff0dcebbcdea246e90006c77b0afa5",
+     "tris": 70,
+     "aabb_m": {
+      "min": [
+       -11.0,
+       0.0,
+       -30.3
+      ],
+      "max": [
+       11.0,
+       15.35,
+       9.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 2360,
+    "LOD1": 268,
+    "PROXY": 70
+   },
+   "footprint_m": [
+    22.08,
+    39.54
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 15.35,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    10.73
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['industrial']",
+    "upper_floors": 0,
+    "floors": "unknown",
+    "floors_note": "single-volume hall: SPEC GF=0 and NF=0, no storey structure in the generator",
+    "eave_height_m": 7.2,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "gable",
+    "roof": {
+     "over": 0.5,
+     "pitch": 14.0
+    },
+    "gf": {
+     "height_m": 0.0,
+     "storey_height_m": 0.0,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_industrial_c_industrial_c.png",
+    "sha256": "fba780e45501919bed578045ca061b70f81f35cffbd98152ea630c4fa5637bbf",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_industrial_c.png",
+    "sha256": "d3fc523cf9fe79397c0721bb4e1773965d3c923568002e39665b197e1bf14c97",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 2360 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_old_core_a",
+   "kind": "building",
+   "family": "hero_old_core",
+   "variant": "a",
+   "era": "old",
+   "generator": "art/blender/hero/hero_building.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/hero_a.glb",
+     "sha256": "d0db0d8eff8273e9faf5ea9b1e35ea4eabcc8d6ff4efba7bc3d58437af43fc6d",
+     "tris": 4233,
+     "aabb_m": {
+      "min": [
+       -5.5695,
+       0.0,
+       -11.7695
+      ],
+      "max": [
+       5.5695,
+       16.3383,
+       1.25
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_old_core_a_lod1.glb",
+     "sha256": "87bf9aeb7be0ce671b0b0b73528c8af1ef94bb2142f52c92a176807a93e14e10",
+     "tris": 421,
+     "aabb_m": {
+      "min": [
+       -5.5695,
+       0.0,
+       -11.7695
+      ],
+      "max": [
+       5.5695,
+       16.0383,
+       1.25
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_old_core_a_proxy.glb",
+     "sha256": "1ced42ff4e0550c7ef81b9c44963cd808f0eec958f17cd0d580909a740c35db4",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -5.4,
+       0.0,
+       -11.6
+      ],
+      "max": [
+       5.4,
+       15.2642,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 4233,
+    "LOD1": 421,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    11.139,
+    13.0195
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 16.3383,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    5.25975
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/hero_layout.py:GF,FL,NF,H,PITCH_DEG,OVER",
+    "upper_floors": 3,
+    "floors": 4,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 12.7,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.6,
+     "pitch": 24.0
+    },
+    "gf": {
+     "height_m": 3.7,
+     "storey_height_m": 3.0,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/hero_a_hero_atlas_a.png",
+    "sha256": "bd25e54ee5aad17d559fe80c2f302c3644ef513c0c07817d982d6d2e8f7dd93c",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_old_core_a.png",
+    "sha256": "3b0c257c9537d20db6284238054351aab0c96f4f285e10f40080f7c4b3540874",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 4233 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_old_core_b",
+   "kind": "building",
+   "family": "hero_old_core",
+   "variant": "b",
+   "era": "old",
+   "generator": "art/blender/hero/hero_building.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/hero_b.glb",
+     "sha256": "4b2fec58e01b38e4decd56fc1caaddc1c36cd9eab2987dac3352eef17320e4ef",
+     "tris": 4233,
+     "aabb_m": {
+      "min": [
+       -5.5695,
+       0.0,
+       -11.7695
+      ],
+      "max": [
+       5.5695,
+       16.3383,
+       1.25
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_old_core_b_lod1.glb",
+     "sha256": "846b56a0855e764b6e3a2d30e578d0e2b72512f7cf0a7746a38285f8b353ada9",
+     "tris": 421,
+     "aabb_m": {
+      "min": [
+       -5.5695,
+       0.0,
+       -11.7695
+      ],
+      "max": [
+       5.5695,
+       16.0383,
+       1.25
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_old_core_b_proxy.glb",
+     "sha256": "bf98fd26ac2c30bbd2eb9d6b84bcbec96cb5b0d4ea3660b5adb479ac2ecab5f9",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -5.4,
+       0.0,
+       -11.6
+      ],
+      "max": [
+       5.4,
+       15.2642,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 4233,
+    "LOD1": 421,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    11.139,
+    13.0195
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 16.3383,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    5.25975
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/hero_layout.py:GF,FL,NF,H,PITCH_DEG,OVER",
+    "upper_floors": 3,
+    "floors": 4,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 12.7,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.6,
+     "pitch": 24.0
+    },
+    "gf": {
+     "height_m": 3.7,
+     "storey_height_m": 3.0,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/hero_b_hero_atlas_b.png",
+    "sha256": "2c27b2561a14bd2cdee42fb79336813cd213433e3aa17b015ce921e646c20448",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_old_core_b.png",
+    "sha256": "137d532ea205a3ad0c3fd7a39d502e27eb520a6e07d7911ce2d3250db16977ee",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 4233 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_old_core_c",
+   "kind": "building",
+   "family": "hero_old_core",
+   "variant": "c",
+   "era": "old",
+   "generator": "art/blender/hero/hero_building.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/hero_c.glb",
+     "sha256": "ac63f4318c2dd004cd62a4e8fcf128f392d5ac07f8a052a1baf15b4b1e710a9c",
+     "tris": 4233,
+     "aabb_m": {
+      "min": [
+       -5.5695,
+       0.0,
+       -11.7695
+      ],
+      "max": [
+       5.5695,
+       16.3383,
+       1.25
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_old_core_c_lod1.glb",
+     "sha256": "3dee40f3ab41f49d8f8500743e02f9a700a29b073d62c937260e692138087d23",
+     "tris": 421,
+     "aabb_m": {
+      "min": [
+       -5.5695,
+       0.0,
+       -11.7695
+      ],
+      "max": [
+       5.5695,
+       16.0383,
+       1.25
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_old_core_c_proxy.glb",
+     "sha256": "ac1a97a8a5c2bd4bb515c6f9936a58180185d970123e6d93812e37d9ef1604b5",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -5.4,
+       0.0,
+       -11.6
+      ],
+      "max": [
+       5.4,
+       15.2642,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 4233,
+    "LOD1": 421,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    11.139,
+    13.0195
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 16.3383,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    5.25975
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/hero_layout.py:GF,FL,NF,H,PITCH_DEG,OVER",
+    "upper_floors": 3,
+    "floors": 4,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 12.7,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.6,
+     "pitch": 24.0
+    },
+    "gf": {
+     "height_m": 3.7,
+     "storey_height_m": 3.0,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/hero_c_hero_atlas_c.png",
+    "sha256": "bd1670bae4daaaca00d144260959af3de448081c20ca725f925149d2288254bf",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_old_core_c.png",
+    "sha256": "3f006992517bb5913c84e2e6c0f808380819d68b877887e8b1d54af0733ddebb",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 4233 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_house_a",
+   "kind": "building",
+   "family": "hero_res_house",
+   "variant": "a",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_house_a.glb",
+     "sha256": "98166a6e88928eb557fe4065a0eac0b8becce905912fab417ff67b178056fad2",
+     "tris": 1572,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.674
+      ],
+      "max": [
+       5.125,
+       9.022,
+       3.98
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_house_a_lod1.glb",
+     "sha256": "0dce17a3d63d85d1c848764419f761259ea7259bfbd823e7f8d26ec4a53af6a1",
+     "tris": 270,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.674
+      ],
+      "max": [
+       5.125,
+       8.722,
+       3.98
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_house_a_proxy.glb",
+     "sha256": "4ed5309e72179513d092109d178103973ca1c9c0365aec2d9451805649ff6f6e",
+     "tris": 80,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.5
+      ],
+      "max": [
+       5.125,
+       8.1527,
+       3.955
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 1572,
+    "LOD1": 270,
+    "PROXY": 80
+   },
+   "footprint_m": [
+    10.25,
+    13.654
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 9.022,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    2.847
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['house']",
+    "upper_floors": 1,
+    "floors": 2,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 5.6,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.5,
+     "pitch": 28.0
+    },
+    "gf": {
+     "height_m": 2.9,
+     "storey_height_m": 2.7,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_house_a_house_a.png",
+    "sha256": "2b107903e00948c6ac15363cb2dc9808bbf668799322e19529d15c74cc7cea0e",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_house_a.png",
+    "sha256": "7f0b6c64d65e7cbe8a73200f4da0e1672cf5a3a4fc97292b595db36d8290cb03",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 1572 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_house_b",
+   "kind": "building",
+   "family": "hero_res_house",
+   "variant": "b",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_house_b.glb",
+     "sha256": "7567793e956ceed96fb84e0f576ec1238f8742aa5279010ba26fbf593fffef78",
+     "tris": 1572,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.674
+      ],
+      "max": [
+       5.125,
+       9.022,
+       3.98
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_house_b_lod1.glb",
+     "sha256": "a665aa46b93d9c38995fdd95d31733c74e3e182932afe3044603f4536673acf0",
+     "tris": 270,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.674
+      ],
+      "max": [
+       5.125,
+       8.722,
+       3.98
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_house_b_proxy.glb",
+     "sha256": "ce6c1043c71d0147df4bbbd86aba8f61073001e29e4f5228459a2f0818ebf578",
+     "tris": 80,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.5
+      ],
+      "max": [
+       5.125,
+       8.1527,
+       3.955
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 1572,
+    "LOD1": 270,
+    "PROXY": 80
+   },
+   "footprint_m": [
+    10.25,
+    13.654
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 9.022,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    2.847
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['house']",
+    "upper_floors": 1,
+    "floors": 2,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 5.6,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.5,
+     "pitch": 28.0
+    },
+    "gf": {
+     "height_m": 2.9,
+     "storey_height_m": 2.7,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_house_b_house_b.png",
+    "sha256": "bd8b15b979fe37ff58181d9132049bdecfbe8d39f57ed101431cf6ad000e4c28",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_house_b.png",
+    "sha256": "93ba665f6ee0c62116c45f3226c176e998a01c25d3bb7ebda8e89e30336cd519",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 1572 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_house_c",
+   "kind": "building",
+   "family": "hero_res_house",
+   "variant": "c",
+   "era": "old",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_house_c.glb",
+     "sha256": "8b9b0919f123bb3600ac9bc9771640536421d4fcebe58d506539af5385f34dbb",
+     "tris": 1572,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.674
+      ],
+      "max": [
+       5.125,
+       9.022,
+       3.98
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_house_c_lod1.glb",
+     "sha256": "87026fcded26bb5bb8242e4c4c88605ba79a5e014a310aca296c928645fa2cf5",
+     "tris": 270,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.674
+      ],
+      "max": [
+       5.125,
+       8.722,
+       3.98
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_house_c_proxy.glb",
+     "sha256": "bd7c912803dd1b061977228732c18c9e3cee6f4d66a60b5c684fd9473fc6fd33",
+     "tris": 80,
+     "aabb_m": {
+      "min": [
+       -5.125,
+       0.0,
+       -9.5
+      ],
+      "max": [
+       5.125,
+       8.1527,
+       3.955
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 1572,
+    "LOD1": 270,
+    "PROXY": 80
+   },
+   "footprint_m": [
+    10.25,
+    13.654
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 9.022,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    2.847
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['house']",
+    "upper_floors": 1,
+    "floors": 2,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 5.6,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "hip",
+    "roof": {
+     "over": 0.5,
+     "pitch": 28.0
+    },
+    "gf": {
+     "height_m": 2.9,
+     "storey_height_m": 2.7,
+     "shopfront": false
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_house_c_house_c.png",
+    "sha256": "83c9f360bee7be19ec887f05d3009fb4ebb4be1a2ab7299f254168b16322ed41",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_house_c.png",
+    "sha256": "ea621499385e68940d736b987a39577c3f69f156694c0a45050f4a32a40bbe0b",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 1572 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_late_a",
+   "kind": "building",
+   "family": "hero_res_late",
+   "variant": "a",
+   "era": "late",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_res_late_a.glb",
+     "sha256": "d0064065df1b22b5825c57cd3a440051ea52372dbbad979f830f8a69e459b24f",
+     "tris": 6738,
+     "aabb_m": {
+      "min": [
+       -7.12,
+       0.0,
+       -16.06
+      ],
+      "max": [
+       7.12,
+       27.93,
+       1.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_res_late_a_lod1.glb",
+     "sha256": "f10e3a6f2fde75920249f33e2bd75a520787f1e424356131657fd04b5c2b9fc4",
+     "tris": 530,
+     "aabb_m": {
+      "min": [
+       -7.03,
+       0.0,
+       -16.0
+      ],
+      "max": [
+       7.03,
+       26.63,
+       1.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_res_late_a_proxy.glb",
+     "sha256": "1f5b5f00fea0fc01f50afe3db30cd2cf672480d56e635b9008f7708d0d00efdb",
+     "tris": 32,
+     "aabb_m": {
+      "min": [
+       -7.0,
+       0.0,
+       -16.0
+      ],
+      "max": [
+       7.0,
+       26.63,
+       0.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 6738,
+    "LOD1": 530,
+    "PROXY": 32
+   },
+   "footprint_m": [
+    14.24,
+    17.06
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 27.93,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    7.53
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['res_late']",
+    "upper_floors": 7,
+    "floors": 8,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 23.9,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "flat",
+    "roof": {
+     "parapet": 0.9
+    },
+    "gf": {
+     "height_m": 3.6,
+     "storey_height_m": 2.9,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_res_late_a_res_late_a.png",
+    "sha256": "68cad66f9d6670c9d053e9d690eb370afc86b9c3501e8ccd7fad51f9629ee5e4",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_res_late_a.png",
+    "sha256": "0d3796cc5e232c3b6db23c48fdf0c0c5eaac5b7223e86b0fe37914778f8e0167",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 6738 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_late_b",
+   "kind": "building",
+   "family": "hero_res_late",
+   "variant": "b",
+   "era": "late",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_res_late_b.glb",
+     "sha256": "40f554bec37c8f04534ee7d07f81c4436a8ccd3c5b0171b011c1934bc3accb9a",
+     "tris": 6738,
+     "aabb_m": {
+      "min": [
+       -7.12,
+       0.0,
+       -16.06
+      ],
+      "max": [
+       7.12,
+       27.93,
+       1.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_res_late_b_lod1.glb",
+     "sha256": "a575c783757e7d56032a619288cb729d9d95a3042baa287e1569c1dcb9db2191",
+     "tris": 530,
+     "aabb_m": {
+      "min": [
+       -7.03,
+       0.0,
+       -16.0
+      ],
+      "max": [
+       7.03,
+       26.63,
+       1.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_res_late_b_proxy.glb",
+     "sha256": "44d5d0ab2a3776cb2988474d26ced91bddb503fccb2e0d435b359c3eda7579db",
+     "tris": 32,
+     "aabb_m": {
+      "min": [
+       -7.0,
+       0.0,
+       -16.0
+      ],
+      "max": [
+       7.0,
+       26.63,
+       0.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 6738,
+    "LOD1": 530,
+    "PROXY": 32
+   },
+   "footprint_m": [
+    14.24,
+    17.06
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 27.93,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    7.53
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['res_late']",
+    "upper_floors": 7,
+    "floors": 8,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 23.9,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "flat",
+    "roof": {
+     "parapet": 0.9
+    },
+    "gf": {
+     "height_m": 3.6,
+     "storey_height_m": 2.9,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_res_late_b_res_late_b.png",
+    "sha256": "509411e837ec91d0a9c876abe87b3a06b2c28e0ecd3f65da6db96672ca7a3436",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_res_late_b.png",
+    "sha256": "5afcef16f4ac02cd5add5067813dd7636e5d984aa7fed84e99fb2b096eb02354",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 6738 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_late_c",
+   "kind": "building",
+   "family": "hero_res_late",
+   "variant": "c",
+   "era": "late",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_res_late_c.glb",
+     "sha256": "9cd424bb50529eec5628dd29cde67db126ea2ff65a19fdfe667c6d9d05bb6225",
+     "tris": 6738,
+     "aabb_m": {
+      "min": [
+       -7.12,
+       0.0,
+       -16.06
+      ],
+      "max": [
+       7.12,
+       27.93,
+       1.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_res_late_c_lod1.glb",
+     "sha256": "ec3015ea708a915f2548adea5454e88948102c922955d8e56b3cd8eb62006bec",
+     "tris": 530,
+     "aabb_m": {
+      "min": [
+       -7.03,
+       0.0,
+       -16.0
+      ],
+      "max": [
+       7.03,
+       26.63,
+       1.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_res_late_c_proxy.glb",
+     "sha256": "c0b3ec0011c8da89b281a71623a2c8c1867d1c586c98d897df96b8790d63dd6e",
+     "tris": 32,
+     "aabb_m": {
+      "min": [
+       -7.0,
+       0.0,
+       -16.0
+      ],
+      "max": [
+       7.0,
+       26.63,
+       0.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 6738,
+    "LOD1": 530,
+    "PROXY": 32
+   },
+   "footprint_m": [
+    14.24,
+    17.06
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 27.93,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    7.53
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['res_late']",
+    "upper_floors": 7,
+    "floors": 8,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 23.9,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "flat",
+    "roof": {
+     "parapet": 0.9
+    },
+    "gf": {
+     "height_m": 3.6,
+     "storey_height_m": 2.9,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_res_late_c_res_late_c.png",
+    "sha256": "a85c99d3083f7ce0c53d1f90fae3e88ba274634bb62858a21976636c885dec47",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_res_late_c.png",
+    "sha256": "bada99c9bbc898e3d5057e8c21cf9210612b2e11f74e6b1e1b747a7886112a74",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 6738 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_mid_a",
+   "kind": "building",
+   "family": "hero_res_mid",
+   "variant": "a",
+   "era": "mid",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_res_mid_a.glb",
+     "sha256": "6cdf373945b85ca997140756517b25041fc5f15c4a99e4c9930475c26477a7a4",
+     "tris": 6558,
+     "aabb_m": {
+      "min": [
+       -6.12,
+       0.0,
+       -14.06
+      ],
+      "max": [
+       6.4,
+       22.13,
+       1.2
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_res_mid_a_lod1.glb",
+     "sha256": "7112fb3a3b1df137af333f11bc18ff416a27b236cab8fc6bbecf2c02fec8d9ff",
+     "tris": 530,
+     "aabb_m": {
+      "min": [
+       -6.07,
+       0.0,
+       -14.0
+      ],
+      "max": [
+       6.4,
+       20.83,
+       1.2
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_res_mid_a_proxy.glb",
+     "sha256": "7d65ef5327618f641390ffce9363169caaf7a1e3c6a34f26cba462c64a8882f3",
+     "tris": 32,
+     "aabb_m": {
+      "min": [
+       -6.0,
+       0.0,
+       -14.0
+      ],
+      "max": [
+       6.0,
+       20.83,
+       0.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 6558,
+    "LOD1": 530,
+    "PROXY": 32
+   },
+   "footprint_m": [
+    12.52,
+    15.26
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 22.13,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    -0.14,
+    0.0,
+    6.43
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['res_mid']",
+    "upper_floors": 5,
+    "floors": 6,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 18.1,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "flat",
+    "roof": {
+     "parapet": 0.55
+    },
+    "gf": {
+     "height_m": 3.6,
+     "storey_height_m": 2.9,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_res_mid_a_res_mid_a.png",
+    "sha256": "624122f098ccdbe22910e3530225f8c3e4f585f0d3c748b57e6cb6c0a3e23620",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_res_mid_a.png",
+    "sha256": "2367a724e6cc5821751f259d71f1f269945300b8184dec91863b45c8af28e186",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 6558 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_mid_b",
+   "kind": "building",
+   "family": "hero_res_mid",
+   "variant": "b",
+   "era": "mid",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_res_mid_b.glb",
+     "sha256": "187b3f1576cc22956ba6cafb1e3aa452350615b71f7bd26f8bb1e5970398e0d6",
+     "tris": 6558,
+     "aabb_m": {
+      "min": [
+       -6.12,
+       0.0,
+       -14.06
+      ],
+      "max": [
+       6.4,
+       22.13,
+       1.2
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_res_mid_b_lod1.glb",
+     "sha256": "4d52fcddc5aeb4cb39e7e32756ac8db6e79427de58b6bae06fb8162342328616",
+     "tris": 530,
+     "aabb_m": {
+      "min": [
+       -6.07,
+       0.0,
+       -14.0
+      ],
+      "max": [
+       6.4,
+       20.83,
+       1.2
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_res_mid_b_proxy.glb",
+     "sha256": "d1a55fe5aa6078fec0ad771c26cb742412077b49407bf568573bd55aa024df81",
+     "tris": 32,
+     "aabb_m": {
+      "min": [
+       -6.0,
+       0.0,
+       -14.0
+      ],
+      "max": [
+       6.0,
+       20.83,
+       0.0
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 6558,
+    "LOD1": 530,
+    "PROXY": 32
+   },
+   "footprint_m": [
+    12.52,
+    15.26
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 22.13,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    -0.14,
+    0.0,
+    6.43
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['res_mid']",
+    "upper_floors": 5,
+    "floors": 6,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 18.1,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "flat",
+    "roof": {
+     "parapet": 0.55
+    },
+    "gf": {
+     "height_m": 3.6,
+     "storey_height_m": 2.9,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_res_mid_b_res_mid_b.png",
+    "sha256": "b873bbc813cc58c4abcfad8c0e14b743bac64ea0d721ea6ff4071d4631a5469e",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_res_mid_b.png",
+    "sha256": "e2375d3ca9586684bff7faaf37ed9e20dd90e8d2394009fcd0e0897c1bd8e1e8",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "LOD0 6558 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  },
+  {
+   "id": "bld_hero_res_mid_c",
+   "kind": "building",
+   "family": "hero_res_mid",
+   "variant": "c",
+   "era": "mid",
+   "generator": "art/blender/hero/fam_build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/fam/hero_res_mid_c.glb",
+     "sha256": "11f5ec138b15fca2b6842f78a5303457d85bae80b500548f4e2d98b618da8323",
+     "tris": 6416,
+     "aabb_m": {
+      "min": [
+       -6.765,
+       0.0,
+       -14.765
+      ],
+      "max": [
+       6.765,
+       21.8543,
+       1.2
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/lod/hero_res_mid_c_lod1.glb",
+     "sha256": "e34ba0e8f368363654b70e05bad69d644093aa0c7e985676f8bf306e69484da3",
+     "tris": 552,
+     "aabb_m": {
+      "min": [
+       -6.765,
+       0.0,
+       -14.765
+      ],
+      "max": [
+       6.765,
+       21.5543,
+       1.2
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/lod/hero_res_mid_c_proxy.glb",
+     "sha256": "c95b5e8aacd66a025e5a3d72c17fe3a2b8c22f619cd8f09924fa1042b3f27739",
+     "tris": 30,
+     "aabb_m": {
+      "min": [
+       -6.6,
+       0.0,
+       -14.6
+      ],
+      "max": [
+       6.6,
+       20.6622,
+       0.6
+      ]
+     },
+     "materials": [
+      "mat_hero_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 6416,
+    "LOD1": 552,
+    "PROXY": 30
+   },
+   "footprint_m": [
+    13.53,
+    15.965
+   ],
+   "footprint_note": "LOD0 bbox XZ (conservative, includes awnings/balconies)",
+   "height_m": 21.8543,
+   "pivot_authored": "facade line (front = +Z); bbox z in [-depth, +overhang]",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    6.7825
+   ],
+   "pivot_note": "ADD to every vertex of LOD0/LOD1/PROXY so the pivot is the LOD0 bbox XZ centre",
+   "foundation_skirt_m": 0.0,
+   "generator_params": {
+    "source": "art/blender/hero/fam_layout.py:FAMILIES['res_mid']",
+    "upper_floors": 5,
+    "floors": 6,
+    "floors_note": "ground floor + upper floors (SPEC GF>0)",
+    "eave_height_m": 18.1,
+    "eave_note": "wall top (SPEC H); roof overhang/parapet above, see roof",
+    "roof_type": "flat",
+    "roof": {
+     "parapet": 0.55
+    },
+    "gf": {
+     "height_m": 3.6,
+     "storey_height_m": 2.9,
+     "shopfront": true
+    }
+   },
+   "atlas": {
+    "path": "res://assets/hero/fam/hero_res_mid_c_res_mid_c.png",
+    "sha256": "69ed92ab1a93d5e81ad2d19bbe033d36005ffaec8eb7d3ceb099234c09504362",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_hero_atlas"
+   },
+   "proxy_atlas": {
+    "path": "res://assets/hero/lod/proxy_res_mid_c.png",
+    "sha256": "ffdf088214d1611afb4434bc70dc3715f2a0398a6bebe02c2b7d232a524ac4a6",
+    "size_px": [
+     256,
+     256
+    ]
+   },
+   "palette": {
+    "wall_rows": [],
+    "roof_rows": [],
+    "accent_rows": [],
+    "note": "hero carries no palette rows"
+   },
+   "lod_distances_m": {
+    "value": "unknown",
+    "note": "catalog distances_m are 'working-model-not-integrated'"
+   },
+   "known_constraints": [
+    "one floor count per family (variants differ in style only)",
+    "footprint differs from variant a of the same family ([13.53, 15.965] vs [12.52, 15.26])",
+    "LOD0 6416 tris: far above kit LOD0 band (ADR-0006 section 1)"
+   ]
+  }
+ ]
+}

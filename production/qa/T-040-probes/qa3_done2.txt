@@ -1,0 +1,4 @@
+loop exit 0
+can03 exit 0
+orig_qa2_play exit 143
+ALLDONE

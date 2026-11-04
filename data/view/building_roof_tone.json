@@ -1,0 +1,5 @@
+{
+	"_doc": "T-062 sanat kapisi B-4: PROXY atlasi duz catilari LOD1 cati malzemesinden acik (krem); listedeki moduller icin PROXY/HLOD1/HLOD2 cati rengi alan ortalamasi hedefe cekilir (sRGB). Asset/katalog hash'ine dokunmaz.",
+	"flat_roof_target_srgb": [154, 146, 127],
+	"modules": ["bld_hero_res_mid_a", "bld_hero_res_mid_b", "bld_hero_res_late_a", "bld_hero_res_late_b", "bld_hero_res_late_c"]
+}

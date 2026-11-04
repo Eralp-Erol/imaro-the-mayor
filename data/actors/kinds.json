@@ -1,0 +1,15 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 3 ve 5): aktor turu taksonomisi. singleton: anahtar actor.<tur> (indekssiz); bare: yalniz kimlik + durum alanlari (ozellik/durus/duyarlilik/kaynak/baglilik yok; protagonist karar vermez, komut verir); regional: actor.<tur>.<bolge>.<n>; aksi halde actor.<tur>.<n> (n >= 1). decides: tur karar verir (karar tablosu anahtari '<tur>.<fiil>'). traits: turun kullanabilecegi ozellikler. state_fields: kinde ozgu durum alanlari ve tipleri (permille | count | axis_map | topic_map | ref_list | ref_map | nullable_string | any_array | any_dict | string). Hepsi CALISMA MODELI.",
+	"kinds": {
+		"protagonist": {"singleton": true, "bare": true, "decides": false, "traits": [], "state_fields": {"profile_slots": "any_array"}},
+		"council": {"decides": true, "traits": ["self_interest", "public_spirit", "partisanship", "integrity", "volatility"], "state_fields": {"seat_group": "nullable_string", "constituency_blocs": "ref_list", "party_key": "nullable_string"}},
+		"interest": {"decides": true, "traits": ["combativeness", "self_interest", "time_horizon"], "state_fields": {"goals": "any_array", "capacity": "permille", "reach": "ref_map"}},
+		"investor": {"decides": true, "traits": ["risk_tolerance", "time_horizon", "integrity"], "state_fields": {"political_risk": "permille"}},
+		"media": {"decides": true, "traits": ["combativeness", "volatility", "integrity"], "state_fields": {"lean": "axis_map", "sensationalism": "permille", "credibility": "permille", "reach": "ref_map"}},
+		"bloc": {"decides": true, "traits": ["volatility", "combativeness"], "state_fields": {"size": "count", "grievances": "topic_map", "satisfaction": "topic_map"}},
+		"rival": {"decides": true, "traits": ["combativeness", "partisanship"], "state_fields": {"platform": "any_dict", "war_chest": "count"}},
+		"remote": {"regional": true, "decides": true, "traits": ["risk_tolerance", "partisanship"], "state_fields": {"region": "string", "policy_vector": "any_dict"}},
+		"story": {"decides": false, "traits": [], "state_fields": {}}
+	}
+}

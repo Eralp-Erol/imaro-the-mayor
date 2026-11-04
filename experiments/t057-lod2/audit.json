@@ -1,0 +1,406 @@
+{
+ "P1": {
+  "ok": true,
+  "leaf_components": 64,
+  "wood_components": 20,
+  "total_components": 84
+ },
+ "P2": {
+  "ok": true,
+  "lod2_triangles": 270,
+  "not_bit_equal_in_lod1": 0,
+  "material_json_identical": true,
+  "uri_ok": true,
+  "order_preserved": true,
+  "no_unused_vertices": true
+ },
+ "P3": {
+  "ok": true,
+  "views": [
+   {
+    "view": [
+     0,
+     12
+    ],
+    "coverage": [
+     21688,
+     21794,
+     0.9951362760392769
+    ],
+    "cov_ok": true,
+    "wood": [
+     4443,
+     4555,
+     0.9754116355653129
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9536804308797128,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     45,
+     12
+    ],
+    "coverage": [
+     20362,
+     20362,
+     1.0
+    ],
+    "cov_ok": true,
+    "wood": [
+     4130,
+     4130,
+     1.0
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9987766087594813,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     90,
+     12
+    ],
+    "coverage": [
+     22234,
+     22234,
+     1.0
+    ],
+    "cov_ok": true,
+    "wood": [
+     4567,
+     4567,
+     1.0
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9560892770499757,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     135,
+     12
+    ],
+    "coverage": [
+     21217,
+     21239,
+     0.9989641696878384
+    ],
+    "cov_ok": true,
+    "wood": [
+     4022,
+     4064,
+     0.9896653543307087
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9521066989996969,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     180,
+     12
+    ],
+    "coverage": [
+     21003,
+     21057,
+     0.9974355321270836
+    ],
+    "cov_ok": true,
+    "wood": [
+     5118,
+     5189,
+     0.9863172094815957
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9959083469721768,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     225,
+     12
+    ],
+    "coverage": [
+     20527,
+     20536,
+     0.9995617452278924
+    ],
+    "cov_ok": true,
+    "wood": [
+     3629,
+     3756,
+     0.9661874334398296
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 1.0,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     270,
+     12
+    ],
+    "coverage": [
+     24583,
+     24586,
+     0.9998779793378345
+    ],
+    "cov_ok": true,
+    "wood": [
+     4704,
+     4836,
+     0.9727047146401985
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9709986320109439,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     315,
+     12
+    ],
+    "coverage": [
+     22344,
+     22364,
+     0.9991057055982829
+    ],
+    "cov_ok": true,
+    "wood": [
+     3745,
+     3821,
+     0.9801099188694059
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9089726918075423,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     0,
+     40
+    ],
+    "coverage": [
+     22465,
+     22526,
+     0.9972920181124034
+    ],
+    "cov_ok": true,
+    "wood": [
+     2798,
+     2800,
+     0.9992857142857143
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9415481832543444,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     45,
+     40
+    ],
+    "coverage": [
+     20851,
+     20887,
+     0.9982764398908411
+    ],
+    "cov_ok": true,
+    "wood": [
+     2385,
+     2431,
+     0.9810777457836282
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.991929567131328,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     90,
+     40
+    ],
+    "coverage": [
+     21624,
+     21629,
+     0.9997688288871422
+    ],
+    "cov_ok": true,
+    "wood": [
+     3419,
+     3424,
+     0.9985397196261683
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9694945446448452,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     135,
+     40
+    ],
+    "coverage": [
+     20553,
+     20554,
+     0.9999513476695534
+    ],
+    "cov_ok": true,
+    "wood": [
+     3147,
+     3150,
+     0.9990476190476191
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9875759249033683,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     180,
+     40
+    ],
+    "coverage": [
+     20853,
+     20860,
+     0.9996644295302013
+    ],
+    "cov_ok": true,
+    "wood": [
+     3141,
+     3150,
+     0.9971428571428571
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9995759117896522,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     225,
+     40
+    ],
+    "coverage": [
+     21596,
+     21602,
+     0.9997222479400055
+    ],
+    "cov_ok": true,
+    "wood": [
+     2143,
+     2166,
+     0.9893813481071099
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 1.0,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     270,
+     40
+    ],
+    "coverage": [
+     24442,
+     24442,
+     1.0
+    ],
+    "cov_ok": true,
+    "wood": [
+     3128,
+     3155,
+     0.9914421553090332
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9941860465116279,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     315,
+     40
+    ],
+    "coverage": [
+     23434,
+     23441,
+     0.9997013779275629
+    ],
+    "cov_ok": true,
+    "wood": [
+     2442,
+     2453,
+     0.9955156950672646
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9470039144835892,
+    "cluster_ok": true
+   },
+   {
+    "view": [
+     0,
+     90
+    ],
+    "coverage": [
+     23572,
+     23581,
+     0.9996183367965735
+    ],
+    "cov_ok": true,
+    "wood": [
+     328,
+     339,
+     0.967551622418879
+    ],
+    "wood_ok": true,
+    "cluster_min_ratio": 0.9983230855226384,
+    "cluster_ok": true
+   }
+  ],
+  "fragment_px": [
+   2156004,
+   2182145
+  ],
+  "fragment_ratio": 0.9880205027621904,
+  "max_abs_coverage_px_delta_vs_build": 0
+ },
+ "P4": {
+  "lod1_triangles": 288,
+  "lod2_triangles": 270,
+  "cap": 172,
+  "tri_ok": false,
+  "fragment_ratio": 0.9880205027621904,
+  "fragment_limit": 0.8,
+  "fragment_ok": false,
+  "ok": false
+ },
+ "P5": {
+  "ok": true,
+  "return_codes": [
+   0,
+   0
+  ],
+  "run1": {
+   "glb": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+   "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+  },
+  "run2": {
+   "glb": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+   "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+  },
+  "repo": {
+   "glb": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+   "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+  },
+  "byte_equal_runs": true,
+  "byte_equal_repo": true
+ },
+ "negatives_ok": true,
+ "all_positive_gates_pass": false,
+ "inputs": {
+  "lod1": "2e5c465e313fd57cc9a2445ebfc2a796cfb6b986fcdbacbd9a2920c3613b9d6a",
+  "lod2": "78eb5606a8b8c5941cd38df8b94c4f6e3fc23baf300f8a94066380540310dca6",
+  "provenance": "58666547a863c64e29d916acbe366b272e1e0f4a474f90c2190a07c1c7747628"
+ }
+}

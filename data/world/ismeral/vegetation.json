@@ -1,0 +1,171 @@
+{
+	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; yerleşim sayıları kilitli değil (F02, F04)",
+	"_notes": [
+		"T0 BİTKİ YERLEŞİMİ kuralları (T-062 B0; WLD-01, WLD-08, TEK-03, VIS-01/02): bitkiler dünya verisinden (yol ağı, parsel/blok, bina ayak izi, arazi sınıfı/eğim/kıyı) türer. KOORDİNAT YOK: her konum kurallardan ve tohumdan gelir. Her sayı ÇALIŞMA MODELİdir (ÇM), kanon değildir; art-director sonradan ayarlar. Bu dosya KURAL verir; tekil ağaç konumu onaylı değildir (F05-C).",
+		"Tür anahtarları oyun bitki tablosundan (`data/library/game_plants.json`, LibraryGate: yalnız approved + hash eşleşen) gelir: cypress, hedge, maquis, olive_open, olive_twisted, palm_date, palm_slender, pine_brutia, pine_stone, plane. Tabloda olmayan anahtar doğrulamada hatadır. Kit `veg_plane` yerleştirilmez; çınar rolünü hero `plane` taşır.",
+		"Q-018 AÇIK (palmiye türü/mevsim): palmiyeler SEÇİLMİŞ sayılmaz. İki tür eşit ağırlıkla ve yalnız sınırlı yerde (kıyıya yakın sokak/meydan çevresi, kıyıda çok az) yerleştirilir; `palm.multiplier` tüm palmiye paylarını çarpar (0 = palmiye yok), `palm.enabled=false` kapatır.",
+		"budget: örnek üst sınırı. Katmanlar `layer_order` sırasıyla üretilir; her katman kendi `layer_caps` sınırına, sonra toplam `max_instances`e kırpılır. Kırpma deterministiktir: sıra anahtarı = karma + (şehre uzaklık / rank_distance_m) x rank_distance_weight, EN BÜYÜK anahtarlılar düşer (şehir çevresi öncelikli).",
+		"terrain: su = WorldData.is_water ya da deniz seviyesi + min_above_sea_m altı; uçurum = eğim > cliff_deg (hiçbir katmanda ağaç yok). Katman başı max_slope_deg bu sınırın altında kalır.",
+		"clearance: gövde konumu bina ayak izi (modül w x d, yönlü dikdörtgen) dışında en az max(trunk_m, crown_frac[katman] x tür erişimi x ölçek) uzaklıkta; yol: sokak ağacı hariç hiçbir ağaç yol tam genişliğinin (yarım genişlik) road_edge_m yakınına giremez, sokak ağacı kaldırım bandında (sidewalk_m, road_style.json ile aynı değerler) durur ama araç yolunun (yarım genişlik - kaldırım) dışındadır. sep_frac: iki ağaç arası en az sep_frac x (erişim_a + erişim_b).",
+		"street: yol kenarında aralıklı sıra. Bölge grubu (zone_groups) yolun o yanındaki, cephesi bu yola bakan en yakın parselin (lot_reach_m içinde) yerleşim bölgesinden gelir; yoksa 'rural'. Kavşak: uç düğümün yarım genişlik + junction_pad_m çevresi boş. Palmiye yalnız group palm.street.groups içinde ve kıyı uzaklığı <= palm.street.max_shore_m iken payla karışır.",
+		"yard: parsel boşluklarında (bina ayak izi ve yol dışı) serpilme; beklenen sayı = serbest alan(ha) x per_ha x yeşillik(parsel) [x vacant_mult boş parselde]. Yeşillik parsel karmasından: lerp(green_min, 1, h1) x (h2 < green_parcel_p ? green_mult : 1). Tür, kalan serbest alana (bina uzaklığı, parsel sınırı + overhang_m) sığan türler arasından ağırlıkla seçilir.",
+		"hedge: seçili parselin yan/arka sınırı boyunca kısmi çit (cephe kenarı hariç); çit yönü sınırın yönüdür.",
+		"grove: kırsal (farm) parselleri ve açık bloklar: düzenli (hafif sarsıntılı) ızgarada zeytin, ızgara parselin en uzun kenarına hizalı; tür karışımı (twisted payı) grup başına.",
+		"coast: ana kıyı şeridi (min_shore_m..band_m) çam ağırlıklı; palmiye çok az. rural: kent çevresi (max_urban_dist_m içinde, uzaklıkla seyrelir) eğim/yükseklik sınıflarına göre maki/çam/servi/zeytin cepleri; yoğunluk küme gürültüsüyle (clusters) yamalıdır."
+	],
+	"schema_version": 1,
+	"seed_label": "veg",
+	"cell_m": 256.0,
+	"budget": {
+		"max_instances": 300000,
+		"layer_order": ["street", "yard", "hedge", "grove", "coast", "rural"],
+		"layer_caps": {"street": 90000, "yard": 90000, "hedge": 25000, "grove": 90000, "coast": 40000, "rural": 130000},
+		"rank_distance_weight": 0.6,
+		"rank_distance_m": 5000.0
+	},
+	"terrain": {
+		"min_above_sea_m": 1.2,
+		"cliff_deg": 38.0,
+		"max_slope_deg": {"street": 14.0, "yard": 18.0, "hedge": 14.0, "grove": 16.0, "coast": 30.0, "rural": 36.0}
+	},
+	"clearance": {
+		"trunk_m": 0.7,
+		"room_cap_m": 12.0,
+		"crown_frac": {"street": 0.3, "yard": 0.45, "grove": 0.3, "scatter": 0.3},
+		"road_edge_m": 0.8,
+		"boundary_m": 0.8,
+		"overhang_m": 2.5,
+		"sep_frac": 0.45,
+		"hedge_tree_sep_m": 1.6,
+		"hedge_building_m": 0.6,
+		"junction_pad_m": 3.0
+	},
+	"species": {
+		"plane": {"scale": [0.85, 1.2]},
+		"cypress": {"scale": [0.8, 1.25]},
+		"pine_brutia": {"scale": [0.8, 1.25]},
+		"pine_stone": {"scale": [0.8, 1.2]},
+		"olive_open": {"scale": [0.85, 1.2]},
+		"olive_twisted": {"scale": [0.85, 1.2]},
+		"maquis": {"scale": [0.7, 1.4]},
+		"hedge": {"scale": [0.9, 1.1]},
+		"palm_date": {"scale": [0.85, 1.15]},
+		"palm_slender": {"scale": [0.85, 1.15]}
+	},
+	"sidewalk_m": {"arterial": 2.4, "collector": 2.0, "local": 1.6, "field": 0.0, "rail": 0.0},
+	"zone_groups": {
+		"center": "core", "historic": "core", "dense": "core",
+		"town_center": "town", "town": "town", "harbor": "town",
+		"village": "hill", "hill_center": "hill", "hillside": "hill",
+		"yard": "industry", "farm": "rural"
+	},
+	"palm": {
+		"enabled": true,
+		"multiplier": 1.0,
+		"weights": {"palm_date": 0.5, "palm_slender": 0.5},
+		"street": {"max_shore_m": 400.0, "share": 0.25, "groups": ["core", "town"]},
+		"coast": {"share": 0.03, "max_shore_m": 300.0, "max_urban_dist_m": 1000.0},
+		"plaza": {"share": 0.5, "spacing_m": 9.0, "offset_m": 3.0}
+	},
+	"street": {
+		"end_margin_m": 4.0,
+		"jitter": 0.25,
+		"field_offset_m": 2.5,
+		"lot_reach_m": 60.0,
+		"classes": {
+			"arterial": {"spacing_m": 15.0},
+			"collector": {"spacing_m": 14.0},
+			"local": {"spacing_m": 12.0},
+			"field": {"spacing_m": 26.0}
+		},
+		"density": {"core": 0.95, "town": 0.9, "hill": 0.65, "industry": 0.2, "rural": 0.3},
+		"field_density": 0.18,
+		"weights": {
+			"core": {"plane": 0.62, "cypress": 0.38},
+			"town": {"plane": 0.55, "cypress": 0.45},
+			"hill": {"cypress": 0.5, "plane": 0.2, "pine_stone": 0.15, "olive_open": 0.15},
+			"industry": {"plane": 0.3, "cypress": 0.7},
+			"rural": {"cypress": 0.6, "olive_open": 0.2, "olive_twisted": 0.2},
+			"field_road": {"cypress": 0.7, "olive_open": 0.15, "olive_twisted": 0.15}
+		}
+	},
+	"yard": {
+		"tries": 8,
+		"green_min": 0.25,
+		"green_parcel_p": 0.2,
+		"green_mult": 2.5,
+		"near_building_m": 22.0,
+		"zones": {
+			"center": {"per_ha": 12.0, "vacant_mult": 2.0, "group": "urban"},
+			"historic": {"per_ha": 10.0, "vacant_mult": 2.0, "group": "urban"},
+			"dense": {"per_ha": 12.0, "vacant_mult": 2.0, "group": "urban"},
+			"town_center": {"per_ha": 16.0, "vacant_mult": 2.2, "group": "urban"},
+			"town": {"per_ha": 24.0, "vacant_mult": 2.2, "group": "garden"},
+			"village": {"per_ha": 30.0, "vacant_mult": 2.0, "group": "garden"},
+			"hill_center": {"per_ha": 16.0, "vacant_mult": 2.0, "group": "garden"},
+			"hillside": {"per_ha": 28.0, "vacant_mult": 2.0, "group": "garden"},
+			"harbor": {"per_ha": 2.0, "vacant_mult": 1.5, "group": "industry"},
+			"yard": {"per_ha": 2.5, "vacant_mult": 1.5, "group": "industry"},
+			"farm": {"per_building": 7.0, "vacant_mult": 1.0, "group": "farm", "near_building": true}
+		},
+		"groups": {
+			"urban": {"plane": 0.3, "cypress": 0.35, "olive_open": 0.15, "olive_twisted": 0.05, "maquis": 0.15},
+			"garden": {"olive_open": 0.22, "olive_twisted": 0.12, "cypress": 0.2, "pine_brutia": 0.1,
+				"pine_stone": 0.06, "plane": 0.12, "maquis": 0.18},
+			"industry": {"plane": 0.4, "cypress": 0.4, "maquis": 0.2},
+			"farm": {"olive_open": 0.4, "olive_twisted": 0.25, "cypress": 0.2, "pine_stone": 0.15}
+		}
+	},
+	"hedge": {
+		"zone_p": {"town": 0.18, "village": 0.3, "hillside": 0.25, "hill_center": 0.15, "farm": 0.1},
+		"edge_p": 0.5,
+		"min_edge_m": 8.0,
+		"end_pad_m": 1.5,
+		"cover": [0.3, 0.7],
+		"inset_m": 0.9,
+		"stride_m": 4.5
+	},
+	"grove": {
+		"parcel_p": 0.45,
+		"open_block_p": 0.5,
+		"region_mult": {"default": 0.6, "D4": 0.6, "D5": 0.9},
+		"spacing_m": [9.0, 12.0],
+		"extent": [0.5, 0.95],
+		"jitter_frac": 0.12,
+		"edge_margin_m": 6.0,
+		"building_margin_m": 6.0,
+		"road_margin_m": 4.0,
+		"twisted_share": [0.15, 0.5],
+		"max_per_grove": 260
+	},
+	"clusters": {
+		"large_m": 900.0,
+		"small_m": 260.0,
+		"small_weight": 0.35,
+		"lo": 0.38,
+		"hi": 0.62
+	},
+	"coast": {
+		"min_shore_m": 25.0,
+		"band_m": 450.0,
+		"max_urban_dist_m": 4500.0,
+		"per_ha": 20.0,
+		"weights": {"pine_brutia": 0.78, "maquis": 0.22}
+	},
+	"rural": {
+		"max_urban_dist_m": 3500.0,
+		"falloff_min": 0.45,
+		"olive_pocket": {"cell_m": 520.0, "threshold": 0.5, "per_ha": 22.0, "max_slope_deg": 18.0,
+			"weights": {"olive_open": 0.5, "olive_twisted": 0.35, "cypress": 0.15}},
+		"classes": [
+			{"name": "high", "slope_deg": [0.0, 90.0], "elev_m": [350.0, 5000.0], "per_ha": 22.0,
+				"weights": {"pine_stone": 0.6, "maquis": 0.4}},
+			{"name": "steep", "slope_deg": [22.0, 90.0], "elev_m": [-100.0, 350.0], "per_ha": 22.0,
+				"weights": {"maquis": 0.78, "pine_stone": 0.22}},
+			{"name": "hill", "slope_deg": [6.0, 22.0], "elev_m": [-100.0, 350.0], "per_ha": 32.0,
+				"weights": {"maquis": 0.45, "pine_stone": 0.28, "pine_brutia": 0.15, "olive_open": 0.12}},
+			{"name": "flat", "slope_deg": [0.0, 6.0], "elev_m": [-100.0, 350.0], "per_ha": 9.0,
+				"weights": {"cypress": 0.2, "olive_open": 0.35, "olive_twisted": 0.25, "pine_brutia": 0.2}}
+		]
+	}
+}

@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA_CAN03 cmd kind=zoning.propose params=["parcel_ids", "land_use", "develop"] -> rejected command.reject.unknown_param
+QA_CAN03 cmd kind=zoning.propose params=["parcel_ids", "land_use", "units"] -> rejected command.reject.unknown_param
+QA_CAN03 cmd kind=building.place params=["parcel_ids", "module"] -> rejected command.reject.not_a_mayor_verb
+QA_CAN03 cmd kind=parcel.develop params=["parcel_ids"] -> rejected command.reject.unknown_kind
+QA_CAN03 cmd kind=budget.propose params=["lines"] -> rejected command.reject.precondition
+QA_CAN03 cmd kind=zoning.propose params=["parcel_ids", "land_use", "density"] -> rejected command.reject.invalid_value
+QA_CAN03 after forged commands +10d: rows=0 rows_without_investor_decision=0
+QA_CAN03 PASS no row without a positive investor decision
+QA_CAN03 PASS pause: tick frozen (52), projector drained, rows stable
+QA_CAN03 PASS fastest speed + slow frames: settled rows == fresh exact (tick 532)
+QA_DONE fails=0

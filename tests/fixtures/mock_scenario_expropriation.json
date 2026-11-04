@@ -1,0 +1,384 @@
+{
+ "format": "imaro.mock_scenario",
+ "format_version": 1,
+ "provenance": "MOCK",
+ "contract_version": "1.5",
+ "id": "mock_expropriation",
+ "description": "MOCK: F1'de uc parsel (iki yapili, biri bos) bir yolun kosesinde; F2'de yakinda ama alinmayan yapili parsel. Yol kamulastirma bayragi olmadan crosses_parcels ile reddedilir ve ret kamulastirma teklifini (sim tarzi sayilar) tasir; expropriate=true ile parseller 'taken' olur, public_work.expropriated -> public_work.built -> command.applied olaylari gelir, 3 tick sonra halk tepkisi (protest) gelir. Geri alma binalari geri getirir, halk tepkisi geri gelmez. Mock geometri ve sim hesaplamaz; sayilar SAHTE.",
+ "initial": {
+  "tick": 0,
+  "speed": 1,
+  "world_id": "fixture.world",
+  "land_uses": [
+   "zone.residential",
+   "zone.mixed",
+   "zone.commercial",
+   "zone.green"
+  ],
+  "parcels": [
+   {
+    "id": 1,
+    "region_code": "F1",
+    "center": [
+     -400.0,
+     200.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "built",
+    "owner": {
+     "kind": "landowner",
+     "id": 1,
+     "name_key": "mock.actor.landowner.1"
+    },
+    "land_value": 1000,
+    "reason_ids": [],
+    "use": "residential",
+    "units": 12,
+    "progress_pm": 1000,
+    "developed_by_sim": false
+   },
+   {
+    "id": 2,
+    "region_code": "F1",
+    "center": [
+     -420.0,
+     150.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "built",
+    "owner": {
+     "kind": "landowner",
+     "id": 2,
+     "name_key": "mock.actor.landowner.2"
+    },
+    "land_value": 1000,
+    "reason_ids": [],
+    "use": "commercial",
+    "units": 4,
+    "progress_pm": 1000,
+    "developed_by_sim": false
+   },
+   {
+    "id": 3,
+    "region_code": "F1",
+    "center": [
+     -380.0,
+     120.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 3,
+     "name_key": "mock.actor.landowner.3"
+    },
+    "land_value": 1000,
+    "reason_ids": [],
+    "use": "",
+    "units": 0,
+    "progress_pm": 0,
+    "developed_by_sim": false
+   },
+   {
+    "id": 4,
+    "region_code": "F2",
+    "center": [
+     -300.0,
+     400.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "built",
+    "owner": {
+     "kind": "landowner",
+     "id": 4,
+     "name_key": "mock.actor.landowner.4"
+    },
+    "land_value": 1000,
+    "reason_ids": [],
+    "use": "residential",
+    "units": 8,
+    "progress_pm": 1000,
+    "developed_by_sim": false
+   }
+  ],
+  "groups": [
+   {
+    "group": {
+     "kind": "group",
+     "id": 1,
+     "name_key": "mock.actor.group.1"
+    },
+    "region_code": "F1",
+    "stance": 100,
+    "stance_delta": 0,
+    "reaction": "neutral",
+    "intensity": 0,
+    "cause_refs": [],
+    "reason_ids": [],
+    "tick": 0
+   }
+  ]
+ },
+ "rules": [
+  {
+   "when": {
+    "kind": "public_work.road",
+    "params": {
+     "points_cm": [
+      -45000,
+      21000,
+      -45000,
+      11000
+     ],
+     "road_class": "local",
+     "expropriate": true
+    }
+   },
+   "preview": {
+    "regions": {
+     "F1": 10
+    },
+    "expropriation": {
+     "parcel_ids": [
+      1,
+      2,
+      3
+     ],
+     "built_parcels": 2,
+     "project_parcels": 0,
+     "res_units": 12,
+     "com_units": 4,
+     "households": 11,
+     "regions": {
+      "F1": 3
+     },
+     "nearby_households": 8,
+     "nearby_parcels": 1,
+     "resettlement": {
+      "rehoused": 7,
+      "unplaced": 4,
+      "cost": 5200
+     }
+    }
+   },
+   "effects": [
+    {
+     "after_ticks": 3,
+     "type": "reason",
+     "label": "r_displacement",
+     "reason": {
+      "actor": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "decision_key": "decision.bloc.expropriation_cause",
+      "factors": [
+       {
+        "name_key": "reason.factor.displaced_households",
+        "value": 40,
+        "weight": 700,
+        "source_ref": "command.1"
+       },
+       {
+        "name_key": "reason.factor.road_proximity",
+        "value": 20,
+        "weight": 300,
+        "is_estimate": true,
+        "source_ref": "command.1"
+       },
+       {
+        "name_key": "reason.factor.displaced_household_count",
+        "value": 11,
+        "weight": 0,
+        "source_ref": "command.1"
+       }
+      ],
+      "threshold": 10,
+      "outcome": "positive",
+      "subjects": [
+       "parcel.1",
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "reason",
+     "label": "r_react",
+     "reason": {
+      "actor": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "decision_key": "decision.bloc.react.protest",
+      "parent_labels": [
+       "r_displacement"
+      ],
+      "factors": [
+       {
+        "name_key": "reason.factor.grievance_level",
+        "value": 1000,
+        "weight": 450
+       },
+       {
+        "name_key": "reason.factor.satisfaction_level",
+        "value": 0,
+        "weight": -250
+       },
+       {
+        "name_key": "reason.factor.media_amplification",
+        "value": 600,
+        "weight": 150
+       },
+       {
+        "name_key": "reason.factor.organizer_capacity",
+        "value": 700,
+        "weight": 100
+       },
+       {
+        "name_key": "reason.factor.trust_in_player",
+        "value": 200,
+        "weight": -50
+       }
+      ],
+      "threshold": 500,
+      "outcome": "positive",
+      "subjects": [
+       "parcel.1",
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "group",
+     "reason_labels": [
+      "r_displacement",
+      "r_react"
+     ],
+     "reaction": {
+      "group": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "region_code": "F1",
+      "stance": -300,
+      "stance_delta": -400,
+      "reaction": "protest",
+      "intensity": 600,
+      "cause_refs": [
+       "command.1",
+       "parcel.1",
+       "parcel.2"
+      ]
+     }
+    },
+    {
+     "after_ticks": 3,
+     "type": "event",
+     "event": {
+      "kind": "group.reacted",
+      "actor": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "subjects": [
+       "parcel.1",
+       "parcel.2"
+      ],
+      "message_key": "event.group.protest",
+      "reason_labels": [
+       "r_react"
+      ]
+     }
+    },
+    {
+     "after_ticks": 5,
+     "type": "agenda",
+     "reason_labels": [
+      "r_react"
+     ],
+     "item": {
+      "item_id": 1,
+      "template_id": "PE-01",
+      "delivery": "agenda",
+      "status": "open",
+      "region_code": "F1",
+      "group": {
+       "kind": "group",
+       "id": 1,
+       "name_key": "mock.actor.group.1"
+      },
+      "expires_after": 30,
+      "title_key": "event.pe01.reason",
+      "args": {
+       "topic": "housing",
+       "stage": 0
+      },
+      "cause_refs": [
+       "command.1",
+       "parcel.1",
+       "parcel.2"
+      ],
+      "options": [
+       {"option_id": "listen", "verb": "listen_session", "label_key": "event.pe01.opt.listen", "available": true,
+        "locked_by": "", "effects": [
+         {"target": "bloc.grievance", "scope": "trigger_topic", "direction": -1, "delay_days": 7, "duration_days": 90, "curve": "decay"},
+         {"target": "relation.trust", "scope": "trigger_bloc", "direction": 1, "delay_days": 7, "duration_days": 0, "curve": "step"}]},
+       {"option_id": "remedy", "verb": "fund_remedy_project", "label_key": "event.pe01.opt.remedy", "available": false,
+        "locked_by": "district_works", "effects": [
+         {"target": "bloc.grievance", "scope": "trigger_topic", "direction": -1, "delay_days": 60, "duration_days": 360, "curve": "linear"}]},
+       {"option_id": "reverse", "verb": "revise_decision", "label_key": "event.pe01.opt.reverse", "available": true,
+        "locked_by": "", "effects": [
+         {"target": "investor.political_risk", "scope": "district", "direction": 1, "delay_days": 0, "duration_days": 180, "curve": "decay"}]}
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "when": {
+    "kind": "public_work.road",
+    "params": {
+     "points_cm": [
+      -45000,
+      21000,
+      -45000,
+      11000
+     ],
+     "road_class": "local"
+    }
+   },
+   "reject": {
+    "reason_key": "public_work.reject.crosses_parcels",
+    "args": {
+     "expropriate": true,
+     "taken_parcels": 3,
+     "taken_built_parcels": 2,
+     "taken_project_parcels": 0,
+     "taken_res_units": 12,
+     "taken_com_units": 4,
+     "displaced_households": 11,
+     "taken_regions": {
+      "F1": 3
+     },
+     "nearby_households": 8,
+     "nearby_parcels": 1
+    }
+   }
+  }
+ ],
+ "timeline": []
+}

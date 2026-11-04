@@ -1,0 +1,351 @@
+{
+ "format": "imaro-game-set/1",
+ "table": "ground",
+ "source_catalog": "data/library/catalog.json",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
+ "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+ "included_count": 14,
+ "unapproved": {
+  "count": 0,
+  "by_reason": {},
+  "entries": []
+ },
+ "layers": [
+  {
+   "id": "gnd_tex_asphalt_new",
+   "kind": "ground_texture",
+   "variant": "asphalt_new",
+   "png": "res://assets/ground/tex/gnd_asphalt_new.png",
+   "png_sha256": "93dd1747efd80acb6c04557c5a652739878377671b04a44e783070d4bd3c1638",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 6.0,
+   "palette_rows": [
+    "U2"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 2,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_asphalt_worn",
+   "kind": "ground_texture",
+   "variant": "asphalt_worn",
+   "png": "res://assets/ground/tex/gnd_asphalt_worn.png",
+   "png_sha256": "5355bf1eb0cd3117f64aadfb0f9e498728e35f869378d1860a4b4ac3413916ca",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 6.0,
+   "palette_rows": [
+    "U2"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 3,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_beach_sand",
+   "kind": "ground_texture",
+   "variant": "beach_sand",
+   "png": "res://assets/ground/tex/gnd_beach_sand.png",
+   "png_sha256": "a30ec11c79af4e8ced915b4aa46359120ec68f33013e15aae00ede56afb296d5",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 4.0,
+   "palette_rows": [
+    "TS"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 11,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_dirt_courtyard",
+   "kind": "ground_texture",
+   "variant": "dirt_courtyard",
+   "png": "res://assets/ground/tex/gnd_dirt_courtyard.png",
+   "png_sha256": "f81ed7d293e80890944393af13f4026da4ccc0e17ef366d9d66d3108b47ed797",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 6.0,
+   "palette_rows": [
+    "U4/U9"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 4,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_field_plowed",
+   "kind": "ground_texture",
+   "variant": "field_plowed",
+   "png": "res://assets/ground/tex/gnd_field_plowed.png",
+   "png_sha256": "e260429878c7505e93c70368576f361097eb58b72eb2aa434aef8152acdd7c81",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 8.0,
+   "palette_rows": [
+    "T1"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 9,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_field_stubble",
+   "kind": "ground_texture",
+   "variant": "field_stubble",
+   "png": "res://assets/ground/tex/gnd_field_stubble.png",
+   "png_sha256": "a06a45e006b29b40590164d8b178713fc84eb0032cf32fb2feee78f038f71237",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 8.0,
+   "palette_rows": [
+    "T1"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 10,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_grass_dry",
+   "kind": "ground_texture",
+   "variant": "grass_dry",
+   "png": "res://assets/ground/tex/gnd_grass_dry.png",
+   "png_sha256": "52da185d4239f1a1dc33bae8e4743f3a314fb93c835c90d218b0b1fe8a6061c3",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 6.0,
+   "palette_rows": [
+    "T2"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 5,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_grass_green",
+   "kind": "ground_texture",
+   "variant": "grass_green",
+   "png": "res://assets/ground/tex/gnd_grass_green.png",
+   "png_sha256": "5073a973a4c5a6103fa958195f62332aa116a1f8a67ff4849a587ccf97cebba2",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 6.0,
+   "palette_rows": [
+    "U5"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 6,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_gravel",
+   "kind": "ground_texture",
+   "variant": "gravel",
+   "png": "res://assets/ground/tex/gnd_gravel.png",
+   "png_sha256": "1ad2f4ae73aca4193a05a0236d0c3b78d3e3b16d26c5b41a609a99ca6d4a4c49",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 3.0,
+   "palette_rows": [
+    "TS/T6"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 12,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_olive_ground",
+   "kind": "ground_texture",
+   "variant": "olive_ground",
+   "png": "res://assets/ground/tex/gnd_olive_ground.png",
+   "png_sha256": "7fcbbb6ee330d7232072236a35cea4f3291123df9d33cca9abe00b9adfddf26a",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 8.0,
+   "palette_rows": [
+    "T3"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 8,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_plaza_stone_a",
+   "kind": "ground_texture",
+   "variant": "plaza_stone_a",
+   "png": "res://assets/ground/tex/gnd_plaza_stone_a.png",
+   "png_sha256": "fa457fbfc71708d7f62bf852fcbdbf32d1a38b918080c8445e459bd0cd081f5f",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 4.0,
+   "palette_rows": [
+    "U1"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 0,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_rock_cliff",
+   "kind": "ground_texture",
+   "variant": "rock_cliff",
+   "png": "res://assets/ground/tex/gnd_rock_cliff.png",
+   "png_sha256": "306aca94bfed44ed377041402f2a29c0e188eeeeadde833908a2bd842158366f",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 8.0,
+   "palette_rows": [
+    "T6"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 13,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_scrub_maquis",
+   "kind": "ground_texture",
+   "variant": "scrub_maquis",
+   "png": "res://assets/ground/tex/gnd_scrub_maquis.png",
+   "png_sha256": "0906b360adfa0c1bac5b33cc2a336e0da84084dd5efc2823aef0f5b880e9c554",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 8.0,
+   "palette_rows": [
+    "T3"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 7,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  },
+  {
+   "id": "gnd_tex_sidewalk_cobble",
+   "kind": "ground_texture",
+   "variant": "sidewalk_cobble",
+   "png": "res://assets/ground/tex/gnd_sidewalk_cobble.png",
+   "png_sha256": "e9451292482b26953bfb927fa4cce9b692915657308859c99de7bd65b094bd3c",
+   "size_px": [
+    512,
+    512
+   ],
+   "size_matches_catalog": true,
+   "tile_m": 3.0,
+   "palette_rows": [
+    "U3"
+   ],
+   "import": {
+    "mipmaps_generate": true,
+    "mip_levels": 10,
+    "compress_mode": "0"
+   },
+   "layer_index": 1,
+   "layer_note": "index in assets/ground/tex/ground_layers.json (terrain layer order)",
+   "generator": "art/blender/ground/ground_tex.py"
+  }
+ ]
+}

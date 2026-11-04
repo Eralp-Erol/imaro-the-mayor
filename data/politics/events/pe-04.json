@@ -1,0 +1,25 @@
+{
+	"schema": 1,
+	"_notes": "PE-04 medya haberi (political-events 5, M2 agenda). Yer tutucu; medya organi tek (AS-7).",
+	"id": "PE-04", "category": "media", "min_milestone": "M2",
+	"hard": [{"src": "media.published_recent", "op": ">=", "value": 1}],
+	"drivers": [
+		{"name": "newsworthiness", "src": "media.newsworthiness", "lo": 200, "hi": 800, "weight": 500},
+		{"name": "lean_alignment", "src": "media.lean_abs", "lo": 0, "hi": 600, "weight": 250},
+		{"name": "fact_signal", "src": "media.fact_abs", "lo": 100, "hi": 800, "weight": 250}
+	],
+	"weight": 400, "gamma": 1, "cooldown_days": 60, "rearm_below": 250, "mutex": ["media_cycle"],
+	"affected": {"type": "bloc", "from": "trigger"},
+	"delivery": "agenda", "reason_key": "event.pe04.reason", "tone_tags": [], "cause": "media_story",
+	"options": [
+		{"id": "respond", "verb": "respond_media", "label_key": "event.pe04.opt.respond", "costs": {"political_capital": 40},
+			"effects": [
+				{"target": "media.tone", "scope": "trigger_topic", "magnitude": 150, "delay_days": 7, "duration_days": 60, "curve": "decay", "attribution": 1000}]},
+		{"id": "accelerate", "verb": "accelerate_project", "label_key": "event.pe04.opt.accelerate", "costs": {"budget": 200},
+			"effects": [
+				{"target": "bloc.grievance", "scope": "trigger_topic", "magnitude": -100, "delay_days": 30, "duration_days": 120, "curve": "linear", "attribution": 1000}]},
+		{"id": "defer", "verb": "defer", "label_key": "event.defer", "effects": []}
+	],
+	"stages": [],
+	"expiry_days": 60
+}

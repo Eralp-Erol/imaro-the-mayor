@@ -1,0 +1,175 @@
+diff --git a/data/actors/decision_tables.json b/data/actors/decision_tables.json
+index 14643f1..c4dc3a4 100644
+--- a/data/actors/decision_tables.json
++++ b/data/actors/decision_tables.json
+@@ -1,6 +1,6 @@
+ {
+ 	"schema": 1,
+-	"_notes": "T-016 (characters-npc 6.1, 6.3, 7): karar tablolari, TEK puanlama fonksiyonu icin. Anahtar '<tur>.<fiil>' (kayitta decision.<tur>.<fiil>). factors: name + taban agirlik (permille, negatif = karsi; 0 = yalniz gosterim) + trait_mod (ozellik -> kaydirma, w' = w * (1 + mod * (ozellik - 500) / 500 / 1000)). theta esik (-1000..1000); hysteresis: onceki karar olumluysa esikten dusulur; noise_amp: gurultu genligi (volatility ile olceklenir). tiers: basamakli esik (artan theta; her basamak ayri kayit). Tum sayilar CALISMA MODELI; investor.political_risk_signal ve olay atesleme T-017/T-026 isidir.",
++	"_notes": "T-016 (characters-npc 6.1, 6.3, 7): karar tablolari, TEK puanlama fonksiyonu icin. Anahtar '<tur>.<fiil>' (kayitta decision.<tur>.<fiil>). factors: name + taban agirlik (permille, negatif = karsi; 0 = yalniz gosterim) + trait_mod (ozellik -> kaydirma, w' = w * (1 + mod * (ozellik - 500) / 500 / 1000)). theta esik (-1000..1000); hysteresis: onceki karar olumluysa esikten dusulur; noise_amp: gurultu genligi (volatility ile olceklenir). tiers: basamakli esik (artan theta; her basamak ayri kayit). Tum sayilar CALISMA MODELI; investor.political_risk_signal ve olay atesleme T-017/T-026 isidir. bloc.support (T-017 eki): kesimin destek karari, bloc.react'in olumlu karsiti; satisfaction_level lehine, sikayet ve olumsuz medya aleyhine.",
+ 	"defaults": {"noise_trait": "volatility", "n_prec": 5},
+ 	"decisions": {
+ 		"council.vote": {
+@@ -26,6 +26,15 @@
+ 			"tiers": [{"id": "petition", "theta": 250}, {"id": "protest", "theta": 500}, {"id": "boycott", "theta": 700}],
+ 			"hysteresis": 30, "noise_amp": 80
+ 		},
++		"bloc.support": {
++			"factors": [
++				{"name": "satisfaction_level", "weight": 500},
++				{"name": "grievance_level", "weight": -250},
++				{"name": "trust_in_player", "weight": 150},
++				{"name": "media_amplification", "weight": -100}
++			],
++			"theta": 300, "hysteresis": 30, "noise_amp": 80
++		},
+ 		"media.coverage": {
+ 			"factors": [
+ 				{"name": "newsworthiness", "weight": 400},
+diff --git a/src/sim/core/game_state.gd b/src/sim/core/game_state.gd
+index 2b553e8..ad91988 100644
+--- a/src/sim/core/game_state.gd
++++ b/src/sim/core/game_state.gd
+@@ -161,6 +161,13 @@ static func validate_dict(data: Variant) -> String:
+ 	var events_error := SimEventLog.validate_data(data["systems"].get(SimEventLog.SYSTEM_KEY, null))
+ 	if not events_error.is_empty():
+ 		return events_error
++	# T-017: aktör ve siyaset bölümleri (yoksa geçerli) biçim denetiminden geçer; bozuk kayıt yüklenmez
++	var actors_error := ActorStore.validate_data(data["systems"].get(ActorStore.SYSTEM_KEY, null))
++	if not actors_error.is_empty():
++		return actors_error
++	var politics_error := PoliticsState.validate_data(data["systems"].get(PoliticsState.KEY, null))
++	if not politics_error.is_empty():
++		return politics_error
+ 	for key in ["pending_commands", "command_log"]:
+ 		var entries: Variant = data.get(key, null)
+ 		if not (entries is Array):
+diff --git a/src/sim/facade/sim_facade_impl.gd b/src/sim/facade/sim_facade_impl.gd
+index 983995b..ba43dbe 100644
+--- a/src/sim/facade/sim_facade_impl.gd
++++ b/src/sim/facade/sim_facade_impl.gd
+@@ -13,7 +13,9 @@ extends SimFacade
+ ## - Kurulmamış sistemler (bütçe, meclis, grup tepkileri) `snapshot().extensions["x.sim.available.<bölüm>"] = false`
+ ##   ve varsayılan boş DTO ile görünür; UI bölümü gizler / `*.not_built` yazar. Komutları gerekçeli reddedilir.
+ ## - Hız sim durumu DEĞİLDİR (TickDriver'dadır, hash'e girmez).
+-## Entegrasyon: yeni sistem/işleyici `create(..., extra_systems, extra_handlers)` ile takılır (T-013/T-014/T-016).
++## Entegrasyon: yeni sistem/işleyici `create(..., extra_systems, extra_handlers)` ile takılır (T-013/T-014/T-016);
++## T-017: `proposal_gate` (öneri meclis oylamasına gider mi) ve `snapshot_provider` (grup/meclis bölümleri) isteğe
++## bağlıdır.
+ 
+ ## Kurulmamış bölümlerin `extensions` anahtarı öneki (v1.1'de tipli `available` alanına taşınması istenir).
+ const AVAILABLE_PREFIX := "x.sim.available."
+@@ -34,12 +36,14 @@ var _facade_config: FacadeConfig
+ var _max_speed_level: int = SPEED_FASTEST
+ var _driver_speeds: Dictionary = {}  # hız adı (String) -> tick/sn (core_config.json driver.speeds)
+ var _retained_cache: Dictionary = {}  # {"key": [last_seq, first_reason_id], "start": int}
++var _snapshot_provider: SnapshotProvider  # T-017: grup/meclis bölümlerini dolduran sağlayıcı (yoksa kurulmamış)
+ 
+ 
+ ## Yeni oyun. Geçersiz yapılandırma/kaynak/hız tablosunda push_error + null.
+ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig = null,
+ 		facade_config: FacadeConfig = null, extra_systems: Array[SimSystem] = [],
+-		extra_handlers: Array[CommandHandler] = []) -> SimFacadeImpl:
++		extra_handlers: Array[CommandHandler] = [], proposal_gate: ProposalGate = null,
++		snapshot_provider: SnapshotProvider = null) -> SimFacadeImpl:
+ 	var sc := sim_config if sim_config != null else SimConfig.load_default()
+ 	var fc := facade_config if facade_config != null else FacadeConfig.load_default()
+ 	var problem := _setup_problem(parcels, sc, fc)
+@@ -52,7 +56,8 @@ static func create(world_seed: int, parcels: ParcelSource, sim_config: SimConfig
+ 	impl._facade_config = fc
+ 	impl._sim = Simulation.new()
+ 	impl._sim.add_system(ParcelZoningSystem.new())
+-	impl._sim.add_handler(ZoningProposeHandler.new(parcels, fc))
++	impl._snapshot_provider = snapshot_provider
++	impl._sim.add_handler(ZoningProposeHandler.new(parcels, fc, proposal_gate))
+ 	impl._sim.add_handler(UnbuiltCommandHandler.new(SimCommand.KIND_BUDGET_PROPOSE, SECTION_BUDGET))
+ 	for system in extra_systems:
+ 		impl._sim.add_system(system)
+@@ -151,6 +156,8 @@ func snapshot() -> SimSnapshot:
+ 		AVAILABLE_PREFIX + String(SECTION_COUNCIL): false,
+ 		AVAILABLE_PREFIX + String(SECTION_GROUPS): false,
+ 	}
++	if _snapshot_provider != null:
++		_snapshot_provider.fill(_state, s)
+ 	return s
+ 
+ 
+diff --git a/src/sim/facade/zoning_propose_handler.gd b/src/sim/facade/zoning_propose_handler.gd
+index bcb82e6..eda590c 100644
+--- a/src/sim/facade/zoning_propose_handler.gd
++++ b/src/sim/facade/zoning_propose_handler.gd
+@@ -9,23 +9,26 @@ const _SHAPE_PREFIX := "command.reject."
+ 
+ var _parcels: ParcelSource
+ var _config: FacadeConfig
++## T-017: isteğe bağlı öneri kapısı (meclis oylaması). null = doğrudan yürürlük (önceki davranış).
++var _gate: ProposalGate
+ 
+ 
+-func _init(parcels: ParcelSource, config: FacadeConfig) -> void:
++func _init(parcels: ParcelSource, config: FacadeConfig, gate: ProposalGate = null) -> void:
+ 	_parcels = parcels
+ 	_config = config
++	_gate = gate
+ 
+ 
+ func command_type() -> StringName:
+ 	return SimCommand.KIND_ZONING_PROPOSE
+ 
+ 
+-func validate(_state: GameState, params: Dictionary) -> StringName:
+-	return _problem(params)["code"]
++func validate(state: GameState, params: Dictionary) -> StringName:
++	return _problem(state, params)["code"]
+ 
+ 
+-func reject_args(_state: GameState, params: Dictionary) -> Dictionary:
+-	return _problem(params)["args"]
++func reject_args(state: GameState, params: Dictionary) -> Dictionary:
++	return _problem(state, params)["args"]
+ 
+ 
+ func subjects(params: Dictionary) -> PackedStringArray:
+@@ -37,6 +40,9 @@ func subjects(params: Dictionary) -> PackedStringArray:
+ 
+ 
+ func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> void:
++	if _gate != null and _gate.requires_vote(state, command_type()):
++		_gate.open(state, command_type(), params, command_id, _config.apply_delay_days)
++		return
+ 	var due := state.tick + _config.apply_delay_days
+ 	var density: int = params.get("density", ParcelZoningSystem.NO_VALUE)
+ 	var height: int = params.get("max_height_m", ParcelZoningSystem.NO_VALUE)
+@@ -45,7 +51,7 @@ func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> voi
+ 
+ 
+ ## {"code": ret kodu ya da &"", "args": ek argümanlar}.
+-func _problem(params: Dictionary) -> Dictionary:
++func _problem(state: GameState, params: Dictionary) -> Dictionary:
+ 	var shape := SimCommand.make(command_type(), params).validate_shape()
+ 	if not shape.is_empty():
+ 		return {"code": StringName(String(shape["reason_key"]).trim_prefix(_SHAPE_PREFIX)), "args": shape["args"]}
+@@ -54,4 +60,8 @@ func _problem(params: Dictionary) -> Dictionary:
+ 			return {"code": &"invalid_target", "args": {"ref": String(SimContract.parcel_ref(id))}}
+ 	if not _config.is_land_use(params["land_use"]):
+ 		return {"code": &"invalid_value", "args": {"param": "land_use"}}
++	if _gate != null:
++		var gated := _gate.precheck(state, command_type(), params)
++		if not gated.is_empty():
++			return gated
+ 	return {"code": &"", "args": {}}
+diff --git a/tests/sim/actors/actor_config_test.gd b/tests/sim/actors/actor_config_test.gd
+index 606be89..52392d6 100644
+--- a/tests/sim/actors/actor_config_test.gd
++++ b/tests/sim/actors/actor_config_test.gd
+@@ -16,8 +16,8 @@ func test_default_data_loads_valid_and_exposes_the_m2_placeholder_roster() -> vo
+ 	assert_str(cfg.campaign_template).is_equal("m2_test")
+ 	assert_int(cfg.digest.length()).is_equal(64)
+ 	assert_array(cfg.trait_ids).contains(["volatility", "integrity"])
+-	assert_array(cfg.table_ids()).is_equal(["bloc.react", "council.vote", "interest.lobby", "media.coverage",
+-		"remote.policy_move"])
++	assert_array(cfg.table_ids()).is_equal(["bloc.react", "bloc.support", "council.vote", "interest.lobby",
++		"media.coverage", "remote.policy_move"])
+ 
+ 
+ func test_protagonist_is_a_bare_placeholder_without_name_or_background() -> void:

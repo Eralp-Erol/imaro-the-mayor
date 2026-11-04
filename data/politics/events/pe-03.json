@@ -1,0 +1,26 @@
+{
+	"schema": 1,
+	"_notes": "PE-03 meclis butce krizi (political-events 5, M2 agenda). Butce sistemi (T-014) kurulana dek butce oylamasi yalniz API ile acilir; hizmet satiri dondurma (budget.line) etkisi desteklenmez (T-014): secenekler kesim/iliski/surtunme etkileri tasir.",
+	"id": "PE-03", "category": "council", "min_milestone": "M2",
+	"hard": [{"src": "council.budget_vote_failed", "op": ">=", "value": 1}],
+	"drivers": [
+		{"name": "dissent", "src": "council.dissent", "lo": 200, "hi": 800, "weight": 400},
+		{"name": "trust_gap", "src": "council.trust_gap", "lo": 300, "hi": 800, "weight": 300},
+		{"name": "unrest_level", "src": "politics.unrest", "lo": 200, "hi": 800, "weight": 300}
+	],
+	"weight": 400, "gamma": 1, "cooldown_days": 90, "rearm_below": 250, "mutex": ["council_budget"],
+	"affected": {"type": "council", "from": "all"},
+	"delivery": "agenda", "reason_key": "event.pe03.reason", "tone_tags": [], "cause": "council_vote",
+	"options": [
+		{"id": "revise", "verb": "revise_budget", "label_key": "event.pe03.opt.revise", "costs": {"time_days": 14},
+			"effects": [
+				{"target": "council.friction", "scope": "all", "magnitude": -2, "delay_days": 14, "duration_days": 90, "curve": "step", "attribution": 1000}]},
+		{"id": "negotiate", "verb": "negotiate", "label_key": "event.pe03.opt.negotiate",
+			"requires": {"authority": "council_vote"}, "costs": {"political_capital": 60},
+			"effects": [
+				{"target": "relation.trust", "scope": "all", "magnitude": 80, "delay_days": 7, "duration_days": 0, "curve": "step", "attribution": 1000}]},
+		{"id": "defer", "verb": "defer", "label_key": "event.defer", "effects": []}
+	],
+	"stages": [],
+	"expiry_days": 120
+}

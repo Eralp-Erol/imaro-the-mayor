@@ -1,0 +1,162 @@
+[
+  {
+    "view": "front",
+    "level": "lod0",
+    "sun_yaw_offset": 0,
+    "path": "artifacts/screenshots/captures/20261027-134958-t057-fpc-plane-front-lod0-sun0.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-front-lod0-sun0",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=lod0",
+      "--view=front",
+      "--distance=150",
+      "--sun_yaw_offset=0"
+    ]
+  },
+  {
+    "view": "front",
+    "level": "proxy",
+    "sun_yaw_offset": 0,
+    "path": "artifacts/screenshots/captures/20261027-135002-t057-fpc-plane-front-proxy-sun0.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-front-proxy-sun0",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=proxy",
+      "--view=front",
+      "--distance=150",
+      "--sun_yaw_offset=0"
+    ]
+  },
+  {
+    "view": "side",
+    "level": "lod0",
+    "sun_yaw_offset": 0,
+    "path": "artifacts/screenshots/captures/20261027-135007-t057-fpc-plane-side-lod0-sun0.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-side-lod0-sun0",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=lod0",
+      "--view=side",
+      "--distance=150",
+      "--sun_yaw_offset=0"
+    ]
+  },
+  {
+    "view": "side",
+    "level": "proxy",
+    "sun_yaw_offset": 0,
+    "path": "artifacts/screenshots/captures/20261027-135011-t057-fpc-plane-side-proxy-sun0.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-side-proxy-sun0",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=proxy",
+      "--view=side",
+      "--distance=150",
+      "--sun_yaw_offset=0"
+    ]
+  },
+  {
+    "view": "top",
+    "level": "lod0",
+    "sun_yaw_offset": 0,
+    "path": "artifacts/screenshots/captures/20261027-135015-t057-fpc-plane-top-lod0-sun0.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-top-lod0-sun0",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=lod0",
+      "--view=top",
+      "--distance=150",
+      "--sun_yaw_offset=0"
+    ]
+  },
+  {
+    "view": "top",
+    "level": "proxy",
+    "sun_yaw_offset": 0,
+    "path": "artifacts/screenshots/captures/20261027-135020-t057-fpc-plane-top-proxy-sun0.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-top-proxy-sun0",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=proxy",
+      "--view=top",
+      "--distance=150",
+      "--sun_yaw_offset=0"
+    ]
+  },
+  {
+    "view": "front",
+    "level": "lod0",
+    "sun_yaw_offset": 60,
+    "path": "artifacts/screenshots/captures/20261027-135024-t057-fpc-plane-front-lod0-sun60.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-front-lod0-sun60",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=lod0",
+      "--view=front",
+      "--distance=150",
+      "--sun_yaw_offset=60"
+    ]
+  },
+  {
+    "view": "front",
+    "level": "proxy",
+    "sun_yaw_offset": 60,
+    "path": "artifacts/screenshots/captures/20261027-135028-t057-fpc-plane-front-proxy-sun60.png",
+    "command": [
+      "tools/capture.sh",
+      "t057-fpc-plane-front-proxy-sun60",
+      "--resolution",
+      "1600x900",
+      "--scene",
+      "res://assets/hero/vegetation/normal_experiment/lab.tscn",
+      "--",
+      "--asset=plane",
+      "--level=proxy",
+      "--view=front",
+      "--distance=150",
+      "--sun_yaw_offset=60"
+    ]
+  }
+]

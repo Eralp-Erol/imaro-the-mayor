@@ -1,0 +1,23 @@
+{
+	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; koordinatlar kilitli değil (F02, F04)",
+	"_notes": [
+		"D1-D6 ÇALIŞMA kodlarıdır; resmî ilçe, onaylı sınır veya kalıcı ad DEĞİLDİR (WLD-02). Yalnız D2 'Orven' adını taşır (CAN-01).",
+		"Kapsam = çapa + eliptik yarıçap (km) + dönüş; her kara hücresi normalize uzaklığı en küçük bölgeye atanır, eşik aşılırsa bölge dışı (0) kalır: arada kalan alan tarım/yeşil kuşak/doğal alandır (WLD-04, WLD-06).",
+		"Sınırlar ve statü AÇIK; bunlar yaklaşık kapsamlardır, düzenlenebilir."
+	],
+	"assignment": {"max_normalized_distance": 1.0},
+	"regions": [
+		{"code": "D1", "name": "", "anchor_km": [20.2, 18.6], "radius_km": [4.2, 3.6], "rotation_deg": 0.0,
+			"basis": "F02 atlas: metropol merkezi, kıyıda. ÇIKARIM: körfezin kuzey kıyısındaki burunda (Referans 02 YÖN)."},
+		{"code": "D2", "name": "Orven", "anchor_km": [33.0, 14.0], "radius_km": [4.0, 3.2], "rotation_deg": 0.0,
+			"basis": "F02 atlas: doğu kıyısı karma ilçe; iç körfezin doğu ucuna değer."},
+		{"code": "D3", "name": "", "anchor_km": [10.5, 10.5], "radius_km": [4.8, 5.4], "rotation_deg": 0.0,
+			"basis": "F02 atlas: batı limanı/üretim çevresi, D4'ün batısındaki ana kara kıyısı."},
+		{"code": "D4", "name": "", "anchor_km": [25.5, 8.0], "radius_km": [8.0, 5.0], "rotation_deg": 0.0,
+			"basis": "F02 atlas: iç/kuzey ova (tarım). Kuzey mi doğu mu tek yöne kesilmez; iç kesim + D3'ün doğusu sabit tutulur."},
+		{"code": "D5", "name": "", "anchor_km": [35.0, 29.0], "radius_km": [6.5, 8.5], "rotation_deg": 0.0,
+			"basis": "F02 atlas: doğu/güneydoğu yamaçları."},
+		{"code": "D6", "name": "", "anchor_km": [21.5, 27.4], "radius_km": [4.5, 3.4], "rotation_deg": 0.0,
+			"basis": "F02 atlas: güney kıyısı, karşı yaka çekirdeği; D1'in karşısında, aralarında dar su geçişi."}
+	]
+}

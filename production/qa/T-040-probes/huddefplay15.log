@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+WORLD_PREVIEW {"buildings":{"buildings":54889,"cells":168,"drawn":54889,"dropped_water":0,"hlod1_nodes":168,"hlod1_tris_all":649668,"hlod2_tris_all":133650,"last_build_ms":3470.1,"last_plan_ms":144.1,"last_rebuilt_cells":168,"lod0_tris_all":11549596,"lod1_tris_all":1579446,"mmi_nodes":5286,"network_ms":4610.4,"parcels":37341,"settlement_ms":16890.5,"supers":26,"view_ms":3738.6},"cell_size_m":100.0,"control_load_ms":1.7,"post_terrain_ms":25273.3,"preset":"district","seed":1467,"sweep_frames":0,"terrain":{"chunk_cells":40,"chunk_size_m":4000.0,"chunks_x":10,"chunks_z":10,"data_ms":1089.6,"land_chunks":96,"land_triangles":199647,"land_vertices":598941,"lod_stride":1,"mesh_ms":68.9,"palette_ms":440.5,"threaded":true,"water_chunks":56,"water_triangles":126938},"terrain_build_ms":1599.3,"world_generate_ms":2030.1,"world_samples":160801}
+PLAYABLE_ACTION parsel [5359, 6020, 6003, 5677, 6019, 6007, 5991, 5052] → zone.mixed: queued
+PLAYABLE_M2 target=5359 days=15 tick=15 rows=13 parcel[vacant use= units=0 progress=0 by_sim=false] decisions(+0/-0) city(approved=32 declined=358 completed=0) unplaced=2
+PLAYABLE {"m2_advance_days":15,"m2_advance_ms":317.2,"sim_buildings":13,"sim_parcels":37341,"sim_setup_ms":5902.3,"sync_ms_max":10.435,"sync_ms_sum":62.568,"sync_n":15,"t0_stock_parcels":24898,"view_ms_sum":6.611,"view_n":5}
+QA_HUD tick=15 panel_text=MOCK | Parsel 5359 | 1 · İmar | Öneri bekliyor: Karma (henüz yürürlükte değil) | 2 · Yatırımcı kararı | Henüz karar yok | 3 · Yapı | Boş · Yapı yok | Öneri verilen 8 parsel: 0 yatırım aldı, 0 vazgeçildi, 8 kararsız | Bölge D1 | Karşılaştırma başlangıcı: simülasyonun başı | Yeni konut birimi | 0 | Yeni işyeri birimi | 0 | Barınan hane | 42.818 / 51.581 hane | Yapımı süren birim | 18 konut, 0 işyeri | Şehir geneli | Yatırım onayı | +32 | Yatırım reddi | +358 | Tamamlanan proje | 0 | Yatırımcı kira geliri | 0 ¤ | Kira geliri yatırımcınındır, belediyenin geliri değildir | Belediye geliri | Henüz kurulmadı | Henüz kurulmadı: belediyenin gelir sistemi yok | Siyasi tepki | Henüz tepki yok | Meclis: 0 açık oylama, 1 sonuçlanan | [Yeniden dene]
+QA_HUD sim parcel=5359 dev=vacant use= units=0 progress=0 zone=zone.residential pending=zone.mixed
+QA_HUD sim region=D1 sim_res=0 sim_com=0 housed=42818 households=51581 pipe_res=18 pipe_com=0
+QA_HUD sim city approved=32 declined=358 completed=0 rent=0 municipal_avail=false baseline=<null>
+QA_HUD tracked=8 approved=0 declined=0 none=8
+QA_HUD group=1 reaction=neutral intensity=0 stance=-189
+QA_HUD group=2 reaction=neutral intensity=0 stance=0

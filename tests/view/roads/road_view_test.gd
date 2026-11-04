@@ -1,0 +1,364 @@
+extends GdUnitTestSuite
+## T-048: sentetik ağ; coğrafya/sanat kararı veya sim fixture'ı yok.
+
+var _world: WorldData
+var _net: WorldNetwork
+var _style: RoadStyle
+
+
+func before_test() -> void:
+	_world = NetworkTestSupport.flat_world()
+	_net = NetworkTestSupport.empty_network(_world)
+	_style = RoadStyle.load_default()
+	# Bu testler chunk mantığını 1 km ızgarada sınar (anahtarlar/koordinatlar sabit); sanat verisindeki varsayılan
+	# chunk_m (T-049 perf: 2 km) bağımsızdır.
+	_style.data["chunk_m"] = 1000.0
+
+
+func _edge(a: Vector2, b: Vector2, cls: StringName = &"local", width: float = 10.0) -> int:
+	return _net.add_edge_raw(_net.add_node_raw(a), _net.add_node_raw(b), cls, width)
+
+
+func _view() -> RoadView:
+	var view: RoadView = auto_free(RoadView.new())
+	add_child(view)
+	view.build(_net, _style)
+	return view
+
+
+func _data(key: Vector2i, metro: bool = false) -> Dictionary:
+	return RoadMeshBuilder.build(_net, _style, RoadChunkPlan.build(_net, _style), key, metro)
+
+
+func _hash(data: Dictionary) -> String:
+	var context := HashingContext.new()
+	context.start(HashingContext.HASH_SHA256)
+	context.update((data["vertices"] as PackedVector3Array).to_byte_array())
+	context.update((data["normals"] as PackedVector3Array).to_byte_array())
+	context.update((data["colors"] as PackedColorArray).to_byte_array())
+	return context.finish().hex_encode()
+
+
+func test_only_road_modes_produce_strips_including_closed_and_delta_edges() -> void:
+	_edge(Vector2(100, 100), Vector2(500, 100), &"arterial", 20.0)
+	var closed := _edge(Vector2(100, 200), Vector2(500, 200), &"collector", 14.0)
+	(_net.edges[closed] as WorldRoadEdge).open = false
+	(_net.edges[closed] as WorldRoadEdge).layer = WorldRoadEdge.LAYER_DELTA
+	_edge(Vector2(100, 300), Vector2(500, 300), &"local")
+	_edge(Vector2(100, 400), Vector2(500, 400), &"field", 6.0)
+	_edge(Vector2(100, 500), Vector2(500, 500), &"rail", 12.0)
+	_edge(Vector2(100, 600), Vector2(500, 600), &"ferry", 0.0)
+	assert_int(int(_data(Vector2i.ZERO)["strips"])).is_equal(4)
+	assert_int(int(_view().stats["strips"])).is_equal(4)
+
+
+func test_every_corner_and_triangle_center_sits_on_sloping_terrain() -> void:
+	for z in _world.height:
+		for x in _world.width:
+			_world.heights[z * _world.width + x] = 10.0 + x * 2.0 + z * 3.0
+	_edge(Vector2(170, 120), Vector2(780, 680), &"arterial", 20.0)
+	for metro in [false, true]:
+		var vertices: PackedVector3Array = _data(Vector2i.ZERO, metro)["vertices"]
+		assert_int(vertices.size()).is_greater(0)
+		for p in vertices:
+			assert_float(p.y - _world.height_at(p.x, p.z)).is_equal_approx(
+					float(_style.data["surface_offset_m"]), 0.0001)
+		for i in range(0, vertices.size(), 3):
+			var center := (vertices[i] + vertices[i + 1] + vertices[i + 2]) / 3.0
+			assert_float(center.y - _world.height_at(center.x, center.z)).is_equal_approx(
+					float(_style.data["surface_offset_m"]), 0.0001)
+
+
+func test_nonplanar_cell_uses_visible_terrain_diagonal_instead_of_bilinear_surface() -> void:
+	# Tek hücre: main diagonal h00=h11, görünür yüzey merkezde 10; bilineer merkez 15.
+	_world = NetworkTestSupport.flat_world(100.0)
+	_world.heights = PackedFloat32Array([10, 20, 20, 10])
+	_net = NetworkTestSupport.empty_network(_world)
+	_edge(Vector2(5, 50), Vector2(95, 50))
+	var vertices: PackedVector3Array = _data(Vector2i.ZERO)["vertices"]
+	for i in range(0, vertices.size(), 3):
+		var center := (vertices[i] + vertices[i + 1] + vertices[i + 2]) / 3.0
+		var expected := 10.0 + absf(center.x - center.z) * 0.1
+		assert_float(center.y - expected).is_equal_approx(float(_style.data["surface_offset_m"]), 0.0001)
+
+
+func test_same_input_and_insertion_order_independent_mesh_hash() -> void:
+	_edge(Vector2(100, 200), Vector2(800, 200))
+	_edge(Vector2(100, 400), Vector2(800, 400), &"collector", 14.0)
+	var first := _hash(_data(Vector2i.ZERO))
+	var reordered := {}
+	var ids := _net.edges.keys()
+	ids.reverse()
+	for id: int in ids:
+		reordered[id] = _net.edges[id]
+	_net.edges = reordered
+	assert_str(_hash(_data(Vector2i.ZERO))).is_equal(first)
+
+
+func test_class_width_and_surface_come_from_data_and_preserve_network_corridor() -> void:
+	for cls: StringName in WorldRoadEdge.ROAD_CLASSES:
+		_net = NetworkTestSupport.empty_network(_world)
+		var eid := _edge(Vector2(100, 200), Vector2(800, 200), cls, 18.0)
+		var edge: WorldRoadEdge = _net.edges[eid]
+		assert_float(_style.width_of(edge)).is_equal(18.0)
+		_style.data["classes"][String(cls)]["width_scale"] = 1.25
+		_style.data["classes"][String(cls)]["brightness"] = 1.5
+		var data := _data(Vector2i.ZERO)
+		var min_z := INF
+		var max_z := -INF
+		for p: Vector3 in data["vertices"]:
+			min_z = minf(min_z, p.z)
+			max_z = maxf(max_z, p.z)
+		assert_float(max_z - min_z).is_equal_approx(22.5, 0.0001)
+		# Köşe rengi yüzey kodu: G = parlaklık / 2 (veriden); R = katman indeksi.
+		var color: Color = (data["colors"] as PackedColorArray)[0]
+		assert_float(color.g).is_equal_approx(0.75, 0.0001)
+		assert_int(RoadStyle.layer_from_color(color)).is_equal(_style.layer_of(edge))
+
+
+func test_metro_is_thinner_and_has_fewer_triangles_with_engine_distance_lod() -> void:
+	_edge(Vector2(100, 200), Vector2(800, 200))
+	var near: PackedVector3Array = _data(Vector2i.ZERO)["vertices"]
+	var metro: PackedVector3Array = _data(Vector2i.ZERO, true)["vertices"]
+	assert_int(metro.size()).is_less(near.size())
+	var view := _view()
+	var chunk := view.chunk_node(Vector2i.ZERO)
+	var near_node: MeshInstance3D = chunk.get_node("Near")
+	var metro_node: MeshInstance3D = chunk.get_node("Metro")
+	assert_float(near_node.visibility_range_end).is_equal(float(_style.data["metro_begin_m"]))
+	assert_float(metro_node.visibility_range_begin).is_equal(near_node.visibility_range_end)
+	assert_bool(near_node.custom_aabb == metro_node.custom_aabb).is_true()
+	assert_bool(view.is_processing()).is_false()
+	assert_bool(view.is_physics_processing()).is_false()
+	var min_z := INF
+	var max_z := -INF
+	for p in metro:
+		min_z = minf(min_z, p.z)
+		max_z = maxf(max_z, p.z)
+	assert_float(max_z - min_z).is_equal_approx(10.0 * float(_style.data["metro_width_scale"]), 0.0001)
+
+
+func test_rebuild_preserves_unrelated_chunk_node_and_mesh_resource() -> void:
+	var changed := _edge(Vector2(100, 200), Vector2(800, 200))
+	_edge(Vector2(2100, 200), Vector2(2800, 200))
+	var view := _view()
+	var untouched := view.chunk_node(Vector2i(2, 0))
+	var mesh: Mesh = (untouched.get_node("Near") as MeshInstance3D).mesh
+	var previous := view.chunk_node(Vector2i.ZERO).get_instance_id()
+	(_net.edges[changed] as WorldRoadEdge).width = 16.0
+	view.rebuild_chunks([Vector2i.ZERO])
+	assert_object(view.chunk_node(Vector2i(2, 0))).is_same(untouched)
+	assert_object((untouched.get_node("Near") as MeshInstance3D).mesh).is_same(mesh)
+	assert_bool(view.chunk_node(Vector2i.ZERO).get_instance_id() != previous).is_true()
+	assert_int(int(view.stats["last_rebuilt"])).is_equal(1)
+
+
+func test_cross_chunk_edge_is_clipped_and_removal_clears_old_chunks() -> void:
+	var eid := _edge(Vector2(800, 200), Vector2(2200, 200))
+	var view := _view()
+	var keys: Array[Vector2i] = view.plan().edge_keys[eid]
+	assert_int(keys.size()).is_equal(3)
+	for key in keys:
+		var vertices: PackedVector3Array = _data(key)["vertices"]
+		for p in vertices:
+			assert_float(p.x).is_between(-0.001, 1000.001)
+	_net.remove_edge_raw(eid)
+	view.rebuild_chunks(keys)
+	assert_int(view.get_child_count()).is_equal(0)
+	assert_int(int(view.stats["strips"])).is_equal(0)
+
+
+func test_shared_junction_produces_grounded_fill_without_changing_network() -> void:
+	var center := _net.add_node_raw(Vector2(500, 500))
+	for end in [Vector2(100, 500), Vector2(900, 500), Vector2(500, 900)]:
+		_net.add_edge_raw(center, _net.add_node_raw(end), &"local", 10.0)
+	var before := _net.graph_hash()
+	var data := _data(Vector2i.ZERO)
+	assert_int(int(data["strips"])).is_equal(3)
+	assert_int(int(data["junctions"])).is_equal(1)
+	_view()
+	assert_str(_net.graph_hash()).is_equal(before)
+	for normal: Vector3 in data["normals"]:
+		assert_float(normal.y).is_greater(0.0)
+
+
+func test_empty_network_and_unknown_chunk_are_safe() -> void:
+	var view := _view()
+	assert_int(view.get_child_count()).is_equal(0)
+	view.rebuild_chunks([Vector2i(50, -1)])
+	assert_int(view.get_child_count()).is_equal(0)
+	assert_int((_data(Vector2i.ZERO)["vertices"] as PackedVector3Array).size()).is_equal(0)
+
+
+func test_acute_junction_has_a_single_surface_in_overlap_region() -> void:
+	var center := _net.add_node_raw(Vector2(500, 500))
+	for end in [Vector2(100, 500), Vector2(900, 500), Vector2(900, 600)]:
+		_net.add_edge_raw(center, _net.add_node_raw(end), &"local", 10.0)
+	var vertices: PackedVector3Array = _data(Vector2i.ZERO)["vertices"]
+	# Kaydırılmış örnekler üçgen kenarlarının üzerinde değildir.
+	for x in range(501, 545, 2):
+		for z in range(495, 515, 2):
+			var probe := Vector2(x + 0.173, z + 0.319)
+			var hits := 0
+			for i in range(0, vertices.size(), 3):
+				var triangle := PackedVector2Array()
+				for j in 3:
+					triangle.append(Vector2(vertices[i + j].x, vertices[i + j].z))
+				if Geometry2D.is_point_in_polygon(probe, triangle):
+					hits += 1
+			assert_int(hits).is_between(0, 1)
+
+
+func _xz_area(vertices: PackedVector3Array) -> float:
+	var area := 0.0
+	for i in range(0, vertices.size(), 3):
+		var u := Vector2(vertices[i + 1].x - vertices[i].x, vertices[i + 1].z - vertices[i].z)
+		var v := Vector2(vertices[i + 2].x - vertices[i].x, vertices[i + 2].z - vertices[i].z)
+		area += absf(u.cross(v)) * 0.5
+	return area
+
+
+func _total_area(view: RoadView, metro: bool) -> float:
+	var total := 0.0
+	for chunk: Node3D in view.get_children():
+		var node := chunk.get_node_or_null("Metro" if metro else "Near") as MeshInstance3D
+		if node != null:
+			total += _xz_area(node.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX])
+	return total
+
+
+func test_strip_area_is_complete_on_rough_terrain_across_cells_and_chunks() -> void:
+	# Düzensiz (köşegen seçimi değişen) arazi; eğik şeritler hücre ve chunk sınırlarını keser.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 48
+	for i in _world.heights.size():
+		_world.heights[i] = rng.randf_range(0.0, 40.0)
+	var expected := 0.0
+	for pair in [[Vector2(80, 130), Vector2(2910, 2260), 12.0], [Vector2(2950, 90), Vector2(310, 2850), 10.0],
+			[Vector2(40, 1000), Vector2(2990, 1030), 20.0]]:
+		_edge(pair[0], pair[1], &"local", pair[2])
+		expected += (pair[0] as Vector2).distance_to(pair[1]) * float(pair[2])
+	var view := _view()
+	# Üç şerit kesiştiği için çakışan alan kavşak dolgusu/trim ile temizlenir; tam kapsama aranır.
+	assert_float(_total_area(view, false)).is_between(expected * 0.97, expected * 1.001)
+
+
+func test_far_from_origin_strip_is_not_dropped_by_float32_triangulation() -> void:
+	# 30 km'de float32 çokgen alanı çöker; eski üçgenleme yer yer parçaları sessizce atıyordu
+	# (gerçek T0 ağındaki arterial kenarın kavşak kırpmasından sonraki uçları; şerit hücre sınırını keser).
+	_world = NetworkTestSupport.flat_world(34000.0, 100.0)
+	_net = NetworkTestSupport.empty_network(_world)
+	var a := Vector2(32628.75, 23076.17)
+	var b := Vector2(32408.05, 23256.46)
+	_edge(a, b, &"arterial", 22.0)
+	var view := _view()
+	assert_float(_total_area(view, false)).is_between(a.distance_to(b) * 22.0 * 0.999, a.distance_to(b) * 22.0 * 1.001)
+
+
+func test_threaded_and_inline_builds_produce_identical_meshes() -> void:
+	for pair in [[Vector2(100, 100), Vector2(2900, 300)], [Vector2(150, 900), Vector2(2800, 1500)],
+			[Vector2(200, 2000), Vector2(2700, 2900)], [Vector2(1500, 50), Vector2(1450, 2950)],
+			[Vector2(60, 2500), Vector2(2950, 1800)]]:
+		_edge(pair[0], pair[1], &"collector", 14.0)
+	var threaded: RoadView = auto_free(RoadView.new())
+	add_child(threaded)
+	threaded.build(_net, _style)
+	var inline: RoadView = auto_free(RoadView.new())
+	inline.use_threads = false
+	add_child(inline)
+	inline.build(_net, _style)
+	assert_int(threaded.get_child_count()).is_greater_equal(RoadView.MIN_THREADED_CHUNKS)
+	assert_int(inline.get_child_count()).is_equal(threaded.get_child_count())
+	for chunk: Node3D in threaded.get_children():
+		for node: MeshInstance3D in chunk.get_children():
+			var other := inline.get_node("%s/%s" % [chunk.name, node.name]) as MeshInstance3D
+			var a: Array = node.mesh.surface_get_arrays(0)
+			var b: Array = other.mesh.surface_get_arrays(0)
+			assert_bool(a[Mesh.ARRAY_VERTEX] == b[Mesh.ARRAY_VERTEX]).is_true()
+			assert_bool(a[Mesh.ARRAY_NORMAL] == b[Mesh.ARRAY_NORMAL]).is_true()
+			assert_bool(a[Mesh.ARRAY_COLOR] == b[Mesh.ARRAY_COLOR]).is_true()
+	assert_int(int(threaded.stats["near_triangles"])).is_equal(int(inline.stats["near_triangles"]))
+
+
+func _bound_style() -> RoadStyle:
+	var style := RoadStyle.load_default()
+	style.bind_layers(GroundLayerSet.shared())
+	return style
+
+
+func test_surface_layers_come_from_approved_asphalt_ids_by_class_and_edge_hash() -> void:
+	# T-062 A4: asfalt new/worn sınıfa ve kenar kimliği hash'ine göre; kimlikler kapıdan geçen onaylı katmanlar.
+	var style := _bound_style()
+	var layers := GroundLayerSet.shared()
+	var new_idx := layers.index_of("gnd_tex_asphalt_new")
+	var worn_idx := layers.index_of("gnd_tex_asphalt_worn")
+	assert_int(new_idx).is_greater_equal(0)
+	assert_int(worn_idx).is_greater_equal(0)
+	var seen_new := 0
+	var seen_worn := 0
+	for id in 600:
+		var edge := WorldRoadEdge.new()
+		edge.id = id
+		edge.road_class = &"local"
+		var layer := style.layer_of(edge)
+		assert_bool(layer == new_idx or layer == worn_idx).is_true()
+		assert_int(layer).is_equal(style.layer_of(edge))   # aynı kenar -> aynı yüzey (deterministik)
+		assert_bool(layer == worn_idx).is_equal(style.is_worn(edge))
+		if layer == worn_idx:
+			seen_worn += 1
+		else:
+			seen_new += 1
+	# local eskimiş payı veriden (0.45): ikisi de görülür ve oran payı izler.
+	var share := float(style.data["classes"]["local"]["surface"]["worn_share"])
+	assert_float(float(seen_worn) / 600.0).is_equal_approx(share, 0.07)
+	assert_int(seen_new).is_greater(0)
+	# arter yolu yerele göre daha az eskimiş (sınıf payı).
+	var worn_art := 0
+	for id in 600:
+		var e := WorldRoadEdge.new()
+		e.id = id
+		e.road_class = &"arterial"
+		if style.is_worn(e):
+			worn_art += 1
+	assert_int(worn_art).is_less(seen_worn)
+
+
+func test_unapproved_surface_id_is_never_loaded_and_falls_back_with_a_gate_denial() -> void:
+	# Negatif: yol stilinde onaysız/bilinmeyen kimlik -> katman yüklenmez (yedek asfalt), kapı ret sayar.
+	var gate := LibraryGate.load_default()
+	gate.report_errors = false
+	var layers := GroundLayerSet.build(gate, false)
+	var style := RoadStyle.load_default()
+	style.data["classes"]["local"]["surface"]["base"] = "gnd_tex_asphalt_REJECTED_x"
+	style.bind_layers(layers)
+	assert_array(Array(gate.unapproved_ids)).contains(["gnd_tex_asphalt_REJECTED_x"])
+	assert_bool(layers.has_layer("gnd_tex_asphalt_REJECTED_x")).is_false()
+	var edge := WorldRoadEdge.new()
+	edge.road_class = &"local"
+	edge.id = 1
+	# Taban katman "surface.fallback" (onaylı asfalt) katmanına düştü: onaysız kimlik hiçbir indeks üretmez.
+	var fallback_idx := layers.index_of(str(style.data["surface"]["fallback"]))
+	assert_int(fallback_idx).is_greater_equal(0)
+	var checked := 0
+	for id in 50:
+		edge.id = id
+		if not style.is_worn(edge):
+			assert_int(style.layer_of(edge)).is_equal(fallback_idx)
+			checked += 1
+	assert_int(checked).is_greater(0)
+
+
+func test_view_material_is_a_shader_material_sharing_the_ground_array_with_world_xz_sampling() -> void:
+	var view := _view_with_style()
+	var mat := view.material()
+	assert_object(mat).is_not_null()
+	assert_object(mat.shader).is_not_null()
+	assert_bool(mat.shader.code.contains("MODEL_MATRIX")).is_true()   # dünya xz örnekleme
+	assert_object(mat.get_shader_parameter("layers")).is_same(GroundLayerSet.shared().array)
+	var node: MeshInstance3D = view.chunk_node(Vector2i.ZERO).get_child(0)
+	assert_object(node.material_override).is_same(mat)
+
+
+func _view_with_style() -> RoadView:
+	_edge(Vector2(100, 100), Vector2(500, 100), &"arterial", 20.0)
+	return _view()

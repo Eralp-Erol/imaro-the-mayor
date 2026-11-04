@@ -1,0 +1,64 @@
+{
+  "bld_hero_com_bazaar": {
+    "sheet": "hero-bazaar.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ],
+    "note": "Godot GL Compat, oyun isigi (kit_lab: gunes 38 derece/0,5, ambient 0,7), sun-az=215 (cephe aydinlik)"
+  },
+  "bld_hero_res_mid": {
+    "sheet": "hero-res_mid.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ],
+    "note": "Godot GL Compat, oyun isigi (kit_lab: gunes 38 derece/0,5, ambient 0,7), sun-az=215 (cephe aydinlik)"
+  },
+  "bld_hero_res_late": {
+    "sheet": "hero-res_late.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ],
+    "note": "Godot GL Compat, oyun isigi (kit_lab: gunes 38 derece/0,5, ambient 0,7), sun-az=215 (cephe aydinlik)"
+  },
+  "bld_hero_res_house": {
+    "sheet": "hero-house.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ],
+    "note": "Godot GL Compat, oyun isigi (kit_lab: gunes 38 derece/0,5, ambient 0,7), sun-az=215 (cephe aydinlik)"
+  },
+  "bld_hero_ind_hero": {
+    "sheet": "hero-industrial.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ],
+    "note": "Godot GL Compat, oyun isigi (kit_lab: gunes 38 derece/0,5, ambient 0,7), sun-az=215 (cephe aydinlik)"
+  },
+  "bld_hero_civ_hero": {
+    "sheet": "hero-civic.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ],
+    "note": "Godot GL Compat, oyun isigi (kit_lab: gunes 38 derece/0,5, ambient 0,7), sun-az=215 (cephe aydinlik)"
+  },
+  "bld_hero_hero_old_core": {
+    "sheet": "hero-old_core.png",
+    "variants": [
+      "a",
+      "b",
+      "c"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+	"schema": 1,
+	"_notes": "T-016 (characters-npc 4.2, 7, 11): iliski/hafiza guncelleme katsayilari; hepsi CALISMA MODELI (kanon degil, oynatma testiyle degisir). Oranlar permille tamsayi (400 = 0.4). loss_aversion 2000 = 2.0x (k_loss = k_gain * loss_aversion). half_life_days: ustel cürüme yari omurleri (gun); resentment > trust olmali (kirginlik guvenden uzun yasar). K_mem: aktor basina hafiza ust siniri. edge_weight_per_shared: ortak baglilik basina dedikodu kenar agirligi; familiarity_gain: olay basina tanidiklik artisi; memory_min_weight: bu agirligin (permille) altindaki hafiza budanir; spill_queue_max: bekleyen dedikodu ust siniri.",
+	"k_gain": 400,
+	"loss_aversion": 2000,
+	"k_resent": 500,
+	"k_forgive": 250,
+	"scar_frac": 300,
+	"half_life_days": {"trust": 360, "resentment": 900, "memory_short": 90, "memory_long": 720},
+	"K_mem": 32,
+	"spill_frac": 150,
+	"spill_delay_days": 14,
+	"edge_weight_per_shared": 500,
+	"familiarity_gain": 20,
+	"memory_min_weight": 10,
+	"spill_queue_max": 256
+}

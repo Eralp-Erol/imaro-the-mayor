@@ -1,0 +1,31 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA2_B001 fresh submit tick=2 queued ids=[777, 781, 785, 787, 792, 795, 806, 808]
+QA2_B001 prior/same submit tick=30 prior=[30, 23071, 23076, 23077, 36187, 36188, 36191, 36193] (queued) same=[26150, 26151, 26157, 26159, 26160, 26169, 26171, 26172] (queued) cmd.tick=30/30
+QA2_B001 prior@proposal tick=30 n=8 model={ "approved": 0, "declined": 0, "waiting": 8 } oracle={ "approved": 0, "declined": 0, "waiting": 8 } pruned=0 with_button=8 log_first_seq=1
+QA2_B001 FAIL same@proposal sayım model={ "approved": 0, "declined": 8, "waiting": 0 } kâhin={ "approved": 0, "declined": 0, "waiting": 8 }
+QA2_B001 same@proposal tick=30 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 0, "waiting": 8 } pruned=0 with_button=8 log_first_seq=1
+QA2_B001 fresh tick=30 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=0 with_button=8 log_first_seq=1
+QA2_B001 prior tick=30 n=8 model={ "approved": 0, "declined": 0, "waiting": 8 } oracle={ "approved": 0, "declined": 0, "waiting": 8 } pruned=0 with_button=8 log_first_seq=1
+QA2_B001 FAIL same sayım model={ "approved": 0, "declined": 8, "waiting": 0 } kâhin={ "approved": 0, "declined": 0, "waiting": 8 }
+QA2_B001 same tick=30 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 0, "waiting": 8 } pruned=0 with_button=8 log_first_seq=1
+QA2_B001 fresh tick=45 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=0 with_button=8 log_first_seq=753
+QA2_B001 prior tick=45 n=8 model={ "approved": 0, "declined": 0, "waiting": 8 } oracle={ "approved": 0, "declined": 0, "waiting": 8 } pruned=4 with_button=4 log_first_seq=753
+QA2_B001 FAIL same sayım model={ "approved": 0, "declined": 8, "waiting": 0 } kâhin={ "approved": 0, "declined": 0, "waiting": 8 }
+QA2_B001 same tick=45 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 0, "waiting": 8 } pruned=0 with_button=8 log_first_seq=753
+QA2_B001 fresh tick=60 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=8 with_button=0 log_first_seq=1693
+QA2_B001 prior tick=60 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=0 with_button=8 log_first_seq=1693
+QA2_B001 same tick=60 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=0 with_button=8 log_first_seq=1693
+QA2_B001 fresh tick=90 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=8 with_button=0 log_first_seq=4308
+QA2_B001 prior tick=90 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=4308
+QA2_B001 same tick=90 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=4308
+QA2_B001 fresh tick=120 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=8 with_button=0 log_first_seq=5480
+QA2_B001 prior tick=120 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=5480
+QA2_B001 same tick=120 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=5480
+QA2_B001 fresh tick=150 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=8 with_button=0 log_first_seq=6455
+QA2_B001 prior tick=150 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=6455
+QA2_B001 same tick=150 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=6455
+QA2_B001 fresh tick=180 n=8 model={ "approved": 8, "declined": 0, "waiting": 0 } oracle={ "approved": 8, "declined": 0, "waiting": 0 } pruned=8 with_button=0 log_first_seq=7393
+QA2_B001 prior tick=180 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=7393
+QA2_B001 same tick=180 n=8 model={ "approved": 0, "declined": 8, "waiting": 0 } oracle={ "approved": 0, "declined": 8, "waiting": 0 } pruned=8 with_button=0 log_first_seq=7393
+QA2_B001 DONE fails=3

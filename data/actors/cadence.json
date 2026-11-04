@@ -1,0 +1,5 @@
+{
+	"schema": 1,
+	"_notes": "T-016: zaman olcekleri (tick = 1 oyun gunu). maintenance_days: hafiza budama bakimi kac gunde bir calisir. Iliski cürümesi tembel hesaplanir (son guncellemeden bu yana gecen gune gore), bu yuzden aralik dogruluk degil yalnizca hafiza boyutu icindir. CALISMA MODELI.",
+	"maintenance_days": 7
+}

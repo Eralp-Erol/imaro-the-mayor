@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA2_B002 batch=109 status=queued
+QA2_B002 day=20 truth_drawable=31 shown=31 missing_now=0 extra_now=0 uc=32 backlog=1 full_active=false full_syncs=0 unplaced=1
+QA2_B002 LOAD day=40 ok=true hash_equal=true epoch=1
+QA2_B002 day=40 truth_drawable=76 shown=71 missing_now=5 extra_now=0 uc=78 backlog=2 full_active=true full_syncs=1 unplaced=1
+QA2_B002 day=60 truth_drawable=79 shown=71 missing_now=8 extra_now=0 uc=80 backlog=22 full_active=true full_syncs=1 unplaced=1
+QA2_B002 day=80 truth_drawable=84 shown=73 missing_now=11 extra_now=0 uc=59 backlog=42 full_active=true full_syncs=1 unplaced=1
+QA2_B002 day=100 truth_drawable=91 shown=76 missing_now=15 extra_now=0 uc=17 backlog=62 full_active=true full_syncs=1 unplaced=2
+QA2_B002 day=120 truth_drawable=92 shown=78 missing_now=14 extra_now=0 uc=17 backlog=82 full_active=true full_syncs=1 unplaced=2
+QA2_B002 day=140 truth_drawable=94 shown=79 missing_now=15 extra_now=0 uc=9 backlog=102 full_active=true full_syncs=1 unplaced=2
+QA2_B002 day=160 truth_drawable=100 shown=82 missing_now=18 extra_now=0 uc=10 backlog=122 full_active=true full_syncs=1 unplaced=3
+QA2_B002 day=180 truth_drawable=103 shown=83 missing_now=20 extra_now=0 uc=14 backlog=142 full_active=true full_syncs=1 unplaced=3
+QA2_B002 day=200 truth_drawable=110 shown=88 missing_now=22 extra_now=0 uc=21 backlog=162 full_active=true full_syncs=1 unplaced=4
+QA2_B002_LAG appear n=88 p50=1 p95=98 max=106 never=22 never_sample=[[30277, 99], [30281, 99], [32694, 100], [33531, 105], [78, 139], [619, 140], [704, 141], [710, 141]]
+QA2_B002_LAG stage n=167 p50=1 p95=85 max=104 pending_at_end=52
+QA2_B002_FRAME worked_frames=597 p50=3.64 p95=4.99 max=7.02 view_builds=15 pump={ "frames": 607, "view_builds": 15, "steps": 597, "behind_frames": 19 }
+QA2_B002_LOAD load_day=40 full_sync_done_day=-1 (days=NOT DONE)
+QA2_B002_DRAINED steps=672 missing=0 extra=0 | exact==fresh hash=true rows=138/138
+QA2_B002_UNPLACED unplaced=7 shown=110 ratio=0.060 reasons={ "t0_merged": 6, "lot_too_small": 1 } truth_unplaceable=7
+QA2_B002_SUMMARY days=200 fpd=4 max_dec_per_day=108 max_uc=81

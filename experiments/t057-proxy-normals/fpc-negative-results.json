@@ -1,0 +1,17 @@
+[
+  {
+    "case": "missing",
+    "exit": 1,
+    "diagnostic": "normal data missing or replaced/zero"
+  },
+  {
+    "case": "zero",
+    "exit": 1,
+    "diagnostic": "normal data missing or replaced/zero"
+  },
+  {
+    "case": "map",
+    "exit": 1,
+    "diagnostic": "affine UV roundtrip drift"
+  }
+]

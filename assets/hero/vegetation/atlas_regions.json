@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "note": "T-057 Karar 5 atlas guard. Upper 512 rows = source bark/leaf/frond pixels. The y640-1023 tile region holds dead pixels left by the retired cross-card proxies; it is kept byte-equal (clearing it is a separate, drift-tested step). atlas_layout.json still lists the retired proxy_* regions as dead reservations so its hash is unchanged.",
+  "upper512_rgba_sha256": "a7ea5561135964b3c66c2cc8168a5af7c72941f56662a70d7c2d810fc6285125",
+  "dead_tile_region": {
+    "rect_xyxy": [0, 640, 1024, 1024],
+    "rgba_sha256": "09a75adbf3f97c7a4074ae8b87a1cbd7e5f8ec550da90a63c76db41e8cf77fd1",
+    "status": "dead-pixels-kept-byte-equal"
+  }
+}

@@ -1,0 +1,1094 @@
+{
+ "format": "imaro-game-set/1",
+ "table": "vegetation",
+ "source_catalog": "data/library/catalog.json",
+ "source_catalog_sha256": "129cccf2eaddbff8dede6e30fd686302ff7d68b76a3f653dfe51637920bdd3cc",
+ "gate": "approval == approved AND user_approved_sha256 == current catalog content hashes AND files match",
+ "included_count": 10,
+ "unapproved": {
+  "count": 1,
+  "by_reason": {
+   "not_in_this_table": 1
+  },
+  "entries": [
+   {
+    "id": "veg_plane",
+    "reason": "not_in_this_table",
+    "detail": "kit"
+   }
+  ]
+ },
+ "plants": [
+  {
+   "id": "veg_hero_cypress_a",
+   "kind": "vegetation",
+   "species": "cypress",
+   "family": "hero_cypress",
+   "variant": "a",
+   "label_tr": "Servi",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_lod0.glb",
+     "sha256": "725571feea04ac4645635363576e7febc4d1bf58a794a969f0e953190ff2aa1a",
+     "tris": 316,
+     "aabb_m": {
+      "min": [
+       -1.3156,
+       0.0,
+       -1.4819
+      ],
+      "max": [
+       1.5784,
+       10.3615,
+       1.2726
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_cypress_a_lod1.glb",
+     "sha256": "a38102e501c062881790a29025077f9a8b933c55115abb023ad9ce84261ece87",
+     "tris": 300,
+     "aabb_m": {
+      "min": [
+       -1.3156,
+       0.0,
+       -1.4819
+      ],
+      "max": [
+       1.5784,
+       10.3615,
+       1.2726
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 316,
+    "LOD1": 300
+   },
+   "footprint_m": [
+    2.894,
+    2.7545
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 1.5784,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 10.3615,
+   "ground_skirt_m": 0.0,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_hedge_a",
+   "kind": "vegetation",
+   "species": "hedge",
+   "family": "hero_hedge",
+   "variant": "a",
+   "label_tr": "Budanmış çit",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_lod0.glb",
+     "sha256": "e11658a658a4775ffc4b84d5da8a989c2c4783d8c0cf702254f02ff8d5d291ee",
+     "tris": 360,
+     "aabb_m": {
+      "min": [
+       -2.3587,
+       -0.0115,
+       -0.6506
+      ],
+      "max": [
+       2.4398,
+       1.197,
+       0.6021
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_hedge_a_lod1.glb",
+     "sha256": "cc44c1f215f52105cdb3b892bf98c2661f77b8ece60649494157a69b9cadf811",
+     "tris": 110,
+     "aabb_m": {
+      "min": [
+       -2.5421,
+       -0.1322,
+       -0.8364
+      ],
+      "max": [
+       2.2097,
+       1.4123,
+       0.7505
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 360,
+    "LOD1": 110
+   },
+   "footprint_m": [
+    4.7985,
+    1.2527
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 2.4398,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 1.197,
+   "ground_skirt_m": 0.0115,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_maquis_a",
+   "kind": "vegetation",
+   "species": "maquis",
+   "family": "hero_maquis",
+   "variant": "a",
+   "label_tr": "Maki / çalı kümesi",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_lod0.glb",
+     "sha256": "c3b67505817556a2b6f9cc1f1c4d1620b1a81221dedfe6f423b4f550b42f4db1",
+     "tris": 288,
+     "aabb_m": {
+      "min": [
+       -1.7897,
+       -0.0056,
+       -1.1345
+      ],
+      "max": [
+       1.7945,
+       2.4931,
+       0.9737
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_maquis_a_lod1.glb",
+     "sha256": "ee8846036990cba5685969f44e898176673e7de08df321c5ab664438057ae3fe",
+     "tris": 80,
+     "aabb_m": {
+      "min": [
+       -1.5838,
+       -0.0028,
+       -1.0182
+      ],
+      "max": [
+       1.7881,
+       2.4838,
+       0.813
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 288,
+    "LOD1": 80
+   },
+   "footprint_m": [
+    3.5842,
+    2.1082
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 1.7945,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 2.4931,
+   "ground_skirt_m": 0.0056,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_olive_open_a",
+   "kind": "vegetation",
+   "species": "olive_open",
+   "family": "hero_olive_open",
+   "variant": "a",
+   "label_tr": "Zeytin · açık üç taç",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_lod0.glb",
+     "sha256": "6fe81cc6b11b7e4c255c3a199bdcb86d0992ac36ec574b76229f798b664a1d9c",
+     "tris": 428,
+     "aabb_m": {
+      "min": [
+       -2.7682,
+       -0.0957,
+       -2.6228
+      ],
+      "max": [
+       2.6021,
+       5.0208,
+       2.0422
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_olive_open_a_lod1.glb",
+     "sha256": "6342b84d7edc2d1d96cc748b849b882e05dd22d914bcb72f1fb39349f11f5e0f",
+     "tris": 260,
+     "aabb_m": {
+      "min": [
+       -2.7337,
+       -0.0765,
+       -2.314
+      ],
+      "max": [
+       2.6902,
+       5.0134,
+       2.0696
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 428,
+    "LOD1": 260
+   },
+   "footprint_m": [
+    5.3703,
+    4.665
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 2.7682,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 5.0208,
+   "ground_skirt_m": 0.0957,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_olive_twisted_a",
+   "kind": "vegetation",
+   "species": "olive_twisted",
+   "family": "hero_olive_twisted",
+   "variant": "a",
+   "label_tr": "Zeytin · burgulu yayvan taç",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_lod0.glb",
+     "sha256": "45d58a0b4e83ab16d2582edd6525691f45a5f7173ed2281b9c7d21c32456a40c",
+     "tris": 552,
+     "aabb_m": {
+      "min": [
+       -2.8655,
+       -0.0957,
+       -2.6222
+      ],
+      "max": [
+       3.1456,
+       5.1211,
+       2.0967
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_olive_twisted_a_lod1.glb",
+     "sha256": "91b67eda30ee796ecbb7d9b2dc23ba35871d54b12a7a5fc1ba97edf05161f835",
+     "tris": 152,
+     "aabb_m": {
+      "min": [
+       -2.2365,
+       -0.0765,
+       -2.564
+      ],
+      "max": [
+       3.4324,
+       5.3248,
+       1.9566
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 552,
+    "LOD1": 152
+   },
+   "footprint_m": [
+    6.0111,
+    4.7189
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 3.1456,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 5.1211,
+   "ground_skirt_m": 0.0957,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_palm_date_a",
+   "kind": "vegetation",
+   "species": "palm_date",
+   "family": "hero_palm_date",
+   "variant": "a",
+   "label_tr": "Kalın gövdeli geniş taçlı palmiye",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_lod0.glb",
+     "sha256": "5e0474786d80f5920c0732fbcb757d439fcd045e1ce2cd181097eb69a1822713",
+     "tris": 610,
+     "aabb_m": {
+      "min": [
+       -3.232,
+       -0.0161,
+       -3.3887
+      ],
+      "max": [
+       3.61,
+       9.425,
+       3.4496
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_lod1.glb",
+     "sha256": "c50150ed6501c3d875e5d5c156d3a83161c5eb18ecb8f7ea7f1ca2f64a2faa71",
+     "tris": 150,
+     "aabb_m": {
+      "min": [
+       -3.1127,
+       -0.0161,
+       -3.3887
+      ],
+      "max": [
+       3.61,
+       9.425,
+       2.8429
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/vegetation/veg_hero_palm_date_a_proxy.glb",
+     "sha256": "d3835c23b13c16e18dcf6101397460552dadfd6d7955dceeeb7861925a3b6123",
+     "tris": 40,
+     "aabb_m": {
+      "min": [
+       -2.8678,
+       -0.0048,
+       -3.3887
+      ],
+      "max": [
+       3.61,
+       9.425,
+       2.6312
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 610,
+    "LOD1": 150,
+    "PROXY": 40
+   },
+   "footprint_m": [
+    6.842,
+    6.8383
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 3.61,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 9.425,
+   "ground_skirt_m": 0.0161,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "PROXY (catalog chain; palms keep the 40-tri proxy, T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_palm_slender_a",
+   "kind": "vegetation",
+   "species": "palm_slender",
+   "family": "hero_palm_slender",
+   "variant": "a",
+   "label_tr": "İnce uzun palmiye",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_lod0.glb",
+     "sha256": "8571753a8b047633bac80979ca1a1b344b2dcbe497cf87d71d2c31ea3dc0416a",
+     "tris": 502,
+     "aabb_m": {
+      "min": [
+       -2.1921,
+       -0.0047,
+       -2.3216
+      ],
+      "max": [
+       2.4435,
+       11.315,
+       2.3378
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_lod1.glb",
+     "sha256": "6c94c9bc196f285bcfcd24ed058b761ac5f98fa303d4fd007d03f76d75dc7232",
+     "tris": 150,
+     "aabb_m": {
+      "min": [
+       -2.1921,
+       -0.0047,
+       -2.2493
+      ],
+      "max": [
+       2.4435,
+       11.315,
+       2.0581
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "PROXY": {
+     "glb": "res://assets/hero/vegetation/veg_hero_palm_slender_a_proxy.glb",
+     "sha256": "d72c0b6bdc873a2bc4836b19c29896fca974a11aa93e6fa832cac5ffa75cd64e",
+     "tris": 40,
+     "aabb_m": {
+      "min": [
+       -1.7652,
+       -0.0014,
+       -2.2493
+      ],
+      "max": [
+       2.4435,
+       11.315,
+       1.7027
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 502,
+    "LOD1": 150,
+    "PROXY": 40
+   },
+   "footprint_m": [
+    4.6356,
+    4.6594
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 2.4435,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 11.315,
+   "ground_skirt_m": 0.0047,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "PROXY (catalog chain; palms keep the 40-tri proxy, T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_pine_brutia_a",
+   "kind": "vegetation",
+   "species": "pine_brutia",
+   "family": "hero_pine_brutia",
+   "variant": "a",
+   "label_tr": "Kızılçam",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_lod0.glb",
+     "sha256": "3a01277b2fada317d8685bae043af1c5e2a94cf98be8351622c7ccc06a50894d",
+     "tris": 608,
+     "aabb_m": {
+      "min": [
+       -3.8899,
+       -0.025,
+       -3.2418
+      ],
+      "max": [
+       3.8931,
+       12.1517,
+       3.8621
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_pine_brutia_a_lod1.glb",
+     "sha256": "9486843366d65e535296a9d193a2febbc5a0e6e52257229d9d37a5f88ade38c4",
+     "tris": 286,
+     "aabb_m": {
+      "min": [
+       -3.6724,
+       -0.0218,
+       -3.7623
+      ],
+      "max": [
+       3.8797,
+       11.9907,
+       4.0225
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 608,
+    "LOD1": 286
+   },
+   "footprint_m": [
+    7.783,
+    7.1039
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 3.8931,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 12.1517,
+   "ground_skirt_m": 0.025,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_pine_stone_a",
+   "kind": "vegetation",
+   "species": "pine_stone",
+   "family": "hero_pine_stone",
+   "variant": "a",
+   "label_tr": "Fıstık çamı",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_lod0.glb",
+     "sha256": "7bd7f18dcbac3d23b1c5f1d9f3c87100e9388fbf0878c6d81751b9a1a34d1323",
+     "tris": 544,
+     "aabb_m": {
+      "min": [
+       -4.5756,
+       -0.0159,
+       -3.6426
+      ],
+      "max": [
+       5.0852,
+       12.7919,
+       5.0991
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_pine_stone_a_lod1.glb",
+     "sha256": "b6f9e4f75efefa599831a016fd254ceaa74b5385cbd6dce28e529bad38c62893",
+     "tris": 272,
+     "aabb_m": {
+      "min": [
+       -5.0896,
+       -0.0139,
+       -3.9221
+      ],
+      "max": [
+       5.3675,
+       12.8194,
+       5.746
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 544,
+    "LOD1": 272
+   },
+   "footprint_m": [
+    9.6608,
+    8.7417
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 5.0991,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 12.7919,
+   "ground_skirt_m": 0.0159,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  },
+  {
+   "id": "veg_hero_plane_a",
+   "kind": "vegetation",
+   "species": "plane",
+   "family": "hero_plane",
+   "variant": "a",
+   "label_tr": "Çınar",
+   "generator": "art/blender/vegetation/build.py",
+   "lods": {
+    "LOD0": {
+     "glb": "res://assets/hero/vegetation/veg_hero_plane_a_lod0.glb",
+     "sha256": "fc10a6f221cda25f5434dc316040bbf032f0d20d91a8c63c68c61be31fbcdcfb",
+     "tris": 1024,
+     "aabb_m": {
+      "min": [
+       -4.9869,
+       -0.0359,
+       -3.9896
+      ],
+      "max": [
+       5.0258,
+       13.7196,
+       4.6848
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    },
+    "LOD1": {
+     "glb": "res://assets/hero/vegetation/veg_hero_plane_a_lod1.glb",
+     "sha256": "2e5c465e313fd57cc9a2445ebfc2a796cfb6b986fcdbacbd9a2920c3613b9d6a",
+     "tris": 288,
+     "aabb_m": {
+      "min": [
+       -5.3253,
+       -0.0359,
+       -4.409
+      ],
+      "max": [
+       5.152,
+       14.101,
+       4.9609
+      ]
+     },
+     "materials": [
+      "mat_vegetation_atlas"
+     ],
+     "import": {
+      "generate_lods": false
+     }
+    }
+   },
+   "triangles": {
+    "LOD0": 1024,
+    "LOD1": 288
+   },
+   "footprint_m": [
+    10.0127,
+    8.6744
+   ],
+   "footprint_note": "LOD0 bbox XZ extent (m, scale 1)",
+   "reach_m": 5.0258,
+   "reach_note": "largest XZ distance from the GLB origin to the LOD0 bbox (conservative clearance radius, scale 1)",
+   "height_m": 13.7196,
+   "ground_skirt_m": 0.0359,
+   "pivot_authored": "GLB origin = trunk/object base, y = 0 ground contact",
+   "pivot_offset_m": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "pivot_note": "no shift: place the origin on the ground point; apply yaw about Y and uniform scale",
+   "atlas": {
+    "path": "res://assets/hero/vegetation/vegetation_atlas.png",
+    "sha256": "b01a6a07ebf9d0e37a56f0447f617cdd4f3dba3213e434ade5406c9ee9ebfb79",
+    "size_px": [
+     1024,
+     1024
+    ],
+    "material": "mat_vegetation_atlas",
+    "layout": "res://assets/hero/vegetation/atlas_layout.json",
+    "layout_sha256": "37be1a475a22346e6075862acfe090d62c4ec3391822e72d6d942cf87308bccb"
+   },
+   "material_policy": {
+    "alpha_mode": "MASK",
+    "alpha_cutoff": 0.45,
+    "double_sided": true,
+    "roughness": 1
+   },
+   "far_representation": "none per tree: cell blob/HLOD (T-057 decision 5)",
+   "lod_distances_m": {
+    "LOD0_max": 120,
+    "LOD1_max": 400,
+    "status": "working-model-not-integrated",
+    "note": "working-model-not-integrated (T-057 decision 5); measure before use (ADR-0006 s4)"
+   },
+   "q018": "open: palm species/season is NOT a selected user decision; placement must stay parametric"
+  }
+ ],
+ "notes": [
+  "veg_plane (kit, mat_kit) is approved but not a game plant: the hero plane (family hero_plane) carries the role (ADR-0006 s4)."
+ ]
+}

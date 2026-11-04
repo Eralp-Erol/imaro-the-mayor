@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "_note": "T-049b arazi görünümü: harman (hybrid) gölgeleme + dünya-uzayı ayrıntı gölgelendiricisi parametreleri. Renkler sRGB [r,g,b]. Yalnız GÖRÜNÜM; WorldData/yükseklik değişmez.",
+  "shading": {
+    "facet_slope_deg": [
+      7.0,
+      16.0
+    ]
+  },
+  "noise": {
+    "size_px": 128,
+    "lattice": [
+      16,
+      8,
+      4,
+      6
+    ],
+    "seed": 4049
+  },
+  "detail": {
+    "scale_fine_m": 640.0,
+    "scale_mid_m": 3200.0,
+    "scale_patch_m": 5600.0,
+    "patch_rotation_rad": 0.62,
+    "tone_fine": 0.12,
+    "tone_mid": 0.16,
+    "fine_fade_m": [
+      500.0,
+      1800.0
+    ]
+  },
+  "patches": {
+    "dark_threshold": [
+      0.5,
+      0.66
+    ],
+    "dark_strength": 0.65,
+    "dry_threshold": [
+      0.5,
+      0.66
+    ],
+    "dry_strength": 0.5,
+    "max_slope_deg": 24.0,
+    "max_height_m": 420.0,
+    "_note": "T-062 A4: eşikler artık katman ağırlığı: dark -> natural_green (nemli cep), dry -> olive."
+  },
+  "coast": {
+    "sea_level_m": 0.0,
+    "sand_height_m": [
+      1.0,
+      3.2
+    ],
+    "sand_shore_m": [
+      150.0,
+      500.0
+    ],
+    "gravel_height_m": 1.4,
+    "max_slope_deg": 14.0,
+    "strength": 0.85
+  },
+  "rock": {
+    "slope_deg": [
+      30.0,
+      46.0
+    ],
+    "strength": 0.8
+  },
+  "haze": {
+    "color": [
+      0.62,
+      0.68,
+      0.72
+    ],
+    "start_m": 6000.0,
+    "end_m": 40000.0,
+    "amount": 0.22
+  },
+  "urban": {
+    "_note": "T-051 kent zemini (spec 8.2/4): yapili parsel altinda dosime/avlu/toprak tonu; maske parsel ayak izinden bir kez hesaplanir (UrbanGroundMask).",
+    "mask": {
+      "max_px": 2048,
+      "min_cell_m": 10.0,
+      "grow_m": 7.0,
+      "margin_m": 300.0,
+      "block_fill_min": 0.35
+    },
+    "strength": 0.94,
+    "edge": [
+      0.3,
+      0.7
+    ],
+    "sharp_fade_m": [
+      3000.0,
+      9000.0
+    ],
+    "slope_deg": [
+      22.0,
+      34.0
+    ],
+    "variants": {
+      "_note": "Parsel kimliği hash'i (+ tohum) ile TEK döşeme seçilir: plaza_stone_a / dirt_courtyard / grass_green. Ağırlıklar toplamı 1. Sanayi parseli her zaman gravel (G kanalı). Yeşil payı bilinçli düşük: ağaç/peyzaj sonraki paket (B/C).",
+      "seed": 6201,
+      "unit": "parcel",
+      "residential": {
+        "plaza": 0.3,
+        "dirt": 0.55,
+        "green": 0.15
+      }
+    },
+    "sidewalk": {
+      "_note": "Kaplama kenarında kaldırım (sidewalk_cobble): maske R eşiği bandı; ek geometri yok.",
+      "band": [
+        0.62,
+        0.95
+      ],
+      "strength": 0.95
+    }
+  },
+  "ground": {
+    "_note": "T-062 A4: sınıf -> onaylı zemin katmanı (LibraryGate kimliği). Rol sırası TerrainLook.GROUND_ROLES ile shader R_* sabitleriyle aynı. Kimlik kapıdan geçmezse yüklenmez, 'fallback' kullanılır.",
+    "fallback": "gnd_tex_grass_dry",
+    "roles": {
+      "natural_default": "gnd_tex_grass_dry",
+      "natural_green": "gnd_tex_grass_green",
+      "scrub": "gnd_tex_scrub_maquis",
+      "olive": "gnd_tex_olive_ground",
+      "rock": "gnd_tex_rock_cliff",
+      "coast_sand": "gnd_tex_beach_sand",
+      "coast_gravel": "gnd_tex_gravel",
+      "field_a": "gnd_tex_field_plowed",
+      "field_b": "gnd_tex_field_stubble",
+      "field_edge": "gnd_tex_dirt_courtyard",
+      "urban_plaza": "gnd_tex_plaza_stone_a",
+      "urban_dirt": "gnd_tex_dirt_courtyard",
+      "urban_green": "gnd_tex_grass_green",
+      "urban_industrial": "gnd_tex_gravel",
+      "urban_sidewalk": "gnd_tex_sidewalk_cobble"
+    },
+    "blend": {
+      "base_weight": 0.5,
+      "blend_width": 0.12,
+      "edge_jitter": 0.12
+    },
+    "distance": {
+      "detail_far_m": 400.0,
+      "fade_to_mean_m": [
+        450.0,
+        1500.0
+      ],
+      "far_base_mix": 0.35,
+      "far_base_range_m": [
+        500.0,
+        3500.0
+      ],
+      "breaker_scale_m": 96.0
+    },
+    "natural": {
+      "scrub_height_m": [
+        35.0,
+        150.0
+      ],
+      "scrub_slope_deg": [
+        6.0,
+        15.0
+      ],
+      "scrub_weight": 0.9,
+      "green_bias": 0.5,
+      "green_gain": 2.4,
+      "grove_threshold": [
+        0.55,
+        0.72
+      ],
+      "grove_weight": 0.8
+    },
+    "fields": {
+      "_note": "palet FIELD_ROTATION_RAD/FIELD_SIZE_M ile AYNI (test zorlar)",
+      "rotation_rad": 0.41,
+      "size_m": [
+        760.0,
+        480.0
+      ],
+      "threshold": [
+        0.3,
+        0.6
+      ],
+      "share_plowed": 0.4,
+      "share_stubble": 0.4,
+      "edge_m": 10.0
+    }
+  }
+}

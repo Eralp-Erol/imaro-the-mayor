@@ -1,0 +1,12 @@
+[
+  {
+    "case": "open",
+    "exit": 1,
+    "diagnostic": "open hull/component edge incidence"
+  },
+  {
+    "case": "normal",
+    "exit": 1,
+    "diagnostic": "zero/nonunit exported real normal"
+  }
+]

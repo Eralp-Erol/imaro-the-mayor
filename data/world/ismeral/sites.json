@@ -1,0 +1,14 @@
+{
+	"_header": "design/foundation/visual-references/02_ismeral_t0_vs_mature_SELECTED.jpg (F04 Referans B) ONAYLANMIŞ YÖN yorumu; koordinatlar kilitli değil (F02, F04)",
+	"_notes": [
+		"T0 sahası işaretleri (parsel değil). WLD-03 (KANONİK): eski batı limanı ve ilk ana sanayi D4'ün batısındaki ANA KARA kıyısındadır; T0 adalarında büyük liman/ana sanayi yoktur.",
+		"Ada genişlemesi yalnız ileride oyuncu kararıyla olabilir, zorunlu değildir; bu veri onu yasaklamaz, yalnız T0 durumunu tanımlar.",
+		"Kesin konum kilitli değildir (F02: 'Ana karanın tam kıyı çizgisi ... kesinleştirilmemiştir')."
+	],
+	"sites": [
+		{"id": "t0_port", "kind": "port", "pos_km": [9.2, 13.4],
+			"basis": "Eski liman: D3'te, ana kara kıyısında, D4'ün batısında (F02 'Liman/ada kuralı')."},
+		{"id": "t0_first_industry", "kind": "first_industry", "pos_km": [10.8, 12.2],
+			"basis": "İlk fabrikalar/depolar limanın hemen gerisinde, ana karada (F02)."}
+	]
+}

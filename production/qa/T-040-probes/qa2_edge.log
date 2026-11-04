@@ -1,0 +1,26 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA2_EDGE ok   olmayan parsel -> rejected command.reject.invalid_target
+QA2_EDGE ok   boş liste -> rejected command.reject.invalid_value
+QA2_EDGE ok   bilinmeyen imar -> rejected command.reject.invalid_value
+QA2_EDGE info çift kimlik -> queued 
+QA2_EDGE info T0 parseli 768 -> queued 
+QA2_EDGE info p771 dev=built by_sim=true decision=approved dtick=1
+QA2_EDGE info p774 dev=built by_sim=true decision=approved dtick=1
+QA2_EDGE info p777 dev=built by_sim=true decision=approved dtick=22
+QA2_EDGE info p781 dev=built by_sim=true decision=approved dtick=22
+QA2_EDGE ok   T0 parseline imar: sim yapısı/satır yok (dev=built by_sim=false)
+QA2_EDGE ok   çift kimlikli öneri: tek satır kümesi (görünen=1)
+QA2_EDGE info yapılmış parsel 771 imar -> queued; önce built/approved/1 sonra built/approved/1 zone=zone.commercial
+QA2_EDGE ok   yapılmış parsele imar: yapı ve 'yatırım yaptı' kararı korunur
+QA2_EDGE ok   yapılmış parsele imar: satır kalır
+QA2_EDGE info yapılmış parsel paneli: decision=0 before_proposal=true recorded=1
+QA2_EDGE ok   yapılmış parsel: kayıtlı karar onay
+QA2_EDGE ok   pencere içinde kalan normal akış tam eşitleme yapmaz (1 -> 1)
+QA2_EDGE ok   pencere dışı sorgu complete=false
+QA2_EDGE ok   pencere aşımı -> TEK tam eşitleme (1 -> 2)
+QA2_EDGE ok   tam eşitleme sonrası görünen == kâhin
+QA2_EDGE ok   sonra yine yalnız feed (tam eşitleme 2)
+QA2_EDGE ok   30 gün sonra görünen == kâhin
+QA2_EDGE ok   duraklatmada 200 karede iş yok (worked=0, sürüm 34->34)
+QA2_EDGE DONE fails=0

@@ -1,0 +1,62 @@
+{
+	"schema_version": 1,
+	"_notes": [
+		"T-062 B1 bitki GÖRÜNÜM ayarları (godot-engineer). Simülasyon bu dosyayı OKUMAZ; yerleşim kuralları data/world/ismeral/vegetation.json'dadır. Bütün sayılar ÇALIŞMA MODELİdir (ÇM): ölçümle ve art-director yakalamasıyla ayarlanır, kanon değildir.",
+		"tiers: T-057 Karar 5 çalışma eşikleri (LOD0 < 120 m, LOD1 < 400 m). 400 m ötesinde HİÇBİR bireysel proxy yoktur (reddedilmiş: 3 çapraz kart, F(P,C), kapalı kabuk, LOD2 alt kümesi); orası HÜCRE LEKESİdir (HLOD). Palmiyeler (kayıtta PROXY'si olanlar) 40 üçgenlik PROXY'yi lod1_end_m..palm_proxy_end_m arasında korur. Eşikler 'working-model-not-integrated': ölçülmüş cihaz sonucu değil (ADR-0006 §4 eşik ölçüm kuralı entegrasyon sonrası).",
+		"Mesafe = kamera konumundan ağacın gövde tabanına 3B uzaklık, ÖRNEK BAŞINA (visibility_range hücre merkezine göre ölçer ve 256 m hücrede ±181 m hata verirdi). Kademe, kamera step_m kadar hareket edince yeniden hesaplanır (her karede değil).",
+		"update: step_m kamera yeniden hesap adımı; load_margin_m/unload_margin_m hücre düğümü açma/kapama histerezisi (hücre kutusuna uzaklık); max_cells_built_per_update ve max_instances_per_frame kare başına iş tavanı (kalan sonraki kareye).",
+		"shadows: yalnız LOD0 gölge düşürür (bütçe seçimi; LOD1/PROXY/lekeler düşürmez).",
+		"blob: 1 km'lik (chunk_cells x hücre) birleşik mesh başına tek MeshInstance3D (draw call tasarrufu); mesh hücre başına kümelenmiş düşük üçgenli kütle (clump_m ızgarasında ağaçlar tek kümede birleşir, renk türün atlastan pişirilmiş ana rengi, alan ağırlıklı baskın tür). begin = tiers.lod1_end_m; gölgelendirici fragmanı begin'den yakınsa atar, fade_begin_m..end_m arası ekran-uzayı dither ile söndürür (alfa karışımı yok). Ağaç mesh'i yok: tek ağaç proxy'si reddedildi.",
+		"species_look (ÇM): leke yüzeyi için taç kabası; crown_base_frac taç alt sınırı (yükseklik oranı), radius_frac erişimin taç yarıçapına oranı, shape = blob.shapes anahtarı. Kimlikler değil tür anahtarlarıdır (game_plants.json). blob.skip_species: leke üretmeyen türler (çit: 400 m'de okunmaz)."
+	],
+	"tiers": {
+		"lod0_end_m": 120.0,
+		"lod1_end_m": 400.0,
+		"palm_proxy_end_m": 1500.0,
+		"status": "working-model-not-integrated"
+	},
+	"update": {
+		"step_m": 10.0,
+		"load_margin_m": 40.0,
+		"unload_margin_m": 140.0,
+		"max_cells_built_per_update": 6,
+		"max_instances_per_frame": 2500
+	},
+	"shadows": {"lod0": true, "lod1": false, "proxy": false},
+	"ground": {"sink_m": 0.12},
+	"blob": {
+		"enabled": true,
+		"chunk_cells": 4,
+		"fade_begin_m": 1400.0,
+		"end_m": 2200.0,
+		"load_margin_m": 200.0,
+		"unload_margin_m": 700.0,
+		"max_chunks_built_per_frame": 2,
+		"install_budget_ms": 2.0,
+		"clump_m": 24.0,
+		"radius_mult": 1.0,
+		"max_clump_radius_m": 8.0,
+		"min_clump_radius_m": 3.0,
+		"sides": 6,
+		"sink_m": 0.4,
+		"value_jitter": 0.08,
+		"skip_species": ["hedge"],
+		"shapes": {
+			"ball": {"rings": [[0.55, 0.0], [1.0, 0.42], [0.72, 0.78]]},
+			"cone": {"rings": [[1.0, 0.0]]},
+			"mound": {"rings": [[1.0, 0.0], [0.75, 0.55]]}
+		}
+	},
+	"species_look": {
+		"plane": {"shape": "ball", "crown_base_frac": 0.22, "radius_frac": 0.9},
+		"cypress": {"shape": "cone", "crown_base_frac": 0.0, "radius_frac": 1.0},
+		"pine_brutia": {"shape": "ball", "crown_base_frac": 0.30, "radius_frac": 0.9},
+		"pine_stone": {"shape": "ball", "crown_base_frac": 0.34, "radius_frac": 0.9},
+		"olive_open": {"shape": "ball", "crown_base_frac": 0.12, "radius_frac": 0.9},
+		"olive_twisted": {"shape": "ball", "crown_base_frac": 0.12, "radius_frac": 0.9},
+		"maquis": {"shape": "mound", "crown_base_frac": 0.0, "radius_frac": 0.9},
+		"hedge": {"shape": "mound", "crown_base_frac": 0.0, "radius_frac": 0.9},
+		"palm_date": {"shape": "ball", "crown_base_frac": 0.6, "radius_frac": 0.9},
+		"palm_slender": {"shape": "ball", "crown_base_frac": 0.6, "radius_frac": 0.9}
+	}
+}

@@ -1,0 +1,6 @@
+{
+	"schema": 1,
+	"_notes": "T-017 (political-events 5, F05-D ACIK): yetki anahtarlari ve verilenler. Hangi makamin neye yetkili oldugu ACIK karardir; bu tablo YER TUTUCUDUR. known: olay seceneklerinin requires.authority'de kullanabilecegi anahtarlar. granted: oyuncunun su an sahip oldugu yetkiler. Yetki yoksa secenek gizlenmez, kilitli ve nedeniyle gosterilir; defer ve en az bir yetkisiz bedelli secenek her zaman kalir (PH-9).",
+	"known": ["district_works", "council_vote", "rent_protection", "levy_speculation"],
+	"granted": ["district_works", "council_vote"]
+}

@@ -1,0 +1,14 @@
+{
+	"schema": 1,
+	"_notes": "T-017 (political-events 3/9/12): olay tarayici ayarlari ve sablon indeksi. Sablon dosyalari data/politics/events/<id>.json. M2 asgari dilim: PE-01, 02, 03, 04, 07 (agenda duzeyi). max_new_per_scan: tarama basina yeni olay ustu. rising_slack_pm: baskinin 'yukseliyor' sayilmasi icin onceki taramaya gore en cok bu kadar dusebilmesi (0 = tam yukselis sarti; sürekli ama hafif dalgalanan baskida olay hic ateslenmeme sorununu onler). interrupt_budget_per_quarter: ceyrek basina 'decision' duzeyi kesinti (fazlasi agenda'ya duser). system_actor: olay atesleme gerekcesinin sistem sozde aktoru (ActorRef v1.1 istegi (a)). investor_decision: yatirimci karar anahtari (T-013; olumsuz karar sayimi ve neden zinciri icin). content.tone_profile: ton profili (AS-6 ACIK, yer tutucu); blocked_tags: bu etiketi tasiyan sablonlar HIC secilmez (yolsuzluk etiketi KAPALI). milestones: kademe sirasi. horizon: nedenlerin sayildigi pencere (gun). risk: yatirimci siyasi risk sinyali (characters-npc 6.3 investor.political_risk_signal) bilesen agirliklari ve doygunluk degerleri; sinyal 0..1000, olay etkisi (investor.political_risk) bolge bazinda eklenir. Tum sayilar CALISMA MODELI.",
+	"templates": ["pe-01", "pe-02", "pe-03", "pe-04", "pe-07"],
+	"milestones": ["M2", "M3", "M4"],
+	"max_new_per_scan": 2,
+	"rising_slack_pm": 100,
+	"interrupt_budget_per_quarter": 2,
+	"system_actor": "actor.sys.1",
+	"investor_decision": "decision.investor.develop",
+	"content": {"tone_profile": "moderate", "blocked_tags": ["corruption"]},
+	"risk": {"weights": {"council_instability": 300, "policy_reversals": 250, "unrest": 250, "permit_delay": 200}, "reversals_full": 5, "permit_full_days": 30},
+	"horizon": {"declines_days": 30, "reversals_days": 180, "media_days": 14}
+}

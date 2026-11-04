@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+QA2_B002 batch=109 status=queued
+QA2_B002 day=20 truth_drawable=31 shown=31 missing_now=0 extra_now=0 uc=32 backlog=1 full_active=false full_syncs=0 unplaced=1
+QA2_B002 day=40 truth_drawable=76 shown=75 missing_now=1 extra_now=0 uc=78 backlog=1 full_active=false full_syncs=0 unplaced=1
+QA2_B002 day=60 truth_drawable=79 shown=79 missing_now=0 extra_now=0 uc=80 backlog=1 full_active=false full_syncs=0 unplaced=2
+QA2_B002 day=80 truth_drawable=84 shown=84 missing_now=0 extra_now=0 uc=59 backlog=1 full_active=false full_syncs=0 unplaced=3
+QA2_B002 day=100 truth_drawable=91 shown=90 missing_now=1 extra_now=0 uc=17 backlog=1 full_active=false full_syncs=0 unplaced=4
+QA2_B002 day=120 truth_drawable=92 shown=92 missing_now=0 extra_now=0 uc=17 backlog=0 full_active=false full_syncs=0 unplaced=4
+QA2_B002 day=140 truth_drawable=94 shown=94 missing_now=0 extra_now=0 uc=9 backlog=0 full_active=false full_syncs=0 unplaced=4
+QA2_B002 day=160 truth_drawable=100 shown=100 missing_now=0 extra_now=0 uc=10 backlog=0 full_active=false full_syncs=0 unplaced=6
+QA2_B002_LAG appear n=100 p50=0 p95=1 max=1 never=0 never_sample=[]
+QA2_B002_LAG stage n=319 p50=0 p95=1 max=2 pending_at_end=0
+QA2_B002_FRAME worked_frames=459 p50=2.64 p95=4.91 max=6.45 view_builds=63 pump={ "frames": 504, "view_builds": 63, "steps": 459, "behind_frames": 55 }
+QA2_B002_DRAINED steps=0 missing=0 extra=0 | exact==fresh hash=true rows=127/127
+QA2_B002_UNPLACED unplaced=6 shown=100 ratio=0.057 reasons={ "t0_merged": 5, "lot_too_small": 1 } truth_unplaceable=6
+QA2_B002_SUMMARY days=160 fpd=4 max_dec_per_day=108 max_uc=81

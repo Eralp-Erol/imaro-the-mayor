@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+WORLD_PREVIEW {"buildings":{"buildings":54889,"cells":168,"drawn":54889,"dropped_water":0,"hlod1_nodes":168,"hlod1_tris_all":649668,"hlod2_tris_all":133650,"last_build_ms":3655.7,"last_plan_ms":145.8,"last_rebuilt_cells":168,"lod0_tris_all":11549596,"lod1_tris_all":1579446,"mmi_nodes":5286,"network_ms":4173.5,"parcels":37341,"settlement_ms":15973.5,"supers":26,"view_ms":3932.2},"cell_size_m":100.0,"control_load_ms":1.5,"post_terrain_ms":24119.4,"preset":"district","seed":1467,"sweep_frames":0,"terrain":{"chunk_cells":40,"chunk_size_m":4000.0,"chunks_x":10,"chunks_z":10,"data_ms":1155.1,"land_chunks":96,"land_triangles":199647,"land_vertices":598941,"lod_stride":1,"mesh_ms":59.8,"palette_ms":447.1,"threaded":true,"water_chunks":56,"water_triangles":126938},"terrain_build_ms":1662.1,"world_generate_ms":1988.4,"world_samples":160801}
+PLAYABLE_ACTION parsel [5359, 6020, 6003, 5677, 6019, 6007, 5991, 5052] → zone.mixed: queued
+PLAYABLE_M2 target=5359 days=30 tick=30 rows=39 parcel[planned use=residential units=3 progress=0 by_sim=true] decisions(+1/-0) city(approved=66 declined=800 completed=0) unplaced=1
+PLAYABLE {"m2_advance_days":30,"m2_advance_ms":626.2,"sim_buildings":39,"sim_parcels":37341,"sim_setup_ms":6996.4,"sync_ms_max":16.6,"sync_ms_sum":209.736,"sync_n":30,"t0_stock_parcels":24898,"view_ms_sum":21.401,"view_n":11}
+QA2_HUD tick=30 proposed_tick=0 panel_text=Parsel 5359 | 1 · İmar | Yürürlükte: Karma | 2 · Yatırımcı kararı | Yatırım yaptı (1. yıl, 23. gün) | [Nedenini gör] | 3 · Yapı | Planlandı · Konut · 3 birim | İnşaat ilerlemesi | %0 | Öneri verilen 8 parsel: 8 yatırım aldı, 0 vazgeçildi, 0 kararsız | Bölge D1 | Karşılaştırma başlangıcı: simülasyonun başı | Yeni konut birimi | 0 | Yeni işyeri birimi | 0 | Barınan hane | 42.818 / 52.354 hane | Yapımı süren birim | 59 konut, 0 işyeri | Şehir geneli | Yatırım onayı | +66 | Yatırım reddi | +800 | Tamamlanan proje | 0 | Yatırımcı kira geliri | 0 ¤ | Kira geliri yatırımcınındır, belediyenin geliri değildir | Belediye geliri | Henüz kurulmadı | Henüz kurulmadı: belediyenin gelir sistemi yok | Siyasi tepki | Grup 1 | Karşı çıkıyor | Şiddet %35 | Tutum −0,369 | Konu: Parsel 18685, Parsel 19877, Parsel 19880 | [Tepkinin nedenini gör] | Meclis: 0 açık oylama, 1 sonuçlanan
+QA2_HUD parcel=5359 dev=planned by_sim=true use=residential units=3 progress=0 decision=approved code=approved dtick=22 rid=766
+QA2_HUD parcel=6020 dev=planned by_sim=true use=residential units=3 progress=0 decision=approved code=approved dtick=22 rid=772
+QA2_HUD parcel=6003 dev=planned by_sim=true use=residential units=4 progress=0 decision=approved code=approved dtick=22 rid=769
+QA2_HUD parcel=5677 dev=planned by_sim=true use=residential units=2 progress=0 decision=approved code=approved dtick=22 rid=767
+QA2_HUD parcel=6019 dev=planned by_sim=true use=residential units=3 progress=0 decision=approved code=approved dtick=22 rid=771
+QA2_HUD parcel=6007 dev=planned by_sim=true use=residential units=3 progress=0 decision=approved code=approved dtick=22 rid=770
+QA2_HUD parcel=5991 dev=planned by_sim=true use=residential units=3 progress=0 decision=approved code=approved dtick=22 rid=768
+QA2_HUD parcel=5052 dev=planned by_sim=true use=residential units=3 progress=0 decision=approved code=approved dtick=22 rid=765
+QA2_HUD FAIL şehir sayacı projects_completed=+0 panelde yok
+QA2_HUD expected=Öneri verilen 8 parsel: 8 yatırım aldı, 0 vazgeçildi, 0 kararsız | Parsel 5359 | Yatırım yaptı (1. yıl, 23. gün) | [Nedenini gör] | Planlandı · Konut · 3 birim | %0
+QA2_HUD city_delta approved=66 declined=800 completed=0 rent=0 first_event_seq=1
+QA2_HUD DONE fails=1

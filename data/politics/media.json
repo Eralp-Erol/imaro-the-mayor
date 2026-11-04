@@ -1,0 +1,19 @@
+{
+	"schema": 1,
+	"_notes": "T-017 (characters-npc 6.3/6.5, AS-7): tek yer tutucu medya organi (bagimsiz; F01 cercevesi). organ: roster'daki media aktoru. decision: karar tablosu. lag_days: haberin tona yansima gecikmesi (media_lag_days). tone_decay_pm: ton haftalik cürümesi. k_media_pm: olumsuz tonun kesim sikayetini buyutme katsayisi; amp_cap_pm: buyutme tavani. weights (pm): tone = fact*gercek_sinyal + lean*durus_uyumu + sens*hassasiyet*catisma (isaret gercek sinyalle). news: haber degeri agirliklari (conflict, scale, novelty). max_stories_per_scan: tarama basina azami haber adayi degerlendirmesi (ReasonLog hacmi). story_axes: haber turu -> eksen konumu (durus uyumu icin; yer tutucu mekanik). Hepsi CALISMA MODELI.",
+	"organ": "actor.media.1",
+	"decision": "media.coverage",
+	"lag_days": 7,
+	"tone_decay_pm": 100,
+	"k_media_pm": 500,
+	"amp_cap_pm": 600,
+	"weights": {"fact": 500, "lean": 250, "sens": 250},
+	"news": {"conflict": 500, "scale": 300, "novelty": 200},
+	"max_stories_per_scan": 3,
+	"story_axes": {
+		"protest": {"growth_vs_preservation": 400},
+		"support": {"growth_vs_preservation": -400},
+		"vote_passed": {},
+		"vote_failed": {}
+	}
+}

@@ -1,0 +1,161 @@
+{
+  "task": "T-059",
+  "source": "actual Godot frames (human_lab.tscn)",
+  "entries": [
+    {
+      "id": "hum_hero_pawn_neutral_a",
+      "path": "design/library/sheets/human-hero/hum_hero_pawn_neutral_a.png",
+      "dimensions_m": [
+        0.464,
+        0.23,
+        1.75
+      ],
+      "triangles": {
+        "LOD0": 122,
+        "LOD1": 66
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-205652-t059-pawn_neutral-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205657-t059-pawn_neutral-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205702-t059-pawn_neutral-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205708-t059-pawn_neutral-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205713-t059-pawn_neutral-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205718-t059-pawn_neutral-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205723-t059-pawn_neutral-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205728-t059-pawn_neutral-far_lod1.png"
+      }
+    },
+    {
+      "id": "hum_hero_pawn_broad_a",
+      "path": "design/library/sheets/human-hero/hum_hero_pawn_broad_a.png",
+      "dimensions_m": [
+        0.564,
+        0.28,
+        1.75
+      ],
+      "triangles": {
+        "LOD0": 122,
+        "LOD1": 66
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-205736-t059-pawn_broad-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205740-t059-pawn_broad-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205745-t059-pawn_broad-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205750-t059-pawn_broad-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205755-t059-pawn_broad-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205800-t059-pawn_broad-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205806-t059-pawn_broad-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205811-t059-pawn_broad-far_lod1.png"
+      }
+    },
+    {
+      "id": "hum_hero_block_neutral_a",
+      "path": "design/library/sheets/human-hero/hum_hero_block_neutral_a.png",
+      "dimensions_m": [
+        0.522,
+        0.275,
+        1.75
+      ],
+      "triangles": {
+        "LOD0": 198,
+        "LOD1": 98
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-205818-t059-block_neutral-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205823-t059-block_neutral-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205828-t059-block_neutral-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205833-t059-block_neutral-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205838-t059-block_neutral-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205843-t059-block_neutral-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205848-t059-block_neutral-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205853-t059-block_neutral-far_lod1.png"
+      }
+    },
+    {
+      "id": "hum_hero_block_broad_a",
+      "path": "design/library/sheets/human-hero/hum_hero_block_broad_a.png",
+      "dimensions_m": [
+        0.614,
+        0.3,
+        1.75
+      ],
+      "triangles": {
+        "LOD0": 198,
+        "LOD1": 98
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-205900-t059-block_broad-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205905-t059-block_broad-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205910-t059-block_broad-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205915-t059-block_broad-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-205920-t059-block_broad-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-205925-t059-block_broad-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-205930-t059-block_broad-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-205935-t059-block_broad-far_lod1.png"
+      }
+    },
+    {
+      "id": "hum_hero_facet_neutral_a",
+      "path": "design/library/sheets/human-hero/hum_hero_facet_neutral_a.png",
+      "dimensions_m": [
+        0.522,
+        0.295,
+        1.75
+      ],
+      "triangles": {
+        "LOD0": 654,
+        "LOD1": 98
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-205943-t059-facet_neutral-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-205947-t059-facet_neutral-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-205952-t059-facet_neutral-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-205957-t059-facet_neutral-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-210002-t059-facet_neutral-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-210007-t059-facet_neutral-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-210012-t059-facet_neutral-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-210017-t059-facet_neutral-far_lod1.png"
+      }
+    },
+    {
+      "id": "hum_hero_facet_broad_a",
+      "path": "design/library/sheets/human-hero/hum_hero_facet_broad_a.png",
+      "dimensions_m": [
+        0.614,
+        0.32,
+        1.75
+      ],
+      "triangles": {
+        "LOD0": 654,
+        "LOD1": 98
+      },
+      "frames": {
+        "front_lod0": "artifacts/screenshots/captures/20261027-210025-t059-facet_broad-front_lod0.png",
+        "side_lod0": "artifacts/screenshots/captures/20261027-210030-t059-facet_broad-side_lod0.png",
+        "back_lod0": "artifacts/screenshots/captures/20261027-210034-t059-facet_broad-back_lod0.png",
+        "top_lod0": "artifacts/screenshots/captures/20261027-210040-t059-facet_broad-top_lod0.png",
+        "3q_lod0": "artifacts/screenshots/captures/20261027-210045-t059-facet_broad-3q_lod0.png",
+        "front_lod1": "artifacts/screenshots/captures/20261027-210050-t059-facet_broad-front_lod1.png",
+        "near_lod0": "artifacts/screenshots/captures/20261027-210055-t059-facet_broad-near_lod0.png",
+        "far_lod1": "artifacts/screenshots/captures/20261027-210100-t059-facet_broad-far_lod1.png"
+      }
+    }
+  ],
+  "contexts": [
+    "context-compare-lod0.png",
+    "context-compare-lod1.png",
+    "context-compare-3q.png",
+    "context-compare-side.png",
+    "context-street.png",
+    "context-scale.png"
+  ],
+  "style_compare": "style-compare.png",
+  "hem_crops": {
+    "hem_facet_neutral_front": "design/library/sheets/human-hero/hem_facet_neutral_front.png",
+    "hem_facet_neutral_side": "design/library/sheets/human-hero/hem_facet_neutral_side.png",
+    "hem_facet_neutral_back": "design/library/sheets/human-hero/hem_facet_neutral_back.png",
+    "hem_facet_broad_front": "design/library/sheets/human-hero/hem_facet_broad_front.png",
+    "hem_facet_broad_side": "design/library/sheets/human-hero/hem_facet_broad_side.png",
+    "hem_facet_broad_back": "design/library/sheets/human-hero/hem_facet_broad_back.png"
+  }
+}

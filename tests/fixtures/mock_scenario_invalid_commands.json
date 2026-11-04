@@ -1,0 +1,140 @@
+{
+ "format": "imaro.mock_scenario",
+ "format_version": 1,
+ "provenance": "MOCK",
+ "contract_version": "1.0",
+ "id": "mock_invalid_commands",
+ "description": "MOCK: Geçersiz komutlar gerekçeyle reddedilir: bilinmeyen tür, belediye fiili olmayan (CAN-03), eksik/yanlış parametre, olmayan parsel; parsel 2 için imar tick sınırında reddedilir (korunan alan). Durum değişmez.",
+ "initial": {
+  "tick": 0,
+  "speed": 1,
+  "world_id": "fixture.world",
+  "land_uses": [
+   "zone.residential",
+   "zone.mixed",
+   "zone.commercial",
+   "zone.green"
+  ],
+  "parcels": [
+   {
+    "id": 1,
+    "region_code": "F1",
+    "center": [
+     -400.0,
+     200.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 1,
+     "name_key": "mock.actor.landowner.1"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   },
+   {
+    "id": 2,
+    "region_code": "F1",
+    "center": [
+     0.0,
+     -400.0
+    ],
+    "area_m2": 1800,
+    "zone": "zone.residential",
+    "pending_zone": "",
+    "development": "vacant",
+    "owner": {
+     "kind": "landowner",
+     "id": 2,
+     "name_key": "mock.actor.landowner.2"
+    },
+    "land_value": 1000,
+    "reason_ids": []
+   }
+  ],
+  "budget": {
+   "period": 1,
+   "status": "approved",
+   "revenue": 120000,
+   "balance": 30000,
+   "pending_vote_id": 0,
+   "lines": [
+    {
+     "line_key": "budget.line.roads",
+     "amount": 40000,
+     "proposed": 40000,
+     "actual": 0
+    },
+    {
+     "line_key": "budget.line.parks",
+     "amount": 15000,
+     "proposed": 15000,
+     "actual": 0
+    },
+    {
+     "line_key": "budget.line.services",
+     "amount": 50000,
+     "proposed": 50000,
+     "actual": 0
+    }
+   ]
+  },
+  "council": {
+   "council": {
+    "kind": "council",
+    "id": 1,
+    "name_key": "mock.actor.council.1"
+   },
+   "seats_total": 11,
+   "blocs": [
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 1,
+      "name_key": "mock.actor.council_bloc.1"
+     },
+     "seats": 6,
+     "stance": 200,
+     "position": "undecided",
+     "reason_id": 0
+    },
+    {
+     "bloc": {
+      "kind": "council_bloc",
+      "id": 2,
+      "name_key": "mock.actor.council_bloc.2"
+     },
+     "seats": 5,
+     "stance": -300,
+     "position": "undecided",
+     "reason_id": 0
+    }
+   ],
+   "votes": []
+  },
+  "groups": []
+ },
+ "rules": [
+  {
+   "when": {
+    "kind": "zoning.propose",
+    "params": {
+     "parcel_ids": [
+      2
+     ]
+    }
+   },
+   "reject": {
+    "reason_key": "command.reject.invalid_target",
+    "args": {
+     "why": "zoning.reject.protected_area"
+    }
+   },
+   "effects": []
+  }
+ ],
+ "timeline": []
+}

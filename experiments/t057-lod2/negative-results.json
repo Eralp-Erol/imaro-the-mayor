@@ -1,0 +1,22 @@
+{
+ "N1": {
+  "command": "audit.py --negative=vertex",
+  "exit_code": 1,
+  "expected_failed_check": "P2",
+  "output": [
+   "N1 vertex[0].x -0.4786556661128998 -> -0.47855567932128906 ; P2 ok=False not_bit_equal=2",
+   "FAILED_CHECKS ['P2']"
+  ],
+  "ok": true
+ },
+ "N2": {
+  "command": "audit.py --negative=card",
+  "exit_code": 1,
+  "expected_failed_check": "P3",
+  "output": [
+   "N2 deleted LOD2 tris [104, 105] (element 27, cluster 2, front score 8374); P3 ok=False; failing views [((90, 12), False, True, False), ((135, 12), False, True, False), ((225, 12), False, True, False), ((270, 12), False, True, False), ((315, 12), True, True, False)]",
+   "FAILED_CHECKS ['P3']"
+  ],
+  "ok": true
+ }
+}
