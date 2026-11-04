@@ -455,3 +455,31 @@ func test_unplaceable_built_parcels_are_reported_not_silent() -> void:
 	fresh.sync(true)
 	assert_array(Array(fresh.unplaced_parcel_ids())).is_equal(Array(ids))
 	assert_int(int(proj.stats["unplaced"])).is_equal(built_bad)
+
+
+## B-025: yol + yıkımla boşalan T0 yapılı parsel belediye arazisi olarak imara açılıp sim'in yatırımcısı yapı kurunca
+## çizilmeli. Projector T0 doluluk kümesini kuruluşta alır (bayat kalır); yapı satırları feed'den gelen parselde bu
+## kümeyle engellenmemeli. Parselin boş olması test düzeneğidir (yıkım yolu başka testlerde); yapılan şey: projector'a
+## "bu parsel T0 yapılıydı" bayat bilgisi vermek.
+func test_a_released_t0_parcel_that_the_sim_develops_is_drawn() -> void:
+	var h := M2RenderSupport.handle(ISOLATE)
+	var f := h.facade
+	var proj := M2RenderSupport.projector(f)
+	var ids := M2RenderSupport.free_parcels(proj, 4, true)
+	assert_int(ids.size()).override_failure_message("fixture'da yerleşebilir boş parsel yok").is_equal(4)
+	for pid in ids:
+		proj._t0_occupied[int(pid)] = true   # eski T0 yapısı yıkıldı, ama projector kuruluşta "dolu" diye almıştı
+	f.advance(2)
+	proj.sync()
+	_propose(f, ids)
+	for day in 170:
+		f.advance(1)
+		proj.sync()
+	proj.sync(true)
+	var built := 0
+	for v in f.parcel_views(ids):
+		if v.development == ParcelView.DEVELOPMENT_BUILT and v.developed_by_sim:
+			built += 1
+			assert_int(M2RenderSupport.rows_of(proj, v.id).size()).override_failure_message(
+					"parsel %d sim'de built ama çizilmedi (bayat T0 kümesi)" % v.id).is_greater(0)
+	assert_int(built).override_failure_message("sim hiçbir parseli bitirmedi: test anlamsız").is_greater(0)
