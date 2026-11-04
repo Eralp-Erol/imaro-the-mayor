@@ -1,8 +1,9 @@
 extends "res://tests/sim/politics/reaction_world_base.gd"
 ## 2026-11-01 · D-014 §3 (KULLANICI): evi yıkılanın ve yakınında/yol dibinde oturanın tepkisi YÜKSEK; ilçe geneli çok az
-## ama SIFIR DEĞİL. "Yeni ev sunulursa tepki hiç olmaz" için sim'de mekanizma YOK (haneler yalnız bölge toplamı); o
-## kısım uygulanmadı: tepkinin "yeniden yerleşti mi" kararı TEK noktada (`ReactionRehousing.still_unhoused`) ve
-## şimdilik hep "hayır" (davranış değişmez). Sayılar ÇALIŞMA MODELİ (F05-C).
+## ama SIFIR DEĞİL. Yeniden iskân politikası KAPALIYKEN (bu dosyadaki dünya: hiç açılmadı) tepkinin "yeniden yerleşti
+## mi" kararı TEK noktada (`ReactionRehousing.still_unhoused`) ve "hayır" kalır (davranış değişmez). Politika AÇIKKEN
+## ev bulunan ailede tepki "biraz kalır" (D-016 §2; sıfır DEĞİL) ve ev bulunamayan aile bekleme listesine girer
+## (D-019 E1): bkz. `tests/sim/public_works/resettlement_*`. Sayılar ÇALIŞMA MODELİ (F05-C).
 
 const REGION := "D1"
 const SEEK_TOPIC := "housing_cost"

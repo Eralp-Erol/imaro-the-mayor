@@ -30,6 +30,8 @@ core	tests/sim/politics/politics_purity_test.gd tests/sim/actors/actor_purity_te
 # Bitki suite'leri tek başına bitki alanı quick'ini 10 dk yapıyordu (placement 227, cache 111, invariants 72, cell_builder 32).
 # Bitki kodu değişince bunlar quick'te ATLANIR (ve açıkça yazılır); `verify full` ya da VERIFY_QUICK_SLOW=1 koşturur.
 slow	tests/world/vegetation/vegetation_placement_test.gd tests/world/vegetation/vegetation_invariants_test.gd tests/view/vegetation/vegetation_cache_test.gd tests/view/vegetation/vegetation_cell_builder_test.gd
+# M2 ilçe testi (gerçek Ismeral dünyası x2 tohum, ~15 sim koşusu, ~4 dk): quick'te ATLANIR, `verify full` / VERIFY_QUICK_SLOW=1 koşturur.
+slow	tests/game/m2_start_district_test.gd
 
 # --- src/ (en uzun önek kazanır) ---
 map	src/app	tests/app tests/view/camera_rig_input_test.gd tests/game/world_input_routing_test.gd

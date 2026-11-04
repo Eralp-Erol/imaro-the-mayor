@@ -116,6 +116,8 @@ func attach_public_works(ctx: PublicWorksContext) -> bool:
 	ctx.economy = _economy  # T-042b: kamulaştırma alınan parselin ekonomi sütunlarını okur/yazar (yoksa kapalı)
 	if not _sim.add_system(ExpropriationFlushSystem.new(ctx)):  # komut aşamasında alınan parseller halkaya girsin
 		return false
+	if not _sim.add_system(ResettlementQueueSystem.new(ctx)):  # T-067: bekleyen aileler yeni evleri alsın
+		return false
 	_public_works = ctx
 	_zoning_handler.municipal_context = ctx
 	_zoning_system.municipal_context = ctx
@@ -167,6 +169,13 @@ func policies() -> Array[PolicyView]:
 	v.enabled = PolicyState.enabled(_state, v.policy_id)
 	v.changed_tick = PolicyState.changed_tick(_state, v.policy_id)
 	v.changed_by_command = PolicyState.changed_by(_state, v.policy_id)
+	v.waiting_households = ResettlementQueue.waiting_total(_state)  # v1.9: bekleme listesi (salt okunur)
+	var waiting := ResettlementQueue.waiting_by_region(_state)
+	var codes: Array = waiting.keys()
+	codes.sort()
+	for code: String in codes:
+		v.waiting_by_region[code] = waiting[code]
+	v.served_households = ResettlementQueue.served_total(_state)
 	out.append(v)
 	return out
 
@@ -417,7 +426,8 @@ func plan_state(parcel_id: int) -> PlanStateView:
 	if _economy == null or _parcels.template(parcel_id) == null:
 		return view  # kurulu ekonomi yok ya da bilinmeyen parsel: plan kavramı yok (`untracked`)
 	var vote_id := _proposal_gate.pending_vote_for_parcel(_state, parcel_id) if _proposal_gate != null else 0
-	var raw := _economy.plan_state(_state, parcel_id, vote_id)
+	var freed := _public_works != null and MunicipalLandFlow.is_freed(_state, parcel_id)  # B-022
+	var raw := _economy.plan_state(_state, parcel_id, vote_id, freed)
 	view.state = raw["state"]
 	view.zone = raw["zone"]
 	view.pending_zone = raw["pending_zone"]

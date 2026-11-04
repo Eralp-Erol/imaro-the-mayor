@@ -251,9 +251,10 @@ func _begin(exact: bool) -> bool:
 	if full:
 		_full_sync()   # feed (ids boş/güvenilmez) atlanır; yeni değişimler bundan sonra feed'den gelir
 	for id in feed.ids:
-		if not _t0_occupied.has(int(id)):
-			dirty[int(id)] = true
-			_w_feed[int(id)] = true
+		# T0 yapılı parsel de okunur (B-025): yol/yıkımla boşalıp belediye arazisi olarak imara açılan T0 parseli sim
+		# yapısı alabilir. T0 stoku `developed_by_sim == false` ile `_apply`da satırsız kalır; feed yalnız değişenleri taşır.
+		dirty[int(id)] = true
+		_w_feed[int(id)] = true
 	for pid: int in _staged:
 		if exact or int(_due.get(pid, 0)) <= tick:
 			if not dirty.has(pid):
@@ -333,6 +334,9 @@ func _read(chunk: PackedInt64Array) -> Array[ParcelView]:
 ## Kayıt YÜKLENDİ (epoch) / geri sarma / eksik feed: türetilmiş durum BİR KEZ, HEMEN ve bütçesiz kurulur (yükleme anında
 ## tek seferlik kısa bekleme; kare dağıtımı yalnız artımlı işler içindir). T0 dışı tüm parseller toplu okunur;
 ## sim'in artık tanımadığı parsellerin izleri silinir. Süre `stats["full_sync_ms"]`.
+## BİLİNEN SINIR (B-025 artığı): T0 yapılı parseller süpürmede ATLANIR (~24 bin ham okuma tasarrufu; gerçek dünyada
+## başsız ~1,3 s -> ~3,0 s ölçüldü). Yıkımla boşalıp sim yapısı almış bir T0 parseli YÜKLEME sonrası süpürmeyle geri
+## gelmez; canlı oyunda feed yolu doğru (yukarıda). Kalıcı çözüm: bayat T0 kümesini sim'den türetmek (facade sorgusu).
 func _full_sync() -> void:
 	var t0 := Time.get_ticks_usec()
 	stats["full_syncs"] += 1

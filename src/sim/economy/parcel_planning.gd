@@ -24,7 +24,9 @@ const STATE_EXISTING := &"existing"
 const NO_TICK := -1
 
 
-## `entry`: parselin bindirme kaydı ({} = yok). `vacant`: parsel boş mu (T0 stoğu/yatırımcı yapısı yok).
+## `entry`: parselin bindirme kaydı ({} = yok). `vacant`: parsel boş mu (T0 stoğu/yatırımcı yapısı yok). B-022: yıkılmış
+## yolun boş belediye arazisi (`STAGE_TAKEN`) da boştur ve `vacant = true` ile gelir (`EconomySystem._is_vacant` yalnız
+## `STAGE_VACANT` bilir; yolun yıkıldığı bilgisi kamu işleri tarafında, `MunicipalLandFlow.is_freed`).
 ## `pending_vote_id` > 0: parsel için meclis oylaması sürüyor (çağıran
 ## `CouncilEngine.pending_vote_for_parcel` ile bulur;
 ## ekonomi siyaseti bilmez) => `proposed`, `due_tick` -1 (yürürlük oylamadan sonra), `vote_ref` "vote.N".

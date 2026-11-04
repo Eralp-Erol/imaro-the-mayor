@@ -132,9 +132,9 @@ func sim_built_units(state: GameState) -> Array[PackedInt64Array]:
 
 ## T-043A · Parselin PLAN DURUMU (UI sorgusu; SALT OKUNUR). Bayrak kapalıysa `untracked`. `pending_vote_id`: parsel için
 ## sürmekte olan meclis oylaması (yoksa 0; çağıran siyasetten bulur). Düzen: `ParcelPlanning.describe`.
-func plan_state(state: GameState, parcel_id: int, pending_vote_id: int = 0) -> Dictionary:
-	return ParcelPlanning.describe(ParcelZoningSystem.overlay_of(state, parcel_id), _is_vacant(state, parcel_id),
-		_unplanned_on, pending_vote_id)
+func plan_state(state: GameState, parcel_id: int, pending_vote_id: int = 0, municipal_free: bool = false) -> Dictionary:
+	return ParcelPlanning.describe(ParcelZoningSystem.overlay_of(state, parcel_id),
+		municipal_free or _is_vacant(state, parcel_id), _unplanned_on, pending_vote_id)
 
 
 ## T-043B ek · Görünüm katmanı için: parselin `ParcelView.zone` değeri şablondaki placeholder'dan (T0 başlangıç imarı)

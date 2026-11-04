@@ -155,3 +155,43 @@ func test_rejection_reason_is_plain_turkish() -> void:
 	assert_str(m.verdict_text()).contains("Yol hâlâ ayakta")
 	for key in ["not_available", "road_still_standing", "plan_pending", "world_unavailable"]:
 		assert_bool(UiText.has(StringName("municipal_land." + key))).is_true()
+
+
+func _many(n: int, area: int = 100) -> Array[MunicipalLandView]:
+	var rows: Array[MunicipalLandView] = []
+	for i in range(1, n + 1):
+		var v := _land(i)
+		v.area_m2 = area
+		rows.append(v)
+	return rows
+
+
+## B-023: 15 parsel tek özet satırı (sim area_m2 toplamı); liste varsayılan kapalı, kullanım/gönder satırları yerinde.
+func test_municipal_mode_groups_parcels_into_one_summary_and_list_folds() -> void:
+	var p := _panel(_facade(_many(15, 120)))
+	p.open_municipal_land()
+	assert_int(p.named_buttons("area_remove_").size()).is_equal(0)
+	assert_str(p.joined_text()).contains("15 parsel · toplam alan 1.800 m²")
+	var toggle := p.named_buttons("municipal_list_toggle")[0]
+	assert_float(toggle.get_combined_minimum_size().y).is_greater_equal(44.0)
+	toggle.pressed.emit()
+	assert_int(p.named_buttons("area_remove_").size()).is_equal(15)
+	# Açık listede satırlar "Yapılı parsel" değil "Boş belediye arazisi" der (gerçek pencere karesinde görülen hata).
+	assert_str(p.joined_text()).contains("Boş belediye arazisi")
+	assert_str(p.joined_text()).not_contains("Yapılı parsel")
+	p.named_buttons("municipal_list_toggle")[0].pressed.emit()
+	assert_int(p.named_buttons("area_remove_").size()).is_equal(0)
+	assert_object(p.use_button(&"zone.mixed")).is_not_null()
+	assert_object(p.send_button()).is_not_null()
+
+
+## B-024: uzun düğme metni dar panelde sarılır; asgari genişlik panelden büyük değil.
+func test_open_button_wraps_in_narrow_panel_sizes() -> void:
+	for width in [361, 330, 280]:
+		var p := _panel(_facade(_many(15)))
+		p.custom_minimum_size.x = 0
+		var b := p.named_buttons("municipal_open")[0]
+		assert_int(b.autowrap_mode).is_equal(TextServer.AUTOWRAP_WORD_SMART)
+		assert_float(b.get_combined_minimum_size().x).is_less(float(width))
+		assert_float(b.get_combined_minimum_size().y).is_greater_equal(44.0)
+		p.queue_free()
