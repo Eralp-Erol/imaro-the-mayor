@@ -494,8 +494,8 @@ static func _expropriation_problem(x: Variant) -> String:
 
 
 ## Yeniden iskân tahsis kaydı (T-065) iç tutarlılığı: `moves` [kaynak, hedef, hane > 0] (kaynak != hedef),
-## rehoused = Σ moves, unplaced = Σ unplaced_by, rehoused + unplaced = yerinden edilen hane, partial <= rehoused,
-## cost >= 0.
+## rehoused = Σ moves + Σ served (T-067 bekleme listesinden sonradan verilenler), unplaced = Σ unplaced_by,
+## rehoused + unplaced = yerinden edilen hane, partial <= rehoused, cost >= 0.
 static func _resettlement_problem(r: Variant, households: int) -> String:
 	if not (r is Dictionary):
 		return "yeniden iskân kaydı sözlük değil"
@@ -522,11 +522,38 @@ static func _resettlement_problem(r: Variant, households: int) -> String:
 	for code: Variant in r["effective"]:
 		if typeof(code) != TYPE_STRING or typeof(r["effective"][code]) != TYPE_INT or int(r["effective"][code]) < 0:
 			return "yeniden iskân.effective satırı geçersiz"
+	var served := _served_problem(r)
+	if served < 0:
+		return "yeniden iskân.served ya da weight_by geçersiz"
+	moved += served
 	if moved != int(r["rehoused"]) or unplaced != int(r["unplaced"]):
 		return "yeniden iskân toplamları satırlarla uyuşmuyor"
 	if int(r["rehoused"]) + int(r["unplaced"]) != households or int(r["partial"]) > int(r["rehoused"]):
 		return "yeniden iskân hane toplamı yerinden edilenle uyuşmuyor"
 	return ""
+
+
+## Bekleme listesinden verilen evler (T-067): `served` [[tick >= 0, kaynak, hedef, hane > 0, sınıf 0/1, 0/1]...]
+## ve `weight_by` {kod: negatif olmayan tamsayı}, ikisi de isteğe bağlı. Geçerliyse verilen toplam hane, değilse -1.
+static func _served_problem(r: Dictionary) -> int:
+	var total := 0
+	if r.has("served"):
+		if not (r["served"] is Array):
+			return -1
+		for row: Variant in r["served"]:
+			if not (row is Array) or (row as Array).size() != 6 or typeof(row[0]) != TYPE_INT or int(row[0]) < 0 \
+					or typeof(row[1]) != TYPE_STRING or typeof(row[2]) != TYPE_STRING or typeof(row[3]) != TYPE_INT \
+					or int(row[3]) <= 0 or typeof(row[4]) != TYPE_INT or not [0, 1].has(int(row[4])) \
+					or typeof(row[5]) != TYPE_INT or not [0, 1].has(int(row[5])):
+				return -1
+			total += int(row[3])
+	if r.has("weight_by"):
+		if not (r["weight_by"] is Dictionary):
+			return -1
+		for code: Variant in r["weight_by"]:
+			if typeof(code) != TYPE_STRING or typeof(r["weight_by"][code]) != TYPE_INT or int(r["weight_by"][code]) < 0:
+				return -1
+	return total
 
 
 static func _op_problem(op: Variant) -> String:

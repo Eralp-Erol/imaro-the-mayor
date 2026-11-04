@@ -169,6 +169,7 @@ static func apply(ctx: PublicWorksContext, state: GameState, params: Dictionary,
 	var work := {"command_id": command_id, "tick": state.tick, "road_class": String(road_class),
 		"length_cm": draft["length_cm"], "region_units": units, "expropriation": record}
 	PublicWorksState.append_work(state, ctx.net.base_hash, ctx.net.peek_last_op(), ctx.net.graph_hash(), work)
+	ResettlementQueue.sync(state)  # T-067: ev bulunamayan aileler bekleme listesine girer (politika açık değilse no-op)
 	PublicWorksState.note_reactions(state, command_id, plan["displaced"], (p["nearby"] as Dictionary)["by_region"],
 		ctx.config.reaction_keep_days)
 	var reason_ids := _record_reasons(state, command_id, snapshots)
@@ -209,6 +210,7 @@ static func revert(ctx: PublicWorksContext, state: GameState, work: Dictionary, 
 	ParcelExpropriation.restore(state, record)
 	var allocation: Dictionary = record.get("resettlement", {})
 	var returned := ResettlementPlanner.revert_moves(state, allocation) if not allocation.is_empty() else 0
+	ResettlementQueue.sync(state)  # T-067: iş kaydı çıkarıldı; geri gelen konutlar "yeni ev" sayılmaz
 	var summary := summary_of(record)
 	var ids := ExpropriationSummary.sorted_ids(summary)
 	ctx.pending_notes.append_array(ids)

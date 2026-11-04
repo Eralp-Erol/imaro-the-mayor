@@ -14,11 +14,11 @@ func _policy(enabled: bool = true) -> SimCommand:
 
 # --- Sürüm ---
 
-func test_contract_version_is_1_8_and_older_documents_stay_compatible() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.8")
+func test_contract_version_is_1_9_and_older_documents_stay_compatible() -> void:
+	assert_str(SimContract.VERSION).is_equal("1.9")
 	assert_int(SimContract.VERSION_MAJOR).is_equal(1)
-	assert_int(SimContract.VERSION_MINOR).is_equal(8)
-	for older in ["1.0", "1.5", "1.6", "1.7"]:
+	assert_int(SimContract.VERSION_MINOR).is_equal(9)
+	for older in ["1.0", "1.5", "1.6", "1.7", "1.8"]:
 		assert_bool(SimContract.is_compatible(older)).is_true()
 	assert_bool(SimContract.is_compatible("2.0")).is_false()
 
@@ -90,6 +90,26 @@ func test_policy_view_round_trips_through_dict_json_and_bytes() -> void:
 	var old := PolicyView.from_dict({"policy_id": "resettlement"})  # eksik alan = varsayılan (geri uyum)
 	assert_int(old.changed_tick).is_equal(-1)
 	assert_bool(old.enabled).is_false()
+
+
+## Sözleşme 1.9 (T-067, D-019 E1) · bekleme listesi verisi: isteğe bağlı alanlar, varsayılan "kimse beklemiyor".
+func test_policy_view_waiting_fields_default_to_nobody_waiting_and_round_trip() -> void:
+	var v := PolicyView.new()
+	assert_int(v.waiting_households).is_equal(0)
+	assert_dict(v.waiting_by_region).is_empty()
+	assert_int(v.served_households).is_equal(0)
+	v.policy_id = PolicyView.ID_RESETTLEMENT
+	v.waiting_households = 9
+	v.waiting_by_region = {"D1": 6, "D2": 3}
+	v.served_households = 4
+	var back := PolicyView.from_dict(JSON.parse_string(JSON.stringify(v.to_dict())))
+	assert_bool(back.same_as(v)).is_true()
+	assert_int(back.waiting_households).is_equal(9)
+	assert_dict(back.waiting_by_region).is_equal({"D1": 6, "D2": 3})
+	assert_bool(PolicyView.from_dict(bytes_to_var(v.to_bytes())).same_as(v)).is_true()
+	var old := PolicyView.from_dict({"policy_id": "resettlement", "enabled": true})  # 1.7/1.8 belgesi
+	assert_int(old.waiting_households).is_equal(0)
+	assert_dict(old.waiting_by_region).is_empty()
 
 
 func test_facade_default_for_policies_is_empty_so_older_implementations_still_work() -> void:

@@ -11,9 +11,14 @@ extends RefCounted
 ##   version        VERSION
 ##   <politika>     {enabled: bool, changed_tick: int >= 0, command_id: int >= 1}   (şimdilik yalnız `resettlement`)
 ## Bilinmeyen politika anahtarı reddedilmez (ileriye dönük), okunmaz.
+##
+## T-067 (D-019 E1): `resettlement_queue` {built_mark: {bölge_kodu: res_built}} bekleme listesinin "yeni ev" ölçüsüdür
+## (`ResettlementQueue`). Bölüm YALNIZ bekleyen aile varken vardır; liste boşalınca silinir, hiç aile beklemediyse hiç
+## yaratılmaz. Listenin kendisi (kim bekliyor) yolların kaydındadır, burada yoktur.
 
 const KEY := "policy"
 const VERSION := 1
+const QUEUE_KEY := "resettlement_queue"
 const IDS: Array[StringName] = [PolicyView.ID_RESETTLEMENT]
 
 
@@ -65,4 +70,15 @@ static func validate_data(value: Variant) -> String:
 			return "durum.systems.policy.%s.changed_tick negatif olmayan tamsayı değil" % String(id)
 		if typeof(row.get("command_id", null)) != TYPE_INT or int(row["command_id"]) < 1:
 			return "durum.systems.policy.%s.command_id pozitif tamsayı değil" % String(id)
+	return _queue_problem(value.get(QUEUE_KEY, null)) if (value as Dictionary).has(QUEUE_KEY) else ""
+
+
+## Bekleme listesi bölümü: {built_mark: {kod: negatif olmayan tamsayı}}.
+static func _queue_problem(queue: Variant) -> String:
+	if not (queue is Dictionary) or not (queue.get("built_mark", null) is Dictionary):
+		return "durum.systems.policy.%s.built_mark sözlük değil" % QUEUE_KEY
+	for code: Variant in queue["built_mark"]:
+		if typeof(code) != TYPE_STRING or typeof(queue["built_mark"][code]) != TYPE_INT \
+				or int(queue["built_mark"][code]) < 0:
+			return "durum.systems.policy.%s.built_mark satırı geçersiz" % QUEUE_KEY
 	return ""

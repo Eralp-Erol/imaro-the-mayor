@@ -1,17 +1,19 @@
 class_name ReactionRehousing
 extends RefCounted
-## D-014 §3 (2026-11-01): "yeni ev sunulmadığı sürece tepki sürer; sunulursa hiç olmaz."
-## Sim'de bunun karşılığı YOKTUR: haneler yalnız bölge toplamıdır (`latent_hh`, barınan = min(talep, biten konut));
-## yerinden edilen hane `household_fate = return_to_latent` ile bölge talebinde kalır; ne hanenin "yeni ev bulması"
-## ne de belediyenin "yeni ev sunması" modellenmiştir (tepki hattı `ExpropriationFlow.apply` ->
-## `PublicWorksState.note_reactions` yalnız bölge başına hane sayısı yazar). Sahip yeniden iskân özelliğini ayrıca
-## karara bağlayacaktır (D-015, design/specs/resettlement-social-security-v0.md).
+## Yerinden edilen ailenin tepkisi (D-014 §3 -> D-016 §2 -> D-019 E1): "yeni ev sunulmadığı sürece tepki sürer; ev
+## verilince BİRAZ KALIR" (sıfır DEĞİL; D-016 §2 D-014 §3'ün "sunulursa hiç olmasın" cümlesini güncelledi). Ev yoksa
+## aile bekleme listesine girer (D-019 E1, T-067): yatırımcıların sonradan bitirdiği yeni evler önce onlara verilir
+## (`ResettlementQueue`), ev verilene dek tepki tam sürer.
+## Sim'de haneler yalnız bölge toplamıdır (`latent_hh`, barınan = min(talep, biten konut)); ev tahsisi
+## `ResettlementPlanner` (yol anı) ve `ResettlementQueue` (sonradan biten evler) ile yapılır, sonuç yolun kaydındadır.
+## Yeniden iskân politikası KAPALIYKEN (hiç açılmamış) hiçbir kayıt yoktur ve tepki bugünkü gibi tam sürer (hane
+## `household_fate = return_to_latent` ile bölge talebinde kalır); belediye hiçbir durumda bina yapmaz (CAN-03).
 ##
 ## TEK GİRİŞ NOKTASI: tepkinin "bu hane yeniden yerleşti mi" kararı YALNIZ `still_unhoused`dan geçer (yerel okuma ve
 ## ilçe/bölge sinyali dahil). T-065 (ADR-0009 Değişiklik 1): yeniden iskân politikası AÇIKKEN yol, tahsis kaydını
-## (`works[i].expropriation.resettlement.effective/unplaced_by/moves`) `index` ile verir; tepki defteri HAM kalır
-## (gerçek yerinden edilen hane), rahatlama OKUMA anında yapılır. `index` boşsa (politika hiç açılmadı, kayıt yok)
-## davranış bit-bit eskisi gibidir: sayı aynen döner. SAF ve durumsuz; rastgelelik yok.
+## (`works[i].expropriation.resettlement.effective/unplaced_by/moves/served`) `index` ile verir; tepki defteri HAM
+## kalır (gerçek yerinden edilen hane), rahatlama OKUMA anında yapılır. `index` boşsa (politika hiç açılmadı, kayıt
+## yok) davranış bit-bit eskisi gibidir: sayı aynen döner. SAF ve durumsuz; rastgelelik yok.
 
 
 ## Tahsis kayıtlarından {komut: {effective, unplaced_by, rehoused_by}} (her biri {kod: hane}). Yolların
@@ -25,6 +27,8 @@ static func index(state: GameState) -> Dictionary:
 		var rehoused_by := {}
 		for move: Array in record["moves"]:
 			rehoused_by[String(move[0])] = int(rehoused_by.get(String(move[0]), 0)) + int(move[2])
+		for row: Array in record.get("served", []):  # bekleme listesinden sonradan verilen evler (T-067)
+			rehoused_by[String(row[1])] = int(rehoused_by.get(String(row[1]), 0)) + int(row[3])
 		out[command_id] = {"effective": record["effective"], "unplaced_by": record["unplaced_by"],
 			"rehoused_by": rehoused_by}
 	return out

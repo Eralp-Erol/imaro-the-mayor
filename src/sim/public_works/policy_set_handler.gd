@@ -44,6 +44,7 @@ func apply_with_id(state: GameState, params: Dictionary, command_id: int) -> voi
 	var value := bool(params["enabled"])
 	var previous := PolicyState.enabled(state, id)
 	PolicyState.set_enabled(state, id, value, command_id)
+	ResettlementQueue.sync(state)  # T-067: kapalıyken/açılırken biten evler "yeni ev" sayılmaz
 	var ref := String(SimContract.ref(SimContract.REF_COMMAND, command_id))
 	var rid := state.record_reason(ExpropriationFlow.ACTOR, DECISION,
 		[{"name": FACTOR_ENABLED, "value": 1 if value else 0, "source_ref": ref}], 0, &"policy_set",

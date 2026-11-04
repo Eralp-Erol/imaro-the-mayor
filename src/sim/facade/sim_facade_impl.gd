@@ -116,6 +116,8 @@ func attach_public_works(ctx: PublicWorksContext) -> bool:
 	ctx.economy = _economy  # T-042b: kamulaştırma alınan parselin ekonomi sütunlarını okur/yazar (yoksa kapalı)
 	if not _sim.add_system(ExpropriationFlushSystem.new(ctx)):  # komut aşamasında alınan parseller halkaya girsin
 		return false
+	if not _sim.add_system(ResettlementQueueSystem.new(ctx)):  # T-067: bekleyen aileler yeni evleri alsın
+		return false
 	_public_works = ctx
 	_zoning_handler.municipal_context = ctx
 	_zoning_system.municipal_context = ctx
@@ -167,6 +169,13 @@ func policies() -> Array[PolicyView]:
 	v.enabled = PolicyState.enabled(_state, v.policy_id)
 	v.changed_tick = PolicyState.changed_tick(_state, v.policy_id)
 	v.changed_by_command = PolicyState.changed_by(_state, v.policy_id)
+	v.waiting_households = ResettlementQueue.waiting_total(_state)  # v1.9: bekleme listesi (salt okunur)
+	var waiting := ResettlementQueue.waiting_by_region(_state)
+	var codes: Array = waiting.keys()
+	codes.sort()
+	for code: String in codes:
+		v.waiting_by_region[code] = waiting[code]
+	v.served_households = ResettlementQueue.served_total(_state)
 	out.append(v)
 	return out
 
