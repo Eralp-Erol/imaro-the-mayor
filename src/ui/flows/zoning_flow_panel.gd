@@ -111,6 +111,7 @@ func _add_area() -> void:
 	if model.parcel_ids.is_empty():
 		_body.add_child(UiFactory.label(UiText.t(&"zoning.pick_parcel"), &"", true))
 		_body.add_child(_muted(UiText.t(&"zoning.area_add_hint")))
+		_add_municipal_entry()
 		return
 	var views := _facade.parcel_views(model.parcel_ids)
 	var by_id := {}
@@ -118,19 +119,49 @@ func _add_area() -> void:
 		by_id[v.id] = v
 	for id in model.parcel_ids:
 		_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
+	if model.municipal_mode:
+		var mode_note := _muted(UiText.t(&"zoning.municipal.mode"))
+		_tag(mode_note, "municipal_mode")
+		_body.add_child(mode_note)
+	elif not model.is_locked():
+		_add_municipal_entry()
 	if not model.is_locked():
 		var limit := model.max_parcels()
 		if limit > 0:
 			_body.add_child(_muted(UiText.t(&"zoning.too_many", {"max": limit}) if model.at_parcel_limit()
 				else UiText.t(&"zoning.count_line", {"n": model.parcel_ids.size(), "max": limit})))
-		_body.add_child(_muted(UiText.t(&"zoning.area_add_hint")))
-		if model.parcel_ids.size() > 1:
+		_body.add_child(_muted(UiText.t(&"zoning.municipal.no_mix" if model.municipal_mode
+				else &"zoning.area_add_hint")))
+		if model.parcel_ids.size() > 1 or model.municipal_mode:
 			var clear := UiFactory.button(_ctx, UiText.t(&"zoning.clear_area"), false)
 			_tag(clear, "area_clear")
 			clear.pressed.connect(func() -> void:
 				model.clear_area()
 				_render())
 			_body.add_child(clear)
+
+
+## D-018: yalnız sim `municipal_lands()` içinde uygun satır varsa görünür (sayı gerçek). Alan boşken düğme, sıradan
+## parsel varken yalnız "önce alanı temizleyin" notu.
+func _add_municipal_entry() -> void:
+	if model.is_locked():
+		return
+	var n := model.municipal_available_ids().size()
+	if n == 0:
+		return
+	if not model.parcel_ids.is_empty():
+		_body.add_child(_muted(UiText.t(&"zoning.municipal.clear_first", {"n": UiText.number(n)})))
+		return
+	var b := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.open", {"n": UiText.number(n)}), false)
+	_tag(b, "municipal_open")
+	b.pressed.connect(open_municipal_land)
+	_body.add_child(b)
+
+
+func open_municipal_land() -> bool:
+	var ok := model.use_municipal_land()
+	_render()
+	return ok
 
 
 func _parcel_row(id: int, view: ParcelView) -> Control:

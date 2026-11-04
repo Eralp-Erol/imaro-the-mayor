@@ -966,5 +966,13 @@
 	"agenda.item_ref": "Gündem öğesi {n}",
 	"command.kind.public_work.demolish": "Yol yıkımı",
 	"command.kind.agenda.respond": "Gündem yanıtı",
-	"event.road.demolished": "Yol yıkıldı: {length_m} m, altyapı kapasitesi -{units_total}"
+	"event.road.demolished": "Yol yıkıldı: {length_m} m, altyapı kapasitesi -{units_total}",
+	"zoning.municipal.open": "Boş belediye arazisini imara aç: {n} parsel",
+	"zoning.municipal.mode": "Belediye arazisi: yıkılan yolun boş yeri yeniden değerlendiriliyor. Belediye bina yapmaz; yalnız araziyi yeniden imara açar, yatırımcılar kendi kararıyla yapabilir.",
+	"zoning.municipal.no_mix": "Belediye arazisi seçiliyken sıradan parsel eklenemez; önce alanı temizleyin.",
+	"zoning.municipal.clear_first": "Boş belediye arazisini imara açmak için önce alanı temizleyin ({n} parsel uygun).",
+	"municipal_land.not_available": "Bu parsel şu an boş belediye arazisi olarak kullanılamıyor",
+	"municipal_land.road_still_standing": "Yol hâlâ ayakta; arazi yıkımdan sonra boşalır",
+	"municipal_land.plan_pending": "Bu araziye zaten bekleyen bir imar önerisi var",
+	"municipal_land.world_unavailable": "Dünya verisi şu an okunamıyor; arazi doğrulanamadı"
 }

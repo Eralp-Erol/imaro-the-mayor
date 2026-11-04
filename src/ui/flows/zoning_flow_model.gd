@@ -31,6 +31,8 @@ var applied_tick: int = -1
 var vote_ref: StringName = &""
 var vote_passed: bool = false
 var reason_ids: PackedInt64Array = PackedInt64Array()
+## D-018 (T-066): alan boş belediye arazisinden kuruldu (`municipal_reuse`); karışık seçim yok.
+var municipal_mode: bool = false
 
 ## Parselde sim dışı (T0 stok) yapı var mı: `Callable(parcel_id: int) -> bool`. İlk günlük tick'ten önce T0 stoku
 ## parselleri sim'de `vacant` görünür; sahne (playable) dünya yapı verisinden bunu enjekte eder. Boş = yalnız sim.
@@ -87,11 +89,38 @@ func is_finished() -> bool:
 # --- Alan ve kullanım ---
 
 func add_parcel(parcel_id: int) -> bool:
-	if is_locked() or parcel_id <= SimContract.NO_ID or parcel_ids.has(parcel_id):
+	if is_locked() or municipal_mode or parcel_id <= SimContract.NO_ID or parcel_ids.has(parcel_id):
 		return false
 	if at_parcel_limit():
 		return false
 	parcel_ids.append(parcel_id)
+	_revalidate()
+	return true
+
+
+## Sim'in şu an uygun (`available`) saydığı boş belediye arazileri (kimlik sıralı). Kaynak sunmuyorsa boş.
+func municipal_available_ids() -> PackedInt64Array:
+	var out := PackedInt64Array()
+	for land in _facade.municipal_lands():
+		if land.available and land.id > SimContract.NO_ID and not out.has(land.id):
+			out.append(land.id)
+	out.sort()
+	return out
+
+
+## Uygun belediye arazisini (sim parsel üst sınırına kadar) alana ekler ve belediye arazisi kipine geçer.
+## Alanda sıradan parsel varsa ya da uygun arazi yoksa false (karışık seçim yok).
+func use_municipal_land() -> bool:
+	if is_locked() or municipal_mode or not parcel_ids.is_empty():
+		return false
+	var ids := municipal_available_ids()
+	if ids.is_empty():
+		return false
+	var limit := max_parcels()
+	if limit > 0 and ids.size() > limit:
+		ids = ids.slice(0, limit)
+	parcel_ids = ids
+	municipal_mode = true
 	_revalidate()
 	return true
 
@@ -114,6 +143,7 @@ func clear_area() -> void:
 	if is_locked():
 		return
 	parcel_ids = PackedInt64Array()
+	municipal_mode = false
 	_revalidate()
 
 
@@ -148,7 +178,7 @@ static func density_options() -> Array[int]:
 func preview() -> PlanPreviewView:
 	if parcel_ids.is_empty() or land_use == &"":
 		return null
-	return _facade.plan_preview(parcel_ids, land_use, density_pm)
+	return _facade.plan_preview(parcel_ids, land_use, density_pm, -1, municipal_mode)
 
 
 ## Sim bayrakları (teklif üst sınırı, meclis yolu): alan/kullanım gerektirmez. Kaynak plan kavramı sunmuyorsa (mock)
@@ -426,13 +456,16 @@ func _route_of(pv: PlanPreviewView) -> String:
 func _command() -> SimCommand:
 	# Yeni komut türü YOK (CAN-03): mevcut `zoning.propose`, yoğunluk isteğe bağlı parametre.
 	if density_pm >= 0:
-		return SimCommand.make(SimCommand.KIND_ZONING_PROPOSE,
-				{"parcel_ids": parcel_ids, "land_use": land_use, "density": density_pm})
-	return SimCommand.zoning_propose(parcel_ids, land_use)
+		var params := {"parcel_ids": parcel_ids, "land_use": land_use, "density": density_pm}
+		if municipal_mode:
+			params["municipal_reuse"] = true
+		return SimCommand.make(SimCommand.KIND_ZONING_PROPOSE, params)
+	return SimCommand.zoning_propose(parcel_ids, land_use, municipal_mode)
 
 
 func _revalidate() -> void:
 	if parcel_ids.is_empty():
+		municipal_mode = false
 		last_validation = null
 		_phase = Phase.PICK_AREA
 		return

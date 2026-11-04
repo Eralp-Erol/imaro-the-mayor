@@ -454,11 +454,11 @@ func plan_preview(parcel_ids: PackedInt64Array, land_use: StringName, density: i
 		return none
 	var raw := _economy.plan_preview(_state, parcel_ids, land_use, density, max_height_m)
 	if municipal_reuse and not parcel_ids.is_empty():
-		var problem := {"code": &"municipal_land.world_unavailable"}
+		var problem := {"args": {"why": String(MunicipalLandFlow.WORLD_UNAVAILABLE)}}
 		if _public_works != null:
 			problem = _public_works.land_preview_problem(_state, parcel_ids)
-		if problem["code"] != &"":
-			raw = {"ok": false, "reason": problem["code"]}
+		if not problem.is_empty():  # sorun yoksa {} döner
+			raw = {"ok": false, "reason": StringName(problem["args"]["why"])}
 	return PlanPreviewView.from_economy(raw, provenance(), land_use, limit, council, min_parcels, min_units)
 
 
