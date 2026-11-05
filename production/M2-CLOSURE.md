@@ -32,7 +32,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 - **Teknik direktör:** `docs/adr/ADR-0010-kare-butcesi-hedefleri-m2.md`, `production/log/2026-11-05-teknik-direktor-perf.md`.
 - **Tasarım direktörü:** FAITHFUL WITH FIXES (`production/log/2026-11-05-design-director-m2.md`): CAN-03 ve D-017..D-019 sadık. Düzeltmeler: ölçüt 7 (yapıldı); bekleme listesi (T-067) oyuncuya görünmüyor (UI yok) ve gerçek Ismeral'de çalışıp çalışmadığı ÖLÇÜLMEDİ; halk tepkisinin meclise etkisi ölçülmedi; D-020 'Hep D2' kanonun 'Orven zorunlu başlangıç değil' reddiyle çakışıyor -> Q-035 (SAHİBE SOR, aşağıda).
 - **Sanat direktörü:** PASS WITH FIXES / KABUL EDİLEBİLİR (`production/log/2026-11-05-art-director-m2.md`): ışık GEÇTİ; yıkılan yol/boş arazi düz hardal sarısı lekesi ve imar paneli ham parsel numaraları YENİDEN YAPILMALI; dokunmatik HUD şehrin ~%60'ını örtüyor; 800x600 ve 768x1024 için karar verilemedi (kare yok). Sahibe sorulacak zevk kararları: çatı paleti, boş arazinin görünüşü, dokunmatik panel yeri.
-- Not: aşağıdaki sahip kararları listesindeki Q-014/Q-028, Q-025, Q-026, Q-027/Q-029 design-director'a göre D-011/D-014'te cevaplanmış olabilir; QUESTIONS.md durumları gözden geçirilmeli (bu liste bayat olabilir).
+- QUESTIONS.md durumları gözden geçirildi (2026-11-05): Q-014, Q-025, Q-026 kayıtta artık "answered" (D-011/D-014); parametreler çalışma değeri olarak açık.
 
 ## Ölçümler (2026-11-05, `production/log/2026-11-05-bekleme-listesi-meclis-olcum.md`)
 - **Bekleme listesi çalışıyor (gerçek Ismeral D2, 2 dünya tohumu, 200 gün):** yola yakın boş parsellere konut imarı verilince yatırımcı bitirdi, bekleyen ailelerin tamamı ev aldı (56/56, 42/42, 12/12; ikinci dünyada 72/72, 32/32, 12/12). İmar yoksa 0 yeni konut ve liste sabit kalır (CAN-03 gereği). Tasarım direktörünün 'sınır listeyi hep kapatır' hipotezi gönderilen veride YANLIŞ; yalnız `leave_region` kaderinde (gönderilmiyor) ölü (B-029).
@@ -41,7 +41,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 
 ## Sahip kararları (M2'yi engellemez, ama kapanış kartında sorulur)
 Yol onayında 0,1-0,2 sn takılma (130-207 ms; ADR-0010 tavanı 100 ms): M2'den önce düzeltilsin mi? Teknik direktör önerisi: 'bilinen açık' yaz, iPad'de ölç, >100 ms ise M2'ye al, değilse M3'ün ilk işi (T-075/T-076). SAHİP KARARI YOK; kayıt D-NNN olarak yazılmadı.
-Q-003 para birimi · Q-015 Ismeral coğrafya onayı · Q-025 halk neye tepki versin · Q-026 araç/yaya yoğunluğu (Kart D) · Q-014/Q-028 meclis eşiği (Kart B) · Q-018 sanat kütüphanesi şablonları · Q-027/Q-029 gündem kartı adı ve tepki sertliği · R1-R3 yeniden iskân varsayımları · T-065 Aşama 2.
+Q-003 para birimi · Q-015 Ismeral coğrafya onayı · Q-018 sanat kütüphanesi şablonları · R1-R3 yeniden iskân varsayımları · T-065 Aşama 2.
 
 ## Doğrulanmadı
 Bu liste dosya okumasından derlendi; testler koşturulmadı. Durum sütunundaki "KANITLI" ifadeleri ilgili QA kayıtlarına dayanır, bu oturumda yeniden doğrulanmadı.
