@@ -218,4 +218,7 @@ func test_reactions_need_a_triggering_change_not_every_scan_over_a_long_run() ->
 	tick(h, 280)  # 40 haftalık tarama x 2 kesim = 80 aday değerlendirme
 	var first_tier := reasons_of(h, "decision.bloc.react.petition")
 	assert_int(first_tier.size()).override_failure_message("değerlendirme olmadı").is_greater(0)
-	assert_int(first_tier.size()).override_failure_message("her taramada kayıt yazıldı").is_less(25)
+	# Üst sınır 80 adayın YARISI (B-130/D-026: petition eşiği 250 -> 190 oldu; tepki veren kesim `recheck_days`ta yeniden
+	# değerlendirilir, ölçülen 26; eski sınır 25 eşik 250'ye göre kalibreydi). Amaç: "her taramada kayıt" (80) olmasın.
+	assert_int(first_tier.size()) \
+		.override_failure_message("her taramada kayıt yazıldı (%d)" % first_tier.size()).is_less(40)

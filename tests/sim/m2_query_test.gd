@@ -10,8 +10,16 @@ const M := preload("res://tests/sim/m2_support.gd")
 const E := preload("res://tests/sim/economy/economy_test_support.gd")
 ## ESKİ koddan (sorgu genişlemesinden ÖNCE) kaydedilen durum hash'leri. Sorgular salt okunur olduğundan ve karar
 ## kuralları değişmediğinden bu değerler değişmemelidir; değişirse bir sorgu durum yazmış ya da kural kaymıştır.
-const GOLDEN_A := "d66d81a91733985b2d903eee2fa1451390a93cc8051322c53a390de48d27ebb2"
-const GOLDEN_B := "3e85ce2ca9eb83a0eeabcd45df930146c012232b3e8513215acb891ed33b49d9"
+## B-130/D-026 ile YENİLENDİ (sahip Q-040 "A"; bilinçli kural değişikliği): `bloc.react` petition eşiği 250 -> 190
+## (`data/actors/decision_tables.json`). Neden: gerekçe kayıtları eşiği (ve histerezis eşiği 220 -> 160) taşır ve
+## ReasonLog hash'e girer; A'da ek olarak bir petition kaydı daha OLUMLU (3 -> 4 olumlu, 60 -> 61 kayıt), B'de yalnız
+## kayıtlardaki eşik alanı değişir (kayıt/olumlu/olay sayıları aynı: 6/2/1). ESKİ: A d66d81a9…27ebb2, B 3e85ce2c…b49d9
+## (eşik 250 ile bire bir üretilir: `production/bugs/B-130.md`).
+# B-130/D-026: decision_tables.json (bloc.react petition 250 -> 190) tüm dosya olarak aktör özetine, o da durum
+# hash'ine girer; baz çizgisi bu yüzden değişti (eski: d66d81a9…). Teknik direktör onayı:
+# production/log/2026-11-05-teknik-direktor-b130-golden.md
+const GOLDEN_A := "ffbaf113645896e9d60c5c8eeba0ef6b8df5f54df8326b31b7bcbfd7678ae2e6"
+const GOLDEN_B := "42abd619af18f2a9fb64298aa89bbe0d62a14db9d5af3f9c91cb715ffb27df9a"
 
 
 func _view(f: SimFacade, id: int) -> ParcelView:

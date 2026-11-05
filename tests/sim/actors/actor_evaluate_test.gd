@@ -141,7 +141,8 @@ func test_tiered_reaction_writes_one_linked_record_per_evaluated_tier() -> void:
 		"protesto": [_react_factors(900), "protest", ["petition", "protest", "boycott"],
 			["positive", "positive", "negative"]],
 		"dilekçe": [_react_factors(600), "petition", ["petition", "protest"], ["positive", "negative"]],
-		"sessiz": [_react_factors(100), "", ["petition"], ["negative"]],
+		# "sessiz": şikâyet yok, memnuniyet yüksek (puan ~0): gürültü (80) dahil petition eşiğinin (veri) çok altında.
+		"sessiz": [_react_factors(0, 500), "", ["petition"], ["negative"]],
 	}
 	var tick := 1
 	for label: String in cases:

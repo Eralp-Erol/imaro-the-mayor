@@ -26,9 +26,11 @@ usage() {
   sed -n '2,/^set -euo/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'
   cat <<'EOF'
 
-Cihazda ölçümü başlatma (bu betik yapmaz; sahip/Studio Director çalıştırır):
-  DEVICECTL_CHILD_IMARO_PERF_LOG=1 xcrun devicectl device process launch --device <kimlik> <bundle-id> --demo --perf-log-frames=24000
-  (ortam değişkeni ya da `--perf-log` bayrağı yeterlidir; uygulama içinden çıkış/arka plana alma dosyayı da yazar)
+Cihazda ölçümü başlatma (bu betik yapmaz; sahip/Studio Director çalıştırır). Tam adımlar: production/tasks/T-076.md.
+  tools/ios-install.sh --launch-only --device <kimlik> -- -- --demo --perf-log=demo-a1.json --perf-log-frames=6000
+  (oyun bayrakları Godot'nun `--` ayracından sonra okunur; ayracın cihaza ulaşıp ulaşmadığı DOĞRULANMADI: ilk
+   koşu sonrası rapordaki "args" alanı boşsa T-076 adım 4'teki ikinci varyantı deneyin. Argümansız yedek:
+   DEVICECTL_CHILD_IMARO_PERF_LOG=1 ile başlatıp oyunu elle oynamak.)
 EOF
 }
 

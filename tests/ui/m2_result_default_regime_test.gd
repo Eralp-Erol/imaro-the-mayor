@@ -264,10 +264,14 @@ func test_a_built_parcel_gets_an_honest_already_invested_line_not_waiting() -> v
 	assert_bool(text.contains(UiText.t(&"m2.investor.waiting"))).is_false()
 
 
+## İlerleme çubuğu: kesim tepki kartlarındaki (ROW_REACTION) yoğunluk çubukları HARİÇ ilk MeterBar.
+## B-130/D-026: yoğun yol yapımında konut arayanlar tepki verince panelde tepki kartı (kendi çubuğu) da görünür.
 func _first_meter(node: Node) -> MeterBar:
 	for child in node.get_children():
 		if child is MeterBar:
 			return child
+		if child.get_meta(M2ResultPanel.META_ROW, "") == M2ResultPanel.ROW_REACTION:
+			continue
 		var inner := _first_meter(child)
 		if inner != null:
 			return inner
