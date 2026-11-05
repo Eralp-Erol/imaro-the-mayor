@@ -125,7 +125,9 @@ static func compute_drawer_heights(ctx: UiContext, top_end: float, toolbar_y: fl
 	var room := maxf(peek, toolbar_y - gap - top_end - ctx.px(tk.size("drawer_map_strip")))
 	var half_key := "drawer_frac_half_low" if low else "drawer_frac_half"   # D-022: haritada iş yapılan paneller alçak
 	var half := clampf(room * tk.limit(half_key), peek, room)
-	var full := clampf(room * tk.limit("drawer_frac_full"), half, room)
+	# B-125: TAM'da bildirim şeridinin en az bir satırı (2 satır ~65 px) harita şeridine sığmalı; yarı yükseklik değişmez.
+	var full_room := maxf(half, room - ctx.px(tk.size("drawer_map_strip_full") - tk.size("drawer_map_strip")))
+	var full := clampf(full_room * tk.limit("drawer_frac_full"), half, full_room)
 	return {DrawerModel.State.CLOSED: peek, DrawerModel.State.HALF: half, DrawerModel.State.FULL: full}
 
 

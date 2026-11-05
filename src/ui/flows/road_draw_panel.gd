@@ -177,6 +177,12 @@ func _render() -> void:
 		_add_undo_row()
 		_restore_focus(focus_role)
 		return
+	# B-123 · Çekmecede eylem satırı (Kamulaştırarak geç / İptal) kaydırma DIŞINDAKİ yapışık altlıkta (`_add_buttons`);
+	# teklif adımında kaydırma alanında yalnız ETKİ satırı ("N bina yıkılacak, M hane yerinden edilecek") ve "Adım 3/3"
+	# kalır, ikisi de YARI'da kesilmeden görünür. Masaüstü/yan panel sırası değişmez.
+	var lead_impact := _impact_leads()
+	if lead_impact:
+		_body.add_child(_impact_label(tool.offer()))
 	_body.add_child(_muted(UiText.t(&"road.step_line", {"n": _step_number(), "total": 3})))
 	# Adım 3/3 (yol yapılabilir): tek satır yönerge + büyük Onayla EN ÜSTTE (kullanıcı denemesi: onayı bulamadı).
 	var review_confirmable := tool.step == RoadDrawTool.Step.REVIEW and tool.can_confirm()
@@ -330,7 +336,7 @@ func _add_preview_card() -> void:
 		inner.add_child(UiFactory.label(UiText.t(&"expropriation.empty_body"), &"", true))
 	elif not tool.offer().is_empty():
 		inner.add_child(UiFactory.label(UiText.t(&"expropriation.offer_title"), UiTheme.V_LABEL_DANGER, true))
-		_add_expropriation_block(inner, tool.offer(), false)
+		_add_expropriation_block(inner, tool.offer(), false, not _impact_leads())
 	else:
 		var reason := UiText.reject_reason(tool.verdict.reason_key, tool.verdict.args)
 		inner.add_child(UiFactory.label(UiText.t(&"road.invalid", {"reason": reason}), UiTheme.V_LABEL_DANGER, true))
@@ -339,14 +345,12 @@ func _add_preview_card() -> void:
 
 ## T-042b · Kamulaştırma bloğu: yalnız sim args'ından düz Türkçe sayılar + "Bedel: henüz kurulmadı". `accepted`: teklif
 ## kabul edilmiş, onay bekleniyor (geri alınabilirlik notu görünür); değilse teklif ("Kamulaştırarak geç").
-func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: bool) -> void:
+func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: bool,
+		with_impact: bool = true) -> void:
 	if not accepted:
 		inner.add_child(_muted(UiText.t(&"expropriation.offer_intro")))
-	var impact := UiFactory.label(ExpropriationText.impact_line(args), UiTheme.V_LABEL_HEADING, true)
-	if ExpropriationText.demolishes(args):
-		impact.add_theme_color_override("font_color", _ctx.tokens.color("danger"))
-	_tag(impact, "expropriation_impact")
-	inner.add_child(impact)
+	if with_impact:
+		inner.add_child(_impact_label(args))
 	inner.add_child(UiFactory.label(ExpropriationText.cost_line(), &"", true))
 	for line in ExpropriationText.detail_lines(args):
 		inner.add_child(_muted(line))
@@ -359,6 +363,21 @@ func _add_expropriation_block(inner: VBoxContainer, args: Dictionary, accepted: 
 		# B-013 / Q-030: kural kararı BEKLİYOR; metin bugünkü gerçek davranışı söyler (kısa süre açık, tepki işlenince
 		# ya da başka yol yapılınca kapanır). Kesin ret nedeni geri alma kapanınca sim'den (`road.undo_closed`) gelir.
 		inner.add_child(_muted(UiText.t(&"expropriation.undo_note")))
+
+
+## Etki satırı (sim args'ından sayılar); yıkım varsa tehlike rengi.
+func _impact_label(args: Dictionary) -> Label:
+	var impact := UiFactory.label(ExpropriationText.impact_line(args), UiTheme.V_LABEL_HEADING, true)
+	if ExpropriationText.demolishes(args):
+		impact.add_theme_color_override("font_color", _ctx.tokens.color("danger"))
+	_tag(impact, "expropriation_impact")
+	return impact
+
+
+## Etki satırı kaydırma alanının tepesinde mi (çekmece, düğme altlıkta; kartta tekrarlanmaz)?
+func _impact_leads() -> bool:
+	return _sticky and tool.step == RoadDrawTool.Step.REVIEW and not tool.can_confirm() \
+			and not tool.offer().is_empty() and not ExpropriationText.is_empty_strip(tool.offer())
 
 
 ## T-065 · Yeniden iskân satırları (sim args'ından): ev ayrılan hane, ev olmayan hane (yol yine yapılır), gösterge
@@ -390,6 +409,12 @@ func _resettlement_policy() -> int:
 	return -1
 
 
+## Birincil onay düğmesi yüksekliği: normalde birincil hedefin 1,2 katı; çekmecede (yapışık altlık, B-123) birincil hedef
+## kadar (>= 56 pt): altlık kaydırma alanından daha az yer alır, etki satırı kesilmez.
+func _confirm_height() -> float:
+	return maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * (1.0 if _sticky else 1.2))
+
+
 func _add_buttons() -> void:
 	if tool.step == RoadDrawTool.Step.PICK_A:
 		# Adım 1'de onaylanacak/iptal edilecek taslak yok: devre dışı Onayla/İptal satırı yer kaplar ve yönetim fiillerini
@@ -403,7 +428,7 @@ func _add_buttons() -> void:
 		var empty_strip := ExpropriationText.is_empty_strip(offer)
 		_accept_button = UiFactory.button(_ctx, UiText.t(
 				&"expropriation.empty_accept" if empty_strip else &"expropriation.accept"), true)
-		UiFactory.emphasize(_ctx, _accept_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
+		UiFactory.emphasize(_ctx, _accept_button, _confirm_height())
 		_tag(_accept_button, "road_expropriate")
 		_accept_button.pressed.connect(func() -> void:
 			tool.accept_offer()
@@ -421,7 +446,7 @@ func _add_buttons() -> void:
 		_confirm_button = UiFactory.button(_ctx, UiText.t(
 				&"expropriation.confirm" if tool.demolishes() else &"road.confirm"), true)
 		# Birincil vurgu + büyük hedef (dokunmatikte >= 44 pt zaten target_primary tabanından gelir).
-		UiFactory.emphasize(_ctx, _confirm_button, maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * 1.2))
+		UiFactory.emphasize(_ctx, _confirm_button, _confirm_height())
 		_confirm_button.custom_minimum_size.x = maxf(_confirm_button.custom_minimum_size.x, _ctx.px(CONFIRM_MIN_WIDTH))
 		_tag(_confirm_button, "road_confirm")
 		_confirm_button.disabled = not tool.can_confirm()
@@ -436,7 +461,10 @@ func _add_buttons() -> void:
 		tool.cancel()
 		refresh())
 	row.add_child(_cancel_button)
-	_body.add_child(row)
+	if _sticky:   # çekmece: eylem satırı kaydırma dışında, her zaman görünür (B-123)
+		footer.add_child(row)
+	else:
+		_body.add_child(row)
 	_add_undo_row()
 
 

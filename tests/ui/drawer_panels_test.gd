@@ -110,3 +110,19 @@ func test_low_half_for_road_and_inspector_normal_for_decision_panels() -> void:
 		assert_bool(HudRoot.DRAWER_LOW_PANELS.has(id)).is_true()
 	for id: StringName in [&"council", &"budget", &"agenda", &"policy", &"m2", &"reason", &"zoning"]:
 		assert_bool(HudRoot.DRAWER_LOW_PANELS.has(id)).is_false()
+
+
+## B-125: TAM çekmecede harita şeridi, bildirim şeridinin en az bir (2 satır) satırına yeter; YARI yüksekliği değişmez.
+func test_full_drawer_leaves_a_map_strip_for_one_notification_row_and_half_is_unchanged() -> void:
+	var ctx := UiContext.for_profile_name(&"touch")
+	for frame: Vector2 in [IPAD_SMALL_LANDSCAPE, IPAD_SMALL_PORTRAIT]:
+		var full := HudLayout.compute(ctx, frame, true, false, 0.0, false, 0.0, DrawerModel.State.FULL)
+		var free_h := full.panel.position.y - full.top.end.y
+		assert_float(free_h).override_failure_message("TAM: harita şeridi %.1f px (%s)" % [free_h, str(frame)]) \
+				.is_greater_equal(ctx.px(ctx.tokens.size("drawer_map_strip_full")) - 0.5)
+		assert_float(full.notifications.position.y + 65.0).is_less_equal(full.panel.position.y)
+		var half := HudLayout.compute(ctx, frame, true, false, 0.0, false, 0.0, DrawerModel.State.HALF)
+		var strip_px := ctx.px(ctx.tokens.size("drawer_map_strip"))
+		var half_room := half.toolbar.position.y - ctx.spacing() - full.top.end.y - strip_px
+		assert_float(float(half.drawer_heights[DrawerModel.State.HALF])).is_equal_approx(
+				half_room * ctx.tokens.limit("drawer_frac_half"), 1.0)

@@ -39,6 +39,7 @@
 		"toolbar_max_width": 760,
 		"sheet_max_height": 560,
 		"drawer_map_strip": 56,
+		"drawer_map_strip_full": 64,
 		"map_margin": 8
 	},
 	"limits": {

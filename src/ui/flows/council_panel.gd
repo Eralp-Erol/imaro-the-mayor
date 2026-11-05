@@ -125,14 +125,17 @@ func _vote_card(row: CouncilModel.VoteRow) -> Control:
 		_add_expectation(inner, row.expectation)
 		_add_positions(inner, v, false)
 	else:
+		# B-123 · Sıra: sonuç + sayım, oylamanın "Nedenini gör"ü, grupların oyu ve "Bu grubun gerekçesi" (tek satır/grup),
+		# en sonda uzun etken dökümü; böylece gerekçe düğmeleri dökümün altına itilmez (önceden ~y 1320).
 		_add_result(inner, v)
-		_add_positions(inner, v, true)
 		if not v.reason_ids.is_empty():
 			var ids := v.reason_ids
 			var why := UiFactory.button(_ctx, UiText.t(&"council.why_vote"), true)
 			_tag(why, "vote_reason_%d" % v.vote_id)
 			why.pressed.connect(func() -> void: _request_reason(func(p: ReasonPanel) -> void: p.show_reason_ids(ids)))
 			inner.add_child(why)
+		_add_positions(inner, v, true)
+		_add_why(inner, v)
 	var subject := SimContract.parse_ref(v.subject_ref)
 	if str(subject["kind"]) == String(SimContract.REF_BUDGET):
 		var open := UiFactory.button(_ctx, UiText.t(&"council.open_budget"), false)
@@ -174,7 +177,6 @@ func _add_result(inner: VBoxContainer, v: CouncilVoteView) -> void:
 	inner.add_child(_tally_row(&"council.vote.against", v.no, "danger"))
 	if v.abstain > 0:
 		inner.add_child(_tally_row(&"council.vote.abstain", v.abstain, "text_muted"))
-	_add_why(inner, v)
 
 
 ## Oylamanın sim'de kayıtlı nedeni (SIM-12): hayıra / evete çeken en etkili etkenler, üye sayılarıyla.
@@ -228,19 +230,22 @@ func _add_positions(inner: VBoxContainer, v: CouncilVoteView, show_reason: bool)
 		return
 	inner.add_child(UiFactory.label(UiText.t(&"council.positions"), UiTheme.V_LABEL_MUTED, true))
 	for p in v.positions:
-		var line := HBoxContainer.new()
-		line.add_child(UiFactory.label("%s (%s)" % [UiText.actor_name(p.bloc), UiText.t(&"council.seat_count",
-			{"seats": p.seats})], &"", true))
+		# HFlow: dar yuvada (320 px) düğme alt satıra sarar; geniş çekmecede etiket, oy ve düğme tek satırda kalır.
+		var line := HFlowContainer.new()
+		line.add_theme_constant_override("h_separation", int(_ctx.spacing()))
+		line.add_theme_constant_override("v_separation", int(_ctx.spacing()))
+		var bloc_label := UiFactory.label("%s (%s)" % [UiText.actor_name(p.bloc), UiText.t(&"council.seat_count",
+			{"seats": p.seats})], &"", true)
+		line.add_child(bloc_label)
 		var pos := _position_row(p.position)
-		pos.size_flags_horizontal = Control.SIZE_SHRINK_END
 		line.add_child(pos)
-		inner.add_child(line)
 		if show_reason and p.reason_id != SimContract.NO_ID:
 			var rid := p.reason_id
 			var b := UiFactory.button(_ctx, UiText.t(&"council.reasons_for_bloc"), false)
 			_tag(b, "bloc_reason_%d_%d" % [v.vote_id, rid])
 			b.pressed.connect(func() -> void: _request_reason(func(rp: ReasonPanel) -> void: rp.show_record(rid)))
-			inner.add_child(b)
+			line.add_child(b)
+		inner.add_child(line)
 
 
 func _position_row(position: StringName) -> Control:
