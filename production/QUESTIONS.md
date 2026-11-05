@@ -318,7 +318,7 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Meanwhile: %62, panel sırası/yenileme davranışı değişmez (her yeni panel yarıda açılır).
 
 
-### Q-038 · Oyunda Meclis ve Bütçe düğmeleri görünsün mü? (status: open)
+### Q-038 · Oyunda Meclis ve Bütçe düğmeleri görünsün mü? (status: answered → D-023 ("gorunsun"))
 - Context: Bağımsız QA'nın bulgusu (B-124): oyunda "Yönetim" modunda şu an yalnız Politikalar düğmesi var. Meclis oylaması ve bütçe sistemde çalışıyor, ama oyuncu bunlara düğmeyle ulaşamıyor; Meclis ancak teklif sunulunca ve gündem rozetinden açılıyor. Koddaki not "bu sistemler henüz kurulu değil" diyor, yani eski kalmış olabilir ya da bilinçle gizlenmiş olabilir.
 - Options: A) Meclis ve Bütçe düğmeleri Yönetim modunda görünsün (önerilen; iPad çekmecesi de gerçek oyunda kullanılır hale gelir). B) Şimdilik gizli kalsın, yalnız gündem rozetinden açılsın. C) Yalnız Bütçe görünsün.
 - Recommendation: A (sistem gerçek veriyle çalışıyor; gizli kalması oyuncuyu nedensellikten uzak tutar).

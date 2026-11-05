@@ -573,16 +573,25 @@ func test_grip_drag_and_arrow_buttons_move_the_real_drawer_and_closed_state_retu
 	await _frames(3)
 
 
-func test_b124_open_gap_real_scene_does_not_register_council_budget_agenda_tools() -> void:
+func test_b124_manage_mode_registers_council_budget_agenda_tools_and_they_open_in_the_drawer() -> void:
 	await _ensure_scene()
 	var hud := _hud()
 	hud.toolbar.select_mode(ModeToolbar.MODE_MANAGE)
 	await _frames(2)
-	# KARAKTERİZASYON: DecisionPanels.attach(..., with_manage_tools=false) -> meclis/bütçe/gündem araçları yok; oyuncu
-	# meclis çekmecesine yalnız gündem rozetinden ve gerekçe bağlantılarından dolaylı ulaşır.
-	for tid in [ModeToolbar.TOOL_COUNCIL, ModeToolbar.TOOL_BUDGET, ModeToolbar.TOOL_AGENDA]:
-		assert_object(hud.toolbar.tool_button(tid)).override_failure_message(
-				"B-124 DÜZELTİLMİŞ GÖRÜNÜYOR (%s kayıtlı): bu karakterizasyonu ters çevirin" % String(tid)).is_null()
+	# D-023 (Q-038): Meclis/Bütçe/Gündem araçları Yönetim modunda kayıtlı; her biri çekmecede YARI açılır.
+	var expected := {ModeToolbar.TOOL_COUNCIL: DecisionPanels.PANEL_COUNCIL,
+			ModeToolbar.TOOL_BUDGET: DecisionPanels.PANEL_BUDGET, ModeToolbar.TOOL_AGENDA: DecisionPanels.PANEL_AGENDA}
+	for tid: StringName in expected:
+		var btn := hud.toolbar.tool_button(tid) as Button
+		assert_object(btn).override_failure_message("%s aracı kayıtlı değil (B-124/D-023)" % String(tid)).is_not_null()
+		hud.close_panel_hard()
+		await _frames(2)
+		btn.pressed.emit()
+		await _frames(4)
+		assert_str(String(hud.panel_id())).is_equal(String(expected[tid]))
+		assert_int(hud.drawer_state).is_equal(DrawerModel.State.HALF)
+	hud.close_panel_hard()
+	await _frames(2)
 	assert_object(hud.toolbar.tool_button(ModeToolbar.TOOL_POLICY)).is_not_null()
 
 

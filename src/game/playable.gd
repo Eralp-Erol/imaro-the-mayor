@@ -418,9 +418,9 @@ func _start_hud() -> void:
 	assert(shared_input != null, "playable: CameraRig girdi profili yok")
 	_hud.bind_input(shared_input)
 	_hud.setup(_facade, PlatformProfile.current())
-	# T-047: oynanabilir sahnede yalnız çalışan araçlar kayıtlıdır (İmar önerisi + Döngü sonucu); Bütçe/Meclis/Gündem
-	# gerçek sim'de henüz kurulu değil, kaydedilmez. T0 stoku için "parselde yapı var mı" sorgusu dünya verisinden gelir.
-	_decisions = DecisionPanels.attach(_hud, _facade, _has_t0_structure, false)
+	# D-023 (Q-038): Bütçe/Meclis/Gündem araçları Yönetim modunda kayıtlıdır (gerçek sim'de çalışıyor). T0 stoku için
+	# "parselde yapı var mı" sorgusu dünya verisinden gelir.
+	_decisions = DecisionPanels.attach(_hud, _facade, _has_t0_structure, true)
 	shared_input.select_requested.connect(_on_select_requested)
 	_status = Label.new()
 	# Yer `_place_status` ile HUD boş harita dikdörtgeninden hesaplanır (araç çubuğu/panelle çakışmaz).
