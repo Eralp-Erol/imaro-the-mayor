@@ -11,7 +11,7 @@
 ## Yanıtların bağlamı
 
 - Başlangıç ilçesi: Oyun şimdilik oyuncunun ilçe seçmesi olmadan, D2'den başlar. Yol yetkisi veride yalnız D2'ye bağlı (`network.json jurisdiction_regions`); bu, şimdiki hâlin kararlaştırılmış olması demektir.
-- Meclis RED: Meclis "hayır"ı yalnız yeşil imar + dolu altyapı + en az 10 parsellik plan gibi koşullarda ve gürültüyle (~%5-8) çıkar. Ağırlıklara/eşiğe dokunulmaz (Q-014/Q-028 açık kalır).
+- Meclis RED: Meclis "hayır"ı yalnız yeşil imar + dolu altyapı + en az 10 parsellik plan gibi koşullarda ve gürültüyle (~%5-8) çıkar. Ağırlıklara/eşiğe dokunulmaz (Q-014 D-014 ile kapandı; Q-028 açık kalır).
 
 ## Uygulama notu (ajan açıklaması; kullanıcı alıntısı değildir)
 

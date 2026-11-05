@@ -1,5 +1,7 @@
 # M2 kapanış listesi (taslak) — 2026-11-04
 
+> **GÜNCEL DURUM (2026-11-05 gece):** `verify full` PASS @ 05c5a13 (3111 test, 0 hata). Tasarım direktörü FAITHFUL WITH FIXES (`production/log/2026-11-05-design-director-m2-kapanis.md`), teknik direktör KOŞULLU EVET (`production/log/2026-11-05-teknik-direktor-m2-kapanis.md`). Sahip kararları işlendi: D-021 (D2 başlangıç, yıkım→meclis güveni, iPad panelleri), D-022 (çekmece yüksekliği), D-023 (Meclis/Bütçe düğmeleri görünür), D-024/D-025 (boş arazi ve çatı ESKİ görünüşe döndü; zevk sahibindir). Q-035/Q-036/Q-038 yanıtlandı. **Tek sert bekleyen: iPad cihaz ölçümü (T-076; sahip: EN SONA).** Kalan hazırlık işleri: B-042 asıl çözüm, T-076 hazırlık, ≥2 grup tepkisi ölçümü (tasarım direktörü bulgusu), pencereli RED karesi (isteğe bağlı), sahibin demoyu oynayıp kabulü. B-027 (gerekçe ~100 günde günlükten düşer) BİLİNEN SINIRDIR, hata değil karar bekler. Aşağıdaki ayrıntılar 2026-11-04/05 öğleden kalma olup yer yer bayattır; yukarıdaki satır önceliklidir.
+
 M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F03 "Oyun hissi için doğrulanması gereken kabul ölçütleri" (7 madde) + M2 satırındaki ek koşullar. Bu dosya KAPANIŞ DEĞİLDİR; neyin kanıtlı, neyin açık olduğunu ayırır. Kanıt yoksa "kanıt aranmadı" yazılır, "geçti" denmez. Karar yetkisi: sahip + director'lar.
 
 ## F03 ölçütleri
@@ -30,13 +32,13 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 
 ## Yönetici incelemeleri (2026-11-05)
 - **Teknik direktör:** `docs/adr/ADR-0010-kare-butcesi-hedefleri-m2.md`, `production/log/2026-11-05-teknik-direktor-perf.md`.
-- **Tasarım direktörü:** FAITHFUL WITH FIXES (`production/log/2026-11-05-design-director-m2.md`): CAN-03 ve D-017..D-019 sadık. Düzeltmeler: ölçüt 7 (yapıldı); bekleme listesi (T-067) oyuncuya görünmüyor (UI yok) ve gerçek Ismeral'de çalışıp çalışmadığı ÖLÇÜLMEDİ; halk tepkisinin meclise etkisi ölçülmedi; D-020 'Hep D2' kanonun 'Orven zorunlu başlangıç değil' reddiyle çakışıyor -> Q-035 (SAHİBE SOR, aşağıda).
+- **Tasarım direktörü:** FAITHFUL WITH FIXES (`production/log/2026-11-05-design-director-m2.md`): CAN-03 ve D-017..D-019 sadık. Düzeltmeler: ölçüt 7 (yapıldı); bekleme listesi (T-067) oyuncuya görünmüyor (UI yok) ve gerçek Ismeral'de çalışıp çalışmadığı ÖLÇÜLMEDİ; halk tepkisinin meclise etkisi ölçülmedi; D-020 'Hep D2' kanonun 'Orven zorunlu başlangıç değil' reddiyle çakışıyor -> Q-035 (YANITLANDI → D-021).
 - **Sanat direktörü:** PASS WITH FIXES / KABUL EDİLEBİLİR (`production/log/2026-11-05-art-director-m2.md`): ışık GEÇTİ; yıkılan yol/boş arazi düz hardal sarısı lekesi ve imar paneli ham parsel numaraları YENİDEN YAPILMALI; dokunmatik HUD şehrin ~%60'ını örtüyor; 800x600 ve 768x1024 için karar verilemedi (kare yok). Sahibe sorulacak zevk kararları: çatı paleti, boş arazinin görünüşü, dokunmatik panel yeri.
 - QUESTIONS.md durumları gözden geçirildi (2026-11-05): Q-014, Q-025, Q-026 kayıtta artık "answered" (D-011/D-014); parametreler çalışma değeri olarak açık.
 
 ## Ölçümler (2026-11-05, `production/log/2026-11-05-bekleme-listesi-meclis-olcum.md`)
 - **Bekleme listesi çalışıyor (gerçek Ismeral D2, 2 dünya tohumu, 200 gün):** yola yakın boş parsellere konut imarı verilince yatırımcı bitirdi, bekleyen ailelerin tamamı ev aldı (56/56, 42/42, 12/12; ikinci dünyada 72/72, 32/32, 12/12). İmar yoksa 0 yeni konut ve liste sabit kalır (CAN-03 gereği). Tasarım direktörünün 'sınır listeyi hep kapatır' hipotezi gönderilen veride YANLIŞ; yalnız `leave_region` kaderinde (gönderilmiyor) ölü (B-029).
-- **Yıkım -> meclis (8 tohum, 144 koşu):** yıkım meclis üyesi güvenini DÜŞÜRMÜYOR; oylamayı hafifçe kolaylaştırıyor (altyapı yükü düştüğü için). Tepki -> meclis bağı yok (B-030, Q-036: SAHİBE SOR).
+- **Yıkım -> meclis (8 tohum, 144 koşu):** yıkım meclis üyesi güvenini DÜŞÜRMÜYOR; oylamayı hafifçe kolaylaştırıyor (altyapı yükü düştüğü için). Tepki -> meclis bağı yok (B-030, Q-036: YANITLANDI → D-021).
 - Gerekçe kaydı ~100 günde düşüyor (B-027); bekleme listesi gerekçeleri de etkileniyor (12 yazıldı, 200. günde 9).
 
 ## Sahip kararları (M2'yi engellemez, ama kapanış kartında sorulur)

@@ -16,7 +16,7 @@ Kanıt seviyeleri: `—` yok · `T` otomatik test · `R` runtime ekran görünt�
 | CAN-05 | Planlama/imar: arazi kullanımı, yoğunluk, yükseklik, gelişme koşulları. | F03 mod 2 | OY | — |
 | CAN-06 | Siyasi/ekonomik yönetim: bütçe, yatırım önceliği, hizmet kapasitesi, yetki, meclis desteği, teşvik, çıkar çatışması, seçim, bölgesel projeler. Bürokrasi yaratıcı inşayı boğmaz. | F03 mod 3 | OY | — |
 | CAN-07 | Ismeral kampanyasında aynı erkek protagonist: ilçe başkanı → metropol başkanı → ulusal mücadele → cumhurbaşkanlığı seçim zaferi = final. Ülke yönetimi oynanmaz. | F01, F05-A | K | — |
-| CAN-08 | Oyuncu başlangıç ilçesini kendisi seçer; yalnızca gerçekten geliştirilmiş, oynanabilir ilçeler seçilebilir gösterilir. Orven zorunlu değildir; stüdyonun geliştirme test alanı seçimi oyuncu özgürlüğünü kısıtlamaz. | F01, F05-A, **D-002** | K | — |
+| CAN-08 | (D-021: gönderilen oyunda yetki alanı bilinçle D2'dir; mimari başka ilçe başlatmayı destekler, testli.) Oyuncu başlangıç ilçesini kendisi seçer; yalnızca gerçekten geliştirilmiş, oynanabilir ilçeler seçilebilir gösterilir. Orven zorunlu değildir; stüdyonun geliştirme test alanı seçimi oyuncu özgürlüğünü kısıtlamaz. | F01, F05-A, **D-002** | K | — |
 | CAN-09 | Yedi bölge kampanyası ayrı protagonist/hikâye/kayıt; başarılar taşınmaz. Diğer bölgeler soyut ekonomi ve siyasetle etkindir. | F01, F05-A | K | — |
 | CAN-10 | Kariyer seviye-puanı menüsü değildir: seçim, destek, itibar, müttefik, medya, sicil; kaybedilen seçim anlamlı sonuç doğurur. | F01, F03 | OY | — |
 | CAN-11 | Makam değişiminde karakter ve dünya durumu sıfırlanmaz; aynı dünya daha geniş yetkiyle yönetilir. | F01, F03 | K | — |
@@ -36,7 +36,7 @@ Kanıt seviyeleri: `—` yok · `T` otomatik test · `R` runtime ekran görünt�
 | WLD-09 | Topolojik sabitler (körfez, yamaç/ova, ana kara–ada ilişkisi, tarihî şehir, miras odakları) korunur; kazanılmış mülkiyet ve geçmiş "sıfırla" ile silinmez. | F02 | OY | — |
 | WLD-10 | Anderva: kesintisiz ana kara, kıyı/ova/yayla/orman/dağ kuşakları; yedi metropol ülke ölçeğinde anlamlı kent kütlesi (köy gibi değil). Varnis, Karvet vb. adlar kesin değil. | F01, F04, F05-A | K / OY | — |
 | WLD-11 | Oyuncu bakmıyorken diğer ilçeler donmaz; diğer belediyeler, yatırımcılar, haneler ve makro koşullar onları değiştirir (soyutlama serbest). | F03 | OY | — |
-| WLD-12 | Örnek/ilk ilçe gelecekteki tüm kampanyalar için zorunlu başlangıç hâline getirilmez. | F03 kabul ölçütleri | OY | — |
+| WLD-12 | (D-021: M2 oyununda başlangıç D2'dir, kampanyalar için zorunlu hâle getirilmez.) Örnek/ilk ilçe gelecekteki tüm kampanyalar için zorunlu başlangıç hâline getirilmez. | F03 kabul ölçütleri | OY | — |
 
 ## Simülasyon (SIM)
 
