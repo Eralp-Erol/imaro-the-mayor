@@ -13,7 +13,10 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 
 # D-021 ile yenilendi: eski c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094 (meclis güven kesintisi
 # `council_trust` kuralı yokken). Kural kapalıyken eski değer `golden_x_council_trust_test.gd` ile kilitli.
-const GOLDEN_X := "1914f0e131fb087426f0e733162ec7f3b1dfc73a1c2aeb555c268cd37c3abb0d"
+# B-080 ile yenilendi (ADR-0011): eski 1914f0e131fb087426f0e733162ec7f3b1dfc73a1c2aeb555c268cd37c3abb0d. Neden:
+# PE-03 `council.trust_gap` artık D-021 kesintisi sonrası etkin güveni okur; senaryoda kesinti var, tek fark
+# `politics.events.last_pressure["PE-03"]` (251 -> 252). Kanıt: `golden_x_council_trust_test.gd`.
+const GOLDEN_X := "d28d563334c8c8c2f5e83b102de4896825c1b7c6eb71655171dfcb0c6d22869c"
 const FINAL_TICK := 60
 const SAVE_TICK := 30
 const SCAN_DAYS := 7
