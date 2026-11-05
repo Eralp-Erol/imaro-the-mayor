@@ -106,6 +106,8 @@ static func variety_material(source: Material, variety: BuildingVariety) -> Mate
 	m.set_shader_parameter("roof_zinc", variety.roof_zinc)
 	m.set_shader_parameter("wall_light", variety.wall_light)
 	m.set_shader_parameter("wall_light_mix", variety.wall_light_mix)
+	m.set_shader_parameter("roof_line_keep", variety.roof_line_keep)
+	m.set_shader_parameter("roof_shade_pivot", variety.roof_shade_pivot)
 	return m
 
 
