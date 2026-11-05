@@ -232,6 +232,10 @@ static func member_factors(state: GameState, ctx: PoliticsContext, member_key: S
 		player: String) -> Dictionary:
 	var factors := ActorInputs.relation_factors(state, ctx.actors, member_key, player)
 	factors.erase("topic_memory")
+	var cut := CouncilTrust.penalty(state, member_key)
+	if cut > 0:  # D-021: yerinden edilme güveni düşürdü (yoksa girdi bit-bit eskisi gibi)
+		factors["trust_in_player"]["value"] = CouncilTrust.effective_trust(state,
+			int(factors["trust_in_player"]["value"]), member_key)
 	var actor := ActorStore.actor_ref(state, member_key)
 	factors["stance_distance"] = stance_alignment(actor["stance"], vote["context"].get("axes", {}))
 	factors["bloc_pressure"] = bloc_pressure(state, ctx, actor, vote["context"].get("stakes", {}))

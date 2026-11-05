@@ -9,7 +9,8 @@ extends SceneTree
 ## (`draw: 0`); gerçek oy gürültülüdür. Çalıştır:
 ##   tools/godot.sh --headless --path . --script res://tools/godot/demolition_council_probe.gd -- \
 ##       [--arms=A,B,C] [--stress-roads=6] [--sim-seeds=1..] [--zones=zone.green,zone.residential,zone.mixed] [--gaps=2,25] [--pick=q90] [--plan-n=12] [--warm=30]
-## Çıktı: `DC_SETUP`, `DC_RUN` (senaryo), `DC_DONE`.
+## Çıktı: `DC_SETUP`, `DC_RUN` (senaryo), `DC_DONE`. D-021: `pre.council_relation[üye]` ayrıca `penalty` (meclis güven kesintisi, pm)
+## ve `trust_eff` (ilişki güveni - kesinti) taşır; kural kapalıyken penalty 0, trust_eff = trust.
 
 const Support := preload("res://tests/sim/perf/qa_world_support.gd")
 const REGION := "D2"
@@ -186,7 +187,8 @@ func _pre_state(s: Support.SimCtx) -> Dictionary:
 		var mk := "actor.council.%d" % (k + 1)
 		if ActorStore.has_actor(st, mk):
 			var rel := ActorStore.relation(st, s.handle.context.actors, mk, player)
-			trust[mk] = {"trust": int(rel["trust"]), "resentment": int(rel["resentment"]), "obligation": int(rel["obligation"])}
+			trust[mk] = {"trust": int(rel["trust"]), "resentment": int(rel["resentment"]), "obligation": int(rel["obligation"]),
+				"penalty": CouncilTrust.penalty(st, mk), "trust_eff": CouncilTrust.effective_trust(st, int(rel["trust"]), mk)}  # D-021
 	var blocs := {}
 	var pol := PoliticsState.data(st)
 	for bk: String in pol["blocs"]:

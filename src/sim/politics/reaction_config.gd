@@ -24,10 +24,19 @@ extends RefCounted
 ##          (puan/tarama) = max(district_floor, hane x district_gain / bölge hanesi); 0 = kapalı.
 ##          `independent_items` (B-008): her yolun öğesi diğer açık PE-01 öğesinden ve bekleme süresinden
 ##          bağımsız açılır (art arda iki yol = iki ayrı tepki, ikincisi gecikmeden); false = eski mutex/bekleme.
+##   council_trust {enabled, decision, cohorts, window_days, threshold_households, drop_per_household_pm, cap_pm,
+##          recover_per_scan_pm} (D-021, `CouncilTrust`): yerinden edilme meclis üyelerinin güvenini düşürür. KOD
+##          varsayılanı KAPALI (yalnız `reactions.json` açar). `cohorts`: temsil ettiği kesim bu kohortlardansa üye
+##          etkilenir; `window_days`: etkinin doğrusal söndüğü süre; `threshold_households`: bunun altındaki (sönmüş)
+##          yerinden edilen hanede etki yok; `drop_per_household_pm`: eşiği aşan hane başına güven kesintisi (pm);
+##          `cap_pm`: toplam kesinti tavanı; `recover_per_scan_pm`: hedef düştüğünde haftalık en çok toparlanma.
+##          Hepsi ÇALIŞMA MODELİ (F05-C), sahibin sözü değil.
 ##          "Yeni ev sunuldu mu" kararı burada DEĞİL, tek noktada: `ReactionRehousing.still_unhoused` (şimdilik hep
 ##          "hâlâ barınamıyor": sim'de yeniden iskân mekanizması yok; sahip ayrıca karar verecek).
 
-const KEYS: Array[String] = ["schema", "window_days", "cohorts", "cause", "agenda", "local"]
+const KEYS: Array[String] = ["schema", "window_days", "cohorts", "cause", "agenda", "local", "council_trust"]
+const COUNCIL_TRUST_KEYS: Array[String] = ["enabled", "decision", "cohorts", "window_days", "threshold_households",
+	"drop_per_household_pm", "cap_pm", "recover_per_scan_pm"]
 const LOCAL_KEYS: Array[String] = ["enabled", "cohort", "neighborhood_households", "min_displacement_pm",
 	"full_displacement_pm", "proximity_share_pm", "floor_pressure_pm", "district_floor", "district_gain",
 	"independent_items"]
@@ -44,6 +53,9 @@ static func defaults() -> Dictionary:
 		"agenda": {"template": "PE-01", "min_displacement_pm": 20, "full_displacement_pm": 100},
 		"local": {"enabled": false, "cohort": "housed", "neighborhood_households": 200, "min_displacement_pm": 20,
 			"full_displacement_pm": 200, "proximity_share_pm": 250}.merged(LOCAL_EXTRA_DEFAULTS),
+		"council_trust": {"enabled": false, "decision": "decision.council.displacement_trust", "cohorts": ["housed"],
+			"window_days": 180, "threshold_households": 10, "drop_per_household_pm": 4, "cap_pm": 150,
+			"recover_per_scan_pm": 25},
 	}
 
 
@@ -56,6 +68,8 @@ static func parse(section: Dictionary, templates: Array, errors: PackedStringArr
 		out["agenda"] = _agenda(section["agenda"], templates, errors)
 	if section.has("local"):
 		out["local"] = _local(section["local"], errors)
+	if section.has("council_trust"):
+		out["council_trust"] = _council_trust(section["council_trust"], errors)
 	return out
 
 
@@ -130,4 +144,39 @@ static func _local(raw: Variant, errors: PackedStringArray) -> Dictionary:
 	for name: String in ["district_floor", "district_gain"]:
 		if raw.has(name):
 			out[name] = ActorSchema.required_int(raw, name, 0, 100000, path, errors)
+	return out
+
+
+static func _council_trust(raw: Variant, errors: PackedStringArray) -> Dictionary:
+	var path := "reactions.council_trust"
+	var out: Dictionary = defaults()["council_trust"]
+	if not (raw is Dictionary):
+		errors.append("%s: sözlük olmalı" % path)
+		return out
+	ActorSchema.check_unknown(raw, COUNCIL_TRUST_KEYS, path, errors)
+	if typeof(raw.get("enabled", null)) != TYPE_BOOL:
+		errors.append("%s.enabled: true/false olmalı" % path)
+	else:
+		out["enabled"] = raw["enabled"]
+	var decision: Variant = raw.get("decision", null)
+	if typeof(decision) != TYPE_STRING or not (decision as String).begins_with("decision."):
+		errors.append("%s.decision: 'decision.' ile başlayan dizge olmalı" % path)
+	else:
+		out["decision"] = decision
+	var cohorts: Variant = raw.get("cohorts", null)
+	if not (cohorts is Array) or (cohorts as Array).is_empty():
+		errors.append("%s.cohorts: boş olmayan kohort kimliği dizisi olmalı" % path)
+	else:
+		var ids: Array = []
+		for cohort_id: Variant in cohorts:
+			if typeof(cohort_id) != TYPE_STRING or (cohort_id as String).is_empty():
+				errors.append("%s.cohorts: kohort kimlikleri dizge olmalı" % path)
+			else:
+				ids.append(cohort_id)
+		out["cohorts"] = ids
+	out["window_days"] = ActorSchema.required_int(raw, "window_days", 1, 100000, path, errors)
+	out["threshold_households"] = ActorSchema.required_int(raw, "threshold_households", 0, 1000000, path, errors)
+	out["drop_per_household_pm"] = ActorSchema.required_int(raw, "drop_per_household_pm", 0, 2000, path, errors)
+	out["cap_pm"] = ActorSchema.required_int(raw, "cap_pm", 0, 2000, path, errors)
+	out["recover_per_scan_pm"] = ActorSchema.required_int(raw, "recover_per_scan_pm", 0, 2000, path, errors)
 	return out

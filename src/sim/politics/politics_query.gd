@@ -47,7 +47,8 @@ static func member_view(state: GameState, ctx: PoliticsContext, member: String, 
 	var bloc := CouncilBlocView.new()
 	bloc.bloc = actor_ref_of(state, member)
 	bloc.seats = 1
-	bloc.stance = int(ActorStore.relation(state, ctx.actors, member, player)["trust"])
+	var trust := int(ActorStore.relation(state, ctx.actors, member, player)["trust"])
+	bloc.stance = CouncilTrust.effective_trust(state, trust, member)  # D-021: kesinti dahil (yoksa ilişki güveni aynen)
 	return bloc
 
 
