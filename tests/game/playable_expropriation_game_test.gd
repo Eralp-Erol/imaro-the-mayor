@@ -208,6 +208,12 @@ func test_road_through_a_built_block_demolishes_then_undo_restores_then_load_mat
 	await _frames(3)
 	assert_int(facade.public_works().size()).is_equal(1)   # ikinci adım onayı bekliyor
 	var yes := Support.find_button(_scene._hud, UiText.t(&"expropriation.undo_confirm"))
+	# Yüklü makinede onay düğmesi 3 kareden geç çıkabilir (verify full'da 1 kez görüldü): sınırlı bekle.
+	var waited := 0
+	while yes == null and waited < 60:
+		await _frames(2)
+		waited += 2
+		yes = Support.find_button(_scene._hud, UiText.t(&"expropriation.undo_confirm"))
 	assert_object(yes).override_failure_message("'Evet, geri al' düğmesi yok").is_not_null()
 	await _click(yes.get_global_rect().get_center())
 	facade.advance(1)
