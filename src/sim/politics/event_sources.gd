@@ -153,7 +153,8 @@ static func _council_sources(state: GameState, ctx: PoliticsContext) -> Dictiona
 	var members: Array = ctx.politics.council["members"]
 	var trust_total := 0
 	for member: String in members:
-		trust_total += int(ActorStore.relation(state, ctx.actors, member, player)["trust"])
+		trust_total += CouncilTrust.effective_trust(state,
+			int(ActorStore.relation(state, ctx.actors, member, player)["trust"]), member)
 	var trust_avg := 0 if members.is_empty() else trust_total / members.size()
 	return {"council.budget_vote_failed": failed, "council.dissent": dissent,
 		"council.trust_gap": clampi((SCALE - trust_avg) / 2, 0, SCALE)}
