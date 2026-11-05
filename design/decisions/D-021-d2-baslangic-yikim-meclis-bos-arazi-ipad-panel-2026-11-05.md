@@ -1,4 +1,4 @@
-# D-021 · D2 şimdilik, yıkım meclis güvenini düşürür, boş arazi kuru ot/toprak, iPad paneli alttan çekmece
+# D-021 · D2 şimdilik, yıkım meclis güvenini düşürür, boş arazi kuru ot/toprak, iPad paneli alttan çekmece, çatı karışık
 
 - Tarih: 2026-11-05 · Kaynak: bu oturumdaki dört seçenekli soru kartı (Q-035, Q-036, boş arazi görünüşü, iPad panel yeri).
 - Not: Kullanıcı seçenekli kartla yanıtladı; aşağıdaki sözler seçtiği kart etiketleridir (serbest metin yazmadı).
@@ -9,6 +9,7 @@
 > Yıkım ve meclis: “Meclis güveni düşsün”
 > Boş arazi: “Kuru ot ve toprak (Önerilen)”
 > iPad paneli: “Alttan çıkan çekmece (Önerilen)”
+> Çatı paleti: “Kiremit ve düz çatı karışık (Önerilen)”
 
 ## Yanıtların bağlamı (ajan açıklaması; kullanıcı alıntısı değildir)
 
@@ -16,3 +17,4 @@
 - Yıkım ve meclis (Q-036): kart metni "Çok aileyi yerinden edersen meclis üyeleri sana daha az güvenir ve imar planların reddedilmeye yaklaşır." BÜYÜKLÜK, eşik ve hangi üyelerin etkileneceği kullanıcı tarafından söylenmedi: çalışma değeri olarak veriye konur, sahip onayı yok, SIM-12 gereği her etki kayda neden olarak yazılır. Simülasyon kuralı değişir: ilgili GOLDEN hash'leri BİLİNÇLİ yenilenebilir (teknik direktör incelemesi şart). Yıkımın olmadığı koşularda hash'ler değişmemelidir.
 - Boş arazi: kart metni "Terk edilmiş, kurumuş tarla hissi. Şehrin renkleriyle uyumlu, hafif ve hızlı yapılır." Yıkılan yol/boş belediye arazisinin düz hardal sarısı görünümü bununla değişir (sanat direktörü bulgusu).
 - iPad paneli: kart metni "Parmakla yukarı çekilir, aşağı itilir. Şehri daha az örter, düğmeler başparmağa yakın olur." Dokunmatik profilde imar paneli alttan çekmece olur; masaüstü düzeni değişmez.
+- Çatı paleti: kart metni "Kiremit hala en çok ama düz/beton çatı ve açık cepheli bloklar artar, yan yana tekrar kırılır." Oranlar sahibin sözü değil: çalışma değeri olarak veriye konur. (Kaynak soru: art-director 2026-11-05, Q-013 ek ile ilgili.)
