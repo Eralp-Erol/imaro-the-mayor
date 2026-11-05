@@ -9,9 +9,29 @@ extends RefCounted
 const DECISION := &"decision.council.displacement_trust"
 
 
-## Kesintisi yürürlükte olan üye sayısı (son kayıt positive).
-static func affected_members(facade: SimFacade) -> int:
-	var council: CouncilView = facade.snapshot().council
+## Kesintisi yürürlükte olan üye sayısı (son kayıt positive). `snap` verilirse yeniden `snapshot()` alınmaz.
+## B-042: facade hızlı yolu (`latest_reason_by_subject`, sözleşme dışı) varsa artımlı önbellekten (~0 ms), yoksa tam
+## tarama; sonuç ikisinde de AYNI (`affected_members_scan` referans).
+static func affected_members(facade: SimFacade, snap: SimSnapshot = null) -> int:
+	if not facade.has_method(&"latest_reason_by_subject"):
+		return affected_members_scan(facade, snap)
+	var council: CouncilView = (snap if snap != null else facade.snapshot()).council
+	var subjects := PackedStringArray()
+	for bloc in council.blocs:
+		if bloc.bloc != null and bloc.bloc.is_valid():
+			subjects.append(String(bloc.bloc.ref()))
+	var latest: Dictionary = facade.call(&"latest_reason_by_subject", DECISION, subjects)
+	var count := 0
+	for subject in subjects:
+		var rec: ReasonRecord = latest.get(subject, null)
+		if rec != null and rec.outcome == ReasonRecord.OUTCOME_POSITIVE:
+			count += 1
+	return count
+
+
+## Tam tarama (eski yol; mock facade ve test referansı): her üyenin tüm neden kaydı.
+static func affected_members_scan(facade: SimFacade, snap: SimSnapshot = null) -> int:
+	var council: CouncilView = (snap if snap != null else facade.snapshot()).council
 	var count := 0
 	for bloc in council.blocs:
 		if bloc.bloc == null or not bloc.bloc.is_valid():

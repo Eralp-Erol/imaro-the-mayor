@@ -17,7 +17,6 @@ const PANEL_COUNCIL := &"council"
 const PANEL_BUDGET := &"budget"
 const PANEL_AGENDA := &"agenda"
 const PANEL_POLICY := &"policy"
-const TRUST_REFRESH_TICKS := 7
 
 var hud: HudRoot = null
 var facade: SimFacade = null
@@ -38,8 +37,6 @@ var _agenda_ready: bool = false
 var _agenda_cache := AgendaModel.Cache.new()
 ## T-067: "eve kavuştu" bildirimi (PolicyView.served_households artışı) ve bekleyen aile sayısı -> HUD şeridi.
 var _queue_notice := ResettlementQueueNotice.new()
-var _trust_checked_tick: int = -1
-var _trust_members: int = 0
 
 
 ## `structure_probe`: parselde sim dışı (T0 stok) yapı var mı (`Callable(parcel_id) -> bool`; ZoningFlowModel'e geçer).
@@ -238,7 +235,7 @@ func _on_refreshed() -> void:
 		return
 	_update_agenda(snap)
 	_update_queue_notice()
-	_update_trust_notice()
+	_update_trust_notice(snap)
 	for panel: FlowPanel in [council_panel(), budget_panel(), agenda_panel(), policy_panel()]:
 		if panel != null:
 			panel.refresh()
@@ -250,16 +247,11 @@ func _update_queue_notice() -> void:
 		hud.strip.set_queue_notice(_queue_notice.waiting(), _queue_notice.last_batch())
 
 
-## B-042: `affected_members` tüm gerekçe kaydını tarar (~22 ms); sim bu kuralı `scan_days` aralığında yazar, bu yüzden
-## sonuç en çok `TRUST_REFRESH_TICKS` günde bir yenilenir (geri sarma/yükleme ve ilk çağrı anında yeniler).
-func _update_trust_notice() -> void:
+## B-042: `affected_members` facade'ın artımlı önbelleğinden okur (tick başına ~0 ms); eski 7 günlük kısıtlama kalktı.
+func _update_trust_notice(snap: SimSnapshot = null) -> void:
 	if hud.strip == null:
 		return
-	var tick := facade.current_tick()
-	if _trust_checked_tick < 0 or tick < _trust_checked_tick or tick - _trust_checked_tick >= TRUST_REFRESH_TICKS:
-		_trust_checked_tick = tick
-		_trust_members = CouncilTrustNotice.affected_members(facade)
-	hud.strip.set_trust_notice(_trust_members)
+	hud.strip.set_trust_notice(CouncilTrustNotice.affected_members(facade, snap if snap != null else hud.snapshot()))
 
 
 func _update_agenda(snap: SimSnapshot) -> void:

@@ -59,6 +59,7 @@ var _zoning_handler: ZoningProposeHandler
 var _change_epoch: int = 0
 ## 2026-11-01 · `parcel_views` gerekçe dizini önbelleği (türetilmiştir; durum/hash/kayıt dışı, bkz. ReasonSubjectCache).
 var _reason_cache := ReasonSubjectCache.new()
+var _latest_reason_cache := ReasonLatestCache.new()
 
 
 ## Yeni oyun. Geçersiz yapılandırma/kaynak/hız tablosunda push_error + null.
@@ -537,6 +538,13 @@ func reasons_for(subject_ref: StringName) -> Array[ReasonRecord]:
 	return out
 
 
+## B-042 · SÖZLEŞME DIŞI, salt okunur hızlı yol (sürüm değişmez; tüketici `has_method` ile arar, yoksa `reasons_for`):
+## her konu için `reasons_for(konu)` içindeki `decision_key == decision` kayıtlarından en yenisi; kaydı olmayan konu
+## sonuçta yoktur. Artımlıdır (yeni günlük kayıtları kadar iş); kayıt yükleme önbelleği bırakır.
+func latest_reason_by_subject(decision: StringName, subjects: PackedStringArray) -> Dictionary:
+	return _latest_reason_cache.lookup(_state, decision, subjects)
+
+
 func reason(reason_id: int) -> ReasonRecord:
 	var rec := _state.reasons.by_id(reason_id)
 	return null if rec.is_empty() else ReasonAdapter.to_record(rec, _state.reasons.first_id())
@@ -589,6 +597,7 @@ func import_save(bytes: PackedByteArray) -> SimSave.LoadResult:
 	_driver.bind_state(_state)
 	_retained_cache = {}
 	_reason_cache.reset()  # eski durumu da bırakır
+	_latest_reason_cache.reset()
 	_sim_units_cache = {}
 	_change_epoch += 1  # T-045: halkanın geçmişi artık geçersiz; tüketici tam yeniden eşitler
 	if _economy != null:

@@ -322,7 +322,7 @@ func _hud_cost(facade: SimFacade, out: Dictionary) -> void:
 			# En büyük aboneyi alt kalemlerine böl (B-041 bulgusu: UI alanı; yalnız ölçüm).
 			var d: Object = cb.get_object()
 			var snap2: SimSnapshot = hud.snapshot()
-			var parts := {"update_agenda": 0.0, "queue_notice": 0.0, "trust_notice": 0.0}
+			var parts := {"update_agenda": 0.0, "queue_notice": 0.0, "trust_notice": 0.0, "trust_scan_ref": 0.0}
 			for i in reps:
 				var t2 := Time.get_ticks_usec()
 				d._update_agenda(snap2)
@@ -333,6 +333,9 @@ func _hud_cost(facade: SimFacade, out: Dictionary) -> void:
 				t2 = Time.get_ticks_usec()
 				d._update_trust_notice()
 				parts["trust_notice"] += _since(t2)
+				t2 = Time.get_ticks_usec()
+				CouncilTrustNotice.affected_members_scan(d.facade, snap2)  # B-042: eski tam tarama (referans)
+				parts["trust_scan_ref"] += _since(t2)
 			for k: String in parts:
 				parts[k] = snappedf(float(parts[k]) / reps, 0.02)
 			subs["decision_panels.parts"] = parts
