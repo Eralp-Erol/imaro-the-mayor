@@ -29,6 +29,11 @@ var _summary: PanelContainer = null
 ## Altyapı yetmediği için vazgeçilen parseller: tek özet satırı ("yol eklemek kapasiteyi artırır"); gerçek sayı.
 var _infra: Dictionary = {}
 var _infra_summary: PanelContainer = null
+## T-067 · Yeniden iskân bekleme listesi (gerçek `PolicyView` sayıları): bekleyen aile / son ev verilen küme satırları.
+var _queue_waiting: int = 0
+var _queue_served: int = 0
+var _queue_waiting_row: PanelContainer = null
+var _queue_served_row: PanelContainer = null
 ## T-042b · Aynı komutun `public_work.expropriated` olayı: "Yol yapıldı" satırına yıkım özeti olarak eklenir (iki satır
 ## yerine tek; komut kimliği -> olay). Yalnız şerit sunumudur; olay günlüğü ikisini de tutar.
 var _demolition: Dictionary = {}
@@ -171,6 +176,23 @@ static func strip_text(event: SimEvent) -> String:
 	return text
 
 
+## Bekleme listesi özetleri (0 ise satır yok). Kendiliğinden kaybolmaz; sayı değişince/sıfırlanınca değişir.
+func set_queue_notice(waiting: int, served_batch: int) -> void:
+	if waiting == _queue_waiting and served_batch == _queue_served:
+		return
+	_queue_waiting = waiting
+	_queue_served = served_batch
+	_rebuild()
+
+
+func queue_texts() -> PackedStringArray:
+	var out := PackedStringArray()
+	for t in [ResettlementQueueText.strip_served(_queue_served), ResettlementQueueText.strip_waiting(_queue_waiting)]:
+		if t != "":
+			out.append(t)
+	return out
+
+
 func clear() -> void:
 	_events.clear()
 	_unplanned.clear()
@@ -246,7 +268,8 @@ static func _has_reason_button(row: Control) -> bool:
 
 
 func _rebuild() -> void:
-	visible = not _events.is_empty() or not _unplanned.is_empty() or not _infra.is_empty()
+	visible = not _events.is_empty() or not _unplanned.is_empty() or not _infra.is_empty() or _queue_waiting > 0 \
+			or _queue_served > 0
 	var shown := _events.size()
 	# Satırlar yeniden kullanılır: her tick'te düğüm silip yaratmak (60 olay/gün rejiminde) kareyi ~2 ms uzatıyordu.
 	while _rows.size() < shown:
@@ -263,6 +286,10 @@ func _rebuild() -> void:
 	# Özet satırı en altta; yalnız gerçek plansız-parsel sayısından.
 	_summary = _sync_summary(_summary, not _unplanned.is_empty(), summary_text())
 	_infra_summary = _sync_summary(_infra_summary, not _infra.is_empty(), infra_summary_text())
+	_queue_served_row = _sync_summary(_queue_served_row, _queue_served > 0,
+			ResettlementQueueText.strip_served(_queue_served))
+	_queue_waiting_row = _sync_summary(_queue_waiting_row, _queue_waiting > 0,
+			ResettlementQueueText.strip_waiting(_queue_waiting))
 	_fit_rows()
 
 
