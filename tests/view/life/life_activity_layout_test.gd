@@ -253,3 +253,33 @@ func test_sliced_refresh_restarts_cleanly_and_nothing_to_do_returns_true() -> vo
 		assert_int(guard).is_less(100000)
 	assert_array(act.eligible.keys()).is_equal(keys_before)
 	assert_vector(act.totals(1.0)).is_equal(totals_before)
+
+
+## B-041: `begin_rebuild` parsel kimliklerini PackedInt64Array ile sıralar (Array.sort'tan ~3x hızlı); işleme sırası
+## `parcel_state` ekleme sırasından bağımsız, artan kimliktir (sonuç sözlüklerinin ekleme sırası aynı kalır).
+func test_rebuild_visits_parcels_in_ascending_id_order_regardless_of_insertion_order() -> void:
+	var act := _activity(_net())
+	var ids: Array = act.net.parcels.keys()
+	ids.sort()
+	assert_int(ids.size()).is_greater(3)
+	var reversed := ids.duplicate()
+	reversed.reverse()
+	for pid: int in reversed:
+		act.parcel_state[pid] = Vector3i(2, 1, 0)  # tersten ekle: dict ekleme sırası azalan
+	assert_array(act.parcel_state.keys()).is_equal(reversed)
+	act.begin_rebuild()
+	assert_bool(act.step_rebuild(1000000)).is_true()
+	var placed: Array = act._placed.keys()
+	assert_int(placed.size()).is_greater(0)
+	var sorted_placed := placed.duplicate()
+	sorted_placed.sort()
+	assert_array(placed).is_equal(sorted_placed)
+
+
+func test_rebuild_with_no_parcels_finishes_immediately() -> void:
+	var act := _activity(_net())
+	act.begin_rebuild()
+	assert_bool(act.is_rebuilding()).is_true()
+	assert_bool(act.step_rebuild(10)).is_true()
+	assert_bool(act.is_rebuilding()).is_false()
+	assert_int(act.stats["parcels_mapped"]).is_equal(0)

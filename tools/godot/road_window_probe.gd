@@ -1,7 +1,8 @@
 extends SceneTree
-## Yol onayı penceresi kare dökümü (ADR-0010 Karar 5, B-040). Gerçek `playable.tscn --demo`'yu PENCERELİ ve motorun gerçek
-## deltasıyla sürer, `--at-tick` gününde bir yol komutu gönderir ve gönderimden sonraki `--window` karenin HER KARESİ için
-## toplam süreyi ve (`--split` ile) alt sistem dökümünü yazar. Sim'e ve sahneye yazmaz; yalnız komut gönderir (oyuncu gibi).
+## Yol onayı penceresi kare dökümü (ADR-0010 Karar 5, B-040). Gerçek `playable.tscn --demo`'yu PENCERELİ ve motorun
+## gerçek deltasıyla sürer, `--at-tick` gününde bir yol komutu gönderir ve gönderimden sonraki `--window` karenin HER
+## KARESİ için toplam süreyi ve (`--split` ile) alt sistem dökümünü yazar. Sim'e ve sahneye yazmaz; yalnız komut
+## gönderir (oyuncu gibi).
 ## Çalıştır (tek Godot; kilit: mkdir /tmp/imaro-godot.lock):
 ##   tools/godot.sh --path . --resolution 1600x900 --script res://tools/godot/road_window_probe.gd -- \
 ##       [--demo] [--at-tick=835] [--window=150] [--speed=3] [--split] [--out=/abs/x.json]
@@ -9,6 +10,8 @@ extends SceneTree
 ## PlayableExpropriation.poll` + bitki koridoru) aynı sırayla ama AYRI ayrı zamanlanır (kalem başına ms). Kalemler:
 ##   reconcile, bld_pump, ground, veg (kamulaştırma takibi) · prepare (RoadEditSync._prepare + işçi başlatma) ·
 ##   roadpoll_join/install/far (RoadEditSync.poll durumuna göre) · corridor · proc (sahnenin kalan `_process`i).
+##   `proc_sim_drive` / `proc_hud_poll` = `proc` içindeki sim tick sürüşü ve HUD yoklaması (sim_stats sayaçları; B-041).
+##   `--no-road`: yol GÖNDERİLMEZ, aynı pencere kaydedilir (sakin referans: tick/HUD/Life tabanı).
 ##   `rest` = toplam - (proc + kalemler) = çizim/takas/motor payı (GL tampon yüklemesi, ilk çizimde derleme).
 ## Split OLMADAN kare yalnız toplam süredir (motor sürer; önce/sonra karşılaştırması bu kipte yapılır).
 ## Duvar saati ölçümdür: makineye bağlı (Intel Mac, iPad DEĞİL); yük 8'in üstündeyse anlamsızdır.
@@ -58,6 +61,18 @@ func run() -> void:
 		return
 	if _args.has("no-far"):
 		(_scene._roads as RoadView).build_far_mesh = false
+	if _args.has("far-verts"):
+		# Deney (B-041): uzak mesh yüzey boyu (varsayılan RoadView.FAR_GROUP_VERTS). Yalnız bu süreçte.
+		(_scene._roads as RoadView).far_group_verts = int(_args["far-verts"])
+	if _args.has("no-decision-refresh"):
+		# Tanı (B-041): tick'li karedeki ~22 ms'lik `DecisionPanels._on_refreshed` (güven şeridi) payını probe'da
+		# devre dışı bırakır; böylece yol penceresinin GÖRÜNÜM payı o gürültüsüz görülür. Oyun koduna dokunmaz,
+		# yalnız bu süreçte bağlantıyı keser.
+		var hud0: HudRoot = _scene._hud
+		for conn: Dictionary in hud0.refreshed.get_connections():
+			var cb0: Callable = conn["callable"]
+			if cb0.get_method() == &"_on_refreshed" and cb0.get_object().has_method("_update_trust_notice"):
+				hud0.refreshed.disconnect(cb0)
 	var frames := 0
 	var guard := 0
 	while guard < 400000 and facade.current_tick() < at_tick:
@@ -79,6 +94,11 @@ func run() -> void:
 		var lh: Node = _scene.get_node_or_null("Life")
 		if lh != null:
 			lh._booted = false
+	if _args.has("life-defer"):
+		# A/B (B-041): tick'li karede Yaşam yenileme dilimi erteleme sayısı (0 = B-040 davranışı).
+		var lh2: Node = _scene.get_node_or_null("Life")
+		if lh2 != null:
+			lh2._defer_max = int(_args["life-defer"])
 	var roads_n := int(_args.get("roads", "1"))
 	var all_out: Array[Dictionary] = []
 	var all_rows: Array = []
@@ -95,7 +115,7 @@ func run() -> void:
 		var rows: Array[Dictionary] = []
 		var sent_us := Time.get_ticks_usec()
 		var t_cmd := Time.get_ticks_usec()
-		var road_ok := _send_road(facade, out, 4311 + ri)
+		var road_ok := true if _args.has("no-road") else _send_road(facade, out, 4311 + ri)
 		out["submit_ms"] = snappedf((Time.get_ticks_usec() - t_cmd) / 1000.0, 0.01)
 		if not road_ok:
 			quit(3)
@@ -177,17 +197,25 @@ func run() -> void:
 							var nm := "pp:%s" % n.name
 							items[nm] = float(items.get(nm, 0.0)) + us / 1000.0
 				t = Time.get_ticks_usec()
+				var st: Dictionary = _scene.sim_stats
+				var drive0 := int(st.get("drive_us_sum", 0))
+				var poll0 := int(st.get("poll_us_sum", 0))
 				_scene._pr = null
 				_scene._process(delta)
 				_scene._pr = saved_pr
 				saved_pr.note_tick()
 				items["proc"] = _since(t)
+				# `proc` içindeki sim sürüşü ve HUD yoklaması (sahnenin kendi sayaçlarından; B-041).
+				items["proc_sim_drive"] = (int(st.get("drive_us_sum", 0)) - drive0) / 1000.0
+				items["proc_hud_poll"] = (int(st.get("poll_us_sum", 0)) - poll0) / 1000.0
 				row["items"] = items
 				row["roads_ms"] = roads_ms
 				prev_cpu = (Time.get_ticks_usec() - t0) / 1000.0
 				row["cpu_ms"] = prev_cpu
 			rows.append(row)
 		_scene.set_process(true)
+		if _args.has("hud-cost"):
+			_hud_cost(facade, out)
 		out["window_ms"] = snappedf((Time.get_ticks_usec() - sent_us) / 1000.0, 0.1)
 		_report(rows, out)
 		all_out.append(out)
@@ -201,7 +229,8 @@ func run() -> void:
 	quit(0)
 
 
-## Sahne altındaki betikli düğümlerin `_process`/`_physics_process`ini motordan alıp probe'dan zamanlayarak sürer (`--nodes`).
+## Sahne altındaki betikli düğümlerin `_process`/`_physics_process`ini motordan alıp probe'dan zamanlayarak sürer
+## (`--nodes`).
 func _collect(node: Node) -> void:
 	for c in node.get_children():
 		if c.get_script() != null:
@@ -214,8 +243,9 @@ func _collect(node: Node) -> void:
 		_collect(c)
 
 
-## B-040 ÖNCESİ `LifeHost._tick` (tek karede `index_edges` + `begin_rebuild` + 5000 parsel/kare) aynı sırayla, kalem kalem
-## zamanlanır (`--life-split`; yalnız ölçüm, host'un özel alanlarını okur/yazar). B-040 sonrası kare dilimli yolu ölçmez.
+## B-040 ÖNCESİ `LifeHost._tick` (tek karede `index_edges` + `begin_rebuild` + 5000 parsel/kare) aynı sırayla, kalem
+## kalem zamanlanır (`--life-split`; yalnız ölçüm, host'un özel alanlarını okur/yazar). B-040 sonrası kare dilimli
+## yolu ölçmez.
 func _life_tick(h: Node, items: Dictionary) -> void:
 	var t := Time.get_ticks_usec()
 	var tick: int = h._facade.current_tick()
@@ -249,6 +279,66 @@ func _life_tick(h: Node, items: Dictionary) -> void:
 	var cam: Vector3 = h._camera.camera.global_position
 	h.view.track_camera(cam, Vector2(cam.x + h._camera.rebase_origin.x, cam.z + h._camera.rebase_origin.y))
 	items["life_host_total"] = _since(t)
+
+
+## `--hud-cost`: `HudRoot.refresh()` kalem kalem (sahnenin tick'li karedeki `hud.poll()` payı; B-041). 10 tekrar
+## ortalaması, ms. HUD'a/sim'e yazmaz (yalnız okur ve zaten tick'te yapılan güncellemeyi tekrar çalıştırır).
+func _hud_cost(facade: SimFacade, out: Dictionary) -> void:
+	var hud: HudRoot = _scene._hud
+	if hud == null:
+		return
+	var reps := 10
+	var acc := {"snapshot": 0.0, "banner": 0.0, "top_bar": 0.0, "relayout": 0.0, "refresh_total": 0.0}
+	for i in reps:
+		var t := Time.get_ticks_usec()
+		hud.refresh()
+		acc["refresh_total"] += _since(t)
+		t = Time.get_ticks_usec()
+		var snap := facade.snapshot()
+		acc["snapshot"] += _since(t)
+		t = Time.get_ticks_usec()
+		hud.banner.apply_facade(facade)
+		acc["banner"] += _since(t)
+		t = Time.get_ticks_usec()
+		hud.top_bar.update_from(snap, facade)
+		acc["top_bar"] += _since(t)
+		t = Time.get_ticks_usec()
+		hud._relayout()
+		acc["relayout"] += _since(t)
+	for k: String in acc:
+		acc[k] = snappedf(float(acc[k]) / reps, 0.01)
+	# `refreshed` abonelerinin her biri ayrı zamanlanır (refresh_total'ın büyük kalemi bunlardır).
+	var subs := {}
+	for conn: Dictionary in hud.refreshed.get_connections():
+		var cb: Callable = conn["callable"]
+		var tot := 0.0
+		for i in reps:
+			var t := Time.get_ticks_usec()
+			cb.call()
+			tot += _since(t)
+		var sname := "%s.%s" % [cb.get_object().get_script().resource_path.get_file(), cb.get_method()]
+		subs[sname] = snappedf(tot / reps, 0.02)
+		if sname.begins_with("decision_panels") and cb.get_object().has_method("_update_trust_notice"):
+			# En büyük aboneyi alt kalemlerine böl (B-041 bulgusu: UI alanı; yalnız ölçüm).
+			var d: Object = cb.get_object()
+			var snap2: SimSnapshot = hud.snapshot()
+			var parts := {"update_agenda": 0.0, "queue_notice": 0.0, "trust_notice": 0.0}
+			for i in reps:
+				var t2 := Time.get_ticks_usec()
+				d._update_agenda(snap2)
+				parts["update_agenda"] += _since(t2)
+				t2 = Time.get_ticks_usec()
+				d._update_queue_notice()
+				parts["queue_notice"] += _since(t2)
+				t2 = Time.get_ticks_usec()
+				d._update_trust_notice()
+				parts["trust_notice"] += _since(t2)
+			for k: String in parts:
+				parts[k] = snappedf(float(parts[k]) / reps, 0.02)
+			subs["decision_panels.parts"] = parts
+	acc["refreshed_subscribers"] = subs
+	out["hud_cost_ms"] = acc
+	print("HUD_COST ", JSON.stringify(acc))
 
 
 func _since(t_us: int) -> float:
