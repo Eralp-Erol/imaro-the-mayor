@@ -15,7 +15,9 @@ Hepsi bash 3.2 uyumlu (`set -euo pipefail`). Godot 4.7.2.stable zorunlu; ikili `
 | `tools/godot.sh --headless --path . --script res://tools/godot/road_ux_probe.gd -- [--n=200]` | Yol çizimi maliyeti, başsız, GERÇEK Ismeral dünyası: `RoadDraftCheck.check` (geçerli/reddedilen), yol onayı bölümleri (add_road, begin_async, arka plan, install: ana iş parçacığı vs duvar), imleç adımı başına panel yeniden çizimi. Render/FPS ölçmez. | stdout `ROAD_UX...` satırları |
 | `tools/godot.sh --headless --path . --script res://tools/godot/k1_table.gd` | K1 tablosunu (ADR-0007 §Bağlam) `CameraEnvelope` ile yeniden üretir (T-064): bölge çapası başına gereken eğim ve en büyük uzaklık, dışa/içe yön. Düz deniz düzlemi, 16:9 ve 4:3. | stdout `K1_TABLE ...` satırları |
 | `tools/visual-diff.sh a.png b.png [fark.png]` | `magick compare -metric AE -fuzz 2%`; farklı piksel sayısı ve yüzde. Eşik kararı çağırana ait. | 0 (araç hatası 1, boyut farkı 2); stdout: `diff_pixels=N total=M percent=P` |
-| `tools/export.sh <macos|windows|ios> [--release]` | Export (T-007): `build/<platform>/<debug|release>/`. Alt komutlar: `smoke macos` (.app açılış duman testi), `templates`, `install-templates <tpz>` (boyut + SHA-512 doğrular). İndirme YAPMAZ; şablon yolu `~/Library/Application Support/Godot/export_templates/4.7.2.stable/`. iOS imza/takım bilgisi repoya girmez. | 0 ok, 1 export/duman hatası, 2 kullanım, 3 sürüm, 4 şablon yok, 5 SHA-512 |
+| `tools/export.sh <macos|windows|ios> [--release]` | Export (T-007): `build/<platform>/<debug|release>/`. Alt komutlar: `smoke macos` (.app açılış duman testi), `templates`, `install-templates <tpz>` (boyut + SHA-512 doğrular). İndirme YAPMAZ; şablon yolu `~/Library/Application Support/Godot/export_templates/4.7.2.stable/`. iOS imza/takım bilgisi repoya girmez: `IMARO_IOS_TEAM_ID` zorunlu (bkz. «iOS kurulumu»). | 0 ok, 1 export/duman hatası, 2 kullanım, 3 sürüm, 4 şablon yok, 5 SHA-512, 6 iOS takım kimliği/ikon |
+| `tools/ios-install.sh --device <id> [--release] [--no-export] [--register-device]` | iOS: export -> `xcodebuild` (otomatik imza) -> `xcrun devicectl device install app` -> başlatma (`com.imaro.themayor`). `--build-only` imzasız derleme (cihaz gerekmez), `--list-devices`, `--launch-only`. Takım kimliği/cihaz ortamdan veya argümandan; sabit yok. | 0 ok, 1 derleme/kurulum, 2 kullanım, 6 takım kimliği/cihaz eksik |
+| `tools/ios-placeholder-icon.py [çıktı.png]` | YER TUTUCU iOS ikonu (1024x1024, sarı/siyah şerit + «YER TUTUCU / SAHİP İKONU BEKLİYOR»). Gerçek ikon DEĞİL; `tools/export.sh ios` export öncesi `build/ios/placeholder-icon.png` olarak (gitignored) üretir. | 0; stdout: yazılan yol |
 | `tools/verify-scope.sh check|resolve <dizin>|base` | `verify quick` kapsam çözücüsü. `check`: `tools/verify-areas.tsv` tutarlı mı (her `src/` dizini bir kurala bağlı, her test belirteci suite'e çözülüyor). `resolve <dizin>`: değişen dosyalardan `run.txt` / `skip.txt` / `areas.txt` üretir (quick'in ne koşacağını önceden görmek için). `base`: kullanılacak taban. | 0/1 |
 | `tools/canon-check.sh` | `design/foundation` manifest bütünlüğü (başka ajan yazdı). | 0/1 |
 
@@ -24,6 +26,34 @@ Hepsi bash 3.2 uyumlu (`set -euo pipefail`). Godot 4.7.2.stable zorunlu; ikili `
 
 ## Kamera zarfı bayrağı (T-064, ADR-0007)
 Oyuncu kamerası `data/view/camera_envelope.json` `player` zarfındadır (~18 km tavan, ~50 m, K1). Eski 58 km / 25 m / 8 derece durumu yalnız geliştirici bayrağıyla verilir: `--envelope=legacy` (+ `--preset=metro_legacy_bench`); dışa aktarılan sürümde yok sayılır. `metro` preset adı emekli (açık hata); yeni uzak uç `core`. `tools/capture.sh`, `tools/perf.sh` ve `tools/smoke_playable.sh` sahneye `-- ... --envelope=legacy` argümanını aynen iletir; `smoke_playable.sh` kabulü `core`, `district:D1`, `street:port` en kötüsüdür, `metro_legacy_bench` bilgi amaçlıdır. Geliştirici sahnede `Home` başlangıç görünümü, `M` core.
+
+## iOS kurulumu (B-060..B-062; tekrarlanabilir, geçici yerel düzenleme gerekmez)
+```
+export IMARO_IOS_TEAM_ID=<10 karakterli takım kimliği>      # repoya yazılmaz; Apple Developer -> Membership
+tools/ios-install.sh --list-devices                          # cihaz kimliğini/adını bul
+export IMARO_IOS_DEVICE=<kimlik veya ad>
+tools/ios-install.sh                                         # export + derle + kur + başlat
+tools/ios-install.sh --register-device                       # YALNIZ ilk kurulumda, cihaz sahibinin onayıyla
+tools/ios-install.sh --build-only                            # cihazsız: yalnız derlemenin çalıştığını doğrular
+```
+- **Ana sahne:** `project.godot` `run/main_scene` duman sahnesidir (test/CI/`verify`/`capture` değişmez);
+  `run/main_scene.template` oyunu (`scenes/game/playable.tscn`) açar. `template` etiketi yalnız dışa aktarılan
+  ikililerde (macOS/Windows/iOS) vardır; editör ve `godot --path` çalıştırmaları etkilenmez. Gerekçe: özellik etiketi
+  tek satır; geçici dosya veya geri alma yok (kesilirse kalıntı bırakacak adım yok). `export.sh smoke macos`
+  duman sahnesini .app içine geçici `override.cfg` yazarak seçer (şablonlar komut satırı sahne yolunu reddeder).
+- **Takım kimliği:** `export_presets.cfg`'de BOŞ kalır (`tests/app/export_tooling_test.gd` zorlar). `tools/export.sh ios`
+  `IMARO_IOS_TEAM_ID`'yi export süresince Godot'nun kendi kimlik bilgisi dosyasına (`.godot/export_credentials.cfg`,
+  gitignored) yazar, çıkışta siler (editörün kendi dosyası varsa yedekleyip geri koyar); `ios-install.sh` ayrıca
+  `DEVELOPMENT_TEAM=` verir. Yoksa/geçersizse çıkış 6 ve açık mesaj.
+- **İkon:** preset `icons/icon_1024x1024` = `res://build/ios/placeholder-icon.png` (YER TUTUCU, sahip ikonu
+  bekliyor). Gerçek ikon sahibin kararıdır; geldiğinde yalnız o preset yolunu gerçek PNG'ye çevir.
+- **Ağ üzerinden kurulum:** iPad bir kez USB ile eşlenip Xcode > Window > Devices and Simulators'ta «Connect via
+  network» açılırsa aynı Wi-Fi'da `xcrun devicectl list devices` cihazı gösterir ve betik USB'siz çalışır (TEST
+  EDİLMEDİ; cihaz kilitsiz ve aynı ağda olmalı). İlk kurulumda iPad'de Ayarlar > Genel > VPN ve Aygıt Yönetimi'nden
+  geliştirici onayı ve Geliştirici Modu gerekebilir.
+- **Doğrulananlar / değil:** export (`export_project_only`) ve imzasız `xcodebuild` derlemesi bu Mac'te doğrulandı.
+  İmzalı derleme, `devicectl install/launch`, cihazda açılış ve ağ üzerinden kurulum doğrulanmadı.
+
 
 ## JSON rapor alanları
 `mode, started_at, git_head, fingerprint, steps[{name,status(pass|fail|skip),seconds,summary}], result`.
