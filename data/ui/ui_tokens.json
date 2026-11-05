@@ -38,6 +38,7 @@
 		"notif_min_width": 240,
 		"toolbar_max_width": 760,
 		"sheet_max_height": 560,
+		"drawer_map_strip": 56,
 		"map_margin": 8
 	},
 	"limits": {
@@ -45,6 +46,8 @@
 		"panel_frac_side_touch": 0.38,
 		"sheet_frac": 0.45,
 		"sheet_frac_expanded": 0.8,
+		"drawer_frac_half": 0.62,
+		"drawer_frac_full": 1.0,
 		"notif_height_frac": 0.4,
 		"center_visible_min": 0.5
 	},

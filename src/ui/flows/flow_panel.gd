@@ -15,6 +15,11 @@ const META_ROLE := &"role"
 var badge: MockBadge = null
 var state_view: StateView = null
 
+## Yapışık eylem alanı (çekmece kipinde `PanelShell` altlığına alınır; kaydırma alanı dışında, her zaman görünür).
+## Çekmece dışında kullanılmaz (boş kalır).
+var footer: VBoxContainer = null
+
+var _sticky: bool = false
 var _ctx: UiContext = null
 var _facade: SimFacade = null
 var _body: VBoxContainer = null
@@ -31,7 +36,16 @@ func refresh() -> void:
 func texts() -> PackedStringArray:
 	var out := PackedStringArray()
 	_collect_texts(self, out)
+	if footer != null and footer.get_parent() != self:
+		_collect_texts(footer, out)
 	return out
+
+
+## Çekmece kipi: eylem alanı (birincil düğme) kaydırma dışına çıkar. Altlık kutusunu döner; panel yeniden çizilir.
+func enable_sticky_footer() -> Control:
+	_sticky = true
+	_render()
+	return footer
 
 
 func joined_text() -> String:
@@ -50,6 +64,7 @@ func named_buttons(role_prefix: String) -> Array[Button]:
 func buttons() -> Array[Button]:
 	var out: Array[Button] = []
 	_collect_buttons(_body, out)
+	_collect_buttons(footer, out)
 	return out
 
 
@@ -88,18 +103,25 @@ func _setup_flow(ctx: UiContext, facade: SimFacade) -> void:
 	state_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	state_view.set_content(_body)
 	add_child(state_view)
+	footer = VBoxContainer.new()
+	footer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_space_for_touch(footer)
+	add_child(footer)
 
 
 ## Gövdeyi temizler; odaktaki kontrolün rolünü döner (`_restore_focus` ile geri verilir).
 func _begin_render() -> String:
 	var focused := get_viewport().gui_get_focus_owner() if is_inside_tree() else null
 	var role := ""
-	if focused != null and is_ancestor_of(focused):
+	if focused != null and (is_ancestor_of(focused) or footer.is_ancestor_of(focused)):
 		role = String(focused.get_meta(META_ROLE, ""))
 	if role.is_empty():
 		role = _pending_focus_role   # önceki çizimin odağı henüz verilmedi (aynı kare)
 	for child in _body.get_children():
 		_body.remove_child(child)
+		child.queue_free()
+	for child in footer.get_children():
+		footer.remove_child(child)
 		child.queue_free()
 	return role
 

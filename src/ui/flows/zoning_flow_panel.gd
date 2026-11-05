@@ -32,6 +32,13 @@ var _warning: Label = null
 var _notes: Label = null
 var _use_buttons: Dictionary = {}
 var _parcels_open: bool = false
+## Çekmece kipi (dokunmatik): eylem alanı altlıkta, genişken alan | kullanım iki sütun. Dışında `_target` = gövde.
+var _target: Container = null
+var _cols: BoxContainer = null
+var _left: VBoxContainer = null
+var _right: VBoxContainer = null
+var _wide: bool = false
+var _actions_row: HFlowContainer = null
 
 
 static func create(ctx: UiContext, facade: SimFacade, flow: ZoningFlowModel) -> ZoningFlowPanel:
@@ -75,6 +82,13 @@ func queued_text() -> String:
 	return _status.text if _status != null and _status.visible else ""
 
 
+## Çekmece genişse (yatay iPad/geniş dikey) alan ve kullanım yan yana, değilse alt alta (içerik yeniden çizilmez).
+func set_wide_layout(wide: bool) -> void:
+	_wide = wide
+	if _cols != null:
+		_cols.vertical = not wide
+
+
 func send_button() -> ActionButton:
 	return _send
 
@@ -95,26 +109,74 @@ func _render() -> void:
 	_status = null
 	_warning = null
 	_notes = null
-	_body.add_child(UiFactory.label(UiText.t(&"zoning.step_line", {"n": model.step_number(),
+	_target = _body
+	_cols = null
+	_actions_row = null
+	if _sticky:
+		_cols = BoxContainer.new()
+		_cols.vertical = not _wide
+		_cols.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_cols.add_theme_constant_override(&"separation", int(_ctx.spacing()) * 2)
+		_left = _column()
+		_right = _column()
+		_right.size_flags_stretch_ratio = 1.4   # kullanım düğmeleri tek satıra sığsın
+		_cols.add_child(_left)
+		_cols.add_child(_right)
+		_body.add_child(_cols)
+		_target = _left
+	_put(UiFactory.label(UiText.t(&"zoning.step_line", {"n": model.step_number(),
 		"total": ZoningFlowModel.step_count(), "name": UiText.t(model.step_name_key())}), UiTheme.V_LABEL_MUTED, true))
 	_add_area()
 	area_changed.emit(model.parcel_ids)
 	if model.parcel_ids.is_empty():
 		_restore_focus(focus_role)
 		return
+	if _sticky:
+		_target = _right
 	_add_uses()
 	_add_density()
+	_target = _body
 	_add_preview()
 	_add_send_and_status()
-	_body.add_child(_muted(UiText.t(&"zoning.no_instant_building")))
+	_put(_muted(UiText.t(&"zoning.no_instant_building")))
 	_restore_focus(focus_role)
 
 
+func _column() -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_space_for_touch(col)
+	return col
+
+
+func _put(child: Node) -> void:
+	_target.add_child(child)
+
+
+## Birincil eylem alanı: çekmecede altlık (kaydırma dışı), aksi halde gövde.
+## Alan eylemleri (liste aç/kapa, alanı temizle): çekmecede tek satıra yan yana dizilir (dikey yer kazancı).
+func _area_action(btn: Button) -> void:
+	if not _sticky:
+		_put(btn)
+		return
+	if _actions_row == null:
+		_actions_row = _button_row()
+		_put(_actions_row)
+	_actions_row.add_child(btn)
+
+
+func _act(child: Node) -> void:
+	if _sticky:
+		footer.add_child(child)
+	else:
+		_body.add_child(child)
+
+
 func _add_area() -> void:
-	_body.add_child(_section(&"zoning.area_parcels"))
+	_put(_section(&"zoning.area_parcels"))
 	if model.parcel_ids.is_empty():
-		_body.add_child(UiFactory.label(UiText.t(&"zoning.pick_parcel"), &"", true))
-		_body.add_child(_muted(UiText.t(&"zoning.area_add_hint")))
+		_put(UiFactory.label(UiText.t(&"zoning.pick_parcel"), &"", true))
+		_put(_muted(UiText.t(&"zoning.area_add_hint")))
 		_add_municipal_entry()
 		return
 	var views := _facade.parcel_views(model.parcel_ids)
@@ -127,11 +189,11 @@ func _add_area() -> void:
 		_add_folded_area(by_id)
 	else:
 		for i in model.parcel_ids.size():
-			_body.add_child(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
+			_put(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
 	if model.municipal_mode:
 		var mode_note := _muted(UiText.t(&"zoning.municipal.mode"))
 		_tag(mode_note, "municipal_mode")
-		_body.add_child(mode_note)
+		_put(mode_note)
 	elif not model.is_locked():
 		_add_municipal_entry()
 	if not model.is_locked():
@@ -140,17 +202,17 @@ func _add_area() -> void:
 		var compact := ZoningParcelText.folds(model.parcel_ids.size()) or model.municipal_mode
 		var limit := model.max_parcels()
 		if limit > 0 and (model.at_parcel_limit() or not compact):
-			_body.add_child(_muted(UiText.t(&"zoning.too_many", {"max": limit}) if model.at_parcel_limit()
+			_put(_muted(UiText.t(&"zoning.too_many", {"max": limit}) if model.at_parcel_limit()
 				else UiText.t(&"zoning.count_line", {"n": model.parcel_ids.size(), "max": limit})))
 		if not compact:
-			_body.add_child(_muted(UiText.t(&"zoning.area_add_hint")))
+			_put(_muted(UiText.t(&"zoning.area_add_hint")))
 		if model.parcel_ids.size() > 1 or model.municipal_mode:
 			var clear := UiFactory.button(_ctx, UiText.t(&"zoning.clear_area"), false)
 			_tag(clear, "area_clear")
 			clear.pressed.connect(func() -> void:
 				model.clear_area()
 				_render())
-			_body.add_child(clear)
+			_area_action(clear)
 
 
 ## D-018: yalnız sim `municipal_lands()` içinde uygun satır varsa görünür (sayı gerçek). Alan boşken düğme, sıradan
@@ -162,7 +224,7 @@ func _add_municipal_entry() -> void:
 	if n == 0:
 		return
 	if not model.parcel_ids.is_empty():
-		_body.add_child(_muted(UiText.t(&"zoning.municipal.clear_first", {"n": UiText.number(n)})))
+		_put(_muted(UiText.t(&"zoning.municipal.clear_first", {"n": UiText.number(n)})))
 		return
 	var b := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.open", {"n": UiText.number(n)}), false)
 	# B-024: uzun metin sarılır; asgari genişlik panel genişliğini aşmaz.
@@ -170,7 +232,7 @@ func _add_municipal_entry() -> void:
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_tag(b, "municipal_open")
 	b.pressed.connect(open_municipal_land)
-	_body.add_child(b)
+	_act(b)   # çekmecede boş alanın birincil eylemi: altlıkta, her zaman görünür
 
 
 ## B-023: belediye arazisi tek özet satırı (parsel sayısı + sim `area_m2` toplamı); parsel listesi katlanabilir
@@ -188,7 +250,7 @@ func _add_municipal_summary(by_id: Dictionary) -> void:
 		if total_m2 > 0 else UiText.t(&"zoning.municipal.summary", {"n": n})
 	var summary := UiFactory.label(text, &"", true)
 	_tag(summary, "municipal_summary")
-	_body.add_child(summary)
+	_put(summary)
 	var toggle := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.hide_list" if _parcels_open
 		else &"zoning.municipal.show_list"), false, true)
 	toggle.button_pressed = _parcels_open
@@ -196,17 +258,17 @@ func _add_municipal_summary(by_id: Dictionary) -> void:
 	toggle.pressed.connect(func() -> void:
 		_parcels_open = not _parcels_open
 		_render())
-	_body.add_child(toggle)
+	_area_action(toggle)
 	if _parcels_open:
 		for i in model.parcel_ids.size():
-			_body.add_child(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
+			_put(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
 
 
 ## Çok parselli sıradan teklif: tek özet satırı (parsel sayısı, sim `area_m2` toplamı, bölge kodları) + katlanır liste.
 func _add_folded_area(by_id: Dictionary) -> void:
 	var summary := UiFactory.label(ZoningParcelText.summary(model.parcel_ids.size(), _views_in_order(by_id)), &"", true)
 	_tag(summary, "area_summary")
-	_body.add_child(summary)
+	_put(summary)
 	# Katlı listede parsel durumları (ör. "reddedildi") görünür kalsın: sim plan durumu etiketine göre sayım.
 	var tally := {}
 	for id in model.parcel_ids:
@@ -219,7 +281,7 @@ func _add_folded_area(by_id: Dictionary) -> void:
 	if not tally_parts.is_empty():
 		var line := _muted(" · ".join(tally_parts))
 		_tag(line, "area_states")
-		_body.add_child(line)
+		_put(line)
 	var toggle := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.hide_list" if _parcels_open
 		else &"zoning.municipal.show_list"), false, true)
 	toggle.button_pressed = _parcels_open
@@ -227,10 +289,10 @@ func _add_folded_area(by_id: Dictionary) -> void:
 	toggle.pressed.connect(func() -> void:
 		_parcels_open = not _parcels_open
 		_render())
-	_body.add_child(toggle)
+	_area_action(toggle)
 	if _parcels_open:
 		for i in model.parcel_ids.size():
-			_body.add_child(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
+			_put(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
 
 
 func _views_in_order(by_id: Dictionary) -> Array[ParcelView]:
@@ -285,19 +347,19 @@ func _parcel_row(id: int, view: ParcelView, ordinal: int) -> Control:
 
 
 func _add_uses() -> void:
-	_body.add_child(_section(&"zoning.use"))
+	_put(_section(&"zoning.use"))
 	if model.is_locked():
 		# Gönderilmiş öneri: seçenekler değil, gönderilen kullanım gösterilir (devre dışı düğme yığını yok).
-		_body.add_child(UiFactory.label(UiText.t(model.land_use), &"", true))
+		_put(UiFactory.label(UiText.t(model.land_use), &"", true))
 		_verdict = null
 		return
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override(&"h_separation", int(_ctx.spacing()))
 	flow.add_theme_constant_override(&"v_separation", int(_ctx.spacing()))
 	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_child(flow)
+	_put(flow)
 	for use in UiConfig.land_uses():
-		var b := UiFactory.button(_ctx, UiText.t(use), true, true)
+		var b := UiFactory.button(_ctx, UiText.t(use), not _sticky, true)
 		_tag(b, "use_%s" % use)
 		b.set_pressed_no_signal(use == model.land_use)
 		b.pressed.connect(choose_use.bind(use))
@@ -307,7 +369,7 @@ func _add_uses() -> void:
 	_verdict.visible = model.last_validation != null
 	if model.last_validation != null and model.last_validation.is_rejected():
 		_verdict.theme_type_variation = UiTheme.V_LABEL_DANGER
-	_body.add_child(_verdict)
+	_put(_verdict)
 
 
 ## Yoğunluk seçenekleri (yalnız hazırlıkta): "Varsayılan" + yapılandırma seçenekleri; seçim komuta `density` gider.
@@ -317,23 +379,23 @@ func _add_density() -> void:
 	var options := ZoningFlowModel.density_options()
 	if options.is_empty():
 		return
-	_body.add_child(_section(&"zoning.density.title"))
+	_put(_section(&"zoning.density.title"))
 	var flow := HFlowContainer.new()
 	flow.add_theme_constant_override(&"h_separation", int(_ctx.spacing()))
 	flow.add_theme_constant_override(&"v_separation", int(_ctx.spacing()))
 	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_body.add_child(flow)
+	_put(flow)
 	var choices: Array[int] = [-1]
 	choices.append_array(options)
 	for pm in choices:
 		var text := UiText.t(&"zoning.density.default") if pm < 0 else UiText.t(&"zoning.density.value",
 				{"pct": UiText.number(pm / 10)})
-		var b := UiFactory.button(_ctx, text, true, true)
+		var b := UiFactory.button(_ctx, text, not _sticky, true)
 		_tag(b, "density_%d" % pm)
 		b.set_pressed_no_signal(pm == model.density_pm)
 		b.pressed.connect(choose_density.bind(pm))
 		flow.add_child(b)
-	_body.add_child(_muted(UiText.t(&"zoning.density.note")))
+	_put(_muted(UiText.t(&"zoning.density.note")))
 
 
 func choose_density(pm: int) -> void:
@@ -346,7 +408,7 @@ func _add_preview() -> void:
 	var pv := model.preview()
 	if pv == null or model.is_locked():
 		return
-	_body.add_child(_section(&"zoning.preview.title"))
+	_put(_section(&"zoning.preview.title"))
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
 	_tag(parts[0], "plan_preview")
@@ -369,29 +431,29 @@ func _add_preview() -> void:
 					else UiTheme.V_LABEL_DANGER, true))
 		inner.add_child(_muted(UiText.t(&"zoning.preview.effect")))
 		inner.add_child(_muted(UiText.t(&"zoning.preview.caveat")))
-	_body.add_child(parts[0])
+	_put(parts[0])
 
 
 func _add_send_and_status() -> void:
 	if model.phase() == ZoningFlowModel.Phase.READY:
-		_body.add_child(UiFactory.label(UiText.t(&"zoning.summary", {"parcels": _area_text(),
+		_put(UiFactory.label(UiText.t(&"zoning.summary", {"parcels": _area_text(),
 			"use": UiText.t(model.land_use)}), &"", true))
 	_add_honesty_notes()
 	if not model.is_locked():
-		_body.add_child(_muted(model.path_text()))
+		_put(_muted(model.path_text()))
 		_add_route_note()
 		_send = ActionButton.create(_ctx, model.submit_label(), true)
 		_tag(_send.button, "send")
 		_send.set_enabled(model.can_send(), model.send_block_reason())
 		_send.pressed.connect(send)
-		_body.add_child(_send)
+		_act(_send)
 	if model.is_locked():
 		_add_route_note()
 	_status = UiFactory.label(model.status_text(), &"", true)
 	_status.visible = not _status.text.is_empty()
 	if model.phase() == ZoningFlowModel.Phase.REFUSED or model.phase() == ZoningFlowModel.Phase.VOTE_FAILED:
 		_status.theme_type_variation = UiTheme.V_LABEL_DANGER
-	_body.add_child(_status)
+	_act(_status)
 	_add_followups()
 
 
@@ -401,7 +463,7 @@ func _add_route_note() -> void:
 	if text != "":
 		var note := _muted(text)
 		_tag(note, "route_note")
-		_body.add_child(note)
+		_put(note)
 
 
 func route_note_text() -> String:
@@ -416,12 +478,12 @@ func _add_honesty_notes() -> void:
 	var note := model.no_private_use_note()
 	if note != "":
 		_notes = UiFactory.label(note, UiTheme.V_LABEL_MUTED, true)
-		_body.add_child(_notes)
+		_put(_notes)
 	if not model.is_locked():
 		var warn := model.structure_warning()
 		if warn != "":
 			_warning = UiFactory.label(warn, UiTheme.V_LABEL_DANGER, true)
-			_body.add_child(_warning)
+			_put(_warning)
 
 
 func warning_text() -> String:
@@ -437,19 +499,19 @@ func _add_followups() -> void:
 		var why := UiFactory.button(_ctx, UiText.t(&"alert.open_reason"), true)
 		_tag(why, "open_reason")
 		why.pressed.connect(_on_reason_pressed)
-		_body.add_child(why)
+		_act(why)
 	if model.vote_ref != &"":
 		var vote := UiFactory.button(_ctx, UiText.t(&"zoning.see_vote"), false)
 		_tag(vote, "open_vote")
 		vote.pressed.connect(func() -> void: navigate_requested.emit(&"council"))
-		_body.add_child(vote)
+		_act(vote)
 	if model.is_finished():
 		var again := UiFactory.button(_ctx, UiText.t(&"zoning.new_proposal"), true)
 		_tag(again, "new_proposal")
 		again.pressed.connect(func() -> void:
 			model.reset()
 			_render())
-		_body.add_child(again)
+		_act(again)
 
 
 func _on_reason_pressed() -> void:

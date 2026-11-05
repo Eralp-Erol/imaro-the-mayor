@@ -38,6 +38,9 @@ signal floaters_changed
 ## kapanınca ya da başka panel açılınca otomatik boşalır.
 signal map_highlight_changed(parcel_ids: PackedInt64Array)
 
+## Çekmece bu genişlikten (px) geniş olunca iki sütunlu içerik (alan | kullanım) düzenine geçer.
+const WIDE_DRAWER_PT := 600.0
+
 var ctx: UiContext = null
 var input: InputProfile = null
 var facade: SimFacade = null
@@ -51,6 +54,9 @@ var layout: HudLayout = null
 var simulated_safe: Vector4 = Vector4.ZERO
 ## Alt sayfa (dikey dokunmatik) genişletildi mi: oyuncu seçimidir, paneller arası ve yeniden kurmalarda kalır.
 var sheet_expanded: bool = false
+## Çekmece (D-021, dokunmatik): açık çekmece panelinin konumu (`DrawerModel.State`); oyuncu seçimidir, panel her
+## açıldığında YARI'dan başlar.
+var drawer_state: int = DrawerModel.State.HALF
 ## İptal (Esc) fiilini panel kapatmadan ÖNCE sorulan sahip kancası (`Callable() -> bool`): true dönerse iptali sahip
 ## tüketmiştir (örn. yol taslağı iptali); HUD paneli kapatmaz. Yoksa Esc paneli kapatır.
 var cancel_guard: Callable = Callable()
@@ -61,6 +67,10 @@ var _frame: Control = null
 var _panel_id: StringName = &""
 var _map_highlight: PackedInt64Array = PackedInt64Array()
 var _panel_title_key: StringName = &""
+var _panel_drawer: bool = false
+## Parmak sürüklerken canlı çekmece yüksekliği (<0: sürükleme yok) ve sürükleme başındaki konum.
+var _drag_h: float = -1.0
+var _drag_from: int = DrawerModel.State.HALF
 var _panel_builder: Callable = Callable()
 var _seen_tick: int = -1
 var _seen_seq: int = -1
@@ -136,6 +146,20 @@ func is_panel_open() -> bool:
 	return panel != null and panel.visible
 
 
+## Açık panel dokunmatik profilde alttan çekmece olarak mı duruyor (D-021).
+func is_drawer_active() -> bool:
+	return is_panel_open() and _panel_drawer and ctx != null and ctx.is_touch()
+
+
+## Çekmeceyi konuma getirir (düğme/sürükleme bırakma/test). Çekmece yoksa yok sayar.
+func set_drawer_state(state: int) -> void:
+	if not is_drawer_active():
+		return
+	drawer_state = clampi(state, DrawerModel.State.CLOSED, DrawerModel.State.FULL)
+	_drag_h = -1.0
+	_relayout()
+
+
 func panel_id() -> StringName:
 	return _panel_id
 
@@ -155,13 +179,18 @@ func set_map_highlight(owner: StringName, parcel_ids: PackedInt64Array) -> void:
 
 
 ## Panel açar. `builder(ctx) -> Control` içeriği üretir (profil değişince yeniden çağrılır). Aynı kimlikse
-## yerinde yeniler.
-func open_panel(panel_id_in: StringName, title_key: StringName, builder: Callable) -> void:
+## yerinde yeniler. `drawer`: dokunmatik profilde panel alttan çekmece olur (D-021; şu an yalnız imar bağlı, diğer karar
+## panelleri aynı bileşeni bekler); masaüstünde bu bayrak etkisizdir.
+func open_panel(panel_id_in: StringName, title_key: StringName, builder: Callable, drawer: bool = false) -> void:
 	if panel_id_in != _panel_id:
 		set_map_highlight(_panel_id, PackedInt64Array())
+	if panel_id_in != _panel_id or not is_panel_open():
+		drawer_state = DrawerModel.State.HALF
+		_drag_h = -1.0
 	_panel_id = panel_id_in
 	_panel_title_key = title_key
 	_panel_builder = builder
+	_panel_drawer = drawer
 	_reopen_panel()
 
 
@@ -294,8 +323,16 @@ func _reopen_panel() -> void:
 	panel.expand_toggled.connect(_on_expand_toggled)
 	panel.minimum_size_changed.connect(_queue_relayout)
 	panel.state_view.minimum_size_changed.connect(_queue_relayout)
+	panel.drawer_drag_started.connect(_on_drawer_drag_started)
+	panel.drawer_dragged.connect(_on_drawer_dragged)
+	panel.drawer_drag_ended.connect(_on_drawer_drag_ended)
+	panel.drawer_step_requested.connect(_on_drawer_step)
 	panel.set_title(UiText.t(_panel_title_key))
-	panel.set_content(_panel_builder.call(ctx))
+	panel.set_drawer(_panel_drawer)
+	var content: Control = _panel_builder.call(ctx)
+	panel.set_content(content)
+	if panel.is_drawer() and content != null and content.has_method(&"enable_sticky_footer"):
+		panel.adopt_footer(content.call(&"enable_sticky_footer") as Control)
 	_frame.add_child(panel)
 	if _restore_pin:
 		panel.pin_button().button_pressed = true
@@ -310,6 +347,8 @@ func _close_panel() -> void:
 		panel.queue_free()
 		panel = null
 	_panel_id = &""
+	_panel_drawer = false
+	_drag_h = -1.0
 	set_map_highlight(&"", PackedInt64Array())
 	_relayout()
 	panel_closed.emit(closed_id)
@@ -338,8 +377,10 @@ func _relayout() -> void:
 	_frame.position = Vector2(origin.x, origin.y)
 	_frame.size = frame_size
 	top_bar.set_wrapped(top_bar.single_row_min_width() > frame_size.x)
+	var drawer := is_drawer_active()
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
-		top_bar.get_combined_minimum_size().y, sheet_expanded, strip.get_combined_minimum_size().x)
+		top_bar.get_combined_minimum_size().y, sheet_expanded, strip.get_combined_minimum_size().x,
+		drawer_state if drawer else -1, _drag_h, panel.drawer_peek_height() if drawer else 0.0)
 	toolbar.set_rows(layout.toolbar_rows)
 	_place(top_bar, layout.top)
 	if banner.visible:
@@ -349,7 +390,12 @@ func _relayout() -> void:
 	_place(toolbar, layout.toolbar)
 	if is_panel_open():
 		panel.set_expand_available(layout.panel_mode == HudLayout.MODE_SHEET, sheet_expanded)
+		if panel.is_drawer():
+			panel.set_drawer_state(drawer_state)
 		_place(panel, layout.panel)
+		var content := panel.content_node()
+		if drawer and content != null and content.has_method(&"set_wide_layout"):
+			content.call(&"set_wide_layout", layout.panel.size.x >= WIDE_DRAWER_PT)
 		if layout.panel_mode == HudLayout.MODE_SIDE:
 			# Yan panel içeriğe uyar (boş alt yarı kalkar); taşarsa içerik kaydırılır.
 			panel.size.y = clampf(panel.content_height(), 0.0, layout.panel.size.y)
@@ -366,7 +412,7 @@ func free_map_rect() -> Rect2:
 	var origin := Vector2(ins.x, ins.y)
 	var region := layout.map_region
 	var bottom := layout.toolbar.position.y
-	if is_panel_open() and layout.panel_mode == HudLayout.MODE_SHEET:
+	if is_panel_open() and (layout.panel_mode == HudLayout.MODE_SHEET or layout.panel_mode == HudLayout.MODE_DRAWER):
 		bottom = layout.panel.position.y
 	return Rect2(origin + region.position, Vector2(region.size.x, maxf(0.0, bottom - region.position.y)))
 
@@ -397,6 +443,31 @@ func _place(c: Control, rect: Rect2) -> void:
 	c.position = rect.position
 	# Yüksekliği 0 verilen öğeler içeriğine göre büyür (set_size en az içerik boyutuna kenetler).
 	c.size = Vector2(rect.size.x, maxf(rect.size.y, 0.0))
+
+
+func _on_drawer_drag_started() -> void:
+	_drag_from = drawer_state
+	_drag_h = layout.panel.size.y if layout != null else -1.0
+
+
+func _on_drawer_dragged(delta_y: float) -> void:
+	if _drag_h < 0.0 or layout == null:
+		return
+	# Parmak yukarı (negatif Y) çekmeceyi büyütür.
+	_drag_h = DrawerModel.clamp_height(_drag_h - delta_y, layout.drawer_heights)
+	_relayout()
+
+
+func _on_drawer_drag_ended(velocity_y: float) -> void:
+	if layout == null or _drag_h < 0.0:
+		return
+	var target := DrawerModel.snap(_drag_h, layout.drawer_heights, velocity_y, _drag_from as DrawerModel.State)
+	set_drawer_state(target)
+
+
+func _on_drawer_step(direction: int) -> void:
+	var s := drawer_state as DrawerModel.State
+	set_drawer_state(DrawerModel.up_from(s) if direction > 0 else DrawerModel.down_from(s))
 
 
 func _on_expand_toggled(expanded: bool) -> void:
