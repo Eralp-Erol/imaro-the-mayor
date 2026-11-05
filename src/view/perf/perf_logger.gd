@@ -28,6 +28,8 @@ extends Node
 ##                rapora `thermal` bloğu (son 2 dk p95 / ilk 2 dk p95, sınır 1,25; ADR-0010 Karar 3) eklenir.
 ##                Godot'tan cihaz ısıl durumu OKUNAMAZ (API yok): ısıl kısma kare süresi kaymasından çıkarılır,
 ##                gerçek durum Xcode/Kontrol Merkezi'nden elle yazılır.
+##   VSync        `--perf-log-novsync`: VSync kapatılır (iOS yok sayabilir); rapor `vsync_mode` (0 = kapalı, 1 = açık)
+##                ve `refresh_hz` alanlarını geri okuyarak yazar.
 ##   başlangıç    `startup`: motor başlangıcından logger'ın eklenmesine ve ilk işlenen kareye geçen süre (soğuk açılış
 ##                için; süreç başlatma/dyld süresini içermez) ve ilk 10 karenin süresi.
 ## Tamamlanan oturumda (`complete`) ölçüm donar: sonraki kareler eklenmez, sonraki yazımlar dosyayı değiştirmez.
@@ -63,6 +65,9 @@ var complete_at_s: float = 0.0
 var window_s: float = 0.0
 ## Bellek örneği kare aralığı (0 = otomatik örnek yok; `sample_memory()` elle çağrılabilir).
 var memory_every: int = DEFAULT_MEMORY_EVERY
+## true: `_ready`de VSync kapatılır, kare tavanı kalkar (`--perf-log-novsync`; masaüstü perf_probe koşulu).
+## Platform yok sayabilir (iOS): rapordaki `vsync_mode` GERİ OKUNAN değerdir.
+var novsync: bool = false
 var out_path: String = ""
 ## Son yazım denemesinin hatası (OK = sorun yok). Test ve tanı için.
 var last_error: Error = OK
@@ -111,6 +116,7 @@ static func attach_if_requested(host: Node, args: Dictionary) -> PerfLogger:
 	logger.complete_at_frames = _arg_int(args, "perf-log-frames", 0)
 	logger.stable_after_s = float(str(args.get("perf-log-stable", DEFAULT_STABLE_AFTER_S)))
 	logger.memory_every = _arg_int(args, "perf-log-mem-every", DEFAULT_MEMORY_EVERY)
+	logger.novsync = args.has("perf-log-novsync")
 	var thermal_s := _thermal_seconds(args)
 	if thermal_s > 0.0:
 		logger.complete_at_s = thermal_s
@@ -319,6 +325,9 @@ static func thermal_summary(ms: PackedFloat32Array, edge_s: float = THERMAL_EDGE
 func _ready() -> void:
 	_started_unix = Time.get_unix_time_from_system()
 	_ready_ticks_ms = Time.get_ticks_msec()
+	if novsync:
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+		Engine.max_fps = 0
 	if out_path == "":
 		out_path = resolve_path("")
 	print("PERF_LOG on path=%s (%s)" % [out_path, ProjectSettings.globalize_path(out_path)])
@@ -498,6 +507,8 @@ func _environment_info() -> Dictionary:
 		"renderer": {"method": method, "driver": RenderingServer.get_current_rendering_driver_name(),
 				"adapter": RenderingServer.get_video_adapter_name()},
 		"refresh_hz": snappedf(DisplayServer.screen_get_refresh_rate(), 0.1),
+		"vsync_mode": int(DisplayServer.window_get_vsync_mode()), "max_fps": Engine.max_fps,
+		"novsync_requested": novsync,
 		"window": [window_size.x, window_size.y],
 		"args": OS.get_cmdline_user_args(), "cmdline_args": OS.get_cmdline_args(),
 		"started_unix": snappedf(_started_unix, 1.0), "path": out_path,

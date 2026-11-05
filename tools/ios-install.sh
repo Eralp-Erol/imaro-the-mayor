@@ -3,7 +3,11 @@
 #   tools/ios-install.sh --device <UDID|ad> [--release] [--no-export] [--register-device]   derle + kur + başlat
 #   tools/ios-install.sh --build-only [--release] [--no-export]                              yalnız derle (imzasız, cihaz GEREKMEZ)
 #   tools/ios-install.sh --list-devices                                                       xcrun devicectl list devices
-#   tools/ios-install.sh --launch-only --device <id>                                          kurulu uygulamayı başlat
+#   tools/ios-install.sh --launch-only --device <id> [-- <uygulama argümanları>]               kurulu uygulamayı başlat
+#     Bu betiğin ilk `--` işareti yutulur; kalanı AYNEN `devicectl ... process launch <bundle>` sonuna eklenir
+#     (örn. `-- -- --demo --perf-log` -> devicectl'e `-- --demo --perf-log`). Godot oyun bayraklarını yalnız kendi `--`
+#     ayracından sonra okur; devicectl'in `--`'yi yutup yutmadığı cihazda DOĞRULANMADI (production/tasks/T-076.md
+#     adım 4 iki varyantı dener). Ortam değişkeni: DEVICECTL_CHILD_<AD>=<değer>.
 # Ortam (repoya YAZILMAZ; varsayılan sabit yok):
 #   IMARO_IOS_TEAM_ID  Apple Developer takım kimliği (10 karakter A-Z0-9). --list-devices dışında zorunlu.
 #   IMARO_IOS_DEVICE   cihaz kimliği/adı (--device yerine). Kurulum/başlatma için zorunlu.
@@ -18,8 +22,9 @@ root="$(cd "$(dirname "$0")/.." && pwd)"; cd "$root"
 BUNDLE_ID="${IMARO_IOS_BUNDLE_ID:-com.imaro.themayor}"
 SCHEME="ImaroTheMayor"
 mode=install; kind=debug; do_export=1; register=0; device="${IMARO_IOS_DEVICE:-}"
+launch_args=()
 
-usage() { sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
+usage() { sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//' >&2; exit 2; }
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -31,6 +36,7 @@ while [ $# -gt 0 ]; do
     --launch-only) mode=launch; shift ;;
     --list-devices) mode=list; shift ;;
     -h|--help) usage ;;
+    --) shift; launch_args=("$@"); break ;;
     *) echo "ios-install.sh: bilinmeyen argüman '$1'" >&2; usage ;;
   esac
 done
@@ -58,7 +64,8 @@ app="$derived/Build/Products/$config-iphoneos/$SCHEME.app"
 
 launch() {
   echo "başlatılıyor: $BUNDLE_ID"
-  xcrun devicectl device process launch --device "$device" --terminate-existing "$BUNDLE_ID"
+  xcrun devicectl device process launch --device "$device" --terminate-existing "$BUNDLE_ID" \
+    ${launch_args[@]+"${launch_args[@]}"}
 }
 
 if [ "$mode" = launch ]; then need_device; launch; exit 0; fi
