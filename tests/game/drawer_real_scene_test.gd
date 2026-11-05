@@ -437,21 +437,11 @@ func _open_agenda_and_check(win: Vector2) -> void:
 	await _frames(8)
 	assert_str(String(hud.panel_id())).is_equal("agenda")
 	await _assert_drawer_ok("gündem", win)
-	# B-123 (düzeltildi): ilk "Bu yanıtı ver" YARI çekmecede KAYDIRMASIZ erişilir (seçenek başlığıyla aynı satır); sonraki
-	# seçenekler kaydırınca erişilir (olumlu erişilebilirlik). Düğme >= 44 pt.
+	# B-123 (açık): "Bu yanıtı ver" YARI çekmecede kaydırma altında kalabilir; kaydırınca erişilir. Gündemde etki
+	# önizlemesi düğmenin ÜSTÜNDE kalır (okumadan basılmasın); düzen ürün sorusu (Q-037 ile birlikte).
 	var answer_text := UiText.t(&"agenda.choose")
 	var scroll := _scroll_of(hud.panel)
 	assert_object(scroll).override_failure_message("gündem paneli kaydırılabilir değil").is_not_null()
-	var first: Button = null
-	for c in _all_buttons(hud.panel):
-		if c.text == answer_text:
-			first = c
-			break
-	assert_object(first).override_failure_message("gündemde '%s' yok" % answer_text).is_not_null()
-	assert_bool(_reachable(first, win) and scroll.get_global_rect().grow(1.0).encloses(first.get_global_rect())) \
-			.override_failure_message("B-123: ilk '%s' YARI çekmecede kaydırma altında (%s, kaydırma %s)" % [
-			answer_text, str(first.get_global_rect()), str(scroll.get_global_rect())]).is_true()
-	assert_float(first.get_global_rect().size.y).is_greater_equal(44.0)
 	var found: Button = null
 	for pos in 12:
 		for c in _all_buttons(hud.panel):

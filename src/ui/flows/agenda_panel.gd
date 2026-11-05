@@ -86,17 +86,18 @@ func _render() -> void:
 	_restore_focus(focus_role)
 
 
-## Kart sırası (B-123, yarı çekmecede kaydırmasız birincil eylem): başlık, kalan süre, yerinden edilme SAYISI (neden
-## satırı), "Sonucu gör", son yanıt durumu, SEÇENEKLER (başlık + "Bu yanıtı ver" aynı satırda); ikincil ayrıntı
-## (tür, konu, yeniden iskân özeti, "Nedenini gör") seçeneklerin ALTINDA. Metinler/renkler değişmedi, yalnız sıra.
 func _item_card(it: AgendaModel.Item) -> Control:
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
 	var title := UiText.t(it.title_key) if UiText.has(it.title_key) else UiText.t(&"agenda.item_new")
 	inner.add_child(UiFactory.label(title, UiTheme.V_LABEL_TITLE, true))
+	var kind_key := StringName("agenda.kind.%s" % it.kind)
+	if UiText.has(kind_key):
+		inner.add_child(_muted(UiText.t(kind_key)))
+	if it.subject_ref != &"":
+		inner.add_child(_pair(UiText.t(&"council.subject"), UiText.humanize(String(it.subject_ref))))
 	inner.add_child(UiFactory.label(_time_text(it), &"", true))
-	var cause := _displacement_cause(it)
-	_add_displacement_headline(inner, cause)
+	_add_displacement_cause(inner, it)
 	if it.kind == AgendaModel.KIND_COUNCIL_VOTE:
 		var open := UiFactory.button(_ctx, UiText.t(&"zoning.see_vote"), true)
 		_tag(open, "open_item_%s" % it.id)
@@ -105,37 +106,20 @@ func _item_card(it: AgendaModel.Item) -> Control:
 	_add_response_state(inner, it)
 	for o in it.options:
 		inner.add_child(_option_card(it, o))
-	var kind_key := StringName("agenda.kind.%s" % it.kind)
-	if UiText.has(kind_key):
-		inner.add_child(_muted(UiText.t(kind_key)))
-	if it.subject_ref != &"":
-		inner.add_child(_pair(UiText.t(&"council.subject"), UiText.humanize(String(it.subject_ref))))
-	_add_displacement_detail(inner, it, cause)
 	return parts[0]
 
 
-## Yerinden edilme nedeni (PE-01, T-042b): öğenin gerekçe zincirindeki sim kaydı; kayıt yoksa boş sözlük.
-func _displacement_cause(it: AgendaModel.Item) -> Dictionary:
+## Yerinden edilme tepkisi (PE-01, T-042b): hane sayısı öğenin gerekçe zincirindeki sim kaydından okunur; kayıtta sayı
+## yoksa satır ve düğme çıkmaz. "Nedenini gör" zinciri (öğe kaydı -> yerinden edilme nedeni) gerekçe panelini açar.
+func _add_displacement_cause(inner: VBoxContainer, it: AgendaModel.Item) -> void:
 	if it.reason_ids.is_empty():
-		return {}
+		return
 	var cause := AgendaModel.displaced_cause(_facade, it.reason_ids)
-	return cause if bool(cause["found"]) else {}
-
-
-## Hane sayısı kayıttan okunur; kayıtta sayı yoksa satır çıkmaz.
-func _add_displacement_headline(inner: VBoxContainer, cause: Dictionary) -> void:
-	if cause.is_empty():
+	if not bool(cause["found"]):
 		return
 	inner.add_child(UiFactory.label(UiText.t(&"agenda.displacement.households", {"count": UiText.number(
 		int(cause["households"]))}), &"", true))
-
-
-## Yeniden iskân özeti (T-065, sim'in tahsis sayımları) + "Nedenini gör" zinciri (öğe kaydı -> yerinden edilme nedeni)
-## gerekçe panelini açar.
-func _add_displacement_detail(inner: VBoxContainer, it: AgendaModel.Item, cause: Dictionary) -> void:
-	if cause.is_empty():
-		return
-	if bool(cause["resettled"]):
+	if bool(cause["resettled"]):   # T-065: sim'in tahsis sayımları (aynı neden kaydında)
 		var housed := int(cause["rehoused"])
 		var unplaced := int(cause["unplaced"])
 		var summary_key := &"resettlement.agenda.summary_road" if cause["scope"] == &"road" \
@@ -177,37 +161,27 @@ func _prune_tracking(tick: int) -> void:
 			_pending.erase(ref)   # olay yenilemeden sonra gelebilir: 1 tick pay; sonra bekleyen kaydı bırak
 
 
-## Seçenek kartı: başlık ve "Bu yanıtı ver" AYNI satırda (düğme yarı çekmecede kaydırmasız görünür); kilit nedeni
-## hemen altında, ardından not ve etki önizlemesi (yön + zaman; büyüklük YOK).
 func _option_card(it: AgendaModel.Item, o: AgendaModel.Option) -> Control:
 	var parts := _card()
 	var inner: VBoxContainer = parts[1]
-	var head := HBoxContainer.new()
-	head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	head.add_theme_constant_override("separation", int(_ctx.spacing()))
-	var name_label := UiFactory.label(UiText.t(o.label_key), UiTheme.V_LABEL_TITLE, true)
-	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	head.add_child(name_label)
-	var choose := UiFactory.button(_ctx, UiText.t(&"agenda.choose"), true)
-	choose.size_flags_horizontal = Control.SIZE_SHRINK_END
-	choose.disabled = not o.available or _pending.has(it.id)
-	_tag(choose, "choose_%s_%s" % [it.id, o.id])
-	choose.pressed.connect(func() -> void: respond(it, o))
-	head.add_child(choose)
-	inner.add_child(head)
-	if not o.available:
-		inner.add_child(_muted(_locked_text(o)))
+	inner.add_child(UiFactory.label(UiText.t(o.label_key), UiTheme.V_LABEL_TITLE, true))
 	var note_key := StringName("agenda.note.%s" % o.verb)
 	if UiText.has(note_key):
 		inner.add_child(_muted(UiText.t(note_key)))
 	if not o.effects.is_empty():
-		var preview := HBoxContainer.new()
-		preview.add_child(UiFactory.label(UiText.t(&"agenda.preview"), UiTheme.V_LABEL_MUTED, true))
-		preview.add_child(_estimate_chip())
-		inner.add_child(preview)
+		var head := HBoxContainer.new()
+		head.add_child(UiFactory.label(UiText.t(&"agenda.preview"), UiTheme.V_LABEL_MUTED, true))
+		head.add_child(_estimate_chip())
+		inner.add_child(head)
 		for effect: Variant in o.effects:
 			inner.add_child(UiFactory.label("• " + AgendaModel.effect_text(effect as Dictionary), &"", true))
+	if not o.available:
+		inner.add_child(_muted(_locked_text(o)))
+	var choose := UiFactory.button(_ctx, UiText.t(&"agenda.choose"), true)
+	choose.disabled = not o.available or _pending.has(it.id)
+	_tag(choose, "choose_%s_%s" % [it.id, o.id])
+	choose.pressed.connect(func() -> void: respond(it, o))
+	inner.add_child(choose)
 	return parts[0]
 
 
