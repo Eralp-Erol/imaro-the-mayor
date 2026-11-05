@@ -40,7 +40,7 @@ M2 = "İlk nedensel döngü (dikey dilim)", `production/ROADMAP.md`. Ölçüt: F
 - Gerekçe kaydı ~100 günde düşüyor (B-027); bekleme listesi gerekçeleri de etkileniyor (12 yazıldı, 200. günde 9).
 
 ## Sahip kararları (M2'yi engellemez, ama kapanış kartında sorulur)
-Yol onayında 0,1-0,2 sn takılma (130-207 ms; ADR-0010 tavanı 100 ms): M2'den önce düzeltilsin mi? Teknik direktör önerisi: 'bilinen açık' yaz, iPad'de ölç, >100 ms ise M2'ye al, değilse M3'ün ilk işi (T-075/T-076). SAHİP KARARI YOK; kayıt D-NNN olarak yazılmadı.
+Yol onayında takılma (130-207 ms): KAYNAK bulundu = Yaşam görünümünün tek karede yeniden kurulması (ADR-0010 Karar 5 hipotezi çürüdü); görünüm tarafında kare dilimine yayıldı (B-040): en kötü yol karesi ~217 ms → ~24 ms (masaüstü, pencereli, yük 3-6; iPad DEĞİL, tam sakin makine değil). Kalan 20-36 ms için B-041 önerileri. Sahip kararı gerekmiyor (sim sınırı değişmedi); iPad ölçümü T-076.
 Q-003 para birimi · Q-015 Ismeral coğrafya onayı · Q-018 sanat kütüphanesi şablonları · R1-R3 yeniden iskân varsayımları · T-065 Aşama 2.
 
 ## Doğrulanmadı

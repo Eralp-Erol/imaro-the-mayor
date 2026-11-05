@@ -30,6 +30,12 @@ var _graph_pending: bool = false
 var _args: Dictionary = {}
 var _init_per_frame: int = 5000
 var _settled: bool = false
+## İlk (kurulum) yeniden kurma bitti mi? Sonrası (yol onayı) kare dilimiyle yürür; kurulumda örtü altında hızlı yol.
+var _booted: bool = false
+## Yol onayı sonrası dizin + parsel toplamı yeniden kurmanın kare başına süre bütçesi (µs). Ölçüm: B-040.
+var _budget_us: int = 3000
+## Yol onayı sonrası kare dilimli yenileme (`LifeEdgeActivity.step_refresh`) sürüyor mu?
+var _refreshing: bool = false
 
 
 func _ready() -> void:
@@ -103,6 +109,8 @@ func _start(view_root: Node3D, terrain: TerrainView, cols: BuildingColumns, worl
 	activity = LifeEdgeActivity.create(_net, config)
 	reader = LifeSimReader.create(_facade, activity, _net, PlayableStock.from_columns(cols))
 	_init_per_frame = int(config.update_value("init_parcels_per_frame"))
+	if config.update_value("runtime_rebuild_budget_us") > 0.0:
+		_budget_us = int(config.update_value("runtime_rebuild_budget_us"))
 	view = LifeView.new()
 	view.name = "Life"
 	view_root.add_child(view)
@@ -136,11 +144,20 @@ func _tick() -> void:
 	if _graph_pending and not _roads_busy():
 		_graph_pending = false
 		_graph_seen = _net.graph_version
-		activity.index_edges()
-		activity.begin_rebuild()
+		if _booted:
+			# B-040: tam ağda kenar dizini tek karede ~70 ms, parsel toplamı 5000/kare ~37 ms x 5 kare idi (yol onayı
+			# takılmasının ~%90'ı). Artık ikisi de süre bütçesiyle yayılır; bitene dek görünüm hücre yenilemez.
+			_refreshing = true
+			activity.step_refresh(_budget_us, true)
+		else:
+			activity.index_edges()
+			activity.begin_rebuild()
 		view.mark_data_changed()
-	if activity.is_rebuilding():
-		activity.step_rebuild(_init_per_frame)
+	elif _refreshing:
+		_refreshing = not activity.step_refresh(_budget_us)
+	elif activity.is_rebuilding():
+		if activity.step_rebuild(_init_per_frame):
+			_booted = true
 	reader.poll(ticked)
 	if reader.occupancy_changed:
 		reader.occupancy_changed = false

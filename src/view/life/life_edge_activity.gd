@@ -42,6 +42,19 @@ var _dirty_cells: Dictionary = {}
 var _rebuild_keys: Array = []
 var _rebuild_i: int = 0
 var _rebuilding: bool = false
+## Kare dilimli kenar dizini (`begin_reindex`): geçici sonuçlar bitince yerine konur.
+var _reindexing: bool = false
+## true: dizin bitti, parsel toplamlarının yeniden kurulumu bir SONRAKİ dilimde başlayacak (`begin_rebuild` ~11 ms
+## sıralama içerir; dizinin son dilimine binmesin).
+var _rebuild_queued: bool = false
+var _ri_keys: Array = []
+var _ri_i: int = 0
+var _ri_eligible: Dictionary = {}
+var _ri_edge_cell: Dictionary = {}
+var _ri_edge_region: Dictionary = {}
+var _ri_lists: Dictionary = {}
+var _ri_min_len: float = 0.0
+var _ri_min_w: float = 0.0
 
 
 static func create(p_net: WorldNetwork, p_cfg: LifeConfig) -> LifeEdgeActivity:
@@ -58,41 +71,95 @@ func cell_of(p: Vector2) -> Vector2i:
 	return Vector2i(floori(p.x / cell_m), floori(p.y / cell_m))
 
 
-## Kenar dizinini baştan kurar (grafik değişince). Tüm hücreler kirlenir.
+## Kenar dizinini baştan kurar (grafik değişince), SENKRON. Tüm hücreler kirlenir. Oyunda yol onayından sonra
+## bunun yerine `step_refresh` ile kare dilimli yapılır: tam ağda tek karede ~70 ms'dir (B-040).
 func index_edges() -> void:
-	eligible.clear()
-	_edge_cell.clear()
-	_edge_region.clear()
+	_begin_reindex()
+	_step_reindex(1 << 40)
+
+
+## Grafik değişimi sonrası kenar dizinini VE parsel toplamlarını kare dilimli yeniden kurar (B-040: tek karede ~120 ms
+## + 5 kare x ~37 ms idi). `restart` true: yeni iş başlatır (sürmekte olan varsa baştan). Her çağrıda en çok `budget_us`
+## kadar ilerler (en az 32 kenar/parsel); `begin_rebuild`in 11 ms'lik sıralaması dizinin son diliminden AYRI karede
+## yapılır. Bitince true. Sürerken `is_rebuilding()` true (görünüm hücre yenilemez); dizin yarım görünmez
+## (eski dizin, bitince tek seferde yerine konur).
+func step_refresh(budget_us: int, restart: bool = false) -> bool:
+	if restart:
+		_begin_reindex()
+	if _reindexing:
+		if _step_reindex(budget_us):
+			_rebuild_queued = true
+		return false
+	if _rebuild_queued:
+		_rebuild_queued = false
+		begin_rebuild()
+		return false
+	return _step_rebuild_budget(budget_us)
+
+
+## Kenar anahtarlarının kopyası üstünde yürür, sonucu GEÇİCİ sözlüklere yazar.
+func _begin_reindex() -> void:
+	_ri_keys = net.edges.keys()
+	_ri_i = 0
+	_ri_eligible = {}
+	_ri_edge_cell = {}
+	_ri_edge_region = {}
+	_ri_lists = {}
+	_ri_min_len = cfg.layout("min_edge_len_m")
+	_ri_min_w = cfg.layout("min_open_width_m")
+	_reindexing = true
+	_rebuild_queued = false
+
+
+## En az 32 kenar işler, sonra `budget_us` dolunca durur. Bitince true (dizin yerine konmuş ve hücreler kirli).
+func _step_reindex(budget_us: int) -> bool:
+	if not _reindexing:
+		return true
+	var t0 := Time.get_ticks_usec()
+	while _ri_i < _ri_keys.size():
+		_index_edge(int(_ri_keys[_ri_i]))
+		_ri_i += 1
+		if (_ri_i & 31) == 0 and Time.get_ticks_usec() - t0 >= budget_us:
+			return false
+	eligible = _ri_eligible
+	_edge_cell = _ri_edge_cell
+	_edge_region = _ri_edge_region
 	_cell_edges.clear()
 	_centrality_memo.clear()
-	var lists: Dictionary = {}
-	var min_len := cfg.layout("min_edge_len_m")
-	var min_w := cfg.layout("min_open_width_m")
-	for eid in net.edges:
-		var e: WorldRoadEdge = net.edges[eid]
-		if e.mode() != WorldNetwork.MODE_ROAD or not e.open:
-			continue
-		var row := cfg.class_row(e.road_class)
-		if row.is_empty() or (float(row["cars_cap_per_100m"]) <= 0.0 and float(row["people_cap_per_100m"]) <= 0.0):
-			continue
-		if e.length < min_len or e.width < min_w:
-			continue
-		var pa := net.node_pos(e.a)
-		var pb := net.node_pos(e.b)
-		var mid := (pa + pb) * 0.5
-		var cell := cell_of(mid)
-		eligible[int(eid)] = true
-		_edge_cell[int(eid)] = cell
-		_edge_region[int(eid)] = net.world.region_code_at(mid.x, mid.y) if net.world != null else &""
-		if not lists.has(cell):
-			lists[cell] = []
-		(lists[cell] as Array).append(int(eid))
-	for cell in lists:
-		var arr: Array = lists[cell]
+	for cell in _ri_lists:
+		var arr: Array = _ri_lists[cell]
 		arr.sort()
 		_cell_edges[cell] = PackedInt32Array(arr)
 		_dirty_cells[cell] = true
 	stats["edges_eligible"] = eligible.size()
+	_ri_keys = []
+	_ri_eligible = {}
+	_ri_edge_cell = {}
+	_ri_edge_region = {}
+	_ri_lists = {}
+	_reindexing = false
+	return true
+
+
+func _index_edge(eid: int) -> void:
+	var e: WorldRoadEdge = net.edges.get(eid)
+	if e == null or e.mode() != WorldNetwork.MODE_ROAD or not e.open:
+		return
+	var row := cfg.class_row(e.road_class)
+	if row.is_empty() or (float(row["cars_cap_per_100m"]) <= 0.0 and float(row["people_cap_per_100m"]) <= 0.0):
+		return
+	if e.length < _ri_min_len or e.width < _ri_min_w:
+		return
+	var pa := net.node_pos(e.a)
+	var pb := net.node_pos(e.b)
+	var mid := (pa + pb) * 0.5
+	var cell := cell_of(mid)
+	_ri_eligible[eid] = true
+	_ri_edge_cell[eid] = cell
+	_ri_edge_region[eid] = net.world.region_code_at(mid.x, mid.y) if net.world != null else &""
+	if not _ri_lists.has(cell):
+		_ri_lists[cell] = []
+	(_ri_lists[cell] as Array).append(eid)
 
 
 ## Parsel -> kenar eşlemesini ve kenar toplamlarını `parcel_state`ten baştan kurar (kare dilimli: `step_rebuild`).
@@ -108,8 +175,9 @@ func begin_rebuild() -> void:
 	stats["rebuilds"] = int(stats["rebuilds"]) + 1
 
 
+## Dizin ya da parsel toplamları yeniden kuruluyor mu? (Görünüm, bu sürerken hücre yenilemez.)
 func is_rebuilding() -> bool:
-	return _rebuilding
+	return _rebuilding or _reindexing or _rebuild_queued
 
 
 ## Kalan işi `per_call` parsel kadar yürütür; bitince true (ve tüm hücreler kirli).
@@ -121,14 +189,33 @@ func step_rebuild(per_call: int) -> bool:
 		var pid := int(_rebuild_keys[_rebuild_i])
 		_rebuild_i += 1
 		_replace(pid, false)
-	if _rebuild_i >= _rebuild_keys.size():
-		_rebuilding = false
-		_rebuild_keys = []
-		for cell in _cell_edges:
-			_dirty_cells[cell] = true
-		stats["parcels_mapped"] = _placed.size()
+	return _finish_rebuild_if_done()
+
+
+## `step_rebuild` ile aynı iş, parsel sayısı yerine ZAMAN bütçesiyle (en az 32 parsel, sonra `budget_us` dolunca durur).
+## Oyunda yol onayı sonrası yeniden kurma bununla yayılır (5000 parsel/kare ~37 ms'ydi; B-040).
+func _step_rebuild_budget(budget_us: int) -> bool:
+	if not _rebuilding:
 		return true
-	return false
+	var t0 := Time.get_ticks_usec()
+	while _rebuild_i < _rebuild_keys.size():
+		var pid := int(_rebuild_keys[_rebuild_i])
+		_rebuild_i += 1
+		_replace(pid, false)
+		if (_rebuild_i & 31) == 0 and Time.get_ticks_usec() - t0 >= budget_us:
+			break
+	return _finish_rebuild_if_done()
+
+
+func _finish_rebuild_if_done() -> bool:
+	if _rebuild_i < _rebuild_keys.size():
+		return false
+	_rebuilding = false
+	_rebuild_keys = []
+	for cell in _cell_edges:
+		_dirty_cells[cell] = true
+	stats["parcels_mapped"] = _placed.size()
+	return true
 
 
 ## Tek parselin durumunu günceller (sim değişim akışı). Sıfırsa kaydı siler. Yeniden kurulum sürerken de güvenlidir.
@@ -207,11 +294,6 @@ func take_dirty_cells() -> Array:
 
 func mark_cell_dirty(cell: Vector2i) -> void:
 	if _cell_edges.has(cell):
-		_dirty_cells[cell] = true
-
-
-func mark_all_dirty() -> void:
-	for cell in _cell_edges:
 		_dirty_cells[cell] = true
 
 
