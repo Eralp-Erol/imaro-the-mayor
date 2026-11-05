@@ -125,6 +125,7 @@ func deactivate() -> void:
 	if not tool.is_active():
 		return
 	tool.deactivate()
+	_hud.drawer_tall = false
 	if _hud.panel_id() == PANEL_ID:
 		_hud.close_panel_hard()
 	_hud.toolbar.clear_active_tool()
@@ -310,6 +311,7 @@ func _refresh_panel() -> void:
 	_panel_pending = false
 	_panel_due = false
 	_last_panel_msec = Time.get_ticks_msec()
+	_hud.drawer_tall = tool.expropriate and tool.demolishes()   # onay kartı: normal yarı yükseklik
 	if panel() != null:
 		panel().refresh()
 

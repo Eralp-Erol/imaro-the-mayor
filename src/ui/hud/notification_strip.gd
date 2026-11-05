@@ -235,8 +235,9 @@ func set_max_height(h: float) -> void:
 
 
 ## Yüksekliğe sığmayan satırları gizler (en az bir satır kalır). Gerekçe düğmesi olan satır ("Nedenini gör", SIM-12)
-## düğmesiz satırdan ÖNCE korunur: 800x600'de yıkım sonrası "Yol yıkıldı" satırının nedeni, üstündeki düğmesiz
-## "Komut uygulandı" satırı yüzünden gizlenmesin (3B kare, B-019). Kalan satırlar özgün sırayla gösterilir.
+## düğmesiz satırdan ÖNCE korunur (güven satırı, B-120, hepsinden önce): 800x600'de yıkım sonrası "Yol yıkıldı"
+## satırının nedeni, üstündeki düğmesiz "Komut uygulandı" satırı yüzünden gizlenmesin (3B kare, B-019). Kalan satırlar
+## özgün sırayla gösterilir.
 ## Satır asgari yüksekliği o anki genişliğe bağlıdır; genişlik/içerik değişince `minimum_size_changed` -> HudRoot
 ## yeniden yerleşimi bu işlevi tekrar çağırır.
 func _fit_rows() -> void:
@@ -253,8 +254,11 @@ func _fit_rows() -> void:
 		if c != null and c.visible:
 			rows.append(c)
 	var order: Array[Control] = []
+	# B-120: güven satırı sim'in kayıtlı nedenini taşıyan tek özet satırı; en sona itilip hep düşmesin.
+	if _trust_row != null and rows.has(_trust_row):
+		order.append(_trust_row)
 	for r in rows:
-		if _has_reason_button(r):
+		if _has_reason_button(r) and not order.has(r):
 			order.append(r)
 	for r in rows:
 		if not order.has(r):

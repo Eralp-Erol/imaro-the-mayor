@@ -315,12 +315,12 @@ func test_road_drawer_and_expropriation_card_keep_map_taps_working_on_the_real_s
 			"'Yıkımı onayla' YARI çekmecede kaydırmasız erişilemiyor").is_true()
 	assert_float(confirm.get_global_rect().size.y).is_greater_equal(44.0)
 
-	# B-121 KARAKTERİZASYON: onay kartında imleç ipucu ile onay işareti (chip) üst üste biniyor
+	# B-121: onay kartında imleç ipucu ile onay işareti (chip) üst üste binmemeli (D-022 sonrası düzende ~4 px boşluk)
 	assert_bool(ctrl.tip.visible and ctrl.chip.visible).override_failure_message("ipucu/işaret görünür olmalı").is_true()
 	var tip_rect := Rect2(ctrl.tip.position, ctrl.tip.size)
 	assert_bool(tip_rect.intersects(ctrl.chip.get_global_rect())).override_failure_message(
-			"B-121 DÜZELTİLMİŞ GÖRÜNÜYOR: bu karakterizasyon iddiasını ters çevirin (tip %s chip %s)" % [
-			str(tip_rect), str(ctrl.chip.get_global_rect())]).is_true()
+			"B-121: ipucu ile onay işareti üst üste biniyor (tip %s chip %s)" % [
+			str(tip_rect), str(ctrl.chip.get_global_rect())]).is_false()
 
 	# onay kartı açıkken harita dokunuşu bitişi taşır ve kabulü SIFIRLAR (yeni teklif, yeniden kabul)
 	await _tap(_screen(b2))
@@ -346,7 +346,7 @@ func test_road_drawer_and_expropriation_card_keep_map_taps_working_on_the_real_s
 
 # --- 4) B-081 şerit satırı: yıkımdan sonra gerçek sim'de ----------------------------------------------------
 
-func test_trust_notice_after_demolition_is_real_but_hidden_by_the_strip_b120_and_wraps_cleanly_alone() -> void:
+func test_trust_notice_after_demolition_stays_visible_among_other_strip_rows_b120_and_wraps_cleanly_alone() -> void:
 	await _ensure_flow()
 	var hud := _hud()
 	var f := _facade()
@@ -366,15 +366,17 @@ func test_trust_notice_after_demolition_is_real_but_hidden_by_the_strip_b120_and
 	var trust_row := strip.get("_trust_row") as Control
 	assert_object(trust_row).override_failure_message("satır düğümü kurulmamış").is_not_null()
 	await _frames(4)
-	# B-120 KARAKTERİZASYON: şerit diğer satırlarla doluyken (yol yapıldı, tepki bekleniyor, plansız parsel...) güven
-	# satırı en düşük öncelikte olduğundan GİZLENİR; oyuncu B-081 gerekçesini hiç görmez.
+	# B-120 (düzeltildi): şerit diğer satırlarla doluyken (yol yapıldı, tepki bekleniyor, plansız parsel...) güven
+	# satırı ÖNCELİKLİDİR; oyuncu B-081 gerekçesini görür.
 	var others := 0
 	for row in strip.get_children():
-		if row != trust_row and (row as Control).visible:
+		if row != trust_row:
 			others += 1
 	assert_int(others).override_failure_message("kurulum: şeritte başka satır yok").is_greater(0)
 	assert_bool(trust_row.visible).override_failure_message(
-			"B-120 DÜZELTİLMİŞ GÖRÜNÜYOR: bu karakterizasyon iddiasını ters çevirin").is_false()
+			"B-120: güven satırı diğer satırlar yüzünden gizlendi").is_true()
+	assert_bool(trust_row.get_global_rect().end.y <= hud.panel.get_global_rect().position.y + 0.5 \
+			or not hud.is_drawer_active()).override_failure_message("güven satırı çekmeceye biniyor").is_true()
 
 	# Tek başına (şerit temizlenince) satır görünür, <= 3 satıra sarar ve çekmece açıkken de sığar (iki yönde).
 	for size: Vector2i in [LANDSCAPE, PORTRAIT]:
