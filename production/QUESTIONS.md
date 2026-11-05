@@ -295,3 +295,11 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: A) Mevcut seyrek his (100 m'de medyan araç ana 1,2 / toplayıcı-yerel 2,5, yaya 1,0 / 3,5 / 3,5; "yaşam belirtisi", okunaklı). B) Daha kalabalık (2x). C) Çok seyrek, yalnız ana yollarda.
 - Recommendation: A (kare süresi ve okunurluk dengeli); renk çeşitliliği/araç tipi (taksi, kamu aracı) Q-018 madde 3 ile birlikte.
 - Meanwhile: A; kullanıcı değiştirirse yalnız `life.json` yoğunluk/ağırlık değeri değişir.
+
+
+### Q-035 · "Oyun hep D2'den başlasın" (D-020) kanonla çakışıyor mu? (status: open — engellemiyor; design-director 2026-11-05)
+- Context: D2 = Orven. Kanonda "Orven'i zorunlu başlangıç yapmak" bilerek reddedildi; D-002 "test alanı seçimi oyun tasarımı kararına dönüşmesin" diyor. D-020 kartı bu çakışmayı göstermedi ve "şimdilik" sözüyle "hep"i birlikte taşıyor. Sonraki sahip kararı kazanır, ama bilgilendirilmiş olması gerekir.
+- Options: A) Şimdilik D2; ilçe seçimi hedef olarak kalır, T-043 bekler. B) Kalıcı: oyun hep Orven'den başlar (D-002 ve kanondaki ret bilerek geçersiz olur). C) İlçe seçimi M2 kapanmadan gelsin (T-043).
+- Recommendation: A.
+- Meanwhile: gönderilen oyun D2'de yol çizdirir; B-026 karar gereği kapalıdır, ama Q-035 B/C'ye dönerse yeniden açılır.
+
