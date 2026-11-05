@@ -329,3 +329,9 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: A) Boş arazi kuru sarı kalsın (şimdiki hâl). B) Boş arazi daha koyu, çıplak toprak rengine yakın olsun (şehir zeminine yaklaşır, öneri sanat direktöründen). Çatı için: gri-bej kalsın / daha sıcak ya da daha açık olsun.
 - Recommendation: B tadında bir deneme: karşılaştırma karelerine bakıp seçmeniz en sağlıklısı; kareleri gönderirim.
 - Meanwhile: Şimdiki renkler kalır; yalnız çizim kusurları (leke kenarı, çatı beyaz çizgisi, yuvarlak leke sınırı) düzeltiliyor.
+
+### Q-040 · İkinci bir halk grubu da yola/imara tepki versin mi? (status: open)
+- Context: M2 ölçütü "en az iki grup tepki verir". Gerçek Ismeral'de ölçtük (B-130): yol/yıkımdan sonra YALNIZ barınan mahalle grubu tepki veriyor (gündem maddesi PE-01 + haber). Konut arayanlar grubu 200-360 günde hiç dilekçe/protesto üretmiyor; puanı eşiğin (250) altında kalıyor (en çok 236). Kod hatası değil, ayar değeri: eşik yüksek, ya da bu grup bu kararlara zaten az bağlı.
+- Options: A) Konut arayanların tepki eşiğini düşür: yoğun yol yapımından sonra onlar da dilekçe/protesto versin, iki grup görünsün (önerilen; sayı çalışma değeri, sonra ayarlanır; GOLDEN hash yenilenir, teknik direktör onayıyla). B) Böyle kalsın: tek grup (barınanlar) + haber yeterli, ölçüt "tek grup tepkisi" diye yeniden yazılsın. C) İmar kararına da konut arayanlar için ayrı bir tepki bağlansın (yeni kural, daha büyük iş).
+- Recommendation: A (ölçütle uyumlu, en küçük değişiklik, sahte nedensellik eklemez).
+- Meanwhile: veri değişmez; M2 kapanışında bu ölçüt "KISMEN (1 grup)" yazılır.
