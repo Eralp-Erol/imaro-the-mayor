@@ -19,9 +19,10 @@ func _road(expropriate: bool) -> SimCommand:
 
 # --- Sürüm ve komut şekli ---
 
-func test_contract_version_is_1_9_and_older_documents_stay_compatible() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.9")  # 1.5 kamulaştırma; 1.6 geri al/yık; 1.7 iskân; 1.8 arazi; 1.9
-	assert_int(SimContract.VERSION_MINOR).is_equal(9)
+func test_contract_version_is_1_10_and_older_documents_stay_compatible() -> void:
+	# 1.5 kamulaştırma; 1.6 geri al/yık; 1.7 iskân; 1.8 arazi; 1.9 liste; 1.10 yapılı parsel sorgusu
+	assert_str(SimContract.VERSION).is_equal("1.10")
+	assert_int(SimContract.VERSION_MINOR).is_equal(10)
 	for old in ["1.0", "1.3", "1.4", "1.5", "1.7"]:
 		assert_bool(SimContract.is_compatible(old)).is_true()
 

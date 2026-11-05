@@ -9,7 +9,8 @@ extends GdUnitTestSuite
 ## fareye ## çevirdiği için). Pencereli kareler: `tools/godot/drawer_real_probe.gd` (`artifacts/qa/drawer-gercek/`).
 ##
 ## AÇIK HATALAR bu dosyada KARAKTERİZASYON testiyle sabitlenir (`test_B12x_open_defect_...`): hata DÜZELTİLİNCE o test
-## kırılır ve iddiası ters çevrilmelidir (kayıt: production/bugs/B-120..B-12x.md). Ürün kodu bu görevde değişmedi.
+## kırılır ve iddiası ters çevrilmelidir (kayıt: production/bugs/B-120..B-12x.md).
+## B-123/B-125 düzeltildi (ui-b123): ilgili iddialar artık düzeltilmiş davranışı sabitler.
 ## Sahne kurulumu ~1 dk (başsız); sahne paylaşılır, testler yol akışı sonrası durumu kullanır (`_ensure_flow`).
 
 const Support := preload("res://tests/game/expropriation_game_support.gd")
@@ -278,6 +279,14 @@ func test_road_drawer_and_expropriation_card_keep_map_taps_working_on_the_real_s
 	assert_bool(_reachable(accept, win)).override_failure_message(
 			"'Kamulaştırarak geç' YARI çekmecede kaydırmasız erişilemiyor").is_true()
 	assert_float(accept.get_global_rect().size.y).is_greater_equal(44.0)
+	# B-123 (düzeltildi): etki satırı ("N bina yıkılacak, M hane yerinden edilecek") kesilmeden, düğmenin üstünde görünür.
+	var impact := _role_label(hud.panel, "expropriation_impact")
+	assert_object(impact).override_failure_message("B-123: etki satırı yok").is_not_null()
+	var road_scroll := _scroll_of(hud.panel)
+	assert_bool(road_scroll.get_global_rect().grow(1.0).encloses(impact.get_global_rect())).override_failure_message(
+			"B-123: etki satırı kaydırma kenarında kesik (%s, kaydırma %s)" % [
+			str(impact.get_global_rect()), str(road_scroll.get_global_rect())]).is_true()
+	assert_float(impact.get_global_rect().end.y).is_less_equal(accept.get_global_rect().position.y + 0.5)
 
 	# harita dokunuşu çekmece AÇIKKEN çalışır: bitiş kayar (olumlu)
 	var end_before := tool.end
@@ -428,7 +437,8 @@ func _open_agenda_and_check(win: Vector2) -> void:
 	await _frames(8)
 	assert_str(String(hud.panel_id())).is_equal("agenda")
 	await _assert_drawer_ok("gündem", win)
-	# Birincil eylem ("Bu yanıtı ver") YARI'da kaydırma altında: kaydırınca erişilir (olumlu erişilebilirlik).
+	# B-123 (açık): "Bu yanıtı ver" YARI çekmecede kaydırma altında kalabilir; kaydırınca erişilir. Gündemde etki
+	# önizlemesi düğmenin ÜSTÜNDE kalır (okumadan basılmasın); düzen ürün sorusu (Q-037 ile birlikte).
 	var answer_text := UiText.t(&"agenda.choose")
 	var scroll := _scroll_of(hud.panel)
 	assert_object(scroll).override_failure_message("gündem paneli kaydırılabilir değil").is_not_null()
@@ -446,6 +456,16 @@ func _open_agenda_and_check(win: Vector2) -> void:
 	scroll.scroll_vertical = 0
 
 
+func _role_label(n: Node, role: String) -> Label:
+	if n is Label and (n as Label).is_visible_in_tree() and String((n as Label).get_meta(&"role", "")) == role:
+		return n
+	for c in n.get_children():
+		var l := _role_label(c, role)
+		if l != null:
+			return l
+	return null
+
+
 func _all_buttons(n: Node) -> Array[Button]:
 	var out: Array[Button] = []
 	if n is Button and (n as Button).is_visible_in_tree():
@@ -461,6 +481,20 @@ func test_agenda_results_policy_zoning_and_council_drawers_on_the_real_scene_lan
 	var hud := _hud()
 	var win := Vector2(get_window().size)
 	await _open_agenda_and_check(win)
+	# B-125 (düzeltildi): TAM çekmecede bildirim şeridi satırları çekmece kenarına binmez.
+	hud.set_drawer_state(DrawerModel.State.FULL)
+	await _frames(6)
+	var strip: NotificationStrip = hud.strip
+	assert_bool(strip.visible).override_failure_message("B-125: şerit görünmüyor (kurulum)").is_true()
+	for row in strip.get_children():
+		var rc := row as Control
+		if rc != null and rc.visible:
+			assert_float(rc.get_global_rect().end.y).override_failure_message(
+					"B-125: TAM çekmecede şerit satırı çekmeceye biniyor (%s, çekmece y %.1f)" % [
+					str(rc.get_global_rect()), hud.panel.get_global_rect().position.y]) \
+					.is_less_equal(hud.panel.get_global_rect().position.y + 0.5)
+	hud.set_drawer_state(DrawerModel.State.HALF)
+	await _frames(4)
 	# Sonuç paneli (gerçek araç düğmesi)
 	hud.toolbar.select_mode(ModeToolbar.MODE_PLAN)
 	await _frames(2)
@@ -653,6 +687,28 @@ func test_zoning_drawer_big_plan_goes_to_the_council_with_real_touch_taps() -> v
 			voted = true
 			break
 	assert_bool(voted).override_failure_message("meclis oylaması açılmadı/sonuçlanmadı").is_true()
+	# B-123 (iyileştirildi, tam çözülmedi): sonuçlanan oylamada "Bu grubun gerekçesi" artık etken dökümünün ALTINDA değil,
+	# grup satırında; ilk düğme kaydırma alanı tepesinden en çok ~420 px aşağıda (önce ~885 px). YARI'da (kaydırma alanı
+	# ~213 px) hâlâ kaydırma ister: sonuç satırı + sayım + çubuklar + oylamanın "Nedenini gör"ü önce gelir.
+	f.advance(30)
+	await _frames(4)
+	hud.refresh()
+	_scene._decisions.open_council()
+	await _frames(8)
+	var bloc_reason: Button = null
+	for bb in _all_buttons(hud.panel):
+		if bb.text == UiText.t(&"council.reasons_for_bloc"):
+			bloc_reason = bb
+			break
+	assert_object(bloc_reason).override_failure_message("sonuçlanmış oylamada 'Bu grubun gerekçesi' yok").is_not_null()
+	var council_scroll := _scroll_of(hud.panel)
+	assert_float(bloc_reason.get_global_rect().position.y - council_scroll.get_global_rect().position.y) \
+			.override_failure_message("B-123: 'Bu grubun gerekçesi' yine çok aşağıda (%s)" % [
+			str(bloc_reason.get_global_rect())]) \
+			.is_less(420.0)
+	assert_float(bloc_reason.get_global_rect().size.y).is_greater_equal(44.0)
+	assert_bool(Rect2(Vector2.ZERO, win).encloses(bloc_reason.get_global_rect()) \
+			or bloc_reason.get_global_rect().end.x <= win.x).is_true()
 	# Plan gönderildikten SONRA "Döngü sonucu" aracı sonuç çekmecesini açmalı.
 	var trace: Array[String] = []
 	hud.tool_selected.connect(func(t: StringName) -> void: trace.append("tool:%s" % String(t)))
@@ -667,3 +723,4 @@ func test_zoning_drawer_big_plan_goes_to_the_council_with_real_touch_taps() -> v
 			"'Döngü sonucu' plan gönderildikten sonra sonuç panelini açmadı (panel=%s, olaylar=%s)" % [
 			String(hud.panel_id()), str(trace)]).is_equal("m2_results")
 	hud.close_panel_hard()
+

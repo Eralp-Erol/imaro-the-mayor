@@ -5,6 +5,9 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 ## kilitler: (1) kural KAPALIYKEN aynı senaryo, D-021 ÖNCESİ kaydedilmiş GOLDEN_X'i bit-bit verir (yani değişikliğin
 ## TEK nedeni kural); (2) kural açıkken hash farklıdır ve fark kesinti durumundan gelir. Sabit burada TEKRARLANIR
 ## (golden dosyasına dokunulmaz); GOLDEN_X sahibin onayıyla yenilenirse bu sabit "kural kapalı" referansı olarak kalır.
+## B-080 (ADR-0011): kural açıkken PE-03 `council.trust_gap` da kesinti sonrası güveni okur; bu yüzden (2) fark kesinti
+## durumuna ek olarak `politics.events.last_pressure["PE-03"]` anahtarındadır (yalnız bu anahtar; kesintili koşuda
+## büyük).
 
 const GOLDEN_X_BEFORE_D021 := "c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094"
 const FINAL_TICK := 60
@@ -64,14 +67,22 @@ func test_with_the_rule_on_the_hash_differs_only_because_the_cut_state_exists() 
 		assert_str(where).override_failure_message("sistem değişti: " + where).is_empty()
 	assert_array(_ledger(state)).is_not_empty()
 	assert_array(_ledger(state)).is_equal(_ledger(off_state))
-	# Siyaset: kesinti durumu ve neden sayacı çıkarılınca (ve kayan neden numaraları temizlenince) aynı.
+	# Siyaset: kesinti durumu, neden sayacı ve PE-03 son baskısı çıkarılınca (ve kayan neden numaraları temizlenince)
+	# aynı. PE-03 baskısı B-080 (ADR-0011) ile BİLİNÇLİ farklıdır: `council.trust_gap` etkin güveni okur; fark yalnız bu
+	# anahtarda ve kesintili koşuda büyüktür (aşağıda ayrıca iddia edilir).
 	var pol_on: Dictionary = PoliticsState.data(state).duplicate(true)
 	var pol_off: Dictionary = PoliticsState.data(off_state).duplicate(true)
+	var pressure_on := int(pol_on["events"]["last_pressure"].get("PE-03", -1))
+	var pressure_off := int(pol_off["events"]["last_pressure"].get("PE-03", -1))
 	for pol: Dictionary in [pol_on, pol_off]:
 		pol.erase(CouncilTrust.KEY)
 		(pol["counters"] as Dictionary).erase("reason_records")
+		(pol["events"]["last_pressure"] as Dictionary).erase("PE-03")
 	var pol_where := _diff(_scrub(pol_on), _scrub(pol_off), "politics")
 	assert_str(pol_where).override_failure_message("siyaset durumu kesinti dışında değişti: " + pol_where).is_empty()
+	assert_int(pressure_off).override_failure_message("PE-03 baskısı taranmış olmalı").is_greater_equal(0)
+	assert_int(pressure_on).override_failure_message("kesinti PE-03 baskısını artırmalı (B-080)") \
+		.is_greater(pressure_off)
 
 
 ## İlk farklı yolun açıklaması ("" = eşit).

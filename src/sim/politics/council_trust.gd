@@ -14,8 +14,9 @@ extends RefCounted
 ##     toparlanır. Durum `politics.council_trust = {penalty {üye: pm}, changes}`; YALNIZ ilk etkide yaratılır
 ##     (yıkımsız koşuda durum ve hash değişmez, GOLDEN A/B).
 ##  5. Her değişiklik üye adına bir NEDEN kaydı yazar (SIM-12): yerinden edilen hane, hedef, uygulanan kesinti; öznesi
-##     yolun komut(lar)ı. Kesinti oy girdisine (`CouncilEngine.member_factors`) ve üye görünümüne `trust` olarak biner;
-##     ilişki kaydını (ActorStore) DEĞİŞTİRMEZ: toparlanma ve tavan burada tek yerde.
+##     yolun komut(lar)ı. Kesinti oy girdisine (`CouncilEngine.member_factors`), üye görünümüne (`trust`) ve PE-03
+##     `council.trust_gap` olay kaynağına (B-080, ADR-0011) biner; ilişki kaydını (ActorStore)
+##     DEĞİŞTİRMEZ: toparlanma ve tavan burada tek yerde.
 ## Belediye bina yaratmaz (CAN-03): yalnız güven koşulu değişir. Saf, tamsayı, rastgelelik yok.
 
 const KEY := "council_trust"
@@ -73,7 +74,8 @@ static func penalty(state: GameState, member_key: String) -> int:
 	return int(d["penalty"].get(member_key, 0)) if d is Dictionary else 0
 
 
-## Üyenin oyuncuya güveni (ilişki güveni - kesinti, -1000..1000). Oy girdisi ve üye görünümü TEK bu işlevi okur.
+## Üyenin oyuncuya güveni (ilişki güveni - kesinti, -1000..1000). Oy girdisi, üye görünümü ve PE-03
+## `council.trust_gap` TEK bu işlevi okur.
 static func effective_trust(state: GameState, relation_trust: int, member_key: String) -> int:
 	return clampi(relation_trust - penalty(state, member_key), -SCALE, SCALE)
 

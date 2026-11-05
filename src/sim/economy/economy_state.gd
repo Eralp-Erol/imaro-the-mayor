@@ -117,6 +117,29 @@ static func investor_ref(investor_id: int) -> ActorRef:
 	return ActorRef.make(&"investor", investor_id, StringName("actor.investor.%d.name" % investor_id))
 
 
+## `ParcelView.developed_by_sim` tanımı (TEK yer: `decorate_view` ve `developed_parcel_ids` kullanır; iki tanım kaymaz):
+## aşama boş değil VE son karar `approved`. T0 stoku karar kaydı taşımaz (`last_code` 0); arsa geri açılınca sıfırlanır.
+static func is_developed_by_sim(stage: int, last_code: int) -> bool:
+	return stage != STAGE_VACANT and last_code == CODE_APPROVED
+
+
+## v1.10 (B-052) · `developed_by_sim` olan parsellerin kimlikleri, artan, tekrarsız (sütunlar `parcel_ids` sırasında,
+## artan). SALT OKUNUR: paketli sütun taraması (O(parsel), parsel başına yalnız iki bayt okuması). Ekonomi kurulu
+## değilse boş.
+static func developed_parcel_ids(state: GameState) -> PackedInt64Array:
+	var out := PackedInt64Array()
+	var d := data(state)
+	if d.is_empty():
+		return out
+	var ids: PackedInt64Array = d["parcel_ids"]
+	var stages: PackedByteArray = d["stage"]
+	var codes: PackedByteArray = d["last_code"]
+	for i in ids.size():
+		if is_developed_by_sim(stages[i], codes[i]):
+			out.append(ids[i])
+	return out
+
+
 ## `ParcelView`'a ekonomi alanlarını yazar (facade `parcel_views` çağırır). Ekonomi kurulu değilse ya da parsel
 ## yoksa şablonu bırakır. Yalnız ekonomi durumunu OKUR. Sözleşme v1.1: `use/units` (proje/yapı), `progress_pm`
 ## (inşaat ilerlemesi ‰: `cfg` yoksa yolda olan projeler için 0), `developed_by_sim` (son karar `approved` ise: T0
@@ -140,7 +163,7 @@ static func decorate_view(state: GameState, view: ParcelView, cfg: EconomyConfig
 	var units: int = (d["units"] as PackedInt32Array)[i]
 	view.use = use_name(use)
 	view.units = units
-	view.developed_by_sim = stage != STAGE_VACANT and (d["last_code"] as PackedByteArray)[i] == CODE_APPROVED
+	view.developed_by_sim = is_developed_by_sim(stage, (d["last_code"] as PackedByteArray)[i])
 	view.progress_pm = progress_pm(stage, use, units, (d["days_left"] as PackedInt32Array)[i], cfg)
 	# (T-043A/T-043B: plansız boş parselde placeholder imarın gizlenmesi `EconomySystem.hides_template_zone` ile
 	# facade'ta yapılır: ekonomi durumu kurulmadan önce de geçerli olmalı.)

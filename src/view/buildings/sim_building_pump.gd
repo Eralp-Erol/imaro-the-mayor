@@ -8,13 +8,10 @@ extends RefCounted
 ##  - Diğer karelerde projector bütçeli dilim yürütür; pencere bu karede biterse (yeni sütunlar) görünüm AYNI
 ##    karede kurulur (`apply_view`). Geride kalındıkça (`backlog_ticks`) bütçe büyür (en çok `MAX_SCALE`x).
 ##  - Bu yalnız ARTIMLI (normal oyun) işlerdir. Kayıt yükleme tam eşitlemesi projector'da senkron/bütçesizdir
-##    (`SimBuildingProjector._full_sync`); sahne yükleme anında `sync()` çağırır. T0 yapılı parsellerin yükleme sonrası
-##    geri okuması (B-050) KARE DİLİMLİdir: projector'ın `sweep_pending()` süresince `SWEEP_BUDGET_US` bütçesiyle
-##    yürür (ADR-0010 kare payı içinde; ~24 bin parsel ~1,6 sn iş, birkaç sn'ye yayılır).
+##    (`SimBuildingProjector._full_sync`: yalnız `sim_developed_parcel_ids()` listesi okunur, B-052); sahne yükleme
+##    anında `sync()` çağırır. Yüklemeden sonra bekleyen ek iş (eski T0 süpürmesi, B-050) YOKTUR.
 
 const BUDGET_US := 1200
-## Yükleme sonrası T0 süpürmesi sürerken kare bütçesi (µs): tek seferlik iş, ADR-0010 görünüm payı (~6 ms) içinde.
-const SWEEP_BUDGET_US := 3000
 const MAX_BEHIND_DAYS := 2
 const MAX_SCALE := 6
 
@@ -54,8 +51,6 @@ func frame(had_tick: bool, apply_view: Callable) -> Dictionary:
 	if behind:
 		stats["behind_frames"] += 1
 	var budget := BUDGET_US * clampi(backlog, 1, MAX_SCALE)
-	if projector.sweep_pending():
-		budget = maxi(budget, SWEEP_BUDGET_US)
 	var res := projector.step(budget)
 	out["stepped"] = bool(res.get("worked", false))
 	if out["stepped"]:

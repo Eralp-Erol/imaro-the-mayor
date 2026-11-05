@@ -22,6 +22,7 @@ static func check_facade(facade: SimFacade) -> PackedStringArray:
 	out.append_array(check_snapshot(facade, snap))
 	out.append_array(check_events(facade))
 	out.append_array(check_parcels(facade, snap))
+	out.append_array(check_developed_ids(facade, facade.sim_developed_parcel_ids()))
 	out.append_array(check_agenda(facade))
 	return out
 
@@ -85,6 +86,27 @@ static func check_parcels(facade: SimFacade, snap: SimSnapshot) -> PackedStringA
 			out.append_array(check_reason_id(facade, rid, "parcel %d" % p.id))
 		if p.decision_reason_id > 0:
 			out.append_array(check_reason_id(facade, p.decision_reason_id, "parcel %d decision" % p.id))
+	return out
+
+
+## v1.10: `sim_developed_parcel_ids()` sonucu `ids` artan/tekrarsız ve `parcel_views`ten süzülen `developed_by_sim`
+## kümesiyle (taban varsayılanın tanımı) AYNI mı? Hızlı yol ezen uygulamaların sapması burada yakalanır.
+static func check_developed_ids(facade: SimFacade, ids: PackedInt64Array) -> PackedStringArray:
+	var out := PackedStringArray()
+	for i in range(1, ids.size()):
+		if ids[i] <= ids[i - 1]:
+			out.append("sim_developed_parcel_ids not strictly ascending at %d" % i)
+	var expected := PackedInt64Array()
+	var all := facade.parcel_ids()
+	var pos := 0
+	while pos < all.size():
+		var chunk := all.slice(pos, mini(pos + SimFacade.DEVELOPED_SCAN_CHUNK, all.size()))
+		pos += chunk.size()
+		for v in facade.parcel_views(chunk):
+			if v.developed_by_sim:
+				expected.append(v.id)
+	if ids != expected:
+		out.append("sim_developed_parcel_ids (%d) != developed_by_sim parcel views (%d)" % [ids.size(), expected.size()])
 	return out
 
 
