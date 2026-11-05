@@ -303,3 +303,9 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Recommendation: A.
 - Meanwhile: gönderilen oyun D2'de yol çizdirir; B-026 karar gereği kapalıdır, ama Q-035 B/C'ye dönerse yeniden açılır.
 
+### Q-036 · Yıkım ve yerinden etme meclisin oyuncuya güvenini etkilesin mi? (status: open — engellemiyor; ölçüm B-030, 2026-11-05)
+- Context: 144 koşuluk ölçümde yol yıkımı/kamulaştırma yüzünden evinden olan hane sayısı 42 ya da 302 olsa da meclis üyelerinin güven/kızgınlık değerleri HİÇ değişmiyor; yıkım oylamayı hafifçe kolaylaştırıyor (altyapı yükünü düşürdüğü için). Halk tepkisi var ama meclise ulaşmıyor. D-008 "halk tepki versin" ve siyasi kariyer çekirdeğiyle ilgili; kanonda (D-014) tepki dağılımı var, meclise bağlanması belirsiz.
+- Options: A) Böyle kalsın: halk tepkisi görünür ama meclis yalnız teklifin kendi değerine bakar (önerilen, ölçülmüş çalışan davranış; sonra istenirse açılır). B) Yerinden edilen hane çoksa meclis güveni bir miktar düşsün (veri ağırlığı; meclis eşiği ve GOLDEN'a dokunur). C) Tepki yalnız kesim baskısı (bloc_pressure) olarak ağırlaşsın.
+- Recommendation: A (karar ürün yönüne ait; sahte nedensellik eklenmez).
+- Meanwhile: bağ yok; HUD yalnız gerçek veriyi gösterir.
+
