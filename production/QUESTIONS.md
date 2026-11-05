@@ -311,7 +311,7 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Meanwhile: bağ yok; HUD yalnız gerçek veriyi gösterir.
 
 
-### Q-037 · iPad'de alttan çekmece yarı açıkken şehrin ne kadarı örtülsün? (status: open; engellemez, çalışma değeri 0,62)
+### Q-037 · iPad'de alttan çekmece yarı açıkken şehrin ne kadarı örtülsün? (status: answered → D-022 (C: yol çizimi ve denetçi %45, karar panelleri %62))
 - Context: D-021 ile imar paneli iPad'de alttan çekmece oldu; şehri örten diğer paneller de (meclis, bütçe, gündem, politika, sonuç, nedensellik, denetçi, yol çizimi) aynı çekmeceye bağlandı. Hepsi önce "yarı" konumda açılır: üst şerit ile araç çubuğu arasındaki boşluğun yaklaşık %62'sini kaplar (yatayda 1024x768'de şehrin ancak alt-orta kısmı görünür kalır). Yarı yükseklik tek bir veri değeri (`drawer_frac_half`, `data/ui/ui_tokens.json`); oyuncu paneli her zaman aşağı itip şehri açabilir.
 - Options: A) %62 kalsın (düğmeler ve metin ilk ekranda sığar; önerilen). B) %45 (şehir daha çok görünür, bazı paneller kaydırma ister). C) Yol çizerken ve denetçide %45, karar panellerinde %62 (haritada iş yapılan paneller daha alçak).
 - Recommendation: A; sahibin iPad'de denemesinden sonra B/C seçilirse yalnız veri değişir.

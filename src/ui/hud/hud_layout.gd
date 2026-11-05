@@ -39,10 +39,12 @@ var map_region: Rect2 = Rect2()
 ## `sheet_expanded`: yalnız alt sayfa kipinde (dikey dokunmatik); oyuncu "Genişlet" derse sayfa `sheet_frac_expanded`
 ## kadar yükselir (varsayılan %45 değişmez; şehri örtme kararı oyuncunundur).
 ## `drawer_state` (>= 0, DrawerModel.State) yalnız DOKUNMATİKTE ve açık panel çekmece ise verilir; `drawer_drag_h` >= 0
-## parmak sürüklerken canlı yüksekliktir; `drawer_peek_h` kabuğun gerçek KAPALI yüksekliği (0 = formül).
+## parmak sürüklerken canlı yüksekliktir; `drawer_peek_h` kabuğun gerçek KAPALI yüksekliği (0 = formül);
+## `drawer_low` yarıyı alçak kesirle açar.
 static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banner: bool,
 		top_min_height: float = 0.0, sheet_expanded: bool = false, strip_min_width: float = 0.0,
-		drawer_state: int = -1, drawer_drag_h: float = -1.0, drawer_peek_h: float = 0.0) -> HudLayout:
+		drawer_state: int = -1, drawer_drag_h: float = -1.0, drawer_peek_h: float = 0.0,
+		drawer_low: bool = false) -> HudLayout:
 	var l := HudLayout.new()
 	var tk := ctx.tokens
 	var margin := ctx.edge_margin()
@@ -87,7 +89,7 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 		if l.panel_mode == MODE_SIDE:
 			l.panel = Rect2(frame.x - panel_w, y, panel_w, frame.y - y)
 		elif l.panel_mode == MODE_DRAWER:
-			l.drawer_heights = compute_drawer_heights(ctx, y, l.toolbar.position.y, drawer_peek_h)
+			l.drawer_heights = compute_drawer_heights(ctx, y, l.toolbar.position.y, drawer_peek_h, drawer_low)
 			var h := float(l.drawer_heights.get(drawer_state, 0.0))
 			if drawer_drag_h >= 0.0:
 				h = DrawerModel.clamp_height(drawer_drag_h, l.drawer_heights)
@@ -113,14 +115,16 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 
 ## Çekmece konum yükseklikleri (px). KAPALI = tutamaç + başlık şeridi; YARI/TAM = kullanılabilir yüksekliğin
 ## (üst şerit ile araç çubuğu arası, altta `drawer_map_strip` harita şeridi bırakılarak) `drawer_frac_half` /
-## `drawer_frac_full` kesri.
+## `drawer_frac_full` kesri; `low` (yol çizimi, denetçi) için `drawer_frac_half_low` (D-022).
 ## `top_end` üst şerit/bant altı, `toolbar_y` araç çubuğu üstü (çerçeve koordinatı).
-static func compute_drawer_heights(ctx: UiContext, top_end: float, toolbar_y: float, peek_h: float = 0.0) -> Dictionary:
+static func compute_drawer_heights(ctx: UiContext, top_end: float, toolbar_y: float, peek_h: float = 0.0,
+		low: bool = false) -> Dictionary:
 	var tk := ctx.tokens
 	var gap := ctx.spacing()
 	var peek := peek_h if peek_h > 0.0 else ctx.px(14.0) + ctx.target_primary() + gap * 4.0
 	var room := maxf(peek, toolbar_y - gap - top_end - ctx.px(tk.size("drawer_map_strip")))
-	var half := clampf(room * tk.limit("drawer_frac_half"), peek, room)
+	var half_key := "drawer_frac_half_low" if low else "drawer_frac_half"   # D-022: haritada iş yapılan paneller alçak
+	var half := clampf(room * tk.limit(half_key), peek, room)
 	var full := clampf(room * tk.limit("drawer_frac_full"), half, room)
 	return {DrawerModel.State.CLOSED: peek, DrawerModel.State.HALF: half, DrawerModel.State.FULL: full}
 

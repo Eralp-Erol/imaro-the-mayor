@@ -38,6 +38,9 @@ signal floaters_changed
 ## kapanınca ya da başka panel açılınca otomatik boşalır.
 signal map_highlight_changed(parcel_ids: PackedInt64Array)
 
+## D-022: haritada iş yapılan paneller çekmecede alçak yarı kesirle açılır (`drawer_frac_half_low`).
+const DRAWER_LOW_PANELS: Array[StringName] = [&"road_draw", &"inspector"]
+
 ## Çekmece bu genişlikten (px) geniş olunca iki sütunlu içerik (alan | kullanım) düzenine geçer.
 const WIDE_DRAWER_PT := 600.0
 
@@ -380,7 +383,8 @@ func _relayout() -> void:
 	var drawer := is_drawer_active()
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
 		top_bar.get_combined_minimum_size().y, sheet_expanded, strip.get_combined_minimum_size().x,
-		drawer_state if drawer else -1, _drag_h, panel.drawer_peek_height() if drawer else 0.0)
+		drawer_state if drawer else -1, _drag_h, panel.drawer_peek_height() if drawer else 0.0,
+		DRAWER_LOW_PANELS.has(_panel_id))
 	toolbar.set_rows(layout.toolbar_rows)
 	_place(top_bar, layout.top)
 	if banner.visible:

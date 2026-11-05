@@ -93,3 +93,20 @@ func test_switching_between_drawer_panels_resets_to_half() -> void:
 	d.open_policy()
 	await await_idle_frame()
 	assert_int(hud.drawer_state).is_equal(DrawerModel.State.HALF)
+
+
+## D-022 (sahip: "C"): yol çizimi ve denetçi yarıda alçak (%45), karar panelleri %62.
+func test_low_half_for_road_and_inspector_normal_for_decision_panels() -> void:
+	var frame := IPAD_SMALL_LANDSCAPE
+	var ctx := UiContext.for_profile_name(&"touch")
+	var normal := HudLayout.compute(ctx, frame, true, false, 0.0, false, 0.0, DrawerModel.State.HALF)
+	var low := HudLayout.compute(ctx, frame, true, false, 0.0, false, 0.0, DrawerModel.State.HALF, -1.0, 0.0, true)
+	var half := DrawerModel.State.HALF
+	assert_float(float(low.drawer_heights[half])).is_less(float(normal.drawer_heights[half]))
+	assert_float(float(low.drawer_heights[DrawerModel.State.FULL])).is_equal(
+			float(normal.drawer_heights[DrawerModel.State.FULL]))
+	assert_float(low.panel.size.y / float(normal.panel.size.y)).is_less(0.8)
+	for id: StringName in [&"road_draw", &"inspector"]:
+		assert_bool(HudRoot.DRAWER_LOW_PANELS.has(id)).is_true()
+	for id: StringName in [&"council", &"budget", &"agenda", &"policy", &"m2", &"reason", &"zoning"]:
+		assert_bool(HudRoot.DRAWER_LOW_PANELS.has(id)).is_false()
