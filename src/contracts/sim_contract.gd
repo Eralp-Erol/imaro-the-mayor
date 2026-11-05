@@ -25,14 +25,17 @@ extends RefCounted
 ##   yeni plan yürürlüğünde boş belediye arazisinin yatırım koşullarına açılması (CAN-03).
 ##   1.9 (T-067, D-019 E1; ADR-0005 Ek L): yeniden iskân bekleme listesi; `PolicyView` isteğe bağlı
 ##   `waiting_households`/`waiting_by_region`/`served_households` (yeni komut/olay yok).
+##   1.10 (B-052, ADR-0011; ADR-0005 Ek M): `SimFacade.sim_developed_parcel_ids()` (salt okunur sorgu; durum/kayıt
+##   biçimi değişmez). UYARI: `1.10` ilk iki haneli MINOR; sürüm karşılaştırması yalnız tamsayı ayrıştırarak yapılır
+##   (`is_compatible`), dizgi/float karşılaştırması yapılmaz.
 ## - Sabit nokta: oran/ağırlık/duruş değerleri `FIXED_SCALE` ile çarpılmış tamsayıdır (0.42 → 420).
 ## - Para: birimsiz tamsayı (Q-003). Ad/simge yalnız yapılandırmadan (`economy.currency_name/_symbol`) biçimlenir.
 ## - Kaynak (provenance): gerçek sim `&"sim"`, mock `&"mock"`. UI `&"sim"` dışındaki her şeyi "MOCK" diye işaretler.
 ## - Referans dizgesi (subject ref): `<tür>.<id>` (örn. `parcel.12`, `actor.investor.3`, `vote.2`); `ref()` üretir.
 
 const VERSION_MAJOR := 1
-const VERSION_MINOR := 9
-const VERSION := "1.9"
+const VERSION_MINOR := 10
+const VERSION := "1.10"
 
 const FIXED_SCALE := 1000
 

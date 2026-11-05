@@ -371,6 +371,13 @@ func parcel_views(ids: PackedInt64Array) -> Array[ParcelView]:
 	return out
 
 
+## v1.10 (B-052) · `developed_by_sim` parsellerinin kimlikleri: ekonomi sütunlarından TEK paketli tarama (taban sınıfın
+## 16-40 bin parsellik `parcel_views` süzgeci yerine). Tanım `EconomyState.is_developed_by_sim` (decorate_view ile aynı
+## işlev). Salt okunur: durum yazmaz. Ekonomi kurulu değilse (ya da ilk tick geçmediyse) boş.
+func sim_developed_parcel_ids() -> PackedInt64Array:
+	return EconomyState.developed_parcel_ids(_state)
+
+
 ## T-040 · Ölçülebilir ekonomik sonuç özeti. SALT OKUNUR; O(bölge) (sim-geliştirmeli birimler tamamlanma sayacına
 ## bağlı önbellekten gelir). Ekonomi kurulu değilse `economy.not_built`; kurulu ama ilk tick geçmediyse (durum ilk
 ## günlük tick'te kurulur) `economy.not_started`. Belediye geliri/vergisi sim'de YOK: `municipal_revenue_available`

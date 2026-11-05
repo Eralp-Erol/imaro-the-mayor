@@ -25,7 +25,7 @@ func test_default_facade_methods_report_no_agenda_items_and_do_not_invent_any() 
 
 
 func test_version_is_1_8_and_agenda_items_is_still_optional_with_an_empty_default() -> void:
-	assert_str(SimContract.VERSION).is_equal("1.9")  # agenda_items 1.5; ...; 1.7 yeniden iskân; 1.8 arazi; 1.9 liste
+	assert_str(SimContract.VERSION).is_equal("1.10")  # agenda_items 1.5; ...; 1.8 arazi; 1.9 liste; 1.10 yapılı parsel
 	assert_bool(SimContract.REF_AGENDA == &"agenda").is_true()
 
 

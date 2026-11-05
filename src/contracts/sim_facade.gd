@@ -18,6 +18,9 @@ const SPEED_NORMAL := 1
 const SPEED_FAST := 2
 const SPEED_FASTEST := 3
 
+## `sim_developed_parcel_ids()` varsayılan yolunun tek okumada aldığı parsel sayısı.
+const DEVELOPED_SCAN_CHUNK := 400
+
 
 ## Bu uygulamanın konuştuğu sözleşme sürümü (`SimContract.VERSION`).
 func contract_version() -> String:
@@ -105,6 +108,24 @@ func economy_outcome() -> EconomyOutcomeView:
 ## false` + boş `ids` -> tüketici her seferinde tam eşitler. Değer kopyası; sim durumunu DEĞİŞTİRMEZ.
 func parcel_changes_since(_tick: int) -> ParcelChangeFeed:
 	return ParcelChangeFeed.incomplete(provenance(), current_tick())
+
+
+## v1.10 (B-052, ADR-0011; ADR-0005 Ek M) · `ParcelView.developed_by_sim == true` olan TÜM parsellerin kimlikleri,
+## artan ve tekrarsız (T0 olan/olmayan ayrımı yok; planlı/inşaatta/yapıldı/durmuş hepsi). Görünümün "sim yapısı" satır
+## kümesidir: yükleme sonrası tam eşitleme tüm parselleri değil yalnız bunları okur. Değer kopyası; sim durumunu
+## DEĞİŞTİRMEZ. Varsayılan DOĞRUDUR ama yavaştır (`parcel_ids` + dilimli `parcel_views` süzgeci): mock ve eski
+## uygulamalar doğru sonuç verir; `SimFacadeImpl` hızlı yolu ezer.
+func sim_developed_parcel_ids() -> PackedInt64Array:
+	var out := PackedInt64Array()
+	var all := parcel_ids()
+	var pos := 0
+	while pos < all.size():
+		var chunk := all.slice(pos, mini(pos + DEVELOPED_SCAN_CHUNK, all.size()))
+		pos += chunk.size()
+		for v in parcel_views(chunk):
+			if v.developed_by_sim:
+				out.append(v.id)
+	return out
 
 
 ## v1.3 (T-042) · Ağa eklenmiş oyuncu yolları, eskiden yeniye (son eleman = geri alınabilecek yol). Değer kopyası; sim
