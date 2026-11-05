@@ -2,7 +2,8 @@ class_name PolicyPanel
 extends FlowPanel
 ## Politikalar paneli (T-065 Aşama 1, D-016 §1; CAN-03 belediye fiili, SIM-12): belediyenin KALICI politikalarını
 ## aç/kapa. Şimdilik tek politika: "Yeniden iskân" (kamulaştırmada ev ayırma). Okuduğu sim alanları:
-## `SimFacade.policies()` -> `PolicyView.policy_id/enabled/changed_by_command`. Eylem: `SimCommand.policy_set`.
+## `SimFacade.policies()` -> `PolicyView.policy_id/enabled/changed_by_command` + bekleme listesi
+## (`waiting_households/waiting_by_region/served_households`, `ResettlementQueueText`). Eylem: `SimCommand.policy_set`.
 ## - Açıkken ve kapalıyken ne olacağı düz Türkçe iki ayrı cümleyle yazılır; seçim kalıcıdır (not).
 ## - Komut sonraki tick sınırında uygulanır: istek gönderilince durum DEĞİŞMEZ, "istek gönderildi" yazar ve düğme
 ##   kilitlenir (iyimser değişim yok); durum sim'de değişince panel yansıtır. Ret (hemen ya da tick sınırında) sim'in
@@ -40,7 +41,8 @@ func status_text() -> String:
 func signature_now() -> String:
 	var parts: Array[String] = []
 	for v in _facade.policies():
-		parts.append("%s/%s/%d" % [v.policy_id, v.enabled, v.changed_by_command])
+		parts.append("%s/%s/%d/%d/%d/%s" % [v.policy_id, v.enabled, v.changed_by_command, v.waiting_households,
+				v.served_households, var_to_str(v.waiting_by_region)])
 	var lapsed := false   # bekleme payı dolduysa imza değişsin ki bekleyen kayıt bırakılsın
 	for id: Variant in _pending():
 		lapsed = lapsed or _facade.current_tick() > int(_pending()[id]["tick"]) + PENDING_TICKS
@@ -120,6 +122,7 @@ func _resettlement_card(v: PolicyView) -> Control:
 	_tag(_state_label, "policy_state")
 	state_row.add_child(_state_label)
 	inner.add_child(state_row)
+	ResettlementQueueText.add_rows(inner, v)   # T-067: bekleme listesi (sim `PolicyView` alanları, SIM-12)
 	# Eylem ve geri bildirimi ÜSTTE (alt sayfa/dar yan panelde kaydırmadan görünsün); açıklamalar altta.
 	var waiting := _pending().has(v.policy_id)
 	_toggle = UiFactory.button(_ctx, UiText.t(
