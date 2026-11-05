@@ -1,8 +1,8 @@
 {
   "mode": "full",
-  "started_at": "2026-11-05T00:46:36Z",
-  "git_head": "e1e7f516522431530311f88b33dda6520a9d9b31",
-  "fingerprint": "99d9d7a5b4d97782cc70a209e93b6309df19b4e878048bda19d9a14a6fe66446",
+  "started_at": "2026-11-05T09:25:03Z",
+  "git_head": "42cd518a7557eee0048b40212013cc7a83fa380f",
+  "fingerprint": "a2e3931e144ef3d33d0c50deb355c672e5352500291b6b67f79e608dd2b8d3d5",
   "steps": [
     {
       "name": "canon-check",
@@ -19,7 +19,7 @@
     {
       "name": "area-map",
       "status": "pass",
-      "seconds": 4,
+      "seconds": 3,
       "summary": "area-map: 65 kural, 19 çekirdek belirteci, src dizinlerinin hepsi eşli"
     },
     {
@@ -37,8 +37,8 @@
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 1624,
-      "summary": "2998 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 1515,
+      "summary": "3016 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",
