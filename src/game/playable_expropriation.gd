@@ -157,10 +157,11 @@ func reconcile() -> Dictionary:
 				_mark_ground(change.dirty_rect)
 	var hide := PackedInt32Array()
 	var show := PackedInt32Array()
+	var reused := _reused_land()
 	for pid: int in cand:
 		if not _t0_pids.has(pid):
 			continue
-		var gone := not _net.parcels.has(pid)
+		var gone := not _net.parcels.has(pid) or reused.has(pid)
 		if gone and not _taken.has(pid):
 			hide.append(pid)
 		elif not gone and _taken.has(pid):
@@ -177,6 +178,20 @@ func reconcile() -> Dictionary:
 	_note("reconcile_max_ms", float(rep["mask_ms"]))
 	stats["last"] = rep
 	return rep
+
+
+## Belediye arazisi olarak yeniden imara açılmış (`restore_parcels` op) parsel kimlikleri (B-051). Parsel dünyaya
+## AYNI kimlikle ama BOŞ döner (`NetworkLandReuse`: eski bina/sahip geri gelmez); `net.parcels` tek başına bunu
+## söylemez ve op ağ sürümünü/değişim günlüğünü değiştirmez. Canlı oyunda T0 yapısı alınma anında gizlendi ve öyle
+## kalır; KAYIT YÜKLENİNCE takipçi tabandan başlar, ağ op'ları sonradan oynatılır: bu küme olmadan alınıp geri açılan
+## parselin eski T0 binası, sim'in yeni yapısının üstüne yeniden çizilirdi. Kaynak yalnız dünya verisidir (op günlüğü).
+func _reused_land() -> Dictionary:
+	var out := {}
+	for op: Dictionary in _net.delta.ops:
+		if str(op.get("op", "")) == "restore_parcels":
+			for id: Variant in op.get("parcel_ids", []):
+				out[int(id)] = true
+	return out
 
 
 func _apply(ids: PackedInt32Array, hide: bool) -> Dictionary:

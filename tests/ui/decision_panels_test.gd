@@ -564,7 +564,7 @@ func test_zoning_area_accepts_more_parcels_from_the_map_only_while_open_and_unlo
 	assert_bool(d.add_zoning_parcel(2)).is_false()  # panel kapalı
 	d.open_zoning(PackedInt64Array([1]))
 	assert_bool(d.add_zoning_parcel(2)).is_true()
-	assert_str(" | ".join(d.zoning_panel().texts())).contains("Parsel 2")
+	assert_str(" | ".join(d.zoning_panel().texts())).contains("2. parsel")
 	d.zoning_panel().choose_use(&"zone.commercial")
 	d.zoning_panel().send()
 	assert_bool(d.add_zoning_parcel(3)).is_false()  # gönderildikten sonra alan kilitli

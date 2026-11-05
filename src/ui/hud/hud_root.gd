@@ -34,6 +34,9 @@ signal events_received(events: Array[SimEvent])
 ## Yüzen kartların (bildirim satırları, hız ipucu, yol ipucu) kapladığı bölgeler değişti: yüzen kartlar yerlerini TEK
 ## yerden (bu sinyal) yeniden hesaplar. Yerleşim yöneticisi budur (B-019): kartlar kendi başlarına yarışmaz.
 signal floaters_changed
+## Açık panelin haritada vurgulanmasını istediği parseller (yalnız GÖRÜNÜM; sim'e yazmaz). Boş = vurgu yok. Panel
+## kapanınca ya da başka panel açılınca otomatik boşalır.
+signal map_highlight_changed(parcel_ids: PackedInt64Array)
 
 var ctx: UiContext = null
 var input: InputProfile = null
@@ -56,6 +59,7 @@ var _platform: PlatformProfile = null
 var _safe: UiSafeArea = null
 var _frame: Control = null
 var _panel_id: StringName = &""
+var _map_highlight: PackedInt64Array = PackedInt64Array()
 var _panel_title_key: StringName = &""
 var _panel_builder: Callable = Callable()
 var _seen_tick: int = -1
@@ -136,9 +140,25 @@ func panel_id() -> StringName:
 	return _panel_id
 
 
+## Haritada vurgulanan parseller (son yayın).
+func map_highlight() -> PackedInt64Array:
+	return _map_highlight
+
+
+## `owner` açık panelin kimliğidir; başka panel açıksa istek yok sayılır. Değişmediyse sinyal yok.
+func set_map_highlight(owner: StringName, parcel_ids: PackedInt64Array) -> void:
+	var ids := parcel_ids if owner == _panel_id and is_panel_open() else PackedInt64Array()
+	if ids == _map_highlight:
+		return
+	_map_highlight = ids.duplicate()
+	map_highlight_changed.emit(_map_highlight)
+
+
 ## Panel açar. `builder(ctx) -> Control` içeriği üretir (profil değişince yeniden çağrılır). Aynı kimlikse
 ## yerinde yeniler.
 func open_panel(panel_id_in: StringName, title_key: StringName, builder: Callable) -> void:
+	if panel_id_in != _panel_id:
+		set_map_highlight(_panel_id, PackedInt64Array())
 	_panel_id = panel_id_in
 	_panel_title_key = title_key
 	_panel_builder = builder
@@ -290,6 +310,7 @@ func _close_panel() -> void:
 		panel.queue_free()
 		panel = null
 	_panel_id = &""
+	set_map_highlight(&"", PackedInt64Array())
 	_relayout()
 	panel_closed.emit(closed_id)
 

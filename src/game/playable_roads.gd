@@ -10,6 +10,7 @@ const NETWORK_PATH := "res://data/world/ismeral/network.json"
 
 var sync: RoadEditSync = null
 var ctrl: RoadDrawController = null
+var area_highlight: ParcelAreaHighlight = null
 ## true: kullanıcı yolu bu tick'te değişti, görünüm işi bir sonraki karede başlar.
 var due: bool = false
 ## T-042b: kamulaştırma takipçisi (alınan T0 parselleri görünümden süzülür, geri alınca döner); host verilmediyse null.
@@ -62,6 +63,8 @@ func attach_commands() -> bool:
 
 
 func start_tool(hud: HudRoot, camera: CameraRig, view_root: Node3D, ground: Callable) -> void:
+	# İmar paneli teklif alanının haritada vurgusu (yalnız görünüm; `playable.gd` satır sınırı nedeniyle burada bağlanır).
+	area_highlight = ParcelAreaHighlight.attach(hud, camera, _net, view_root, ground)
 	if sync == null:
 		return
 	ctrl = RoadDrawController.attach(hud, camera, _net, _facade, view_root, ground, hud.get_parent() as CanvasLayer)

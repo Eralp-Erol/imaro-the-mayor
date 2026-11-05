@@ -21,6 +21,20 @@ static func archive_rows(net: WorldNetwork, source_op: int, parcel_ids: PackedIn
 	return rows
 
 
+## SALT OKUNUR: kamulaştırılıp yola gömülmüş (ağdan çıkmış) parselin arşiv geometrisi; yoksa null. Görünüm vurgusu için
+## (belediye arazisi haritada gösterilir); ağa/sim'e yazmaz. En yeni işlemden geriye aranır.
+static func archived_parcel(net: WorldNetwork, parcel_id: int) -> WorldParcel:
+	for i in range(net._undo_stack.size() - 1, -1, -1):
+		var source: NetworkOpJournal = net._undo_stack[i]
+		if not source.expropriating or not source.taken_set.has(parcel_id):
+			continue
+		for collection in [source.parcels_removed, source.parcels_retired]:
+			for parcel: WorldParcel in collection:
+				if parcel.id == parcel_id:
+					return parcel
+	return null
+
+
 static func apply(net: WorldNetwork, op: Dictionary, journal: NetworkOpJournal, report: Dictionary) -> void:
 	var source: Variant = op.get("source_op", null)
 	var raw: Variant = op.get("parcel_ids", null)

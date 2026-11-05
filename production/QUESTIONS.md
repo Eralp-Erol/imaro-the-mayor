@@ -170,7 +170,7 @@ Durumlar:
 | Q-016 | Sim yapısı eşlemesi ve oynanabilir başlangıç koşulları: ekonomi birimi↔kit katı oranı, inşaat kademesinin görünümü (iskele modülü var mı), başlangıç altyapı kapasitesi/hane talebi, otonom yatırımcı büyümesi oynanabilirde açık mı | **open** | — (engellemiyor) |
 | Q-013 | Yapı kiti: dini yapılar var mı; çatı payı oranları; T0'da 12+ kat; saat kulesi hedef boyu (T-025 S1–S4) | **open** | — |
 | Q-018 | Varlık kütüphanesi (T-052): insan stilizasyonu, araç kimliği/livery, T0 tramvayı, yol kesiti genişlik ve sınıfları, mevsim, kalabalıkta kimlik işaretleri | **open** | yalnız ilgili kategorinin onayı (T-042 yol kesitleri, T-050 insan/araç); diğer işler engellenmez |
-| Q-025 | Halk neye tepki versin? (D-008 son adımı, bugün sessiz) | **open** | — (engellemiyor) |
+| Q-025 | Halk neye tepki versin? (D-008 son adımı, bugün sessiz) | answered → D-011 (parametreler çalışma değeri) | — |
 | Q-026 | Şehirde kaç araç/yaya görünsün? (T-050 yaşam belirtisi yoğunluğu, araç renk çeşitliliği) | answered → D-014 | — |
 | Q-027 | Gündem Kararı gözden geçir seçeneği yolu geri almıyor (etiket / gerçek geri alma / kaldır) | answered → D-014 | — |
 | Q-028 | İlk büyük imar planı meclise gitsin mi (10 parsel / 40 birim; Q-014'ün güncel hâli) | answered → D-014 | — |
@@ -201,7 +201,7 @@ Kaynak: design-director canon kapısı (2026-10-20) ve art-director T-025 raporu
 Beklerken stüdyo ne yapar: protagonist `actor.protagonist` + boş `profile_slots`; partiler `party.a/b`, N veridir, M2'de parti yok; `T_elec`/`start_mode`/`election.rule`/`council.size` parametre; `lose_consequence` kancası; yalnız sistem tetikli olaylar, boş kadro şeması; `tone_profile` ılımlı yer tutucu, `corruption` etiketli şablonlar kapalı; HUD A iskeleti nötr tema, yalnız prototip, MOCK rozetli; takvim `{year}. yıl, {day}. gün`, başlık 'Imaro: The Mayor'; kit v0 varsayımları (dini yapı yok, çatı kiremit payı ≤%55 yakın/≤%35 metro, 12+ kat yalnız D1'de az, saat kulesi 23 m).
 Tek sert kural: **ad/sayı/senaryo kanon gibi yazılmaz**; cevaplar `design/decisions/` altına kullanıcının sözleriyle kaydedilir.
 
-### Q-014 · İmar önerisi meclisten geçmeli mi? (status: open — engellemiyor)
+### Q-014 · İmar önerisi meclisten geçmeli mi? (status: answered → D-011 + D-014 (Q-028); eşik/ağırlık parametreleri çalışma değeri, sahip onayı yok)
 Kaynak: T-027 sim raporu (SIM-05, CAN-05/06). Şu an çalışma modeli: önerilen imar değişikliği `apply_delay_days=3` sonra otomatik yürürlüğe girer (veri). Gerçek yetki/meclis usulü F05-D'de AÇIK. Beklerken: yapılandırılabilir `requires_council` bayrağı (veri), UI akışı iki yolu da gösterebilir.
 
 ### Q-015 · Ismeral coğrafyasının yaratıcı onayı (status: open — kullanıcı kararı bekliyor)
@@ -283,14 +283,14 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Meanwhile: v0 = A; sim'de karşılığı olmayan önizleme alanı "henüz kurulmadı".
 
 
-### Q-025 · Halk neye tepki versin? (D-008 "halk tepki versin" adımı; status: open — engellemiyor)
+### Q-025 · Halk neye tepki versin? (D-008 "halk tepki versin" adımı; status: answered → D-011 (kullanıcı kart cevabı); tepki parametreleri çalışma değeri)
 - Context: ölçüm `production/log/2026-10-31-altyapi-siyaset-yan-etkisi.md`. Eski tepkinin gerçek nedeni "altyapı doluluğu %50'den itibaren şikâyet" idi (oyuncu hiçbir şey yapmasa da çıkıyordu; `cause_refs` yanlışlıkla plan parsellerini gösteriyordu: yanlış nedensellik). Oynanabilirde şikâyet artık yalnız yük > kapasite iken başlıyor; yol+plan sonrası 400 günde grup tepkisi ve gündem 0 (D2, tek tohum). İnşaat baskısı D2'de hiçbir kesime ulaşmıyor (kesim payı ~%7,5 < `min_share_pm` %10). Bkz. `design/specs/core-loop-v0.md` §9.
 - Options: bkz. "Şimdi kullanıcıya sorulacaklar" Kart 2 (A sessiz / B yeni bina tepkisi / C yol-plan kararına tepki / D eski hale).
 - Recommendation: A; kullanıcı B/C seçerse `construction_burden`, `min_share_pm` ya da olay kaynağı veri olarak ayarlanır; sahte tepki eklenmez (SIM-12).
 - Meanwhile: tepki yok; HUD yalnız gerçek veriyi gösterir; bina sayısı, ret ve gerekçeler yol+plan etkisini okunur kılar.
 
 
-### Q-026 · Şehirde ne kadar araç ve yaya görünsün? (T-050; status: open — engellemiyor)
+### Q-026 · Şehirde ne kadar araç ve yaya görünsün? (T-050; status: answered → D-014)
 - Context: araç/yaya sayısı gerçek sim verisinden türer (hane/işyeri/inşaat birimi x doluluk; aktivite yoksa sahte trafik yok). Ama "birim başına kaç araç/yaya" ve sınıf tavanları çalışma değeri (`data/view/life.json`). Ölçüm: `production/log/2026-10-31-T-050-yasam-belirtisi.md`.
 - Options: A) Mevcut seyrek his (100 m'de medyan araç ana 1,2 / toplayıcı-yerel 2,5, yaya 1,0 / 3,5 / 3,5; "yaşam belirtisi", okunaklı). B) Daha kalabalık (2x). C) Çok seyrek, yalnız ana yollarda.
 - Recommendation: A (kare süresi ve okunurluk dengeli); renk çeşitliliği/araç tipi (taksi, kamu aracı) Q-018 madde 3 ile birlikte.

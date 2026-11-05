@@ -323,7 +323,11 @@ func test_save_load_bumps_the_epoch_and_costs_exactly_one_full_sync_then_only_th
 	assert_bool(bool(rep["resync"])).is_true()
 	assert_int(int(proj.stats["full_syncs"])).is_equal(1)
 	assert_str(proj.columns().state_hash()).is_equal(early_hash)
+	# B-050: yükleme sonrası tek bekleyen iş T0 süpürmesidir (kare dilimli); `sync(true)` bitirir.
+	assert_bool(proj.busy()).is_equal(proj.sweep_pending())
+	proj.sync(true)
 	assert_bool(proj.busy()).is_false()
+	assert_str(proj.columns().state_hash()).is_equal(early_hash)
 	# (b) İleri git, sonra eski kayda GERİ SAR: tek tam eşitleme, eski satırlar.
 	_propose(f, ids.slice(25))
 	for day in 60:
@@ -360,13 +364,17 @@ func test_a_freshly_attached_projector_to_a_loaded_state_does_one_full_sync() ->
 	var fb := hb.facade
 	var proj_b := M2RenderSupport.projector(fb)
 	assert_bool(fb.import_save(bytes).ok).is_true()
-	# Bütçeli adım bile tam eşitlemeyi TEK adımda (senkron) bitirir; T0 stoku ham okumada atlanır.
-	var steps := 0
+	# Bütçeli adım bile tam eşitlemeyi TEK adımda (senkron) bitirir; T0 stoku senkron okumada atlanır (B-050: sonra kare
+	# dilimli süpürmeyle okunur: en çok T0 sayısı / VIEW_CHUNK ek birim).
+	proj_b.step(FRAME_BUDGET_US)
+	assert_int(int(proj_b.stats["full_syncs"])).override_failure_message("tam eşitleme ilk adımda bitmedi").is_equal(1)
+	var steps := 1
 	while proj_b.busy() and steps < 20000:
 		proj_b.step(FRAME_BUDGET_US)
 		steps += 1
 	assert_int(int(proj_b.stats["full_syncs"])).is_equal(1)
-	assert_int(steps).override_failure_message("tam eşitleme tek adımda bitmedi").is_less_equal(8)
+	var t0_units := ceili(float(proj_b._t0_occupied.size()) / SimBuildingProjector.VIEW_CHUNK)
+	assert_int(steps).override_failure_message("süpürme sınırı aşıldı").is_less_equal(8 + t0_units + 4)
 	assert_str(proj_b.columns().state_hash()).is_equal(proj.columns().state_hash())
 	assert_int(int(proj_b.stats["parcel_reads"])).is_less_equal(fb.parcel_ids().size())
 
@@ -483,3 +491,114 @@ func test_a_released_t0_parcel_that_the_sim_develops_is_drawn() -> void:
 			assert_int(M2RenderSupport.rows_of(proj, v.id).size()).override_failure_message(
 					"parsel %d sim'de built ama çizilmedi (bayat T0 kümesi)" % v.id).is_greater(0)
 	assert_int(built).override_failure_message("sim hiçbir parseli bitirmedi: test anlamsız").is_greater(0)
+
+
+## B-050 (B-025 artığı): yıkımla boşalıp sim yapısı almış T0 parseli KAYIT YÜKLEME sonrası da çizilmeli. Tam eşitleme T0
+## yapılı parselleri atlıyordu (satırlar yüklemeden sonra kayboluyordu). Düzeltme: T0 parselleri tam eşitlemede atlanır
+## ama KARE DİLİMLİ süpürmeyle (`step`) geri okunur; `sync()` onları okumaz (yükleme anı bekleme süresi kısa kalır),
+## `sync(true)` süpürmeyi tamamlar. Yükleme yeni facade + yeni projector üstünde yapılır (oyuncunun gerçek yüklemesi).
+func _released_t0_run() -> Dictionary:
+	var h := M2RenderSupport.handle(ISOLATE)
+	var f := h.facade
+	var proj := M2RenderSupport.projector(f)
+	var ids := M2RenderSupport.free_parcels(proj, 4, true)
+	assert_int(ids.size()).override_failure_message("fixture'da yerleşebilir boş parsel yok").is_equal(4)
+	for pid in ids:
+		proj._t0_occupied[int(pid)] = true   # eski T0 yapısı yıkıldı; projector kuruluşta "dolu" diye almıştı
+	f.advance(2)
+	proj.sync()
+	_propose(f, ids)
+	for day in 170:
+		f.advance(1)
+		proj.sync()
+	proj.sync(true)
+	return {"facade": f, "proj": proj, "ids": ids}
+
+
+func _loaded_projector(bytes: PackedByteArray, ids: PackedInt64Array) -> SimBuildingProjector:
+	var hb := M2RenderSupport.handle(ISOLATE)
+	var proj_b := M2RenderSupport.projector(hb.facade)
+	for pid in ids:
+		proj_b._t0_occupied[int(pid)] = true
+	assert_bool(hb.facade.import_save(bytes).ok).is_true()
+	return proj_b
+
+
+func test_a_released_t0_parcel_the_sim_developed_is_drawn_after_a_save_load() -> void:
+	var run := _released_t0_run()
+	var proj: SimBuildingProjector = run["proj"]
+	var ids: PackedInt64Array = run["ids"]
+	var drawn_live := 0
+	for pid in ids:
+		drawn_live += 1 if M2RenderSupport.rows_of(proj, int(pid)).size() > 0 else 0
+	assert_int(drawn_live).override_failure_message("canlı oyunda T0'dan gelen parsel çizilmiyor: test anlamsız") \
+			.is_greater(0)
+	var bytes := (run["facade"] as SimFacadeImpl).export_save()
+	var proj_b := _loaded_projector(bytes, ids)
+	var steps := 0
+	while proj_b.busy() and steps < 20000:
+		proj_b.step(FRAME_BUDGET_US)
+		steps += 1
+	assert_bool(proj_b.sweep_pending()).is_false()
+	for pid in ids:
+		var live_rows := M2RenderSupport.rows_of(proj, int(pid)).size()
+		assert_int(M2RenderSupport.rows_of(proj_b, int(pid)).size()).override_failure_message(
+				"parsel %d: yüklemeden önce %d satır, sonra %d" % [pid, live_rows,
+				M2RenderSupport.rows_of(proj_b, int(pid)).size()]).is_equal(live_rows)
+	assert_str(proj_b.columns().state_hash()).override_failure_message("yükleme sonrası satırlar canlı oyundan farklı") \
+			.is_equal(proj.columns().state_hash())
+
+
+func test_the_pump_gives_the_t0_sweep_a_bounded_larger_frame_budget() -> void:
+	var run := _released_t0_run()
+	var ids: PackedInt64Array = run["ids"]
+	var bytes := (run["facade"] as SimFacadeImpl).export_save()
+	var proj_b := _loaded_projector(bytes, ids)
+	proj_b.virtual_unit_us = VIRTUAL_UNIT_US
+	proj_b.sync()
+	var pump := SimBuildingPump.create(proj_b)
+	var noop := func(_c: BuildingColumns, _v: int) -> void: pass
+	var u0 := int(proj_b.stats["units"])
+	pump.frame(false, noop)
+	var units := int(proj_b.stats["units"]) - u0
+	# Normal iş bütçesi (1,2 ms) bu sanal saatte en çok 2 birim; süpürme ~3 ms (4 birim) alır, daha fazlasını DEĞİL.
+	var normal_units := ceili(float(SimBuildingPump.BUDGET_US) / VIRTUAL_UNIT_US)
+	var sweep_units := ceili(float(SimBuildingPump.SWEEP_BUDGET_US) / VIRTUAL_UNIT_US)
+	assert_int(units).override_failure_message("süpürme karesi %d birim" % units).is_greater(normal_units)
+	assert_int(units).is_less_equal(sweep_units + 1)
+	# Süpürme bitince bütçe normale döner: tick'siz boş karede iş kalmaz.
+	var guard := 0
+	while proj_b.sweep_pending() and guard < 20000:
+		pump.frame(false, noop)
+		guard += 1
+	assert_bool(proj_b.sweep_pending()).is_false()
+
+
+func test_the_t0_sweep_after_a_load_is_frame_sliced_and_reads_every_parcel_once() -> void:
+	var run := _released_t0_run()
+	var ids: PackedInt64Array = run["ids"]
+	var bytes := (run["facade"] as SimFacadeImpl).export_save()
+	var proj_b := _loaded_projector(bytes, ids)
+	var total := (proj_b._facade as SimFacadeImpl).parcel_ids().size()
+	proj_b.virtual_unit_us = VIRTUAL_UNIT_US
+	proj_b.sync()   # yükleme anı: T0 dışı parseller senkron, T0 süpürmesi BEKLEYEN iş
+	assert_int(int(proj_b.stats["full_syncs"])).is_equal(1)
+	assert_bool(proj_b.sweep_pending()).override_failure_message("T0 süpürmesi kare dilimine bırakılmadı").is_true()
+	assert_bool(proj_b.busy()).is_true()
+	assert_int(int(proj_b.stats["parcel_reads"])).override_failure_message("sync() T0 parsellerini de okudu") \
+			.is_less(total)
+	var steps := 0
+	var steps_with_work := 0
+	while proj_b.busy() and steps < 20000:
+		steps_with_work += 1 if bool(proj_b.step(FRAME_BUDGET_US)["worked"]) else 0
+		steps += 1
+	assert_bool(proj_b.sweep_pending()).is_false()
+	assert_int(int(proj_b.stats["parcel_reads"])).override_failure_message("her parsel tam bir kez okunmalı") \
+			.is_equal(total)
+	assert_int(steps_with_work).override_failure_message("süpürme tek adımda bitti: dilimlenmedi").is_greater(1)
+	# İkinci yükleme (epoch) süpürmeyi baştan kurar; `sync(true)` hepsini bitirir, yine her parsel bir kez.
+	var reads_before := int(proj_b.stats["parcel_reads"])
+	assert_bool((proj_b._facade as SimFacadeImpl).import_save(bytes).ok).is_true()
+	proj_b.sync(true)
+	assert_bool(proj_b.sweep_pending()).is_false()
+	assert_int(int(proj_b.stats["parcel_reads"]) - reads_before).is_equal(total)

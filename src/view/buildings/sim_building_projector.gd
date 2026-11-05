@@ -36,6 +36,9 @@ const VIEW_CHUNK := 16
 const SWEEP_CHUNK := 8
 ## Süpürmede bir birimde en çok bu kadar ham kimlik taranır (T0 parselleri atlanırken).
 const SWEEP_SCAN := 2000
+## T0 yapılı parsellerin kare dilimli süpürmesinde (B-050) bir pencereye eklenen en çok kimlik; pencere yine
+## `VIEW_CHUNK`lık birimlere bölünür ve her karede bütçe kadar yürür.
+const T0_SWEEP_WINDOW := 256
 ## Okunmuş görünümlerin uygulanması (yerleşim hesabı dahil) birim başına en çok bu kadar µs.
 const APPLY_UNIT_US := 700
 const EXACT_CHUNK := 400
@@ -56,6 +59,9 @@ var stats: Dictionary = {"syncs": 0, "windows": 0, "changed_windows": 0, "full_s
 var _facade: SimFacade = null
 var _placer: SimBuildingPlacer = null
 var _t0_occupied: Dictionary = {}
+## Tam eşitlemeden sonra geri okunacak T0 yapılı parseller (artan kimlik) ve sıradaki konum (B-050).
+var _t0_sweep: PackedInt64Array = PackedInt64Array()
+var _t0_sweep_pos: int = 0
 var _last_tick: int = -1
 ## Son tüketilen feed: `up_to_tick` (-1 = hiç) ve `epoch` (-1 = bilinmiyor).
 var _feed_tick: int = -1
@@ -162,7 +168,18 @@ func unplaced_reason_counts() -> Dictionary:
 ## Sürmekte olan pencere ya da başlamamış iş var mı (yeni sim günü, feed tam değil/epoch değişti).
 func busy() -> bool:
 	return _phase != Phase.IDLE or _facade.current_tick() != _last_tick \
-			or _needs_full(_facade.parcel_changes_since(_feed_tick))
+			or _needs_full(_facade.parcel_changes_since(_feed_tick)) or sweep_pending()
+
+
+## Kayıt yüklemesinden sonra T0 yapılı parsellerin kare dilimli geri okuması sürüyor mu (B-050)? `step()` yürütür;
+## `sync()` bunu BEKLETİR, `sync(true)` bitirir.
+func sweep_pending() -> bool:
+	return _t0_sweep_pos < _t0_sweep.size()
+
+
+## Süpürmede henüz okunmamış T0 parsel sayısı (kuyruk derinliği).
+func sweep_remaining() -> int:
+	return maxi(_t0_sweep.size() - _t0_sweep_pos, 0)
 
 
 ## Projector'ın işlediği son sim günü ile şimdiki gün arasındaki fark (kuyruk derinliği).
@@ -195,8 +212,9 @@ func step(budget_us: int) -> Dictionary:
 	return {"worked": worked, "busy": _phase != Phase.IDLE, "ms": ms}
 
 
-## BÜTÇESİZ tam senkron (testler, dev ilerletme, yükleme). Dönüş: {changed, resync, parcels, feed_ids, ms}.
-## `exact`: inşaattaki TÜM projelerin ilerlemesini şimdi okur.
+## BÜTÇESİZ senkron (testler, dev ilerletme, yükleme). Dönüş: {changed, resync, parcels, feed_ids, ms}.
+## `exact`: inşaattaki TÜM projelerin ilerlemesini şimdi okur VE yüklemeden kalan T0 süpürmesini bitirir (~24 bin ek
+## okuma). `exact == false`: T0 süpürmesi (B-050) beklemede kalır, sonraki `step()` kareleri yürütür; yükleme anı kısa.
 func sync(exact: bool = false) -> Dictionary:
 	var t0 := Time.get_ticks_usec()
 	var v0 := _version
@@ -206,7 +224,7 @@ func sync(exact: bool = false) -> Dictionary:
 	while true:
 		if _phase != Phase.IDLE:
 			_run_unit()
-		elif not _begin(false):
+		elif not _begin(false, exact):
 			break
 	if exact and _begin(true):
 		while _phase != Phase.IDLE:
@@ -230,12 +248,12 @@ func _needs_full(feed: ParcelChangeFeed) -> bool:
 	return not feed.complete or (_feed_epoch >= 0 and feed.epoch != _feed_epoch)
 
 
-## Yeni pencere açar; yapılacak iş yoksa false.
-func _begin(exact: bool) -> bool:
+## Yeni pencere açar; yapılacak iş yoksa false. `sweep`: bekleyen T0 süpürmesinin bir dilimi de bu pencereye girer.
+func _begin(exact: bool, sweep: bool = true) -> bool:
 	var tick := _facade.current_tick()
 	var feed := _facade.parcel_changes_since(_feed_tick)
 	var full := _needs_full(feed)
-	if not exact and not full and tick == _last_tick:
+	if not exact and not full and tick == _last_tick and not (sweep and sweep_pending()):
 		return false
 	var t0 := Time.get_ticks_usec()
 	_vnow += virtual_unit_us / 4
@@ -255,6 +273,12 @@ func _begin(exact: bool) -> bool:
 		# yapısı alabilir. T0 stoku `developed_by_sim == false` ile `_apply`da satırsız kalır; feed yalnız değişenleri taşır.
 		dirty[int(id)] = true
 		_w_feed[int(id)] = true
+	if sweep and sweep_pending():
+		var stop := mini(_t0_sweep_pos + T0_SWEEP_WINDOW, _t0_sweep.size())
+		for i in range(_t0_sweep_pos, stop):
+			dirty[int(_t0_sweep[i])] = true
+		stats["t0_sweep_reads"] = int(stats.get("t0_sweep_reads", 0)) + stop - _t0_sweep_pos
+		_t0_sweep_pos = stop
 	for pid: int in _staged:
 		if exact or int(_due.get(pid, 0)) <= tick:
 			if not dirty.has(pid):
@@ -332,11 +356,13 @@ func _read(chunk: PackedInt64Array) -> Array[ParcelView]:
 # --- tam eşitleme ------------------------------------------------------------------------------------------------
 
 ## Kayıt YÜKLENDİ (epoch) / geri sarma / eksik feed: türetilmiş durum BİR KEZ, HEMEN ve bütçesiz kurulur (yükleme anında
-## tek seferlik kısa bekleme; kare dağıtımı yalnız artımlı işler içindir). T0 dışı tüm parseller toplu okunur;
+## tek seferlik kısa bekleme; kare dağıtımı yalnız artımlı işler içindir). T0 DIŞI tüm parseller toplu okunur;
 ## sim'in artık tanımadığı parsellerin izleri silinir. Süre `stats["full_sync_ms"]`.
-## BİLİNEN SINIR (B-025 artığı): T0 yapılı parseller süpürmede ATLANIR (~24 bin ham okuma tasarrufu; gerçek dünyada
-## başsız ~1,3 s -> ~3,0 s ölçüldü). Yıkımla boşalıp sim yapısı almış bir T0 parseli YÜKLEME sonrası süpürmeyle geri
-## gelmez; canlı oyunda feed yolu doğru (yukarıda). Kalıcı çözüm: bayat T0 kümesini sim'den türetmek (facade sorgusu).
+## T0 YAPILI parseller (B-050, B-025 artığı) bu senkron okumada ATLANIR (~24 bin ham okuma; hepsi senkron okununca
+## başsız ~1,3 s -> ~3,0 s ölçüldü) ama KARE DİLİMLİ süpürmeye (`_t0_sweep`) alınır: `step()` her pencereye
+## `T0_SWEEP_WINDOW` kimlik katar. Yıkımla boşalıp sim yapısı almış T0 parseli yüklemeden sonra bu süpürmeyle geri
+## çizilir (canlı oyunda feed yolu zaten doğru). Süpürme bitene dek o parsellerin ESKİ satırları (varsa) korunur ve
+## sırası gelince sim'e göre düzeltilir: yükleme anında bina kaybolup geri gelmez.
 func _full_sync() -> void:
 	var t0 := Time.get_ticks_usec()
 	stats["full_syncs"] += 1
@@ -360,8 +386,14 @@ func _full_sync() -> void:
 			stale.erase(v.id)
 			changed = _apply(v, tick) or changed
 	for pid: int in stale:
+		if _t0_occupied.has(pid):
+			continue   # sırası gelince T0 süpürmesi okur ve düzeltir (satır önce kaybolup geri gelmez)
 		_forget(pid)
 		changed = true
+	var t0_ids: Array = _t0_occupied.keys()
+	t0_ids.sort()
+	_t0_sweep = PackedInt64Array(t0_ids)
+	_t0_sweep_pos = 0
 	if changed:
 		_rebuild_columns()
 		stats["changed_windows"] += 1

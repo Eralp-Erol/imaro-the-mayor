@@ -203,3 +203,53 @@ func test_graph_change_reindexes_edges_and_new_roads_gain_life() -> void:
 	assert_int(net.graph_version).is_greater(graph_before)
 	act.index_edges()
 	assert_int(act.stats["edges_eligible"]).is_greater(edges_before)
+
+
+## B-040: kare dilimli dizin + parsel toplamı (yol onayı sonrası ana iş parçacığı sıçramasını önler) SENKRON yolla AYNI
+## sonucu verir; her dilimde en az 32 kenar/parsel ilerler (bütçe 0 olsa da takılmaz); sürerken `is_rebuilding()` true.
+func test_sliced_refresh_matches_the_synchronous_result() -> void:
+	var net := _net()
+	var sync_act := _activity(net)
+	_fill(sync_act, Vector3i(4, 2, 1))
+	sync_act.step_rebuild(1000000)
+	var path := PackedVector2Array([ORIGIN + Vector2(0, -150.0), ORIGIN + Vector2(3 * DX, -150.0)])
+	assert_bool(bool(net.add_road(path, WorldRoadEdge.CLASS_LOCAL).get("ok", false))).is_true()
+	sync_act.index_edges()
+	sync_act.begin_rebuild()
+	sync_act.step_rebuild(1000000)
+	var sliced := _activity(net)
+	_fill(sliced, Vector3i(4, 2, 1))
+	var calls := 1
+	var done := sliced.step_refresh(0, true)
+	assert_bool(done).is_false()
+	while not done:
+		assert_bool(sliced.is_rebuilding()).is_true()
+		done = sliced.step_refresh(0)
+		calls += 1
+		assert_int(calls).is_less(100000)
+	assert_bool(sliced.is_rebuilding()).is_false()
+	assert_int(sliced.stats["edges_eligible"]).is_equal(sync_act.stats["edges_eligible"])
+	assert_array(sliced.eligible.keys()).is_equal(sync_act.eligible.keys())
+	assert_array(sliced.cells()).is_equal(sync_act.cells())
+	for eid: int in sync_act.eligible:
+		assert_vector(Vector3(sliced.edge_units.get(eid, Vector3i.ZERO))).is_equal(
+				Vector3(sync_act.edge_units.get(eid, Vector3i.ZERO)))
+	assert_vector(sliced.totals(1.0)).is_equal(sync_act.totals(1.0))
+	assert_int(sliced.stats["parcels_mapped"]).is_equal(sync_act.stats["parcels_mapped"])
+
+
+func test_sliced_refresh_restarts_cleanly_and_nothing_to_do_returns_true() -> void:
+	var act := _activity(_net())
+	_fill(act, Vector3i(3, 0, 0))
+	act.step_rebuild(1000000)
+	assert_bool(act.step_refresh(0)).is_true()  # iş yok
+	var totals_before := act.totals(1.0)
+	var keys_before := act.eligible.keys()
+	assert_bool(act.step_refresh(0, true)).is_false()
+	assert_bool(act.step_refresh(0, true)).is_false()  # sürerken yeniden başlatma: baştan, bozulma yok
+	var guard := 0
+	while not act.step_refresh(0):
+		guard += 1
+		assert_int(guard).is_less(100000)
+	assert_array(act.eligible.keys()).is_equal(keys_before)
+	assert_vector(act.totals(1.0)).is_equal(totals_before)

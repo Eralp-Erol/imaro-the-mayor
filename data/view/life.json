@@ -52,6 +52,7 @@
 	"update": {
 		"cell_margin_m": 120.0,
 		"camera_step_m": 12.0,
-		"init_parcels_per_frame": 5000
+		"init_parcels_per_frame": 5000,
+		"runtime_rebuild_budget_us": 3000
 	}
 }
