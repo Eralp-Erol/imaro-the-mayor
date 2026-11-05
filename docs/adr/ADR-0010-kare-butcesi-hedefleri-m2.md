@@ -161,3 +161,9 @@ Cihaz: iPad Pro 12,9" (6. nesil; M2 yonga [genel bilgi]), iPadOS 26.5.2. Hiçbir
 - **Varsayım:** 100 ms algı eşiği; M2 tek çekirdek hızı; iOS watchdog ve bellek sınırı; Instruments'ın Compatibility yolunda veri vermesi; iOS varsayılan kare tavanı; K8 düşüşünün kapsama etkisi payı.
 - **Ölçülmedi:** iPad'in tüm satırları; açılış uçtan uca; yol penceresinde alt sistem dökümü; diğer eylemlerin pencereleri; 1,00M tepe karesinin kaynağı; K8 2026-10-25 sonrası.
 - Ham perf JSON'ları (`artifacts/perf/`) bu oturumda bulunamadı; sayılar kayıttan alındı.
+
+## Ek A · M2 kapanış durumu (2026-11-05, technical-director; ayrıntı `production/log/2026-11-05-teknik-direktor-m2-kapanis.md`)
+- Karar 2 "Ölçülen" sütunu `121ff46` yapısındandır; B-040/B-081/B-042/B-052 ve çekmece sonrası kararlı evre **yeniden ölçülmedi**.
+- Etkileşim karesi: B-040 sonrası (B-042 öncesi, HUD dahil) en kötü 47-57 ms, >33,3 ms kare 5-54 [kayıt, B-041]. **Tavan (100 ms) geçiyor, hedef (≤ 50 ms, ≤ 3 kare) geçmiyor**; B-042 sonrası ölçülmedi. Karar 2 tablosundaki "FAIL" artık geçerli değil.
+- Kararlı p99 riski: en hızlı hızda güven şeridi (B-042, 7 tick'te bir ~22 ms) karelerin ~%4'üne biner -> p99 ~28-30 ms olabilir [hesap, ölçülmedi].
+- Masaüstü yeniden ölçümü T-076 ile aynı yapıda yapılır (iPad karşılaştırması aynı yapıyı ister); ayrı görev açılmaz.
