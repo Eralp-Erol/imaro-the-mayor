@@ -95,7 +95,7 @@ reg_flag=""; [ "$register" = 1 ] && reg_flag="-allowProvisioningDeviceRegistrati
 # shellcheck disable=SC2086
 xcodebuild -project "$proj_dir/$SCHEME.xcodeproj" -scheme "$SCHEME" -configuration "$config" \
   -destination "id=$device" -derivedDataPath "$derived" \
-  DEVELOPMENT_TEAM="$IMARO_IOS_TEAM_ID" -allowProvisioningUpdates $reg_flag build >"$build_log" 2>&1 \
+  DEVELOPMENT_TEAM="$IMARO_IOS_TEAM_ID" CODE_SIGN_IDENTITY="Apple Development" -allowProvisioningUpdates $reg_flag build >"$build_log" 2>&1 \
   || { echo "ios-install.sh: xcodebuild BAŞARISIZ — $build_log" >&2; grep -E "error:" "$build_log" | head -n 8 >&2 || true
        echo "  İlk kurulumda cihaz hesaba kayıtlı değilse --register-device ekle (cihaz sahibinin onayıyla)." >&2; exit 1; }
 [ -d "$app" ] || { echo "ios-install.sh: derlenen .app bulunamadı: $app" >&2; exit 1; }
