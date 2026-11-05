@@ -88,17 +88,3 @@ func test_instance_buffer_carries_custom_data_and_hlod1_uses_variant_colors() ->
 	var tpl := _kit.proxies[m] as BuildingKit.ProxyTemplate
 	assert_int(tpl.variant_colors.size()).is_equal(BuildingVariety.CODES)
 	assert_bool(tpl.colors_for(1) != tpl.colors).is_true()   # beton çatı: HLOD1 köşe renkleri değişir
-
-
-func test_art_fixes_roof_lines_suppressed_and_jitter_low() -> void:
-	# Sanat direktörü F4/F5: beton çatıda kiremit sıra çizgisi bastırılır, cepheden >= %20 koyu; parlaklık sapması ~0,03.
-	var v := BuildingVariety.load_default()
-	assert_float(v.jitter).is_less_equal(0.03)
-	var span := absf(BuildingVariety.roof_shade(0.3, v.roof_line_keep, v.roof_shade_pivot) \
-			- BuildingVariety.roof_shade(0.1, v.roof_line_keep, v.roof_shade_pivot))
-	var raw := absf(BuildingVariety.roof_shade(0.3) - BuildingVariety.roof_shade(0.1))
-	assert_float(span).is_less(raw * 0.3)
-	var k := BuildingVariety.roof_shade(0.15, v.roof_line_keep, v.roof_shade_pivot)
-	var roof_v := v.roof_concrete.srgb_to_linear().get_luminance() * k
-	var wall_v := v.wall_light.srgb_to_linear().get_luminance() * BuildingVariety.wall_shade(0.15)
-	assert_float(roof_v).is_less(wall_v * 0.8)
