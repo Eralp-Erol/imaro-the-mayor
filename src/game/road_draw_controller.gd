@@ -114,10 +114,10 @@ func panel() -> RoadDrawPanel:
 func activate() -> void:
 	if tool.is_active():
 		if _hud.panel_id() != PANEL_ID:   # başka panel yerimizi aldı: "Yol çiz"e yeniden dokunmak paneli geri getirir
-			_hud.open_panel(PANEL_ID, &"road.title", _build_panel)
+			_hud.open_panel(PANEL_ID, &"road.title", _build_panel, true)
 		return
 	tool.activate()
-	_hud.open_panel(PANEL_ID, &"road.title", _build_panel)
+	_hud.open_panel(PANEL_ID, &"road.title", _build_panel, true)
 	_hud.toolbar.set_active_tool(ModeToolbar.TOOL_ROAD_DRAW)
 
 

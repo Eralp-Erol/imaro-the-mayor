@@ -68,7 +68,7 @@ func set_band(band_in: StringName) -> void:
 
 
 func open() -> void:
-	hud.open_panel(PANEL_ID, &"inspector.title", _build)
+	hud.open_panel(PANEL_ID, &"inspector.title", _build, true)
 
 
 func is_open() -> bool:

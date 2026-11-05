@@ -179,8 +179,8 @@ func set_map_highlight(owner: StringName, parcel_ids: PackedInt64Array) -> void:
 
 
 ## Panel açar. `builder(ctx) -> Control` içeriği üretir (profil değişince yeniden çağrılır). Aynı kimlikse
-## yerinde yeniler. `drawer`: dokunmatik profilde panel alttan çekmece olur (D-021; şu an yalnız imar bağlı, diğer karar
-## panelleri aynı bileşeni bekler); masaüstünde bu bayrak etkisizdir.
+## yerinde yeniler. `drawer`: dokunmatik profilde panel alttan çekmece olur (D-021; imar, meclis, bütçe, gündem,
+## politika, sonuç, nedensellik, denetçi, yol çizimi); masaüstünde bu bayrak etkisizdir.
 func open_panel(panel_id_in: StringName, title_key: StringName, builder: Callable, drawer: bool = false) -> void:
 	if panel_id_in != _panel_id:
 		set_map_highlight(_panel_id, PackedInt64Array())

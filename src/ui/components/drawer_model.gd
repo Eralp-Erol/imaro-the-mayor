@@ -2,8 +2,8 @@ class_name DrawerModel
 extends RefCounted
 ## Alttan çıkan çekmece (D-021): SAF mantık (düğüm yok, test edilebilir). Üç konum: KAPALI (yalnız tutamaç + başlık
 ## şeridi görünür; panel kapanmış sayılmaz), YARI (karar + birincil eylem görünür), TAM (uzun içerik). Parmakla
-## sürükleme bırakılınca en yakın konuma oturur; hızlı fırlatma yönüne bir konum atlar. Karar panelleri (imar,
-## bütçe, meclis, politika) aynı bileşeni kullanır; şu an yalnız imar panelinde bağlıdır.
+## sürükleme bırakılınca en yakın konuma oturur; hızlı fırlatma yönüne bir konum atlar. Şehri örten tüm gerçek
+## paneller (imar, bütçe, meclis, gündem, politika, sonuç, nedensellik, denetçi, yol) aynı bileşeni kullanır.
 
 enum State { CLOSED, HALF, FULL }
 

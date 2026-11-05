@@ -99,19 +99,19 @@ func add_zoning_parcel(parcel_id: int) -> bool:
 
 
 func open_council() -> void:
-	hud.open_panel(PANEL_COUNCIL, &"council.title", _build_council)
+	hud.open_panel(PANEL_COUNCIL, &"council.title", _build_council, true)
 
 
 func open_budget() -> void:
-	hud.open_panel(PANEL_BUDGET, &"budget.title", _build_budget)
+	hud.open_panel(PANEL_BUDGET, &"budget.title", _build_budget, true)
 
 
 func open_agenda() -> void:
-	hud.open_panel(PANEL_AGENDA, &"agenda.title", _build_agenda)
+	hud.open_panel(PANEL_AGENDA, &"agenda.title", _build_agenda, true)
 
 
 func open_policy() -> void:
-	hud.open_panel(PANEL_POLICY, &"policy.title", _build_policy)
+	hud.open_panel(PANEL_POLICY, &"policy.title", _build_policy, true)
 
 
 ## Yönetim araçları (bütçe, meclis, gündem). Ele alındıysa true.
