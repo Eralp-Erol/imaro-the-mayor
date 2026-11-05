@@ -297,13 +297,13 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Meanwhile: A; kullanıcı değiştirirse yalnız `life.json` yoğunluk/ağırlık değeri değişir.
 
 
-### Q-035 · "Oyun hep D2'den başlasın" (D-020) kanonla çakışıyor mu? (status: open — engellemiyor; design-director 2026-11-05)
+### Q-035 · "Oyun hep D2'den başlasın" (D-020) kanonla çakışıyor mu? (status: answered → D-021)
 - Context: D2 = Orven. Kanonda "Orven'i zorunlu başlangıç yapmak" bilerek reddedildi; D-002 "test alanı seçimi oyun tasarımı kararına dönüşmesin" diyor. D-020 kartı bu çakışmayı göstermedi ve "şimdilik" sözüyle "hep"i birlikte taşıyor. Sonraki sahip kararı kazanır, ama bilgilendirilmiş olması gerekir.
 - Options: A) Şimdilik D2; ilçe seçimi hedef olarak kalır, T-043 bekler. B) Kalıcı: oyun hep Orven'den başlar (D-002 ve kanondaki ret bilerek geçersiz olur). C) İlçe seçimi M2 kapanmadan gelsin (T-043).
 - Recommendation: A.
 - Meanwhile: gönderilen oyun D2'de yol çizdirir; B-026 karar gereği kapalıdır, ama Q-035 B/C'ye dönerse yeniden açılır.
 
-### Q-036 · Yıkım ve yerinden etme meclisin oyuncuya güvenini etkilesin mi? (status: open — engellemiyor; ölçüm B-030, 2026-11-05)
+### Q-036 · Yıkım ve yerinden etme meclisin oyuncuya güvenini etkilesin mi? (status: answered → D-021 (meclis güveni düşsün; parametreler çalışma değeri))
 - Context: 144 koşuluk ölçümde yol yıkımı/kamulaştırma yüzünden evinden olan hane sayısı 42 ya da 302 olsa da meclis üyelerinin güven/kızgınlık değerleri HİÇ değişmiyor; yıkım oylamayı hafifçe kolaylaştırıyor (altyapı yükünü düşürdüğü için). Halk tepkisi var ama meclise ulaşmıyor. D-008 "halk tepki versin" ve siyasi kariyer çekirdeğiyle ilgili; kanonda (D-014) tepki dağılımı var, meclise bağlanması belirsiz.
 - Options: A) Böyle kalsın: halk tepkisi görünür ama meclis yalnız teklifin kendi değerine bakar (önerilen, ölçülmüş çalışan davranış; sonra istenirse açılır). B) Yerinden edilen hane çoksa meclis güveni bir miktar düşsün (veri ağırlığı; meclis eşiği ve GOLDEN'a dokunur). C) Tepki yalnız kesim baskısı (bloc_pressure) olarak ağırlaşsın.
 - Recommendation: A (karar ürün yönüne ait; sahte nedensellik eklenmez).
