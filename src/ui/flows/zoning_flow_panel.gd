@@ -13,6 +13,8 @@ extends FlowPanel
 ## CAN-03: yalnız imar KOŞULU önerilir; metin bunu söyler.
 
 signal submitted(result: CommandResult)
+## Teklif alanındaki parseller (her çizimde; haritada vurgu için, yalnız görünüm). Dedupe alıcıdadır.
+signal area_changed(parcel_ids: PackedInt64Array)
 
 var model: ZoningFlowModel = null
 ## Salt okunur kısayollar (ui_lab/testler): modelin son ön doğrulaması ve gönderimi.
@@ -96,6 +98,7 @@ func _render() -> void:
 	_body.add_child(UiFactory.label(UiText.t(&"zoning.step_line", {"n": model.step_number(),
 		"total": ZoningFlowModel.step_count(), "name": UiText.t(model.step_name_key())}), UiTheme.V_LABEL_MUTED, true))
 	_add_area()
+	area_changed.emit(model.parcel_ids)
 	if model.parcel_ids.is_empty():
 		_restore_focus(focus_role)
 		return
@@ -120,9 +123,11 @@ func _add_area() -> void:
 		by_id[v.id] = v
 	if model.municipal_mode:
 		_add_municipal_summary(by_id)
+	elif ZoningParcelText.folds(model.parcel_ids.size()):
+		_add_folded_area(by_id)
 	else:
-		for id in model.parcel_ids:
-			_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
+		for i in model.parcel_ids.size():
+			_body.add_child(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
 	if model.municipal_mode:
 		var mode_note := _muted(UiText.t(&"zoning.municipal.mode"))
 		_tag(mode_note, "municipal_mode")
@@ -190,8 +195,45 @@ func _add_municipal_summary(by_id: Dictionary) -> void:
 		_render())
 	_body.add_child(toggle)
 	if _parcels_open:
-		for id in model.parcel_ids:
-			_body.add_child(_parcel_row(id, by_id.get(id) as ParcelView))
+		for i in model.parcel_ids.size():
+			_body.add_child(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
+
+
+## Çok parselli sıradan teklif: tek özet satırı (parsel sayısı, sim `area_m2` toplamı, bölge kodları) + katlanır liste.
+func _add_folded_area(by_id: Dictionary) -> void:
+	var summary := UiFactory.label(ZoningParcelText.summary(model.parcel_ids.size(), _views_in_order(by_id)), &"", true)
+	_tag(summary, "area_summary")
+	_body.add_child(summary)
+	# Katlı listede parsel durumları (ör. "reddedildi") görünür kalsın: sim plan durumu etiketine göre sayım.
+	var tally := {}
+	for id in model.parcel_ids:
+		var state_text := PlanStateText.label(model.plan_state_of(id), true)
+		if state_text != "":
+			tally[state_text] = int(tally.get(state_text, 0)) + 1
+	for state_text: String in tally:
+		var line := _muted(UiText.t(&"zoning.state_tally", {"label": state_text, "n": UiText.number(tally[state_text])}))
+		_tag(line, "area_states")
+		_body.add_child(line)
+	var toggle := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.hide_list" if _parcels_open
+		else &"zoning.municipal.show_list"), false, true)
+	toggle.button_pressed = _parcels_open
+	_tag(toggle, "area_list_toggle")
+	toggle.pressed.connect(func() -> void:
+		_parcels_open = not _parcels_open
+		_render())
+	_body.add_child(toggle)
+	if _parcels_open:
+		for i in model.parcel_ids.size():
+			_body.add_child(_parcel_row(model.parcel_ids[i], by_id.get(model.parcel_ids[i]) as ParcelView, i + 1))
+
+
+func _views_in_order(by_id: Dictionary) -> Array[ParcelView]:
+	var out: Array[ParcelView] = []
+	for id in model.parcel_ids:
+		var v := by_id.get(id) as ParcelView
+		if v != null:
+			out.append(v)
+	return out
 
 
 func open_municipal_land() -> bool:
@@ -200,7 +242,7 @@ func open_municipal_land() -> bool:
 	return ok
 
 
-func _parcel_row(id: int, view: ParcelView) -> Control:
+func _parcel_row(id: int, view: ParcelView, ordinal: int) -> Control:
 	# Kompakt satır (çok parselli teklifte önizleme ekranda kalsın): başlık + plan durumu aynı satırda, "Çıkar" sağda.
 	var card_parts := _card()
 	var card: PanelContainer = card_parts[0]
@@ -211,7 +253,7 @@ func _parcel_row(id: int, view: ParcelView) -> Control:
 	if model.municipal_mode:
 		# Belediye arazisi yapılı değildir ("Yapılı parsel" yanlış olur): sim `municipal_lands()` satırı.
 		plan_text = UiText.t(&"zoning.municipal.row")
-	var title_text := UiText.humanize(SimContract.parcel_ref(id))
+	var title_text := ZoningParcelText.row_head(ordinal, view)
 	if plan_text != "":
 		title_text += " · " + plan_text
 	elif view != null:
@@ -415,9 +457,7 @@ func _on_reason_pressed() -> void:
 
 
 func _area_text() -> String:
-	if model.municipal_mode:
-		return UiText.t(&"zoning.municipal.summary", {"n": UiText.number(model.parcel_ids.size())})
-	var parts := PackedStringArray()
-	for id in model.parcel_ids:
-		parts.append(UiText.humanize(SimContract.parcel_ref(id)))
-	return ", ".join(parts)
+	var by_id := {}
+	for v in _facade.parcel_views(model.parcel_ids):
+		by_id[v.id] = v
+	return ZoningParcelText.area_phrase(model.parcel_ids.size(), _views_in_order(by_id))

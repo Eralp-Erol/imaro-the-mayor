@@ -167,6 +167,8 @@ func _alive(panel: Variant) -> bool:
 func _build_zoning(ctx: UiContext) -> Control:
 	var p := ZoningFlowPanel.create(ctx, facade, zoning)
 	_wire(p)
+	p.area_changed.connect(func(ids: PackedInt64Array) -> void: hud.set_map_highlight(PANEL_ZONING, ids))
+	hud.set_map_highlight(PANEL_ZONING, zoning.parcel_ids)  # ilk çizim bağlantıdan önce oldu
 	_zoning_panel = p
 	return p
 
