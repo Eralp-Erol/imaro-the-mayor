@@ -9,10 +9,15 @@ extends Node3D
 ## Kullanım: `ParcelAreaHighlight.attach(hud, camera, net, view_root, ground)`; kaynak `HudRoot.map_highlight_changed`.
 
 const MAX_RINGS := 40
+## Teklif alanı çizgisi: tek seçim halkasından kalın, açık iç hat + koyu dış hat (hardal/boş arazide de seçilir).
+const LINE_SCALE := 2.2
+const INNER_COLOR := Color(0.97, 0.98, 1.0)
 
 var camera_rig: CameraRig = null
 var ground_height: Callable = Callable()
 var parcels: Dictionary = {}
+## Arşiv (yola gömülmüş belediye arazisi) araması için ağ; yoksa yalnız `parcels`.
+var net: WorldNetwork = null
 var band: StringName = &""
 
 var _rings: Array[ParcelSelectionRing] = []
@@ -24,6 +29,7 @@ static func attach(hud: HudRoot, rig: CameraRig, net: WorldNetwork, parent: Node
 	var h := ParcelAreaHighlight.new()
 	h.camera_rig = rig
 	h.ground_height = ground
+	h.net = net
 	h.parcels = net.parcels if net != null else {}
 	parent.add_child(h)
 	if rig != null:
@@ -49,7 +55,7 @@ func show_parcels(ids: PackedInt64Array) -> void:
 	_ids = ids.duplicate()
 	var shown := 0
 	for id in ids:
-		var parcel := parcels.get(id) as WorldParcel
+		var parcel := _find(id)
 		if parcel == null or shown >= MAX_RINGS:
 			continue
 		_ring(shown).select(parcel)
@@ -75,10 +81,21 @@ func highlighted_ids() -> PackedInt64Array:
 	return out
 
 
+## Önce canlı parsel; yoksa (kamulaştırılıp yola gömülen belediye arazisi) salt okunur arşiv geometrisi.
+func _find(id: int) -> WorldParcel:
+	var live := parcels.get(id) as WorldParcel
+	if live != null or net == null:
+		return live
+	return NetworkLandReuse.archived_parcel(net, id)
+
+
 func _ring(index: int) -> ParcelSelectionRing:
 	while _rings.size() <= index:
 		var r := ParcelSelectionRing.new()
 		r.name = "AreaRing%d" % _rings.size()
+		r.width_scale = LINE_SCALE
+		r.outline_halo = true
+		r.color = INNER_COLOR
 		add_child(r)
 		r.bind(camera_rig, ground_height)
 		r.set_band(band)

@@ -135,12 +135,15 @@ func _add_area() -> void:
 	elif not model.is_locked():
 		_add_municipal_entry()
 	if not model.is_locked():
+		# Sıkı düzen (dokunmatikte kullanım seçimi ve gönder ilk ekranda kalsın): özet satırı zaten sayıyı söyler;
+		# ipucu/sayaç yalnız küçük alanda, sınırda uyarı her zaman.
+		var compact := ZoningParcelText.folds(model.parcel_ids.size()) or model.municipal_mode
 		var limit := model.max_parcels()
-		if limit > 0:
+		if limit > 0 and (model.at_parcel_limit() or not compact):
 			_body.add_child(_muted(UiText.t(&"zoning.too_many", {"max": limit}) if model.at_parcel_limit()
 				else UiText.t(&"zoning.count_line", {"n": model.parcel_ids.size(), "max": limit})))
-		_body.add_child(_muted(UiText.t(&"zoning.municipal.no_mix" if model.municipal_mode
-				else &"zoning.area_add_hint")))
+		if not compact:
+			_body.add_child(_muted(UiText.t(&"zoning.area_add_hint")))
 		if model.parcel_ids.size() > 1 or model.municipal_mode:
 			var clear := UiFactory.button(_ctx, UiText.t(&"zoning.clear_area"), false)
 			_tag(clear, "area_clear")
@@ -210,8 +213,11 @@ func _add_folded_area(by_id: Dictionary) -> void:
 		var state_text := PlanStateText.label(model.plan_state_of(id), true)
 		if state_text != "":
 			tally[state_text] = int(tally.get(state_text, 0)) + 1
+	var tally_parts := PackedStringArray()
 	for state_text: String in tally:
-		var line := _muted(UiText.t(&"zoning.state_tally", {"label": state_text, "n": UiText.number(tally[state_text])}))
+		tally_parts.append(UiText.t(&"zoning.state_tally", {"label": state_text, "n": UiText.number(tally[state_text])}))
+	if not tally_parts.is_empty():
+		var line := _muted(" · ".join(tally_parts))
 		_tag(line, "area_states")
 		_body.add_child(line)
 	var toggle := UiFactory.button(_ctx, UiText.t(&"zoning.municipal.hide_list" if _parcels_open
@@ -260,7 +266,9 @@ func _parcel_row(id: int, view: ParcelView, ordinal: int) -> Control:
 		title_text += " · %s" % (UiText.humanize(view.zone) if view.zone != &"" else UiText.t(&"common.unknown"))
 		if view.pending_zone != &"":
 			title_text += " · %s: %s" % [UiText.t(&"zoning.pending_zone"), UiText.humanize(view.pending_zone)]
-	var title := UiFactory.label(title_text, UiTheme.V_LABEL_DANGER if PlanStateText.needs_plan(plan) else &"", true)
+	# Boş belediye arazisi normal durumdur (H3): kırmızı yalnız gerçekten plansız sıradan parselde.
+	var warn := PlanStateText.needs_plan(plan) and not model.municipal_mode
+	var title := UiFactory.label(title_text, UiTheme.V_LABEL_DANGER if warn else &"", true)
 	_tag(title, "plan_state_%d" % id)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)

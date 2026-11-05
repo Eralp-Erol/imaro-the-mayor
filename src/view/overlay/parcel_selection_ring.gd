@@ -42,12 +42,19 @@ const MAX_SEGMENT_M := 6.0
 ## Miter uzunluğu sınırı (keskin köşelerde sivri uç yok).
 const MITER_LIMIT := 2.0
 const REBUILD_RATIO := 0.08
+const AREA_MAX_WIDTH_FRACTION := 0.12
+## Koyu dış hat, iç çizgiden bu kat kalın (iç çizgi ortada kalır).
+const OUTLINE_HALO_FACTOR := 2.2
 
 var camera_rig: CameraRig = null
 var ground_height: Callable = Callable()
 var color: Color = Color.WHITE
 var halo_color: Color = Color.BLACK
 var band: StringName = &""
+## Çok parsel vurgusu (ParcelAreaHighlight): çizgi kalınlığı katsayısı ve koyu dış hat (açık iç hat + koyu çerçeve,
+## boş arazinin hardal zemininde de seçilir). Kalınlık yine parsel kenarının `AREA_MAX_WIDTH_FRACTION`ını aşmaz.
+var width_scale: float = 1.0
+var outline_halo: bool = false
 
 var _parcel: WorldParcel = null
 var _mesh_node: MeshInstance3D = null
@@ -156,7 +163,10 @@ func _refresh(force: bool) -> void:
 	if _parcel == null:
 		return
 	var mpp := _current_mpp()
-	var p := plan(band, mpp, sqrt(maxf(_parcel.area, 1.0)))
+	var size_m := sqrt(maxf(_parcel.area, 1.0))
+	var p := plan(band, mpp, size_m)
+	if bool(p["visible"]) and not bool(p["marker"]) and width_scale != 1.0:
+		p["width_m"] = minf(float(p["width_m"]) * width_scale, AREA_MAX_WIDTH_FRACTION * size_m)
 	if not bool(p["visible"]):
 		_plan = p
 		if _mesh_node != null:
@@ -203,7 +213,10 @@ func _build(p: Dictionary) -> void:
 				halo_i)
 		_marker_geometry(float(p["radius_m"]), float(p["width_m"]), float(p["lift_m"]) + 0.02, verts, indices)
 	else:
-		_outline_geometry(float(p["width_m"]) * 0.5, float(p["lift_m"]), verts, indices)
+		_outline_geometry(float(p["width_m"]) * 0.5, float(p["lift_m"]) + (0.02 if outline_halo else 0.0), verts,
+				indices)
+		if outline_halo:
+			_outline_geometry(float(p["width_m"]) * 0.5 * OUTLINE_HALO_FACTOR, float(p["lift_m"]), halo_v, halo_i)
 	if verts.is_empty():
 		clear()
 		return
