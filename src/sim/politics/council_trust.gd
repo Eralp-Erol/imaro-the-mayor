@@ -29,28 +29,42 @@ const CODE_DROP := &"displacement_trust"
 const CODE_RECOVER := &"displacement_trust_recovery"
 
 
-## Haftalık tarama. Yapılandırma kapalıysa ya da tepki defteri yoksa hiçbir şey yapmaz (durum değişmez).
+## Haftalık tarama. Yapılandırma kapalıysa/tepki defteri yoksa YENİ kesinti yazılmaz; kesinti tablosu zaten varsa (veri
+## sonradan kapatıldı ya da `cohorts` değişti: `reactions.json` digest dışı, eski kayıt yeni veriyle yüklenebilir)
+## kapsam dışı kalan her üyenin hedefi 0'dır ve normal toparlanma çalışır (kesinti donup oya binmeye devam etmez).
+## Durum yokken ve kural kapalıyken hiçbir şey yazılmaz (hash değişmez).
 static func scan(state: GameState, ctx: PoliticsContext) -> void:
 	var cfg: Dictionary = ctx.politics.reactions["council_trust"]
-	if not bool(cfg["enabled"]) or not PublicWorksState.has_reactions(state):
-		return
-	var reading := reading_of(state, cfg)
-	var target := target_of(cfg, int(reading["households"]))
-	var members := affected_members(state, ctx, cfg)
 	var pol := PoliticsState.data(state)
+	var live: bool = bool(cfg["enabled"]) and PublicWorksState.has_reactions(state)
+	if not live and not pol.has(KEY):
+		return
+	var reading := {"households": 0, "commands": []}
+	var target := 0
+	var members: Array[String] = []
+	if live:
+		reading = reading_of(state, cfg)
+		target = target_of(cfg, int(reading["households"]))
+		members = affected_members(state, ctx, cfg)
 	if not pol.has(KEY):
 		if target <= 0 or members.is_empty():
 			return
 		pol[KEY] = {"penalty": {}, "changes": 0}
 	var table: Dictionary = pol[KEY]["penalty"]
-	for member in members:
+	var keys: Array = members.duplicate()
+	for member: String in table:
+		if not keys.has(member):
+			keys.append(member)
+	keys.sort()
+	for member: String in keys:
 		var before := int(table.get(member, 0))
-		var after := target if target > before else maxi(target, before - int(cfg["recover_per_scan_pm"]))
+		var goal := target if members.has(member) else 0
+		var after := goal if goal > before else maxi(goal, before - int(cfg["recover_per_scan_pm"]))
 		if after == before:
 			continue
 		table[member] = after
 		pol[KEY]["changes"] = int(pol[KEY]["changes"]) + 1
-		_record(state, ctx, cfg, member, reading, target, after, after < before)
+		_record(state, ctx, cfg, member, reading, goal, after, after < before)
 
 
 ## Üyenin güvenine binen kesinti (pm, >= 0); durum yoksa 0.

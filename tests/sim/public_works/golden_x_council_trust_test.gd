@@ -59,11 +59,68 @@ func test_with_the_rule_on_the_hash_differs_only_because_the_cut_state_exists() 
 	# Kesinti durumu dışında oyun aynıdır: ekonomi ve yol işleri bit-bit aynı; bütçe defteri (tick, tür, tutar, referans)
 	# aynı (kalemlerin `reason_id`si kayıt numarası kaydığı için KARŞILAŞTIRILMAZ: yeni neden kayıtları numara tüketir).
 	var off_state := (off as SimFacadeImpl).game_state()
-	for system: String in ["economy", "public_works"]:
-		assert_str(str(state.systems.get(system, {}))).override_failure_message("sistem değişti: " + system) \
-			.is_equal(str(off_state.systems.get(system, {})))
+	for system: String in ["economy", "public_works", "actors", "policy"]:
+		var where := _diff(_scrub(state.systems.get(system, {})), _scrub(off_state.systems.get(system, {})), system)
+		assert_str(where).override_failure_message("sistem değişti: " + where).is_empty()
 	assert_array(_ledger(state)).is_not_empty()
 	assert_array(_ledger(state)).is_equal(_ledger(off_state))
+	# Siyaset: kesinti durumu ve neden sayacı çıkarılınca (ve kayan neden numaraları temizlenince) aynı.
+	var pol_on: Dictionary = PoliticsState.data(state).duplicate(true)
+	var pol_off: Dictionary = PoliticsState.data(off_state).duplicate(true)
+	for pol: Dictionary in [pol_on, pol_off]:
+		pol.erase(CouncilTrust.KEY)
+		(pol["counters"] as Dictionary).erase("reason_records")
+	var pol_where := _diff(_scrub(pol_on), _scrub(pol_off), "politics")
+	assert_str(pol_where).override_failure_message("siyaset durumu kesinti dışında değişti: " + pol_where).is_empty()
+
+
+## İlk farklı yolun açıklaması ("" = eşit).
+func _diff(a: Variant, b: Variant, path: String) -> String:
+	var found := ""
+	if a is Dictionary and b is Dictionary:
+		var keys: Array = (a as Dictionary).keys()
+		for key: Variant in (b as Dictionary):
+			if not keys.has(key):
+				keys.append(key)
+		for key: Variant in keys:
+			if not (a as Dictionary).has(key) or not (b as Dictionary).has(key):
+				found = "%s/%s: anahtar yalnız birinde" % [path, str(key)]
+			else:
+				found = _diff(a[key], b[key], "%s/%s" % [path, str(key)])
+			if not found.is_empty():
+				break
+	elif a is Array and b is Array:
+		if (a as Array).size() != (b as Array).size():
+			found = "%s: uzunluk %d != %d" % [path, (a as Array).size(), (b as Array).size()]
+		else:
+			for i in (a as Array).size():
+				found = _diff(a[i], b[i], "%s[%d]" % [path, i])
+				if not found.is_empty():
+					break
+	elif str(a) != str(b):
+		found = "%s: %s != %s" % [path, str(a).left(80), str(b).left(80)]
+	return found
+
+
+## Neden kaydı numaraları (`reason_id`, `reason_ids`, `parent_ids`) kesinti kayıtları numara tükettiği için kayar;
+## karşılaştırmadan önce silinir. Sözlük/dizi derin kopyalanır.
+func _scrub(value: Variant) -> Variant:
+	if value is Dictionary:
+		var out := {}
+		for key: Variant in (value as Dictionary):
+			if str(key) in ["reason_id", "reason_ids", "parent_ids"]:
+				continue
+			out[key] = _scrub(value[key])
+		return out
+	if value is Array:
+		var list: Array = []
+		for item: Variant in (value as Array):
+			list.append(_scrub(item))
+		return list
+	if (value is String or value is StringName) and str(value).begins_with("reason.") \
+			and str(value).trim_prefix("reason.").is_valid_int():
+		return "reason.#"  # kaynak referansı olarak saklanan neden numarası (aktör hafızası `source_ref`)
+	return value
 
 
 func _ledger(state: GameState) -> Array:

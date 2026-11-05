@@ -54,7 +54,7 @@ static func defaults() -> Dictionary:
 		"local": {"enabled": false, "cohort": "housed", "neighborhood_households": 200, "min_displacement_pm": 20,
 			"full_displacement_pm": 200, "proximity_share_pm": 250}.merged(LOCAL_EXTRA_DEFAULTS),
 		"council_trust": {"enabled": false, "decision": "decision.council.displacement_trust", "cohorts": ["housed"],
-			"window_days": 180, "threshold_households": 10, "drop_per_household_pm": 4, "cap_pm": 150,
+			"window_days": 180, "threshold_households": 10, "drop_per_household_pm": 5, "cap_pm": 200,
 			"recover_per_scan_pm": 25},
 	}
 

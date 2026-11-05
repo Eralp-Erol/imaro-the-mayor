@@ -253,7 +253,8 @@ func test_unchanged_weeks_write_no_new_records() -> void:
 	assert_int(n).is_greater(0)
 	for _i in 3:
 		_next_scan(h)
-	assert_bool(reasons_of(h, "decision.council.displacement_trust").size() <= n + 3 * HOUSED.size()).is_true()
+	assert_int(reasons_of(h, "decision.council.displacement_trust").size()).override_failure_message(
+		"değişmeyen haftalarda yeni kayıt yazılmamalı").is_equal(n)
 
 
 # --- Determinizm, kayıt, CAN-03 ---
@@ -269,15 +270,11 @@ func test_same_seed_and_commands_give_the_same_hash_and_the_cut_is_in_it() -> vo
 	off.facade.advance(30)
 	assert_str(off.state().state_hash()).override_failure_message("kesinti hash'e girer") \
 		.is_not_equal(a.state().state_hash())
-
-
-func test_the_cut_is_independent_of_how_ticks_are_chunked() -> void:
-	var a := _road_world()
-	var b := _road_world()
-	a.facade.advance(33)
-	for _i in 33:
-		b.facade.advance(1)
-	assert_str(a.state().state_hash()).is_equal(b.state().state_hash())
+	# tick parçalamadan bağımsız: 30 tek adım == 30'luk tek ilerleme
+	var c := _road_world()
+	for _i in 30:
+		c.facade.advance(1)
+	assert_str(c.state().state_hash()).is_equal(a.state().state_hash())
 
 
 func test_save_and_load_in_the_middle_of_the_cut_resumes_the_same_hash() -> void:
@@ -319,6 +316,42 @@ func test_the_cut_creates_no_private_building_and_changes_no_economy_state_can_0
 	assert_str(str(h.state().systems["economy"])).is_equal(economy_before)
 	assert_str(str(h.state().systems["public_works"])).is_equal(works_before)
 	assert_str(str(h.facade.parcel_ids())).is_equal(parcels_before)
+
+
+# --- Eski kayıt + değişmiş veri: kesinti donmaz (teknik direktör F1) ---
+
+## Kesintili kayıt (varsayılan TRUST verisiyle), `changes` verisiyle kurulmuş taze dünyaya yüklenir.
+func _load_cut_into(changes: Dictionary) -> PoliticsHandle:
+	var run := _road_world()
+	run.facade.advance(16)
+	assert_int(_pen(run, HOUSED[0])).is_greater(0)
+	var fresh := _road_world(changes, true, false)
+	var loaded := fresh.facade.import_save(run.facade.export_save())
+	assert_bool(loaded.ok).override_failure_message(loaded.message).is_true()
+	assert_int(_pen(fresh, HOUSED[0])).is_equal(_pen(run, HOUSED[0]))
+	return fresh
+
+
+func test_a_saved_cut_recovers_to_zero_when_the_rule_is_switched_off_in_the_data() -> void:
+	var h := _load_cut_into({"enabled": false})
+	var previous := _pen(h, HOUSED[0])
+	for _i in 12:
+		_next_scan(h)
+		var now := _pen(h, HOUSED[0])
+		assert_int(now).override_failure_message("kapalıyken kesinti yükselmez, adım <= 20").is_between(
+			maxi(previous - 20, 0), previous)
+		previous = now
+	for member: String in MEMBERS:
+		assert_int(_pen(h, member)).override_failure_message("kapalı veri: kesinti 0'a inmeli " + member).is_equal(0)
+	# aynı kayıt, kapsamı değişmiş veri: kapsam dışı kalan üye toparlanır, kapsama giren kesinti alır
+	var moved := _load_cut_into({"cohorts": ["seeking"], "window_days": 100000})  # sönme yok: hedef sabit kalır
+	for _i in 12:
+		_next_scan(moved)
+	# üye 5 iki kesimi de temsil eder (hem barınan hem arayan): kapsamda kalır; yalnız 1 ve 2 kapsam dışına çıkar
+	for member: String in ["actor.council.1", "actor.council.2"]:
+		assert_int(_pen(moved, member)).override_failure_message("kapsam dışı üye toparlanmalı " + member).is_equal(0)
+	for member: String in ["actor.council.3", "actor.council.4", "actor.council.5"]:
+		assert_int(_pen(moved, member)).override_failure_message("kapsamdaki üye " + member).is_greater(0)
 
 
 # --- Veri sağlamlığı ---
