@@ -73,22 +73,6 @@ func test_vacant_dry_land_look_is_in_the_shader_and_on_by_default() -> void:
 	assert_bool(code.contains("vacant_soil")).is_true()
 
 
-func test_vacant_land_art_fixes_stay_subtle() -> void:
-	# Sanat direktörü F1/F2 (2026-11-05): ince benek kare mozaik vermesin; arsa karedeki en doygun yüzey olmasın.
-	var code := FileAccess.get_file_as_string(TerrainLook.SHADER_PATH)
-	assert_bool(code.contains("uniform float vacant_grain = 0.12;")).is_true()
-	assert_bool(code.contains("uniform float vacant_soil_max = 0.5;")).is_true()
-	assert_bool(code.contains("uniform vec2 vacant_lum_band = vec2(0.95, 1.05);")).is_true()
-	assert_bool(code.contains("* 0.35 * dfade")).is_false()
-	for name in ["vacant_straw", "vacant_sage"]:
-		var rx := RegEx.create_from_string("uniform vec3 " + name + " : source_color = vec3\\(([^)]*)\\)")
-		var mt := rx.search(code)
-		assert_object(mt).is_not_null()
-		var p := (mt.get_string(1) as String).split(",")
-		var c := Color(float(p[0]), float(p[1]), float(p[2]))
-		assert_float(c.s).is_less(0.3)
-
-
 func test_roles_come_from_data_and_resolve_to_the_intended_approved_layers() -> void:
 	var layers := GroundLayerSet.shared()
 	var resolved := _look.resolve_ground_roles(layers)

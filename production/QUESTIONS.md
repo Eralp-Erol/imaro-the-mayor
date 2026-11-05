@@ -324,7 +324,7 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Recommendation: A (sistem gerçek veriyle çalışıyor; gizli kalması oyuncuyu nedensellikten uzak tutar).
 - Meanwhile: Düğmeler eklenmez, çekmece yalnız programatik açılışla sınanır.
 
-### Q-039 · Boş arazi ve beton çatı hangi renkte olsun? (status: open)
+### Q-039 · Boş arazi ve beton çatı hangi renkte olsun? (status: kısmen yanıtlandı: boş arazi → D-024 eski görünüşe döndü; çatı AÇIK)
 - Context: Sanat direktörü incelemesi (2026-11-05): boş arazi şu an kuru sarı bir tarla gibi, şehir zemininden biraz daha açık ve soluk. Beton çatılar düz gri-bej. İkisi de kalite hatası değil, beğeni sorusu.
 - Options: A) Boş arazi kuru sarı kalsın (şimdiki hâl). B) Boş arazi daha koyu, çıplak toprak rengine yakın olsun (şehir zeminine yaklaşır, öneri sanat direktöründen). Çatı için: gri-bej kalsın / daha sıcak ya da daha açık olsun.
 - Recommendation: B tadında bir deneme: karşılaştırma karelerine bakıp seçmeniz en sağlıklısı; kareleri gönderirim.
