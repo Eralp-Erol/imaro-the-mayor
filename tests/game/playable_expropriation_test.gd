@@ -144,6 +144,85 @@ func test_a_change_log_gap_falls_back_to_a_full_reconcile_with_the_same_result()
 	assert_int(view.building_count()).is_equal((fx["cols"] as BuildingColumns).count - removed.size())
 
 
+func _sorted64(ids: PackedInt32Array) -> PackedInt64Array:
+	var out := PackedInt64Array()
+	for pid in ids:
+		out.append(int(pid))
+	out.sort()
+	return out
+
+
+## Al -> yık -> arsayı belediye arazisi olarak geri aç (D-018). Dönüş: alınan kimlikler.
+func _take_demolish_and_reuse(net: WorldNetwork) -> PackedInt32Array:
+	var removed := _take(net)
+	var ids := _sorted64(removed)
+	assert_bool(DemolitionPlan.run(net, net.peek_last_op(), true)["ok"]).is_true()
+	var restored := net.restore_parcels(0, ids)
+	assert_bool(restored["ok"]).override_failure_message(str(restored["error"])).is_true()
+	for pid in removed:
+		assert_bool(net.parcels.has(pid)).override_failure_message("arsa dünyaya dönmedi: %d" % pid).is_true()
+	return removed
+
+
+## B-051 (kayıt yükleme): takipçi tabandan başlar, ağ op'ları (al + yık + arsayı geri aç) SONRADAN oynatılır.
+## Geri açılan parsel dünyaya boş döner; eski T0 binası sim'in yeni yapısının üstüne yeniden çizilmemeli.
+func test_reused_land_t0_buildings_stay_hidden_when_ops_replay_after_the_follower_exists() -> void:
+	var ref := _fixture()
+	var removed_ref := _take(ref["net"])
+	(ref["follow"] as PlayableExpropriation).settle()
+	var want := _signature(ref["view"], ref["cols"])
+	var fx := _fixture()
+	var net: WorldNetwork = fx["net"]
+	var view: BuildingView = fx["view"]
+	var follow: PlayableExpropriation = fx["follow"]
+	var cols: BuildingColumns = fx["cols"]
+	var removed := _take_demolish_and_reuse(net)
+	var sorted_ref := Array(removed_ref)
+	sorted_ref.sort()
+	var sorted_now := Array(removed)
+	sorted_now.sort()
+	assert_array(sorted_now).is_equal(sorted_ref)
+	follow.settle()
+	assert_int(follow.taken_count()).override_failure_message("geri açılan arsanın T0 binası yeniden çizildi") \
+			.is_equal(removed.size())
+	assert_int(view.building_count()).is_equal(cols.count - removed.size())
+	assert_str(_signature(view, cols)).is_equal(want)
+	for pid in removed:
+		assert_bool(follow.is_hidden(pid)).is_true()
+		assert_bool((fx["occupied"] as Dictionary).has(pid)).is_false()
+
+
+## B-051: canlı oyunda gizli kalır; tam eşitleme (değişim günlüğü boşluğu) de geri açılan arsayı "geri geldi" sanmaz.
+func test_a_full_reconcile_does_not_show_t0_buildings_of_reused_land() -> void:
+	var fx := _fixture()
+	var net: WorldNetwork = fx["net"]
+	var view: BuildingView = fx["view"]
+	var follow: PlayableExpropriation = fx["follow"]
+	var cols: BuildingColumns = fx["cols"]
+	var removed := _take(net)
+	follow.settle()
+	var hidden_signature := _signature(view, cols)
+	var ids := _sorted64(removed)
+	assert_bool(DemolitionPlan.run(net, net.peek_last_op(), true)["ok"]).is_true()
+	assert_bool(net.restore_parcels(0, ids)["ok"]).is_true()
+	net.change_log.clear()   # günlük eksik: sonraki eşitleme tamdır
+	var rep := follow.reconcile()
+	assert_bool(rep["full"]).is_true()
+	assert_int(rep["shown"]).override_failure_message("geri açılan arsanın T0 binası geri gösterildi").is_equal(0)
+	while follow.busy():
+		follow.poll(1000000)
+	assert_int(follow.taken_count()).is_equal(removed.size())
+	assert_str(_signature(view, cols)).is_equal(hidden_signature)
+	# Negatif: yol geri alınıp (arsa geri açma yok) parsel dönünce bina GERİ gelir (eski davranış korunur).
+	var fx2 := _fixture()
+	var total: int = (fx2["cols"] as BuildingColumns).count
+	_take(fx2["net"])
+	(fx2["follow"] as PlayableExpropriation).settle()
+	(fx2["net"] as WorldNetwork).undo_last_op()
+	(fx2["follow"] as PlayableExpropriation).settle()
+	assert_int((fx2["view"] as BuildingView).building_count()).is_equal(total)
+
+
 func test_selection_ring_is_cleared_when_its_parcel_is_taken() -> void:
 	var fx := _fixture()
 	var net: WorldNetwork = fx["net"]
