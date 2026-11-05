@@ -1,8 +1,8 @@
 {
   "mode": "full",
-  "started_at": "2026-11-05T17:57:36Z",
-  "git_head": "0ddcfc03907964f1adaafb870ccfa57610333fee",
-  "fingerprint": "2d9d07028b973c2138ae88afaf26b8832a00d53d05e7d34f7ffc1961b3303d3e",
+  "started_at": "2026-11-05T18:54:21Z",
+  "git_head": "34eae42ee6ebd21ddfe9f3f42f12610ab95ae605",
+  "fingerprint": "a63b6f1750a62a5de0074cdd154dbe41a1cde1758c6f9ab5a79a37c07249c6c9",
   "steps": [
     {
       "name": "canon-check",
@@ -19,7 +19,7 @@
     {
       "name": "area-map",
       "status": "pass",
-      "seconds": 4,
+      "seconds": 3,
       "summary": "area-map: 67 kural, 19 çekirdek belirteci, src dizinlerinin hepsi eşli"
     },
     {
@@ -37,13 +37,13 @@
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 1559,
-      "summary": "3096 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 2008,
+      "summary": "3094 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",
       "status": "pass",
-      "seconds": 39,
+      "seconds": 42,
       "summary": "  PASS  CLAUDE_PROJECT_DIR ana checkout'u gösterse bile oturum cwd'si kullanılıyor  canon-guard testi: 105 PASS, 0 FAIL "
     },
     {
