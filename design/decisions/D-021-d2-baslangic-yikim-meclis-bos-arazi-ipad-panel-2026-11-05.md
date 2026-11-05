@@ -10,6 +10,8 @@
 > Boş arazi: “Kuru ot ve toprak (Önerilen)”
 > iPad paneli: “Alttan çıkan çekmece (Önerilen)”
 > Çatı paleti: “Kiremit ve düz çatı karışık (Önerilen)”
+> Meclis güveni ayar düzeyi (ek kart): “Hafif kalsın (Önerilen)”
+> Güven düşüşü hangi oylara (ek kart): “İmar ve bütçe birlikte (Önerilen)”
 
 ## Yanıtların bağlamı (ajan açıklaması; kullanıcı alıntısı değildir)
 
@@ -18,3 +20,4 @@
 - Boş arazi: kart metni "Terk edilmiş, kurumuş tarla hissi. Şehrin renkleriyle uyumlu, hafif ve hızlı yapılır." Yıkılan yol/boş belediye arazisinin düz hardal sarısı görünümü bununla değişir (sanat direktörü bulgusu).
 - iPad paneli: kart metni "Parmakla yukarı çekilir, aşağı itilir. Şehri daha az örter, düğmeler başparmağa yakın olur." Dokunmatik profilde imar paneli alttan çekmece olur; masaüstü düzeni değişmez.
 - Çatı paleti: kart metni "Kiremit hala en çok ama düz/beton çatı ve açık cepheli bloklar artar, yan yana tekrar kırılır." Oranlar sahibin sözü değil: çalışma değeri olarak veriye konur. (Kaynak soru: art-director 2026-11-05, Q-013 ek ile ilgili.)
+- Ek kart (aynı gün, teknik direktör incelemesinden sonra): Ayar düzeyi 'Hafif': oy farkı küçülür, ret çıkmaz (sert seçenek reddedildi; ileride tek sayıyla sertleştirilebilir). Güven düşüşü imar ve bütçe oylarına birlikte biner (mevcut hâl onaylandı). B-080 (PE-03 `council.trust_gap` olayı ham ilişkiyi okuyor) sahibe sorulmadı; açık.
