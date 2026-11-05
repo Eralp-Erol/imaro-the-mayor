@@ -52,7 +52,6 @@ func _scenario(enabled: bool) -> SimFacadeImpl:
 
 func test_with_the_rule_off_the_golden_x_scenario_is_bit_identical_to_the_pre_d021_value() -> void:
 	var hash_off := _scenario(false).state_hash()
-	print("GOLDEN_X_RULE_OFF_CANDIDATE=%s" % hash_off)
 	assert_str(hash_off).override_failure_message(
 		"kural kapalıyken GOLDEN_X (D-021 öncesi) değişmemeli; yenilenecekse: %s" % hash_off) \
 		.is_equal(GOLDEN_X_BEFORE_D021)

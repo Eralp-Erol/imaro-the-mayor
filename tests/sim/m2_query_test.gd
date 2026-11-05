@@ -15,6 +15,8 @@ const E := preload("res://tests/sim/economy/economy_test_support.gd")
 ## ReasonLog hash'e girer; A'da ek olarak bir petition kaydı daha OLUMLU (3 -> 4 olumlu, 60 -> 61 kayıt), B'de yalnız
 ## kayıtlardaki eşik alanı değişir (kayıt/olumlu/olay sayıları aynı: 6/2/1). ESKİ: A d66d81a9…27ebb2, B 3e85ce2c…b49d9
 ## (eşik 250 ile bire bir üretilir: `production/bugs/B-130.md`).
+# B-130/D-026: decision_tables.json (bloc.react petition 250 -> 190) tüm dosya olarak aktör özetine, o da durum
+# hash'ine girer; baz çizgisi bu yüzden değişti (eski: d66d81a9…). Teknik direktör onayı: production/log/2026-11-05-teknik-direktor-b130-golden.md
 const GOLDEN_A := "ffbaf113645896e9d60c5c8eeba0ef6b8df5f54df8326b31b7bcbfd7678ae2e6"
 const GOLDEN_B := "42abd619af18f2a9fb64298aa89bbe0d62a14db9d5af3f9c91cb715ffb27df9a"
 
