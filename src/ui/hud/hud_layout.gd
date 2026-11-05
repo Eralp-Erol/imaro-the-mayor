@@ -6,11 +6,14 @@ extends RefCounted
 ##   tavan)
 ##   dokunmatik yatay    : üst şerit, alt araç çubuğu, sağda L2 yan panel (en çok %38)
 ##   dokunmatik dikey    : araç çubuğu iki satır, L2 ALT SAYFA (araç çubuğu dahil en çok %45 yükseklik)
+##   dokunmatik + çekmece: (D-021) çekmece olarak açılan panel (imar) iki yönde de alttan çıkar: KAPALI/YARI/TAM
+##                         (`DrawerModel`), tam genişlik, araç çubuğunun hemen üstünde; masaüstü etkilenmez
 ## Girdi `frame` güvenli alan içi çerçeve boyutudur (UiContext.frame_size). Çıktı çerçeve koordinatlarında
 ## Rect2'ler.
 
 const MODE_SIDE := &"side"
 const MODE_SHEET := &"sheet"
+const MODE_DRAWER := &"drawer"
 ## Araç çubuğu satırı sayısı: dikey dokunmatikte 2 (ux-layout §3.3).
 const TOOLBAR_ROWS_PORTRAIT := 2
 
@@ -25,6 +28,8 @@ var toolbar: Rect2 = Rect2()
 var toolbar_rows: int = 1
 ## Açık değilse boyutu sıfır.
 var panel: Rect2 = Rect2()
+## Çekmece kipinde konum yükseklikleri (DrawerModel.State -> px); diğer kiplerde boş.
+var drawer_heights: Dictionary = {}
 var map_region: Rect2 = Rect2()
 
 
@@ -33,14 +38,18 @@ var map_region: Rect2 = Rect2()
 ## `strip_min_width`: bildirim şeridinin içeriğinden gelen asgari genişlik (0 = bilinmiyor).
 ## `sheet_expanded`: yalnız alt sayfa kipinde (dikey dokunmatik); oyuncu "Genişlet" derse sayfa `sheet_frac_expanded`
 ## kadar yükselir (varsayılan %45 değişmez; şehri örtme kararı oyuncunundur).
+## `drawer_state` (>= 0, DrawerModel.State) yalnız DOKUNMATİKTE ve açık panel çekmece ise verilir; `drawer_drag_h` >= 0
+## parmak sürüklerken canlı yüksekliktir; `drawer_peek_h` kabuğun gerçek KAPALI yüksekliği (0 = formül).
 static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banner: bool,
-		top_min_height: float = 0.0, sheet_expanded: bool = false, strip_min_width: float = 0.0) -> HudLayout:
+		top_min_height: float = 0.0, sheet_expanded: bool = false, strip_min_width: float = 0.0,
+		drawer_state: int = -1, drawer_drag_h: float = -1.0, drawer_peek_h: float = 0.0) -> HudLayout:
 	var l := HudLayout.new()
 	var tk := ctx.tokens
 	var margin := ctx.edge_margin()
 	var gap := ctx.spacing()
 	var portrait_touch := ctx.is_touch() and frame.y > frame.x
-	l.panel_mode = MODE_SHEET if portrait_touch else MODE_SIDE
+	var drawer := ctx.is_touch() and drawer_state >= 0
+	l.panel_mode = MODE_DRAWER if drawer else (MODE_SHEET if portrait_touch else MODE_SIDE)
 	l.toolbar_rows = TOOLBAR_ROWS_PORTRAIT if portrait_touch else 1
 
 	l.top = Rect2(0.0, 0.0, frame.x, maxf(ctx.bar_top_height(), top_min_height))
@@ -77,6 +86,12 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 	if panel_open:
 		if l.panel_mode == MODE_SIDE:
 			l.panel = Rect2(frame.x - panel_w, y, panel_w, frame.y - y)
+		elif l.panel_mode == MODE_DRAWER:
+			l.drawer_heights = compute_drawer_heights(ctx, y, l.toolbar.position.y, drawer_peek_h)
+			var h := float(l.drawer_heights.get(drawer_state, 0.0))
+			if drawer_drag_h >= 0.0:
+				h = DrawerModel.clamp_height(drawer_drag_h, l.drawer_heights)
+			l.panel = Rect2(0.0, l.toolbar.position.y - gap - h, frame.x, h)
 		else:
 			# Alt sayfa + araç çubuğu birlikte en çok %45 yükseklik: ekranın ortası hiçbir zaman örtülmez.
 			var budget := frame.y * tk.limit("sheet_frac_expanded" if sheet_expanded else "sheet_frac")
@@ -89,11 +104,25 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 	# `notif_height_frac`'ı; kalanı hız ipucu + yol ipucu kartlarının. Böylece şerit araç çubuğunu örtemez/ekran dışına
 	# taşamaz.
 	var bottom := l.toolbar.position.y
-	if panel_open and l.panel_mode == MODE_SHEET:
+	if panel_open and (l.panel_mode == MODE_SHEET or l.panel_mode == MODE_DRAWER):
 		bottom = l.panel.position.y
 	var free_h := maxf(0.0, bottom - gap - l.notifications.position.y)
 	l.notifications_max_h = floorf(free_h * tk.limit("notif_height_frac"))
 	return l
+
+
+## Çekmece konum yükseklikleri (px). KAPALI = tutamaç + başlık şeridi; YARI/TAM = kullanılabilir yüksekliğin
+## (üst şerit ile araç çubuğu arası, altta `drawer_map_strip` harita şeridi bırakılarak) `drawer_frac_half` /
+## `drawer_frac_full` kesri.
+## `top_end` üst şerit/bant altı, `toolbar_y` araç çubuğu üstü (çerçeve koordinatı).
+static func compute_drawer_heights(ctx: UiContext, top_end: float, toolbar_y: float, peek_h: float = 0.0) -> Dictionary:
+	var tk := ctx.tokens
+	var gap := ctx.spacing()
+	var peek := peek_h if peek_h > 0.0 else ctx.px(14.0) + ctx.target_primary() + gap * 4.0
+	var room := maxf(peek, toolbar_y - gap - top_end - ctx.px(tk.size("drawer_map_strip")))
+	var half := clampf(room * tk.limit("drawer_frac_half"), peek, room)
+	var full := clampf(room * tk.limit("drawer_frac_full"), half, room)
+	return {DrawerModel.State.CLOSED: peek, DrawerModel.State.HALF: half, DrawerModel.State.FULL: full}
 
 
 ## Açık panel varken haritanın MERKEZ bölgesinin (orta %50 × %50) ne kadarının HUD tarafından örtülmediği

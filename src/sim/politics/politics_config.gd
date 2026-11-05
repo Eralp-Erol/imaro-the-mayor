@@ -429,6 +429,9 @@ func _parse_reactions(raw: Variant) -> void:
 	reactions = ReactionConfig.parse(section, events.get("templates", []), errors)
 	if cohort(str(reactions["local"]["cohort"])).is_empty():  # T-042b: mahalle ölçekli öğeyi taşıyan kesim kohortu
 		errors.append("reactions.local.cohort: blocs.json'da olmayan kohort (%s)" % str(reactions["local"]["cohort"]))
+	for trust_cohort: String in reactions["council_trust"]["cohorts"]:  # D-021: etkilenen üyelerin kesim kohortları
+		if cohort(trust_cohort).is_empty():
+			errors.append("reactions.council_trust.cohorts: blocs.json'da olmayan kohort (%s)" % trust_cohort)
 	blocs["reaction_window"] = ActorSchema.optional_int(section, "window_days", BlocSignals.DEFAULT_WINDOW_DAYS, 1, 3650,
 		"reactions", errors)
 	var cohorts: Variant = section.get("cohorts", {})

@@ -6,6 +6,9 @@ extends RefCounted
 ## Hero örneği yalnız dönüşümdür (3x4); palet/özel veri yok: renk modülün atlas dokusundan gelir.
 
 const FLOATS_PER_INSTANCE := 12
+## D-021: dönüşümün ardından 4 float özel veri (çatı modu, açık cephe, parlaklık sapması, 0): MultiMesh tamponu aralığı.
+const CUSTOM_FLOATS := 4
+const INSTANCE_STRIDE := FLOATS_PER_INSTANCE + CUSTOM_FLOATS
 
 
 static func build_cell(cols: BuildingColumns, plan: BuildingChunkPlan, key: Vector2i, kit: BuildingKit,
@@ -35,13 +38,14 @@ static func build_cell(cols: BuildingColumns, plan: BuildingChunkPlan, key: Vect
 	data.kept = kept
 	data.kept_ord = kept_ord
 	data.base_y = base_y
+	data.variants = _pick_variants(cols, kept, kit)
 	var module_keys: Array = by_module.keys()
 	module_keys.sort()
 	for m: int in module_keys:
 		var rows := PackedInt32Array(by_module[m] as Array)
 		data.modules.append(m)
 		data.counts.append(rows.size())
-		data.buffers.append(_instance_buffer(cols, kept, base_y, rows, data.origin))
+		data.buffers.append(_instance_buffer(cols, kept, base_y, rows, data.origin, data.variants, kit.variety))
 		data.lod0_tris += kit.near_tris[m] * rows.size()
 		data.lod1_tris += (kit.mid_tris[m] if kit.has_mid[m] == 1 else kit.near_tris[m]) * rows.size()
 	if config.build_hlod1:
@@ -52,9 +56,10 @@ static func build_cell(cols: BuildingColumns, plan: BuildingChunkPlan, key: Vect
 ## Örnek başına 12 float: 3x4 dönüşüm (satır öncelikli, `Basis(UP, yaw)` ölçek 1). Pivot ayak izi merkezidir
 ## (mesh `BuildingKit`te normalize edilmiştir), yani `x/z` doğrudan yerleşim merkezidir.
 static func _instance_buffer(cols: BuildingColumns, kept: PackedInt32Array, base_y: PackedFloat32Array,
-		rows: PackedInt32Array, origin: Vector2) -> PackedFloat32Array:
+		rows: PackedInt32Array, origin: Vector2, variants: PackedInt32Array, variety: BuildingVariety) \
+		-> PackedFloat32Array:
 	var buf := PackedFloat32Array()
-	buf.resize(rows.size() * FLOATS_PER_INSTANCE)
+	buf.resize(rows.size() * INSTANCE_STRIDE)
 	var o := 0
 	for r in rows:
 		var i := kept[r]
@@ -72,8 +77,54 @@ static func _instance_buffer(cols: BuildingColumns, kept: PackedInt32Array, base
 		buf[o + 9] = 0.0
 		buf[o + 10] = c
 		buf[o + 11] = cols.z[i] - origin.y
-		o += FLOATS_PER_INSTANCE
+		var cd := variety.custom_data(variants[r], cols.bright[i])
+		buf[o + 12] = cd.r
+		buf[o + 13] = cd.g
+		buf[o + 14] = cd.b
+		buf[o + 15] = 0.0
+		o += INSTANCE_STRIDE
 	return buf
+
+
+## D-021: örnek başına varyant kodu (kept ile paralel). Parsel kimliği + modülden deterministik; aynı modülün
+## `reroll_radius_m` içindeki komşusuyla aynı kodu alırsa yeniden çekilir (yan yana tekrar kırılır). Hücre-yerel:
+## yalnız hücre içeriğine bağlı, sütun sırası (hücre planı sırası) deterministik.
+static func _pick_variants(cols: BuildingColumns, kept: PackedInt32Array, kit: BuildingKit) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	out.resize(kept.size())
+	var v := kit.variety
+	if not v.enabled:
+		return out
+	var radius := maxf(v.reroll_radius_m, 1.0)
+	var grid: Dictionary = {}
+	for j in kept.size():
+		var i := kept[j]
+		var m := cols.module_idx[i]
+		var fam := kit.families[m]
+		var pitched := kit.roof_pitched[m] == 1
+		var gx := int(floor(cols.x[i] / radius))
+		var gz := int(floor(cols.z[i] / radius))
+		var code := 0
+		for salt in range(maxi(v.reroll_tries, 1)):
+			code = v.pick(fam, cols.parcel_id[i], m, pitched, salt)
+			if not _clashes(grid, gx, gz, Vector2(cols.x[i], cols.z[i]), m, code, radius):
+				break
+		out[j] = code
+		var key := Vector2i(gx, gz)
+		if not grid.has(key):
+			grid[key] = []
+		(grid[key] as Array).append(Vector4(cols.x[i], cols.z[i], float(m), float(code)))
+	return out
+
+
+static func _clashes(grid: Dictionary, gx: int, gz: int, pos: Vector2, m: int, code: int, radius: float) -> bool:
+	for dx in range(-1, 2):
+		for dz in range(-1, 2):
+			var list: Array = grid.get(Vector2i(gx + dx, gz + dz), [])
+			for e: Vector4 in list:
+				if int(e.w) == code and int(e.z) == m and Vector2(e.x, e.y).distance_to(pos) <= radius:
+					return true
+	return false
 
 
 ## HLOD1: kaynak şablonlar (`config.hlod1_source`: "proxy" = PROXY mesh'i, "box" = ayak izi kutusu) hücre içinde tek
@@ -95,7 +146,7 @@ static func _merge_hlod1(data: BuildingCellData, cols: BuildingColumns, kit: Bui
 		var xf := Transform3D(basis, Vector3(cols.x[i] - data.origin.x, data.base_y[j], cols.z[i] - data.origin.y))
 		verts.append_array(xf * tpl.vertices)
 		normals.append_array(Transform3D(basis, Vector3.ZERO) * tpl.normals)
-		colors.append_array(tpl.colors)
+		colors.append_array(tpl.colors_for(data.variants[j]))
 	data.hlod1_vertices = verts
 	data.hlod1_normals = normals
 	data.hlod1_colors = colors

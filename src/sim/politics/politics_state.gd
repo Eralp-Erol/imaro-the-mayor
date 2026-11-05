@@ -18,6 +18,7 @@ extends RefCounted
 ##   declines  {last_total, ticks [tick,…]}
 ##   events    {last_pressure {şablon: pm}, cooldown_until {şablon: tick}, next_item, agenda [öğe], effects [bekleyen],
 ##              fired, interrupts {çeyrek: sayı}}
+##   council_trust {penalty {üye: pm}, changes}  (D-021, yalnız yerinden edilme meclis güvenini düşürünce yaratılır)
 ##   counters  {scans, reason_records, events_emitted}
 
 const KEY := "politics"
@@ -114,6 +115,9 @@ static func validate_data(value: Variant) -> String:
 		var vote_problem := _vote_problem(vote)
 		if not vote_problem.is_empty():
 			return vote_problem
+	var trust_problem := _council_trust_problem(value.get(CouncilTrust.KEY, null))
+	if not trust_problem.is_empty():
+		return trust_problem
 	var events: Dictionary = value["events"]
 	for field_name in ["agenda", "effects"]:
 		if not (events.get(field_name, null) is Array):
@@ -127,6 +131,19 @@ static func validate_data(value: Variant) -> String:
 	if not (media.get("tone", null) is Dictionary) or not (media.get("pending", null) is Array) \
 			or not (media.get("queue", null) is Array) or typeof(media.get("published", null)) != TYPE_INT:
 		return "durum.systems.politics.media geçersiz"
+	return ""
+
+
+## D-021 `council_trust` (yalnız ilk etkide yaratılır): {penalty {üye: int >= 0}, changes: int}.
+static func _council_trust_problem(value: Variant) -> String:
+	if value == null:
+		return ""
+	if not (value is Dictionary) or not (value.get("penalty", null) is Dictionary) \
+			or typeof(value.get("changes", null)) != TYPE_INT:
+		return "durum.systems.politics.council_trust geçersiz"
+	for member: Variant in value["penalty"]:
+		if typeof(member) != TYPE_STRING or typeof(value["penalty"][member]) != TYPE_INT or value["penalty"][member] < 0:
+			return "durum.systems.politics.council_trust.penalty '%s' tamsayı >= 0 değil" % str(member)
 	return ""
 
 

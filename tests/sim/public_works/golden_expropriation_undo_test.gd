@@ -11,7 +11,9 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 ## sistemin kuralı) bilinçli değişirse sabit, gerekçesiyle ve AYRI commit'te yeniden alınır (aynen GOLDEN_A/B
 ## kuralı). Hash'i yeniden almak için testi çalıştırın; başarısızlık iletisi gerçek değeri yazar.
 
-const GOLDEN_X := "c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094"
+# D-021 ile yenilendi: eski c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094 (meclis güven kesintisi
+# `council_trust` kuralı yokken). Kural kapalıyken eski değer `golden_x_council_trust_test.gd` ile kilitli.
+const GOLDEN_X := "1914f0e131fb087426f0e733162ec7f3b1dfc73a1c2aeb555c268cd37c3abb0d"
 const FINAL_TICK := 60
 const SAVE_TICK := 30
 const SCAN_DAYS := 7

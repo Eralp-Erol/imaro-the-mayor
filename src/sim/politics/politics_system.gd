@@ -47,3 +47,4 @@ func on_daily(state: GameState) -> void:
 		MediaEngine.scan(state, _ctx)
 		EventEngine.scan(state, _ctx)
 		ReactionAgenda.scan(state, _ctx)  # T-042b: yerinden edilme gündem maddesi (defter yoksa hiçbir şey yapmaz)
+		CouncilTrust.scan(state, _ctx)  # D-021: yerinden edilme meclis güvenini düşürür (kapalı/defter yoksa boş)

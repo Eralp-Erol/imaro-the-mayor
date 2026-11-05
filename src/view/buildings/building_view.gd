@@ -646,6 +646,7 @@ func _install_super(skey: Vector2i, result: Dictionary) -> void:
 func _make_mmi(mesh: Mesh, count: int) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_custom_data = true   # D-021: çatı/cephe varyantı (BuildingChunkBuilder.INSTANCE_STRIDE)
 	mm.mesh = mesh
 	mm.instance_count = count
 	var mmi := MultiMeshInstance3D.new()

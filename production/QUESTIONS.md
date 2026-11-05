@@ -210,6 +210,7 @@ Onay gelene kadar kural: **hiçbir görev kalıcı şehir/mahalle/liman/yol/yerl
 
 ### Q-013 ek · Çatı payı kuralı çelişkisi (T-005 raporu, art-director kararı gerekir)
 Kit §3.2: küçük merkez/köy/yamaç/tarlada kiremit payı %55–70; aynı spec'te "her 500 m pencerede ≤%55" kuralı var. T-005 yorumu: 500 m kuralı yalnız yoğun/orta yoğun pencereler için geçerli. Onay art-director'da (sanat kuralı), kullanıcı kararı değil. Beklerken: yorum uygulandı.
+D-021 (sahip: kiremit hala en çok, düz/beton çatı ve açık cephe artsın) sonrası ölçüm (T0, 31 829 yapı, görünüm tarafı `data/view/building_variety.json`, çalışma değeri): kiremit %41,4 (önce %66,2), beton gri eğimli %13,7, çinko gri eğimli %11,0, gerçek düz çatı %33,8 (mesh/T0 aile ağırlıkları, DEĞİŞMEDİ); açık cephe %44. Çinko/beton eğimli çatı düz çatı SAYILMAZ. Kiremit ≤%55 kuralı tüm şehirde sağlanır; 500 m pencere bazlı ölçüm yapılmadı (art-director).
 
 ### Q-018 · Varlık kütüphanesi şablon kararları (T-052; status: open — kontak sayfalarıyla birlikte sorulacak)
 Kaynak: art-director, `design/library/README.md` + `design/library/templates-v0.md` (her kategorinin sonunda tam soru listesi). Kullanıcı 2026-10-25: insan, araç, yol çizimi şablonları önceden çizilip onaya sunulacak; dünyada onaysız hiçbir şey yaratılmayacak. Aşağıdakiler kanondan çözülemeyen ve kontak sayfasıyla birlikte sorulacak kararlardır (hiçbiri uydurulmadı):
@@ -297,13 +298,13 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Meanwhile: A; kullanıcı değiştirirse yalnız `life.json` yoğunluk/ağırlık değeri değişir.
 
 
-### Q-035 · "Oyun hep D2'den başlasın" (D-020) kanonla çakışıyor mu? (status: open — engellemiyor; design-director 2026-11-05)
+### Q-035 · "Oyun hep D2'den başlasın" (D-020) kanonla çakışıyor mu? (status: answered → D-021)
 - Context: D2 = Orven. Kanonda "Orven'i zorunlu başlangıç yapmak" bilerek reddedildi; D-002 "test alanı seçimi oyun tasarımı kararına dönüşmesin" diyor. D-020 kartı bu çakışmayı göstermedi ve "şimdilik" sözüyle "hep"i birlikte taşıyor. Sonraki sahip kararı kazanır, ama bilgilendirilmiş olması gerekir.
 - Options: A) Şimdilik D2; ilçe seçimi hedef olarak kalır, T-043 bekler. B) Kalıcı: oyun hep Orven'den başlar (D-002 ve kanondaki ret bilerek geçersiz olur). C) İlçe seçimi M2 kapanmadan gelsin (T-043).
 - Recommendation: A.
 - Meanwhile: gönderilen oyun D2'de yol çizdirir; B-026 karar gereği kapalıdır, ama Q-035 B/C'ye dönerse yeniden açılır.
 
-### Q-036 · Yıkım ve yerinden etme meclisin oyuncuya güvenini etkilesin mi? (status: open — engellemiyor; ölçüm B-030, 2026-11-05)
+### Q-036 · Yıkım ve yerinden etme meclisin oyuncuya güvenini etkilesin mi? (status: answered → D-021 (meclis güveni düşsün; parametreler çalışma değeri))
 - Context: 144 koşuluk ölçümde yol yıkımı/kamulaştırma yüzünden evinden olan hane sayısı 42 ya da 302 olsa da meclis üyelerinin güven/kızgınlık değerleri HİÇ değişmiyor; yıkım oylamayı hafifçe kolaylaştırıyor (altyapı yükünü düşürdüğü için). Halk tepkisi var ama meclise ulaşmıyor. D-008 "halk tepki versin" ve siyasi kariyer çekirdeğiyle ilgili; kanonda (D-014) tepki dağılımı var, meclise bağlanması belirsiz.
 - Options: A) Böyle kalsın: halk tepkisi görünür ama meclis yalnız teklifin kendi değerine bakar (önerilen, ölçülmüş çalışan davranış; sonra istenirse açılır). B) Yerinden edilen hane çoksa meclis güveni bir miktar düşsün (veri ağırlığı; meclis eşiği ve GOLDEN'a dokunur). C) Tepki yalnız kesim baskısı (bloc_pressure) olarak ağırlaşsın.
 - Recommendation: A (karar ürün yönüne ait; sahte nedensellik eklenmez).

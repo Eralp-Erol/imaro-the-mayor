@@ -76,14 +76,15 @@ func test_changing_one_building_changes_only_its_cell_hash() -> void:
 	assert_vector(Vector2(changed[0])).is_equal(Vector2(plan.cell_of(cols.x[0], cols.z[0])))
 
 
-func test_parcel_id_floors_and_flags_do_not_change_the_render_hash() -> void:
+func test_floors_and_flags_do_not_change_the_render_hash_but_parcel_id_does_d021() -> void:
 	var cols := BuildingTestSupport.grid_columns(_mid(), 4, 100.0, 5.0, 5.0)
 	var plan := BuildingChunkPlan.build(cols, Vector2.ZERO, 1000.0, 4)
 	var before := plan.cell_hashes(cols)
-	cols.parcel_id[0] = 999999
 	cols.floors[0] = 9
 	cols.flags[0] = 255
 	assert_dict(plan.cell_hashes(cols)).is_equal(before)
+	cols.parcel_id[0] = 999999   # D-021: çatı/cephe varyantı parsel kimliğinden türer
+	assert_dict(plan.cell_hashes(cols)).is_not_equal(before)
 
 
 func test_moving_a_building_across_a_boundary_changes_both_cells() -> void:

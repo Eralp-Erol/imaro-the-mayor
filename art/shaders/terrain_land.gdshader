@@ -79,6 +79,17 @@ uniform vec2 urban_slope = vec2(22.0, 34.0);
 uniform vec2 walk_band = vec2(0.62, 0.95);  // kaplama kenarında kaldırım bandı (R eşiği)
 uniform float walk_strength = 0.95;
 
+// D-021 "Kuru ot ve toprak": kentin içindeki BOŞ arazi (yıkılan yol, boş belediye arazisi, boş parsel) düz hardal yerine
+// sönük saman + çıplak toprak + soluk ot yamaları. Ek geometri/doku yok: aynı geçiş, 3 gürültü okuması + 1 maske okuması.
+// "Kent içi" = yapılı-parsel maskesinin YÜKSEK mip'i (yakın çevrede yapı var); kırsal tarla/çayır etkilenmez.
+uniform float vacant_strength = 0.9;                       // 0 = kapalı (karşılaştırma için)
+uniform vec2 vacant_near = vec2(0.06, 0.3);                // yüksek mip kaplaması -> kent içi ağırlığı
+uniform float vacant_lod = 5.0;
+uniform vec3 vacant_straw : source_color = vec3(0.57, 0.52, 0.36);
+uniform vec3 vacant_soil : source_color = vec3(0.47, 0.38, 0.28);
+uniform vec3 vacant_sage : source_color = vec3(0.44, 0.46, 0.32);
+uniform vec2 vacant_detail_fade = vec2(400.0, 1800.0);     // ince benek uzakta söner
+
 varying vec2 v_xz;
 varying float v_y;
 varying float v_ny;
@@ -208,6 +219,7 @@ void fragment() {
 	}
 
 	// --- kent zemini ---------------------------------------------------------------------------------
+	float vac_k = 0.0;
 	if (urban_rect.z > 0.0) {
 		vec2 uu = (xz - urban_rect.xy) / urban_rect.zw;
 		vec2 inside = step(vec2(0.0), uu) * step(uu, vec2(1.0));
@@ -218,6 +230,8 @@ void fragment() {
 		vec4 mm = mix(m_far, m, sharp);
 		float ok = 1.0 - smoothstep(urban_slope.x, urban_slope.y, slope_deg);
 		float k = clamp(cover * urban_strength * ok * mask, 0.0, 1.0);
+		float near_city = smoothstep(vacant_near.x, vacant_near.y, textureLod(urban_tex, uu, vacant_lod).r);
+		vac_k = vacant_strength * near_city * inside.x * inside.y * ok * mask * (1.0 - k) * (1.0 - rock_t) * (1.0 - sand_t);
 		if (k > 0.0) {
 			float rr = max(mm.r, 0.02);
 			float ind = clamp(mm.g / rr, 0.0, 1.0);
@@ -256,6 +270,22 @@ void fragment() {
 	// Ton oynaması: iki ölçek; yakın ince katman uzakta kendiliğinden söner (tile tekrarını gizler).
 	float tone_n = s_mid.x * 0.4 + s_mid.y * 0.3 + s_patch.y * 0.3;   // farklı ölçekler: tekrar eden ızgara izi yok
 	col *= 1.0 + (tone_n - 0.5) * 2.0 * tone_mid + (n_fine - 0.5) * 2.0 * tone_fine * fine_w;
+
+	// Boş kent arazisi: kuru ot / toprak (D-021). Doku tanesi korunur (parlaklık), renk saman-toprak-ot yamalarına kayar.
+	if (vac_k > 0.0) {
+		float vb = texture(noise_tex, xz / 190.0).b;
+		float vm = texture(noise_tex, xz / 34.0).g;
+		float vt = texture(noise_tex, xz / 9.0).r;
+		float dfade = 1.0 - smoothstep(vacant_detail_fade.x, vacant_detail_fade.y, dist);
+		float soil_w = smoothstep(0.52, 0.80, vb * 0.55 + vm * 0.45) * 0.8;
+		float sage_w = smoothstep(0.52, 0.72, 1.0 - vm) * (1.0 - soil_w);
+		vec3 dc = mix(vacant_straw, vacant_soil, soil_w);
+		dc = mix(dc, vacant_sage, sage_w * 0.5);
+		dc *= 1.0 + (vt - 0.5) * 0.35 * dfade;
+		float lum = dot(col, vec3(0.299, 0.587, 0.114));
+		dc *= mix(0.88, 1.12, clamp(lum * 3.0, 0.0, 1.0));
+		col = mix(col, dc, vac_k);
+	}
 
 	// Uzakta sınıf (köşe) rengine kısmi solma: bölge çeşitliliği taşınır, doku tekrarı/moiré yok.
 	float base_t = smoothstep(far_base_range.x, far_base_range.y, dist) * far_base_mix;

@@ -65,6 +65,14 @@ func test_material_builds_with_shader_and_data_driven_uniforms() -> void:
 	assert_float(float(m.get_shader_parameter("detail_far"))).is_greater(0.0)
 
 
+func test_vacant_dry_land_look_is_in_the_shader_and_on_by_default() -> void:
+	# D-021 (B-090): boş kent arazisi düz hardal değil, kuru ot/toprak; tek malzeme, ek geometri/doku yok.
+	var code := FileAccess.get_file_as_string(TerrainLook.SHADER_PATH)
+	assert_bool(code.contains("uniform float vacant_strength = 0.9;")).is_true()
+	assert_bool(code.contains("vac_k")).is_true()
+	assert_bool(code.contains("vacant_soil")).is_true()
+
+
 func test_roles_come_from_data_and_resolve_to_the_intended_approved_layers() -> void:
 	var layers := GroundLayerSet.shared()
 	var resolved := _look.resolve_ground_roles(layers)

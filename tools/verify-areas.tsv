@@ -50,6 +50,7 @@ map	src/view/buildings	tests/view/buildings tests/library tests/game/m2_sync_bud
 map	src/view/camera	tests/view/camera_k1_test.gd tests/view/camera_envelope_test.gd tests/view/camera_math_gestures_test.gd tests/view/camera_math_safety_test.gd tests/view/camera_math_test.gd tests/view/camera_pitch_floor_test.gd tests/view/camera_presets_test.gd tests/view/camera_rig_input_test.gd tests/view/camera_rig_pose_test.gd tests/view/camera_roof_clearance_test.gd tests/view/camera_sweep_test.gd tests/view/camera_tilt_test.gd tests/game/world_input_routing_test.gd
 map	src/view/life	tests/view/life tests/library tests/game/playable_tempo_test.gd
 map	src/view/library	tests/library tests/view/buildings tests/view/vegetation
+map	src/view/perf	tests/view/perf
 map	src/view/overlay	tests/view/parcel_selection_ring_test.gd tests/game/road_draw_flow_test.gd
 map	src/view/roads	tests/view/roads tests/game/road_draw_flow_test.gd tests/game/road_draw_tool_test.gd
 map	src/view/terrain	tests/view/terrain_look_test.gd tests/view/terrain_mesh_builder_test.gd tests/view/terrain_palette_test.gd tests/view/terrain_view_test.gd tests/view/urban_ground_mask_test.gd tests/view/ground_layer_set_test.gd tests/view/far_lod_test.gd tests/view/view_warmup_test.gd
@@ -97,6 +98,7 @@ map	tests/sim/politics	tests/sim/politics
 map	tests/sim/public_works	tests/sim/public_works
 map	tests/view/buildings	tests/view/buildings
 map	tests/view/life	tests/view/life
+map	tests/view/perf	tests/view/perf
 map	tests/view/roads	tests/view/roads
 map	tests/view/vegetation	tests/view/vegetation
 map	tests/world/network	tests/world/network

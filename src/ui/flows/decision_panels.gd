@@ -86,7 +86,7 @@ func open_zoning(parcel_ids: PackedInt64Array = PackedInt64Array()) -> void:
 		zoning = ZoningFlowModel.create(facade, structure_probe)
 		for id in parcel_ids:
 			zoning.add_parcel(id)
-	hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning)
+	hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning, true)
 
 
 ## Panel açıkken haritadan seçilen parseli alana ekler. Eklendiyse true.
@@ -120,7 +120,7 @@ func on_tool_selected(tool_id: StringName) -> bool:
 		ModeToolbar.TOOL_ZONE:
 			# Haritadan parsel seçilene dek boş akış ("Önce bir parsel seçin"); süren/hazırlanan akış korunur.
 			if zoning != null and not zoning.is_finished():
-				hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning)
+				hud.open_panel(PANEL_ZONING, &"zoning.title", _build_zoning, true)
 			else:
 				open_zoning()
 		ModeToolbar.TOOL_BUDGET:

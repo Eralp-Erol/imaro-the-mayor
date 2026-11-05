@@ -16,6 +16,8 @@ var buffers: Array[PackedFloat32Array] = []
 var kept: PackedInt32Array = PackedInt32Array()
 var kept_ord: PackedInt32Array = PackedInt32Array()
 var base_y: PackedFloat32Array = PackedFloat32Array()
+## D-021: `kept` ile paralel varyant kodu (`BuildingVariety`; roof_mode + 3 * açık_cephe).
+var variants: PackedInt32Array = PackedInt32Array()
 ## Su/dünya dışı nedeniyle atılan yapı sayısı.
 var dropped: int = 0
 var lod0_tris: int = 0

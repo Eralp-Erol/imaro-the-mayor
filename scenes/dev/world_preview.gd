@@ -86,6 +86,7 @@ var _far_lod: bool = false
 func _ready() -> void:
 	var args := _parse_args()
 	_args = args
+	PerfLogger.attach_if_requested(self, args)  # T-076: yalnız --perf-log / IMARO_PERF_LOG ile; yoksa null, etkisiz
 	_shadows_wanted = not args.has("no-shadows")
 	var t0 := Time.get_ticks_usec()
 	var control := WorldControlData.load_dir(DATA_DIR)

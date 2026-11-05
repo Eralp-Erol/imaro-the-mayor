@@ -1,0 +1,22 @@
+{
+	"_doc": "D-021 (sahip karari: kiremit hala en cok ama duz/beton cati ve acik cepheli bloklar artar, yan yana tekrar kirilir). Oranlar CALISMA DEGERI (sahibin sozu degil), kodda gomulu degil. Goruntu tarafi: onayli hero mesh/atlas degismez; ornek basina varyant (parsel kimligi + modul), cizimde cati/cephe tonu. Sim'e dokunmaz. roof_tile_keep = egimli catili modulun kiremitte kalma olasiligi (duz catili moduller cati modu almaz). Q-013 ek kurali (<=%55 kiremit, yakin pencere) icin olcum production/log notunda.",
+	"enabled": true,
+	"seed": 1105,
+	"roof_concrete_srgb": [156, 150, 140],
+	"roof_zinc_srgb": [124, 131, 136],
+	"wall_light_srgb": [240, 234, 220],
+	"wall_light_mix": 0.8,
+	"brightness_jitter": 0.05,
+	"reroll_radius_m": 30.0,
+	"reroll_tries": 6,
+	"default": {"roof_tile_keep": 0.7, "roof_concrete_share": 0.6, "wall_light_share": 0.4},
+	"families": {
+		"hero_res_house": {"roof_tile_keep": 0.72, "roof_concrete_share": 0.6, "wall_light_share": 0.4},
+		"hero_old_core": {"roof_tile_keep": 0.68, "roof_concrete_share": 0.5, "wall_light_share": 0.35},
+		"hero_com_bazaar": {"roof_tile_keep": 0.6, "roof_concrete_share": 0.6, "wall_light_share": 0.45},
+		"hero_res_mid": {"roof_tile_keep": 1.0, "roof_concrete_share": 0.6, "wall_light_share": 0.5},
+		"hero_res_late": {"roof_tile_keep": 1.0, "roof_concrete_share": 0.6, "wall_light_share": 0.5},
+		"hero_civ_hero": {"roof_tile_keep": 0.85, "roof_concrete_share": 0.5, "wall_light_share": 0.25},
+		"hero_ind_hero": {"roof_tile_keep": 0.4, "roof_concrete_share": 0.3, "wall_light_share": 0.45}
+	}
+}

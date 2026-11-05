@@ -29,7 +29,7 @@ func test_instances_are_grouped_by_module_with_12_floats_each() -> void:
 	assert_int(data.instance_count()).is_equal(3)
 	assert_array(data.modules).is_equal(PackedInt32Array([mini(a, b), maxi(a, b)]))
 	for n in data.modules.size():
-		assert_int(data.buffers[n].size()).is_equal(data.counts[n] * BuildingChunkBuilder.FLOATS_PER_INSTANCE)
+		assert_int(data.buffers[n].size()).is_equal(data.counts[n] * BuildingChunkBuilder.INSTANCE_STRIDE)
 	assert_int(data.counts[data.modules.find(a)]).is_equal(2)
 
 
@@ -55,9 +55,10 @@ func test_buffer_layout_matches_transform3d_rows_and_carries_no_palette_data() -
 	assert_float(buf[3]).is_equal_approx(250.0, 0.001)
 	assert_float(buf[7]).is_equal_approx(xf.origin.y, 0.001)
 	assert_float(buf[11]).is_equal_approx(400.0, 0.001)
-	# hero örneğinde özel veri/palet yok: tampon tam 3x4 dönüşümdür (renk atlas dokusundan)
-	assert_int(buf.size()).is_equal(BuildingChunkBuilder.FLOATS_PER_INSTANCE)
+	# 3x4 dönüşüm + 4 float özel veri (D-021 çatı/cephe varyantı); palet satırı yok (renk atlas dokusundan)
+	assert_int(buf.size()).is_equal(BuildingChunkBuilder.INSTANCE_STRIDE)
 	assert_int(BuildingChunkBuilder.FLOATS_PER_INSTANCE).is_equal(12)
+	assert_int(BuildingChunkBuilder.INSTANCE_STRIDE).is_equal(16)
 
 
 func test_cell_local_positions_keep_32bit_precision_far_from_the_origin() -> void:
@@ -108,7 +109,7 @@ func test_hlod1_merges_one_proxy_per_building_with_the_baked_template_colours() 
 			var p := data.hlod1_vertices[v]
 			assert_float(Vector2(p.x + data.origin.x - cx, p.z + data.origin.y - cz).length()).is_less(half_diag + 1.0)
 			assert_float(p.y).is_between(12.0 - 0.3, 12.0 + _kit.height_m[m] + 0.1)
-			assert_bool(data.hlod1_colors[v] == tpl.colors[v - b * per]).is_true()
+			assert_bool(data.hlod1_colors[v] == tpl.colors_for(data.variants[b])[v - b * per]).is_true()   # D-021 varyant
 
 
 func test_hlod1_colour_is_the_modules_baked_colour_and_ignores_instance_palette_rows() -> void:
@@ -117,14 +118,14 @@ func test_hlod1_colour_is_the_modules_baked_colour_and_ignores_instance_palette_
 	var cols := BuildingTestSupport.columns([{"m": a, "x": 100.0, "z": 100.0, "wall": 0, "roof": 13},
 			{"m": a, "x": 300.0, "z": 100.0, "wall": 9, "roof": 15}, {"m": b, "x": 500.0, "z": 100.0}])
 	var data := _build(cols)
-	var per_a := (_kit.proxies[a] as BuildingKit.ProxyTemplate).vertices.size()
-	# aynı modülün iki örneği, farklı palet satırı sütunlarına rağmen aynı renk (hero palet taşımaz)
-	assert_bool(data.hlod1_colors.slice(0, per_a) == data.hlod1_colors.slice(per_a, 2 * per_a)).is_true()
-	# başka modül başka renkler (atlas kaynaklı)
-	var tpl_b: BuildingKit.ProxyTemplate = _kit.proxies[b]
-	assert_bool(data.hlod1_colors.slice(2 * per_a) == tpl_b.colors).is_true()
-	assert_bool(data.hlod1_colors.slice(0, per_a) == (_kit.proxies[a] as BuildingKit.ProxyTemplate).colors).is_true()
-	assert_bool(tpl_b.colors != (_kit.proxies[a] as BuildingKit.ProxyTemplate).colors).is_true()
+	var tpl_a := _kit.proxies[a] as BuildingKit.ProxyTemplate
+	var tpl_b := _kit.proxies[b] as BuildingKit.ProxyTemplate
+	var per_a := tpl_a.vertices.size()
+	# palet satırı sütunları rengi değiştirmez (hero palet taşımaz); renk şablon rengi + D-021 varyantıdır
+	assert_bool(data.hlod1_colors.slice(0, per_a) == tpl_a.colors_for(data.variants[0])).is_true()
+	assert_bool(data.hlod1_colors.slice(per_a, 2 * per_a) == tpl_a.colors_for(data.variants[1])).is_true()
+	assert_bool(data.hlod1_colors.slice(2 * per_a) == tpl_b.colors_for(data.variants[2])).is_true()
+	assert_bool(tpl_b.colors != tpl_a.colors).is_true()
 
 
 func test_hlod1_box_source_uses_the_ten_triangle_footprint_box() -> void:

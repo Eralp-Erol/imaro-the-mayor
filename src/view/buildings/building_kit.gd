@@ -52,6 +52,9 @@ var roof_color: PackedColorArray = PackedColorArray()
 ## Modül başına HLOD1 şablonları: PROXY (BuildingKit.ProxyTemplate) ve kutu; mesh yüklenmediyse null.
 var proxies: Array = []
 var boxes: Array = []
+## D-021: cephe/çatı çeşitliliği verisi ve modülün çatısı eğimli mi (düz çatı çatı modu almaz).
+var variety: BuildingVariety = BuildingVariety.load_default()
+var roof_pitched: PackedByteArray = PackedByteArray()
 
 var _records: Array[Dictionary] = []
 var _mesh_cache: Dictionary = {}
@@ -63,6 +66,11 @@ class ProxyTemplate:
 	var vertices: PackedVector3Array = PackedVector3Array()
 	var normals: PackedVector3Array = PackedVector3Array()
 	var colors: PackedColorArray = PackedColorArray()
+	## D-021: varyant koduna göre yeniden renklendirilmiş köşe renkleri (`BuildingVariety.CODES` adet); boşsa `colors`.
+	var variant_colors: Array = []
+
+	func colors_for(code: int) -> PackedColorArray:
+		return variant_colors[code] if code > 0 and code < variant_colors.size() else colors
 
 	func triangle_count() -> int:
 		return vertices.size() / 3
@@ -110,7 +118,8 @@ func level_mesh(module: int, level: String) -> Mesh:
 	var lods: Variant = rec.get("lods")
 	if not (lods is Dictionary) or not (lods as Dictionary).has(level):
 		return null
-	var mesh := HeroMeshLoader.load_mesh(str(((lods as Dictionary)[level] as Dictionary)["glb"]), pivot_offset[module])
+	var mesh := HeroMeshLoader.load_mesh(str(((lods as Dictionary)[level] as Dictionary)["glb"]), pivot_offset[module],
+			variety)
 	if mesh != null:
 		_mesh_cache[key] = mesh
 	return mesh
@@ -144,6 +153,8 @@ func _add_record(e: Dictionary) -> void:
 	is_landmark.append(1 if str(e.get("kind", "")) == "landmark" else 0)
 	var off: Array = e.get("pivot_offset_m", [0.0, 0.0, 0.0])
 	pivot_offset.append(Vector3(float(off[0]), float(off[1]), float(off[2])))
+	var roof_type := str(gp.get("roof_type", ""))
+	roof_pitched.append(1 if (roof_type != "" and roof_type != "flat") else 0)
 	wall_color.append(Color(0.5, 0.5, 0.5, 1.0))
 	roof_color.append(Color(0.5, 0.5, 0.5, 1.0))
 	proxies.append(null)
@@ -162,9 +173,31 @@ func _bake_module(module: int) -> void:
 		push_error("BuildingKit: PROXY atlası okunamadı (%s): HLOD renkleri nötr kalır" % ids[module])
 	var baked := _make_template(mesh, atlas, _roof_target_for(ids[module]))
 	proxies[module] = baked["template"]
+	_bake_variants(baked["template"], module)
 	wall_color[module] = baked["wall"]
 	roof_color[module] = baked["roof"]
 	boxes[module] = _make_box(footprint_w[module], footprint_d[module], height_m[module], baked["wall"], baked["roof"])
+
+
+## D-021: PROXY şablonunun her varyant kodu için köşe renkleri (HLOD1 birleştirmede örnek başına renk hesabı yok).
+func _bake_variants(tpl: ProxyTemplate, module: int) -> void:
+	tpl.variant_colors = [tpl.colors]
+	if not variety.enabled:
+		return
+	for code in range(1, BuildingVariety.CODES):
+		if roof_pitched[module] != 1 and code % BuildingVariety.ROOF_MODES != 0:
+			tpl.variant_colors.append(tpl.colors)
+			continue
+		var cols := PackedColorArray()
+		cols.resize(tpl.colors.size())
+		for i in range(0, tpl.colors.size() - 2, 3):
+			var ny := (tpl.normals[i].y + tpl.normals[i + 1].y + tpl.normals[i + 2].y) / 3.0
+			var y := (tpl.vertices[i].y + tpl.vertices[i + 1].y + tpl.vertices[i + 2].y) / 3.0
+			var c := variety.recolor(tpl.colors[i], ny, y, code)
+			cols[i] = c
+			cols[i + 1] = c
+			cols[i + 2] = c
+		tpl.variant_colors.append(cols)
 
 
 func _proxy_atlas_image(module: int) -> Image:
