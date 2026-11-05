@@ -236,6 +236,7 @@ func _on_refreshed() -> void:
 		return
 	_update_agenda(snap)
 	_update_queue_notice()
+	_update_trust_notice()
 	for panel: FlowPanel in [council_panel(), budget_panel(), agenda_panel(), policy_panel()]:
 		if panel != null:
 			panel.refresh()
@@ -245,6 +246,11 @@ func _update_queue_notice() -> void:
 	_queue_notice.observe(facade.policies())
 	if hud.strip != null:
 		hud.strip.set_queue_notice(_queue_notice.waiting(), _queue_notice.last_batch())
+
+
+func _update_trust_notice() -> void:
+	if hud.strip != null:
+		hud.strip.set_trust_notice(CouncilTrustNotice.affected_members(facade))
 
 
 func _update_agenda(snap: SimSnapshot) -> void:

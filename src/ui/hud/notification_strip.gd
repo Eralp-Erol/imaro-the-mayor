@@ -34,6 +34,9 @@ var _queue_waiting: int = 0
 var _queue_served: int = 0
 var _queue_waiting_row: PanelContainer = null
 var _queue_served_row: PanelContainer = null
+## B-081 · Meclis güveni düşüşü (gerçek neden kaydından; `CouncilTrustNotice`): etkilenen üye sayısı, 0 = satır yok.
+var _trust_members: int = 0
+var _trust_row: PanelContainer = null
 ## T-042b · Aynı komutun `public_work.expropriated` olayı: "Yol yapıldı" satırına yıkım özeti olarak eklenir (iki satır
 ## yerine tek; komut kimliği -> olay). Yalnız şerit sunumudur; olay günlüğü ikisini de tutar.
 var _demolition: Dictionary = {}
@@ -185,6 +188,17 @@ func set_queue_notice(waiting: int, served_batch: int) -> void:
 	_rebuild()
 
 
+func set_trust_notice(members: int) -> void:
+	if members == _trust_members:
+		return
+	_trust_members = members
+	_rebuild()
+
+
+func trust_text() -> String:
+	return CouncilTrustNotice.strip_text(_trust_members)
+
+
 func queue_texts() -> PackedStringArray:
 	var out := PackedStringArray()
 	for t in [ResettlementQueueText.strip_served(_queue_served), ResettlementQueueText.strip_waiting(_queue_waiting)]:
@@ -269,7 +283,7 @@ static func _has_reason_button(row: Control) -> bool:
 
 func _rebuild() -> void:
 	visible = not _events.is_empty() or not _unplanned.is_empty() or not _infra.is_empty() or _queue_waiting > 0 \
-			or _queue_served > 0
+			or _queue_served > 0 or _trust_members > 0
 	var shown := _events.size()
 	# Satırlar yeniden kullanılır: her tick'te düğüm silip yaratmak (60 olay/gün rejiminde) kareyi ~2 ms uzatıyordu.
 	while _rows.size() < shown:
@@ -290,6 +304,7 @@ func _rebuild() -> void:
 			ResettlementQueueText.strip_served(_queue_served))
 	_queue_waiting_row = _sync_summary(_queue_waiting_row, _queue_waiting > 0,
 			ResettlementQueueText.strip_waiting(_queue_waiting))
+	_trust_row = _sync_summary(_trust_row, _trust_members > 0, CouncilTrustNotice.strip_text(_trust_members))
 	_fit_rows()
 
 
