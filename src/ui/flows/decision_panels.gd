@@ -43,9 +43,8 @@ var _trust_members: int = 0
 
 
 ## `structure_probe`: parselde sim dışı (T0 stok) yapı var mı (`Callable(parcel_id) -> bool`; ZoningFlowModel'e geçer).
-## `with_manage_tools`: Bütçe/Meclis/Gündem araçlarını araç çubuğuna kaydet (ui_lab/test). Oynanabilir sahne bunları
-## kaydetmez: gerçek sim'de bu sistemler henüz kurulu değil (ölü düğme yok, T-047). İmar önerisi aracı her zaman
-## kayıtlıdır.
+## `with_manage_tools`: Bütçe/Meclis/Gündem araçlarını araç çubuğuna kaydet. Oynanabilir sahne D-023'ten beri kaydeder
+## (gerçek sim'de çalışıyor; Q-038). İmar önerisi aracı her zaman kayıtlıdır.
 static func attach(hud_in: HudRoot, facade_in: SimFacade, structure_probe: Callable = Callable(),
 		with_manage_tools: bool = true) -> DecisionPanels:
 	var d := DecisionPanels.new()

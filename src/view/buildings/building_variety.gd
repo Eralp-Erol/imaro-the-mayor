@@ -28,10 +28,7 @@ var wall_light: Color = Color(0.88, 0.85, 0.78)
 var wall_light_mix: float = 0.55
 var reroll_radius_m: float = 28.0
 var reroll_tries: int = 5
-var jitter: float = 0.03
-## F4: beton/çinko eğimli çatıda kiremit sıra çizgisi kontrastının kalan payı (0 = düz levha) ve gri pivotu.
-var roof_line_keep: float = 0.2
-var roof_shade_pivot: float = 0.85
+var jitter: float = 0.05
 var enabled: bool = false
 
 
@@ -53,9 +50,7 @@ func apply(d: Dictionary) -> void:
 	wall_light_mix = float(d.get("wall_light_mix", 0.55))
 	reroll_radius_m = float(d.get("reroll_radius_m", 28.0))
 	reroll_tries = int(d.get("reroll_tries", 5))
-	jitter = float(d.get("brightness_jitter", 0.03))
-	roof_line_keep = float(d.get("roof_line_keep", 0.2))
-	roof_shade_pivot = float(d.get("roof_shade_pivot", 0.85))
+	jitter = float(d.get("brightness_jitter", 0.05))
 	enabled = bool(d.get("enabled", true))
 
 
@@ -107,7 +102,7 @@ func recolor(c: Color, ny: float, y: float, code: int) -> Color:
 	var out := lin
 	if roof_mode > 0 and ny > PITCH_NY_MIN and ny < PITCH_NY_MAX:
 		var base := (roof_concrete if roof_mode == 1 else roof_zinc).srgb_to_linear()
-		var k := roof_shade(lum, roof_line_keep, roof_shade_pivot)
+		var k := roof_shade(lum)
 		out = Color(base.r * k, base.g * k, base.b * k, 1.0)
 	elif light == 1 and absf(ny) < PITCH_NY_MIN:
 		var w := smoothstep(WALL_LIGHT_Y0, WALL_LIGHT_Y1, y)
@@ -119,9 +114,8 @@ func recolor(c: Color, ny: float, y: float, code: int) -> Color:
 
 
 ## Atlas parlaklığından (doğrusal) çatı/cephe kazancı; shader ile aynı sabitler.
-static func roof_shade(lum: float, line_keep: float = 1.0, pivot: float = 0.85) -> float:
-	var k := clampf(0.55 + lum * 1.6, 0.45, 1.15)
-	return pivot + (k - pivot) * line_keep
+static func roof_shade(lum: float) -> float:
+	return clampf(0.55 + lum * 1.6, 0.45, 1.15)
 
 
 static func wall_shade(lum: float) -> float:

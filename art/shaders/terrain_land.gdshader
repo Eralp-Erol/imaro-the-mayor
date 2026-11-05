@@ -85,12 +85,9 @@ uniform float walk_strength = 0.95;
 uniform float vacant_strength = 0.9;                       // 0 = kapalı (karşılaştırma için)
 uniform vec2 vacant_near = vec2(0.06, 0.3);                // yüksek mip kaplaması -> kent içi ağırlığı
 uniform float vacant_lod = 5.0;
-uniform vec3 vacant_straw : source_color = vec3(0.58, 0.54, 0.42);
-uniform vec3 vacant_soil : source_color = vec3(0.48, 0.41, 0.32);
-uniform vec3 vacant_sage : source_color = vec3(0.45, 0.46, 0.36);
-uniform float vacant_grain = 0.12;                         // 9 m benek genligi (F1: 0,35 kare mozaik veriyordu)
-uniform float vacant_soil_max = 0.5;                       // toprak yamasi ust siniri (F2)
-uniform vec2 vacant_lum_band = vec2(0.95, 1.05);           // doku parlakligi carpan bandi (F1)
+uniform vec3 vacant_straw : source_color = vec3(0.57, 0.52, 0.36);
+uniform vec3 vacant_soil : source_color = vec3(0.47, 0.38, 0.28);
+uniform vec3 vacant_sage : source_color = vec3(0.44, 0.46, 0.32);
 uniform vec2 vacant_detail_fade = vec2(400.0, 1800.0);     // ince benek uzakta söner
 
 varying vec2 v_xz;
@@ -280,13 +277,13 @@ void fragment() {
 		float vm = texture(noise_tex, xz / 34.0).g;
 		float vt = texture(noise_tex, xz / 9.0).r;
 		float dfade = 1.0 - smoothstep(vacant_detail_fade.x, vacant_detail_fade.y, dist);
-		float soil_w = smoothstep(0.52, 0.80, vb * 0.55 + vm * 0.45) * vacant_soil_max;
+		float soil_w = smoothstep(0.52, 0.80, vb * 0.55 + vm * 0.45) * 0.8;
 		float sage_w = smoothstep(0.52, 0.72, 1.0 - vm) * (1.0 - soil_w);
 		vec3 dc = mix(vacant_straw, vacant_soil, soil_w);
 		dc = mix(dc, vacant_sage, sage_w * 0.5);
-		dc *= 1.0 + (vt - 0.5) * vacant_grain * dfade;
+		dc *= 1.0 + (vt - 0.5) * 0.35 * dfade;
 		float lum = dot(col, vec3(0.299, 0.587, 0.114));
-		dc *= mix(vacant_lum_band.x, vacant_lum_band.y, clamp(lum * 3.0, 0.0, 1.0));
+		dc *= mix(0.88, 1.12, clamp(lum * 3.0, 0.0, 1.0));
 		col = mix(col, dc, vac_k);
 	}
 
