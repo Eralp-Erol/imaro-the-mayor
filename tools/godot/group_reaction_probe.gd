@@ -8,7 +8,8 @@ extends SceneTree
 ##   base       karar YOK (taban çizgisi)            road     kamulaştırmalı yol (1. gün)
 ##   zone       yalnız imar (konut, 12 parsel)        road_zone yol + imar (3. gün)
 ##   policy     yeniden iskân politikası AÇ + yol + imar   demolish yol (1. gün) + yol yıkımı (8. gün)
-##   zone_mixed yalnız imar (karma)
+##   zone_mixed yalnız imar (karma)    stress   DOZ TESTİ: en çok hane yerinden eden 6 yol (1-6. gün) + imar (8. gün)
+##   `<ad>360` (örn. base360, stress360) = aynı senaryo, 360 günlük ufuk (`--long-days`); taban çizgisi sürüklenmesini ayırmak için.
 ## Çalıştır (kilit + nice ile):
 ##   tools/godot.sh --headless --path . --script res://tools/godot/group_reaction_probe.gd -- \
 ##       [--world-seed=N] [--sim-seeds=1] [--days=200] [--scenarios=base,road,zone,road_zone,policy,demolish] [--pick=q90] [--plan-n=12]
@@ -63,6 +64,10 @@ func run() -> void:
 	for pid in RoadDraftCheck.taken_parcels(w.net, pts, RoadDrawTool.ROAD_CLASS):
 		taken[int(pid)] = true
 	var plan_ids := _nearest_vacant(pts, int(_args.get("plan-n", "12")), taken)
+	var stress: Array = []  # DOZ TESTİ: en çok hane yerinden eden 6 yol (cands artan hane sıralı: sondan)
+	for k in int(_args.get("stress-roads", "6")):
+		if cands.size() - 1 - k >= 0:
+			stress.append((cands[cands.size() - 1 - k] as Dictionary)["cm"])
 	print("GR_SETUP ", JSON.stringify({"world_seed": world_seed, "sim_seeds": seeds, "days": days, "scenarios": names,
 		"road": {"len_m": snappedf(float(cand["len"]), 0.1), "taken": cand["taken"], "built": cand["built"], "hh": cand["hh"], "near_hh": cand["near_hh"]},
 		"plan_parcels": plan_ids.size(), "taken_ids": taken.keys(), "candidates": cands.size()}))
@@ -72,7 +77,7 @@ func run() -> void:
 		return
 	for sd in seeds:
 		for nm in names:
-			_scenario(w, int(sd), String(nm), warm, days, cand, plan_ids, taken)
+			_scenario(w, int(sd), String(nm), warm, int(_args.get("long-days", "360")) if String(nm).ends_with("360") else days, cand, plan_ids, taken, stress)
 	print("GR_DONE")
 	quit(0)
 
@@ -88,22 +93,25 @@ func _pick_index(n: int, pick: String) -> int:
 	return clampi(int(pick), 0, n - 1)
 
 
-func _scenario(w: Support.WorldCtx, seed_i: int, nm: String, warm: int, days: int, cand: Dictionary, plan_ids: PackedInt64Array, taken: Dictionary) -> void:
+func _scenario(w: Support.WorldCtx, seed_i: int, nm: String, warm: int, days: int, cand: Dictionary, plan_ids: PackedInt64Array, taken: Dictionary, stress: Array) -> void:
 	var s := Support.new_sim(w, seed_i)
 	s.step(warm)
 	var decisions: Array = []  # {day, kind, status, command_id}
 	var refs := {}  # kararın bağlı olduğu varlık referansları
 	var work_cmd := -1
-	var road_day := 1 if nm in ["road", "road_zone", "policy", "demolish"] else -1
-	var zone_day := 3 if nm in ["road_zone", "policy"] else (1 if nm in ["zone", "zone_mixed"] else -1)
-	var demolish_day := 8 if nm == "demolish" else -1
-	var policy_day := 1 if nm == "policy" else -1
+	var kind := nm.trim_suffix("360")  # "<ad>360" = aynı senaryo, uzun ufuk (--long-days, varsayılan 360)
+	var is_stress := kind == "stress"
+	var road_day := 1 if kind in ["road", "road_zone", "policy", "demolish"] else -1
+	var zone_day := 3 if kind in ["road_zone", "policy"] else (1 if kind in ["zone", "zone_mixed"] else (8 if is_stress else -1))
+	var demolish_day := 8 if kind == "demolish" else -1
+	var policy_day := 1 if kind == "policy" else -1
 	var road_ok := true
 	var ev_rows: Array = []  # group.reacted olayları (gerekçe zinciriyle)
 	var per_group := {}  # kesim -> {max_i, nonneutral_days, first_tick, reaction_set, last_nonneutral_refs}
 	var agenda_open: Dictionary = {}
 	var bloc_trace: Array = []
 	var pre_blocs := _bloc_gs(s)
+	var score_track := {}
 	for d in range(1, days + 1):
 		if d == policy_day:
 			var pr := s.facade.submit_command(SimCommand.policy_set(PolicyView.ID_RESETTLEMENT, true))
@@ -116,8 +124,13 @@ func _scenario(w: Support.WorldCtx, seed_i: int, nm: String, warm: int, days: in
 				refs["command.%d" % rr.command_id] = "road"
 				for pid: int in taken:
 					refs["parcel.%d" % pid] = "road_taken"
+		if is_stress and d <= stress.size():
+			var sr := s.facade.submit_command(SimCommand.public_work_road(stress[d - 1], RoadDrawTool.ROAD_CLASS, true))
+			decisions.append({"day": d, "kind": "road", "status": String(sr.status), "reason": String(sr.reason_key), "command_id": sr.command_id})
+			if not sr.is_rejected():
+				refs["command.%d" % sr.command_id] = "road"
 		if d == zone_day:
-			var zone := "zone.mixed" if nm == "zone_mixed" else "zone.residential"
+			var zone := "zone.mixed" if kind == "zone_mixed" else "zone.residential"
 			var zr := s.facade.submit_command(SimCommand.zoning_propose(plan_ids, StringName(zone)))
 			decisions.append({"day": d, "kind": "zoning", "status": String(zr.status), "reason": String(zr.reason_key), "command_id": zr.command_id, "zone": zone, "parcels": plan_ids.size()})
 			for pid in plan_ids:
@@ -136,7 +149,7 @@ func _scenario(w: Support.WorldCtx, seed_i: int, nm: String, warm: int, days: in
 				continue
 			ev_rows.append(_event_row(s, e))
 		for g in PoliticsQuery.group_views(s.facade.game_state()):
-			var gk := String(g.group.key) if g.group != null else "?"
+			var gk := String(g.group.ref()) if g.group != null else "?"
 			var pg: Dictionary = per_group.get(gk, {"max_i": 0, "nonneutral_days": 0, "first_tick": -1, "reactions": {}, "refs": []})
 			if String(g.reaction) != "neutral" or g.intensity > 0:
 				pg["nonneutral_days"] = int(pg["nonneutral_days"]) + 1
@@ -146,6 +159,7 @@ func _scenario(w: Support.WorldCtx, seed_i: int, nm: String, warm: int, days: in
 				pg["reactions"][String(g.reaction)] = true
 				pg["refs"] = Array(g.cause_refs)
 			per_group[gk] = pg
+		_track_scores(s, score_track)
 		for it in s.facade.agenda_items():
 			if not agenda_open.has(it.item_id):
 				agenda_open[it.item_id] = {"template": String(it.template_id), "opened": it.opened_tick, "region": String(it.region_code), "cause_refs": Array(it.cause_refs).slice(0, 4), "reason_ids": Array(it.reason_ids).size()}
@@ -190,7 +204,7 @@ func _scenario(w: Support.WorldCtx, seed_i: int, nm: String, warm: int, days: in
 	var out := {"scenario": nm, "sim_seed": seed_i, "world_seed": w.world_seed, "days": days, "decisions": decisions, "road_ok": road_ok, "pre_blocs": pre_blocs, "end_blocs": _bloc_gs(s),
 		"groups": groups_out, "groups_reacting_view": reacting, "groups_reacting_event": reacting_events, "groups_linked": linked.keys(),
 		"group_events_total": ev_rows.size(), "group_events": ev_rows.slice(0, 24), "agenda": agenda_open.values(), "bloc_trace": bloc_trace,
-		"counts": s.counts, "state_hash": s.facade.state_hash()}
+		"scores": score_track, "counts": s.counts, "state_hash": s.facade.state_hash()}
 	print("GR_RUN ", JSON.stringify(out))
 	# ağı taban grafına döndür
 	var guard := 0
@@ -231,9 +245,37 @@ func _event_row(s: Support.SimCtx, e: SimEvent) -> Dictionary:
 			next.append_array(Array(rec.parent_ids))
 		frontier = next
 		depth += 1
-	return {"tick": e.tick, "group": String(e.actor.key) if e.actor != null else "?", "message": String(e.message_key), "topic": str(e.args.get("topic", "")),
+	return {"tick": e.tick, "group": String(e.actor.ref()) if e.actor != null else "?", "message": String(e.message_key), "topic": str(e.args.get("topic", "")),
 		"intensity": int(e.args.get("intensity", 0)), "tier": str(e.args.get("tier", "")), "subjects": Array(e.subjects).slice(0, 4), "reason_n": reason_n,
 		"outcome": outcome, "consistent": consistent, "chain": chain}
+
+
+## Kesim başına en yeni tepki/destek/neden kaydı: basamak eşiğine göre en yüksek puan (SIM-12: kayıtlar olumsuz sonuçta da yazılır).
+func _track_scores(s: Support.SimCtx, track: Dictionary) -> void:
+	var log: ReasonLog = s.facade.game_state().reasons
+	for bk in PoliticsState.bloc_keys(s.facade.game_state()):
+		var t: Dictionary = track.get(bk, {"react_petition_max": -1, "react_petition_thr": 0, "react_protest_max": -1, "support_max": -1, "support_thr": 0,
+			"cause_records": 0, "cause_first_tick": -1, "cause_subjects": [], "eval_ticks": 0, "last_eval_tick": -1})
+		for key in ["petition", "protest"]:
+			var rec: Dictionary = log.latest({"decision": StringName("decision.bloc.react." + key), "actor": StringName(bk)})
+			if not rec.is_empty() and int(rec["tick"]) != int(t["last_eval_tick"]) and key == "petition":
+				t["last_eval_tick"] = rec["tick"]
+				t["eval_ticks"] = int(t["eval_ticks"]) + 1
+			if not rec.is_empty():
+				t["react_%s_max" % key] = maxi(int(t["react_%s_max" % key]), int(rec["score"]))
+				if key == "petition":
+					t["react_petition_thr"] = int(rec["threshold"])
+		var sup: Dictionary = log.latest({"decision": &"decision.bloc.support", "actor": StringName(bk)})
+		if not sup.is_empty():
+			t["support_max"] = maxi(int(t["support_max"]), int(sup["score"]))
+			t["support_thr"] = int(sup["threshold"])
+		var cause: Dictionary = log.latest({"decision": &"decision.bloc.expropriation_cause", "actor": StringName(bk)})
+		if not cause.is_empty() and int(t["cause_first_tick"]) < 0:
+			t["cause_first_tick"] = cause["tick"]
+			t["cause_subjects"] = Array(cause["subjects"]).slice(0, 4)
+		if not cause.is_empty():
+			t["cause_records"] = 1
+		track[bk] = t
 
 
 func _bloc_gs(s: Support.SimCtx) -> Dictionary:
