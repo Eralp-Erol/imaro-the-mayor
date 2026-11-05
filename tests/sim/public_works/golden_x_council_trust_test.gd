@@ -9,7 +9,10 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 ## durumuna ek olarak `politics.events.last_pressure["PE-03"]` anahtarındadır (yalnız bu anahtar; kesintili koşuda
 ## büyük).
 
-const GOLDEN_X_BEFORE_D021 := "c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094"
+# B-130/D-026 ile yenilendi: eski c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094 (D-021 öncesi). Kural
+# kapalıyken bile `bloc.react` petition eşiği 250 -> 190 kayıt eşiğini (hash'e girer) değiştirdi; bu sabit hâlâ "yalnız
+# council_trust kuralı kapalı" referansıdır, yalnız bloc.react eşiğine göre yeniden alındı.
+const GOLDEN_X_BEFORE_D021 := "92d1a99e9ef9b491683d790a7e8b5ca2f39510ba7114f1c2fde7e324e22c1ef6"
 const FINAL_TICK := 60
 const SCAN_DAYS := 7
 
@@ -48,8 +51,11 @@ func _scenario(enabled: bool) -> SimFacadeImpl:
 
 
 func test_with_the_rule_off_the_golden_x_scenario_is_bit_identical_to_the_pre_d021_value() -> void:
-	assert_str(_scenario(false).state_hash()).override_failure_message(
-		"kural kapalıyken GOLDEN_X (D-021 öncesi) değişmemeli").is_equal(GOLDEN_X_BEFORE_D021)
+	var hash_off := _scenario(false).state_hash()
+	print("GOLDEN_X_RULE_OFF_CANDIDATE=%s" % hash_off)
+	assert_str(hash_off).override_failure_message(
+		"kural kapalıyken GOLDEN_X (D-021 öncesi) değişmemeli; yenilenecekse: %s" % hash_off) \
+		.is_equal(GOLDEN_X_BEFORE_D021)
 
 
 func test_with_the_rule_on_the_hash_differs_only_because_the_cut_state_exists() -> void:

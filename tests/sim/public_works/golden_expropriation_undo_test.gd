@@ -16,7 +16,11 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 # B-080 ile yenilendi (ADR-0011): eski 1914f0e131fb087426f0e733162ec7f3b1dfc73a1c2aeb555c268cd37c3abb0d. Neden:
 # PE-03 `council.trust_gap` artık D-021 kesintisi sonrası etkin güveni okur; senaryoda kesinti var, tek fark
 # `politics.events.last_pressure["PE-03"]` (251 -> 252). Kanıt: `golden_x_council_trust_test.gd`.
-const GOLDEN_X := "d28d563334c8c8c2f5e83b102de4896825c1b7c6eb71655171dfcb0c6d22869c"
+# B-130/D-026 ile yenilendi (sahip Q-040 "A"). ESKİ:
+# d28d563334c8c8c2f5e83b102de4896825c1b7c6eb71655171dfcb0c6d22869c
+# Neden: `bloc.react` petition eşiği 250 -> 190 (`data/actors/decision_tables.json`); kesim tepki gerekçe kayıtları
+# eşiği taşır ve ReasonLog hash'e girer. Kural kapalı referansı (`golden_x_council_trust_test.gd`) da yenilendi.
+const GOLDEN_X := "cd738f30bb347a65e89004744f5628edf126fd5587a58d805bfc1a1b1c49dbf8"
 const FINAL_TICK := 60
 const SAVE_TICK := 30
 const SCAN_DAYS := 7
