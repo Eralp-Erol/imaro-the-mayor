@@ -409,8 +409,8 @@ func _resettlement_policy() -> int:
 	return -1
 
 
-## Birincil onay düğmesi yüksekliği: normalde birincil hedefin 1,2 katı; çekmecede (yapışık altlık, B-123) birincil hedef
-## kadar (>= 56 pt): altlık kaydırma alanından daha az yer alır, etki satırı kesilmez.
+## Birincil onay düğmesi yüksekliği: normalde birincil hedefin 1,2 katı; çekmecede (yapışık altlık, B-123) birincil
+## hedef kadar (>= 56 pt): altlık kaydırma alanından daha az yer alır, etki satırı kesilmez.
 func _confirm_height() -> float:
 	return maxf(CONFIRM_MIN_HEIGHT, _ctx.target_primary() * (1.0 if _sticky else 1.2))
 
