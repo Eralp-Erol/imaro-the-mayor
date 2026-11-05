@@ -123,14 +123,15 @@ func test_tier_meshes_carry_the_modules_own_atlas_material_and_no_override_is_ne
 		var rec := _record(_kit.ids[m])
 		var near_mesh := _kit.tier_mesh(m, BuildingLod.Tier.LOD0) as ArrayMesh
 		var mid_mesh := _kit.tier_mesh(m, BuildingLod.Tier.LOD1) as ArrayMesh
-		var near := near_mesh.surface_get_material(0) as StandardMaterial3D
-		var mid := mid_mesh.surface_get_material(0) as StandardMaterial3D
+		# D-021: atlas materyali = mat_hero_variety (Lambert, speküler kapalı; atlas uniform'u)
+		var near := near_mesh.surface_get_material(0) as ShaderMaterial
+		var mid := mid_mesh.surface_get_material(0) as ShaderMaterial
 		assert_object(near).is_not_null()
 		assert_object(mid).is_not_null()
-		assert_str(near.albedo_texture.resource_path).is_equal(str(rec["atlas"]["path"]))
-		assert_str(mid.albedo_texture.resource_path).is_equal(str(rec["proxy_atlas"]["path"]))
-		assert_int(near.specular_mode).is_equal(BaseMaterial3D.SPECULAR_DISABLED)
-		assert_int(near.diffuse_mode).is_equal(BaseMaterial3D.DIFFUSE_LAMBERT)
+		assert_str((near.get_shader_parameter("atlas") as Texture2D).resource_path).is_equal(str(rec["atlas"]["path"]))
+		assert_str((mid.get_shader_parameter("atlas") as Texture2D).resource_path).is_equal(
+				str(rec["proxy_atlas"]["path"]))
+		assert_str(near.shader.resource_path).is_equal(HeroMeshLoader.VARIETY_SHADER_PATH)
 
 
 func test_proxy_templates_are_unindexed_triangles_matching_the_table_triangle_count() -> void:

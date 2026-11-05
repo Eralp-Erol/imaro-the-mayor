@@ -78,19 +78,21 @@ func super_groups() -> Dictionary:
 
 
 ## Hücre içerik özeti (SHA-256 hex): render'a etki eden alanlar (modül, konum, yön, renk satırları, parlaklık).
-## `parcel_id`, `floors`, `flags`, `era` render'ı değiştirmez -> özete girmez.
+## `parcel_id` (D-021: çatı/cephe varyantı) girer; `floors`, `flags`, `era` render'ı değiştirmez -> özete girmez.
 func cell_hash(cols: BuildingColumns, key: Vector2i) -> String:
 	var idx := indices(key)
 	var m := PackedInt32Array()
 	var xs := PackedFloat32Array()
 	var zs := PackedFloat32Array()
 	var ys := PackedFloat32Array()
+	var pids := PackedInt32Array()   # D-021: varyant parsel kimliğinden türer
 	var rows := PackedByteArray()
 	for i in idx:
 		m.append(cols.module_idx[i])
 		xs.append(cols.x[i])
 		zs.append(cols.z[i])
 		ys.append(cols.yaw[i])
+		pids.append(cols.parcel_id[i])
 		rows.append(cols.wall_row[i])
 		rows.append(cols.roof_row[i])
 		rows.append(cols.accent_row[i])
@@ -98,7 +100,8 @@ func cell_hash(cols: BuildingColumns, key: Vector2i) -> String:
 	var ctx := HashingContext.new()
 	ctx.start(HashingContext.HASH_SHA256)
 	ctx.update(PackedByteArray([idx.size() & 255, (idx.size() >> 8) & 255, (idx.size() >> 16) & 255, 1]))
-	for part: PackedByteArray in [m.to_byte_array(), xs.to_byte_array(), zs.to_byte_array(), ys.to_byte_array(), rows]:
+	for part: PackedByteArray in [m.to_byte_array(), xs.to_byte_array(), zs.to_byte_array(), ys.to_byte_array(),
+			pids.to_byte_array(), rows]:
 		if not part.is_empty():
 			ctx.update(part)
 	return ctx.finish().hex_encode()

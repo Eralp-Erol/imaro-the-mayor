@@ -11,6 +11,7 @@ extends RefCounted
 ## aynı ışıklandırma: sıfır parlaklık, atlas dokusundaki albedo ışıkla bir kez çarpılır).
 
 const FLAT_SHADER_PATH := "res://assets/shaders/mat_hero_proxy.gdshader"
+const VARIETY_SHADER_PATH := "res://assets/shaders/mat_hero_variety.gdshader"
 
 
 ## .glb sahnesi. Önce içe aktarılmış kaynak; yoksa (import koşmamış ortam) çalışma zamanında glTF okuma.
@@ -29,7 +30,7 @@ static func instantiate_scene(glb_path: String) -> Node:
 
 ## GLB'deki mesh'i `pivot_offset` eklenmiş (ve düğüm dönüşü uygulanmış) yeni ArrayMesh olarak döndürür; yüzey
 ## materyalleri atlas kopyasıdır. Dosya/mesh yoksa null (hata günlüğe yazılır).
-static func load_mesh(glb_path: String, pivot_offset: Vector3) -> ArrayMesh:
+static func load_mesh(glb_path: String, pivot_offset: Vector3, variety: BuildingVariety = null) -> ArrayMesh:
 	var root := instantiate_scene(glb_path)
 	if root == null:
 		push_error("HeroMeshLoader: GLB açılamadı: %s" % glb_path)
@@ -68,7 +69,8 @@ static func load_mesh(glb_path: String, pivot_offset: Vector3) -> ArrayMesh:
 			arrays[Mesh.ARRAY_NORMAL] = normals
 		arrays[Mesh.ARRAY_TANGENT] = null   # normal haritası yok: teğet kullanılmaz
 		out.add_surface_from_arrays(source.mesh.surface_get_primitive_type(s), arrays)
-		out.surface_set_material(out.get_surface_count() - 1, shaded_material(source.mesh.surface_get_material(s)))
+		out.surface_set_material(out.get_surface_count() - 1,
+				variety_material(source.mesh.surface_get_material(s), variety))
 	root.free()
 	return out
 
@@ -86,6 +88,24 @@ static func shaded_material(source: Material) -> Material:
 	m.diffuse_mode = BaseMaterial3D.DIFFUSE_LAMBERT
 	m.specular_mode = BaseMaterial3D.SPECULAR_DISABLED
 	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	return m
+
+
+## D-021: atlas dokusunu koruyan, örnek başına çatı/cephe varyantı (MultiMesh özel verisi) uygulayan malzeme.
+## `variety` sabitleri (veri) uniform olur. Kaynak malzeme atlas dokusu taşımıyorsa `shaded_material` döner.
+static func variety_material(source: Material, variety: BuildingVariety) -> Material:
+	var base := source as BaseMaterial3D
+	if base == null or base.albedo_texture == null or variety == null or not variety.enabled:
+		return shaded_material(source)
+	var m := ShaderMaterial.new()
+	m.resource_name = base.resource_name + "_variety"
+	m.shader = load(VARIETY_SHADER_PATH)
+	m.set_shader_parameter("atlas", base.albedo_texture)
+	m.set_shader_parameter("albedo_tint", base.albedo_color)
+	m.set_shader_parameter("roof_concrete", variety.roof_concrete)
+	m.set_shader_parameter("roof_zinc", variety.roof_zinc)
+	m.set_shader_parameter("wall_light", variety.wall_light)
+	m.set_shader_parameter("wall_light_mix", variety.wall_light_mix)
 	return m
 
 

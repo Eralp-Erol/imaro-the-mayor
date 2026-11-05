@@ -70,19 +70,20 @@ func test_multimesh_carries_transforms_only_and_the_mesh_surface_holds_the_atlas
 			continue
 		var mmi := child as MultiMeshInstance3D
 		seen += 1
-		assert_bool(mmi.multimesh.use_custom_data).is_false()
+		assert_bool(mmi.multimesh.use_custom_data).is_true()   # D-021 çatı/cephe varyantı
 		assert_bool(mmi.multimesh.use_colors).is_false()
 		assert_int(mmi.multimesh.transform_format).is_equal(MultiMesh.TRANSFORM_3D)
 		assert_int(mmi.multimesh.instance_count).is_equal(10)
 		assert_object(mmi.material_override).is_null()   # materyal mesh yüzeyinde (modül başına atlas)
-		var mat := mmi.multimesh.mesh.surface_get_material(0) as StandardMaterial3D
+		var mat := mmi.multimesh.mesh.surface_get_material(0) as ShaderMaterial
 		assert_object(mat).is_not_null()
-		assert_object(mat.albedo_texture).is_not_null()
+		var atlas := mat.get_shader_parameter("atlas") as Texture2D
+		assert_object(atlas).is_not_null()
 		var id := str(mmi.get_meta(BuildingView.MODULE_META))
 		var rec := _kit.record(_kit.module_index(id))
 		var level_atlas := str(rec["proxy_atlas"]["path"]) if mmi.name.begins_with("L1_") or mmi.name.begins_with("S1_") \
 				else str(rec["atlas"]["path"])
-		assert_str(mat.albedo_texture.resource_path).is_equal(level_atlas)
+		assert_str(atlas.resource_path).is_equal(level_atlas)
 	assert_int(seen).is_greater_equal(4)
 
 
