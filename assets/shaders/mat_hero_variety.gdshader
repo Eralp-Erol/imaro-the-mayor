@@ -12,6 +12,8 @@ uniform vec3 roof_concrete : source_color = vec3(0.61, 0.59, 0.55);
 uniform vec3 roof_zinc : source_color = vec3(0.49, 0.51, 0.53);
 uniform vec3 wall_light : source_color = vec3(0.89, 0.86, 0.79);
 uniform float wall_light_mix = 0.6;
+uniform float roof_line_keep = 0.2;     // kiremit sira cizgisi kontrastinin kalan payi (veriden)
+uniform float roof_shade_pivot = 0.85;
 
 varying vec3 v_custom;
 varying float v_up;
@@ -30,7 +32,8 @@ void fragment() {
 	bool pitched = v_up > 0.5 && v_up < 0.985;
 	if (pitched && mode > 0.5) {
 		vec3 base = mode < 1.5 ? roof_concrete : roof_zinc;
-		c = base * clamp(0.55 + lum * 1.6, 0.45, 1.15);
+		float rk = clamp(0.55 + lum * 1.6, 0.45, 1.15);
+		c = base * (roof_shade_pivot + (rk - roof_shade_pivot) * roof_line_keep);
 	} else if (abs(v_up) < 0.5 && v_custom.y > 0.5) {
 		float w = smoothstep(3.0, 4.5, v_y) * wall_light_mix * smoothstep(0.02, 0.1, lum);
 		c = mix(c, wall_light * clamp(0.7 + lum * 0.9, 0.7, 1.1), w);

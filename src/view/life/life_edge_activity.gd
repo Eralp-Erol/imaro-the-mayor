@@ -39,7 +39,8 @@ var _centrality_memo: Dictionary = {}
 var _edge_region: Dictionary = {}
 var _cell_edges: Dictionary = {}
 var _dirty_cells: Dictionary = {}
-var _rebuild_keys: Array = []
+## Sıralı parsel kimlikleri (PackedInt64Array: `Array.sort` 40k anahtarda ~9 ms, paketli sıralama ~3 ms; B-041).
+var _rebuild_keys: PackedInt64Array = PackedInt64Array()
 var _rebuild_i: int = 0
 var _rebuilding: bool = false
 ## Kare dilimli kenar dizini (`begin_reindex`): geçici sonuçlar bitince yerine konur.
@@ -168,7 +169,7 @@ func begin_rebuild() -> void:
 	_cell_units.clear()
 	_centrality_memo.clear()
 	_placed.clear()
-	_rebuild_keys = parcel_state.keys()
+	_rebuild_keys = PackedInt64Array(parcel_state.keys())
 	_rebuild_keys.sort()
 	_rebuild_i = 0
 	_rebuilding = true
@@ -211,7 +212,7 @@ func _finish_rebuild_if_done() -> bool:
 	if _rebuild_i < _rebuild_keys.size():
 		return false
 	_rebuilding = false
-	_rebuild_keys = []
+	_rebuild_keys = PackedInt64Array()
 	for cell in _cell_edges:
 		_dirty_cells[cell] = true
 	stats["parcels_mapped"] = _placed.size()

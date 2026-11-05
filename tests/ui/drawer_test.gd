@@ -137,7 +137,7 @@ func test_desktop_layout_is_unchanged_even_if_a_drawer_state_is_passed() -> void
 
 
 func test_non_drawer_touch_panels_keep_the_old_layout() -> void:
-	# Diğer karar panelleri henüz bağlı değil: dokunmatik yatayda yan panel, dikeyde alt sayfa kalır.
+	# Çekmece bayrağı verilmeyen panel (ör. dev galerileri) eski yerleşimde kalır: yatayda yan panel, dikeyde alt sayfa.
 	var ctx := UiContext.for_profile_name(&"touch")
 	var land := HudLayout.compute(ctx, ctx.frame_size(Vector2(1366, 1024)), true, false)
 	var port := HudLayout.compute(ctx, ctx.frame_size(Vector2(1024, 1366)), true, false)

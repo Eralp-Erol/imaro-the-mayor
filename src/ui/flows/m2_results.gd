@@ -63,7 +63,7 @@ func rebind(facade_in: SimFacade) -> void:
 # --- Açma / takip ---
 
 func open() -> void:
-	hud.open_panel(PANEL_ID, &"m2.title", _build_results)
+	hud.open_panel(PANEL_ID, &"m2.title", _build_results, true)
 
 
 func is_open() -> bool:
@@ -107,7 +107,7 @@ func build_model() -> M2ResultModel:
 func open_reason(initial: Callable) -> void:
 	_reason_nav = []
 	_reason_initial = initial
-	hud.open_panel(PANEL_REASON, &"reason.title", _build_reason)
+	hud.open_panel(PANEL_REASON, &"reason.title", _build_reason, true)
 
 
 func _on_event_reason(event: SimEvent) -> void:

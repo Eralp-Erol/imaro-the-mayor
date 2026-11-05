@@ -17,6 +17,7 @@ const PANEL_COUNCIL := &"council"
 const PANEL_BUDGET := &"budget"
 const PANEL_AGENDA := &"agenda"
 const PANEL_POLICY := &"policy"
+const TRUST_REFRESH_TICKS := 7
 
 var hud: HudRoot = null
 var facade: SimFacade = null
@@ -37,6 +38,8 @@ var _agenda_ready: bool = false
 var _agenda_cache := AgendaModel.Cache.new()
 ## T-067: "eve kavuştu" bildirimi (PolicyView.served_households artışı) ve bekleyen aile sayısı -> HUD şeridi.
 var _queue_notice := ResettlementQueueNotice.new()
+var _trust_checked_tick: int = -1
+var _trust_members: int = 0
 
 
 ## `structure_probe`: parselde sim dışı (T0 stok) yapı var mı (`Callable(parcel_id) -> bool`; ZoningFlowModel'e geçer).
@@ -99,19 +102,19 @@ func add_zoning_parcel(parcel_id: int) -> bool:
 
 
 func open_council() -> void:
-	hud.open_panel(PANEL_COUNCIL, &"council.title", _build_council)
+	hud.open_panel(PANEL_COUNCIL, &"council.title", _build_council, true)
 
 
 func open_budget() -> void:
-	hud.open_panel(PANEL_BUDGET, &"budget.title", _build_budget)
+	hud.open_panel(PANEL_BUDGET, &"budget.title", _build_budget, true)
 
 
 func open_agenda() -> void:
-	hud.open_panel(PANEL_AGENDA, &"agenda.title", _build_agenda)
+	hud.open_panel(PANEL_AGENDA, &"agenda.title", _build_agenda, true)
 
 
 func open_policy() -> void:
-	hud.open_panel(PANEL_POLICY, &"policy.title", _build_policy)
+	hud.open_panel(PANEL_POLICY, &"policy.title", _build_policy, true)
 
 
 ## Yönetim araçları (bütçe, meclis, gündem). Ele alındıysa true.
@@ -236,6 +239,7 @@ func _on_refreshed() -> void:
 		return
 	_update_agenda(snap)
 	_update_queue_notice()
+	_update_trust_notice()
 	for panel: FlowPanel in [council_panel(), budget_panel(), agenda_panel(), policy_panel()]:
 		if panel != null:
 			panel.refresh()
@@ -245,6 +249,18 @@ func _update_queue_notice() -> void:
 	_queue_notice.observe(facade.policies())
 	if hud.strip != null:
 		hud.strip.set_queue_notice(_queue_notice.waiting(), _queue_notice.last_batch())
+
+
+## B-042: `affected_members` tüm gerekçe kaydını tarar (~22 ms); sim bu kuralı `scan_days` aralığında yazar, bu yüzden
+## sonuç en çok `TRUST_REFRESH_TICKS` günde bir yenilenir (geri sarma/yükleme ve ilk çağrı anında yeniler).
+func _update_trust_notice() -> void:
+	if hud.strip == null:
+		return
+	var tick := facade.current_tick()
+	if _trust_checked_tick < 0 or tick < _trust_checked_tick or tick - _trust_checked_tick >= TRUST_REFRESH_TICKS:
+		_trust_checked_tick = tick
+		_trust_members = CouncilTrustNotice.affected_members(facade)
+	hud.strip.set_trust_notice(_trust_members)
 
 
 func _update_agenda(snap: SimSnapshot) -> void:

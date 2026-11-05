@@ -38,10 +38,21 @@ signal floaters_changed
 ## kapanınca ya da başka panel açılınca otomatik boşalır.
 signal map_highlight_changed(parcel_ids: PackedInt64Array)
 
+## D-022: haritada iş yapılan paneller çekmecede alçak yarı kesirle açılır (`drawer_frac_half_low`).
+const DRAWER_LOW_PANELS: Array[StringName] = [&"road_draw", &"inspector"]
+
 ## Çekmece bu genişlikten (px) geniş olunca iki sütunlu içerik (alan | kullanım) düzenine geçer.
 const WIDE_DRAWER_PT := 600.0
 
 var ctx: UiContext = null
+## Alçak çekmece paneli yine de normal yarı yükseklikte açılsın (yıkım onay kartı: "Yıkımı onayla" kaydırmasız
+## görünsün).
+var drawer_tall: bool = false:
+	set(v):
+		if v != drawer_tall:
+			drawer_tall = v
+			if is_node_ready():
+				_relayout()
 var input: InputProfile = null
 var facade: SimFacade = null
 var top_bar: TopBar = null
@@ -179,11 +190,12 @@ func set_map_highlight(owner: StringName, parcel_ids: PackedInt64Array) -> void:
 
 
 ## Panel açar. `builder(ctx) -> Control` içeriği üretir (profil değişince yeniden çağrılır). Aynı kimlikse
-## yerinde yeniler. `drawer`: dokunmatik profilde panel alttan çekmece olur (D-021; şu an yalnız imar bağlı, diğer karar
-## panelleri aynı bileşeni bekler); masaüstünde bu bayrak etkisizdir.
+## yerinde yeniler. `drawer`: dokunmatik profilde panel alttan çekmece olur (D-021; imar, meclis, bütçe, gündem,
+## politika, sonuç, nedensellik, denetçi, yol çizimi); masaüstünde bu bayrak etkisizdir.
 func open_panel(panel_id_in: StringName, title_key: StringName, builder: Callable, drawer: bool = false) -> void:
 	if panel_id_in != _panel_id:
 		set_map_highlight(_panel_id, PackedInt64Array())
+		drawer_tall = false
 	if panel_id_in != _panel_id or not is_panel_open():
 		drawer_state = DrawerModel.State.HALF
 		_drag_h = -1.0
@@ -380,7 +392,8 @@ func _relayout() -> void:
 	var drawer := is_drawer_active()
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
 		top_bar.get_combined_minimum_size().y, sheet_expanded, strip.get_combined_minimum_size().x,
-		drawer_state if drawer else -1, _drag_h, panel.drawer_peek_height() if drawer else 0.0)
+		drawer_state if drawer else -1, _drag_h, panel.drawer_peek_height() if drawer else 0.0,
+		DRAWER_LOW_PANELS.has(_panel_id) and not drawer_tall)
 	toolbar.set_rows(layout.toolbar_rows)
 	_place(top_bar, layout.top)
 	if banner.visible:

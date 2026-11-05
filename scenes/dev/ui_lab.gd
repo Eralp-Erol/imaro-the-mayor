@@ -130,7 +130,7 @@ func select_parcel(parcel_id: int) -> void:
 		if hud.panel_id() == &"inspector":
 			hud.close_panel_soft()
 		return
-	hud.open_panel(&"inspector", &"inspector.title", _build_inspector)
+	hud.open_panel(&"inspector", &"inspector.title", _build_inspector, true)
 
 
 func open_actors() -> void:
@@ -190,7 +190,7 @@ func _on_tool_selected(tool_id: StringName) -> void:
 	if tool_id == ModeToolbar.TOOL_ZONE:
 		open_zoning()
 	elif tool_id == ModeToolbar.TOOL_INSPECT:
-		hud.open_panel(&"inspector", &"inspector.title", _build_inspector)
+		hud.open_panel(&"inspector", &"inspector.title", _build_inspector, true)
 
 
 func _on_panel_closed(_id: StringName) -> void:
@@ -216,7 +216,7 @@ func open_reason_for(subject_ref: StringName) -> void:
 func _open_reason(initial: Callable) -> void:
 	_reason_nav = []
 	_reason_initial = initial
-	hud.open_panel(&"reason", &"reason.title", _build_reason)
+	hud.open_panel(&"reason", &"reason.title", _build_reason, true)
 
 
 func _build_reason(c: UiContext) -> Control:

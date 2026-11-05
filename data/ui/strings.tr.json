@@ -922,6 +922,7 @@
 	"queue.why_paused": "Yeniden iskân kapalı: bekleyen ailelere ev verilmez, tepkileri sürer. Açarsanız yeni biten evler onlara verilir.",
 	"strip.queue_waiting": "{n} aile yeniden iskân için ev bekliyor",
 	"strip.queue_served": "{n} aile yeni eve yerleşti",
+	"strip.council_trust_drop": "Meclis güveni düştü: yıkım kararı, evsiz kalan aileler ({n} üye)",
 	"policy.pending": "İstek gönderildi; oyun akınca işlenir, durum o zaman değişir.",
 	"policy.refused": "Değiştirilemedi: {reason}",
 	"policy.refused_generic": "istek kabul edilmedi",
