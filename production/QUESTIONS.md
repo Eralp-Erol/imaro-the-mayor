@@ -335,3 +335,9 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: A) Konut arayanların tepki eşiğini düşür: yoğun yol yapımından sonra onlar da dilekçe/protesto versin, iki grup görünsün (önerilen; sayı çalışma değeri, sonra ayarlanır; GOLDEN hash yenilenir, teknik direktör onayıyla). B) Böyle kalsın: tek grup (barınanlar) + haber yeterli, ölçüt "tek grup tepkisi" diye yeniden yazılsın. C) İmar kararına da konut arayanlar için ayrı bir tepki bağlansın (yeni kural, daha büyük iş).
 - Recommendation: A (ölçütle uyumlu, en küçük değişiklik, sahte nedensellik eklemez).
 - Meanwhile: veri değişmez; M2 kapanışında bu ölçüt "KISMEN (1 grup)" yazılır.
+
+### Q-041 · "İki grup tepkisi" ölçütünü nasıl okuyalım? (status: open)
+- Context: Q-040 "A" uygulandı (D-026): konut arayanlar artık yoğun yol yapımından sonra dilekçe veriyor (doz testi 360 günde 4/4, tek yolda ve karar yokken yok). Ama barınan mahalle grubunun puanı tabanla örtüşüyor (doz 31-73, taban 8-42), yalnız eşiği düşürerek tepki vermiyor. Barınanlar zaten kamulaştırmalı her yolda mahalle gündem maddesi (PE-01) ve haber üretiyor.
+- Options: A) Ölçütü şöyle oku: "konut arayanlar grup tepkisi + barınanlar mahalle gündemi/haber" = iki grup tepkisi (önerilen; yeni kod yok, gerçek oyunda ikisi de görünür). B) Barınanlar için de ayrı bir dilekçe/protesto sinyali eklensin (kod + yeni GOLDEN, daha büyük iş).
+- Recommendation: A (ikisi de gerçek nedenle ve karara bağlı çıkıyor; B ancak oynayınca eksik hissedilirse).
+- Meanwhile: M2 kapanışında bu ölçüt "KISMEN: konut arayanlar dilekçe, barınanlar gündem" yazılır.
