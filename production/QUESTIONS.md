@@ -316,3 +316,16 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: A) %62 kalsın (düğmeler ve metin ilk ekranda sığar; önerilen). B) %45 (şehir daha çok görünür, bazı paneller kaydırma ister). C) Yol çizerken ve denetçide %45, karar panellerinde %62 (haritada iş yapılan paneller daha alçak).
 - Recommendation: A; sahibin iPad'de denemesinden sonra B/C seçilirse yalnız veri değişir.
 - Meanwhile: %62, panel sırası/yenileme davranışı değişmez (her yeni panel yarıda açılır).
+
+
+### Q-038 · Oyunda Meclis ve Bütçe düğmeleri görünsün mü? (status: open)
+- Context: Bağımsız QA'nın bulgusu (B-124): oyunda "Yönetim" modunda şu an yalnız Politikalar düğmesi var. Meclis oylaması ve bütçe sistemde çalışıyor, ama oyuncu bunlara düğmeyle ulaşamıyor; Meclis ancak teklif sunulunca ve gündem rozetinden açılıyor. Koddaki not "bu sistemler henüz kurulu değil" diyor, yani eski kalmış olabilir ya da bilinçle gizlenmiş olabilir.
+- Options: A) Meclis ve Bütçe düğmeleri Yönetim modunda görünsün (önerilen; iPad çekmecesi de gerçek oyunda kullanılır hale gelir). B) Şimdilik gizli kalsın, yalnız gündem rozetinden açılsın. C) Yalnız Bütçe görünsün.
+- Recommendation: A (sistem gerçek veriyle çalışıyor; gizli kalması oyuncuyu nedensellikten uzak tutar).
+- Meanwhile: Düğmeler eklenmez, çekmece yalnız programatik açılışla sınanır.
+
+### Q-039 · Boş arazi ve beton çatı hangi renkte olsun? (status: open)
+- Context: Sanat direktörü incelemesi (2026-11-05): boş arazi şu an kuru sarı bir tarla gibi, şehir zemininden biraz daha açık ve soluk. Beton çatılar düz gri-bej. İkisi de kalite hatası değil, beğeni sorusu.
+- Options: A) Boş arazi kuru sarı kalsın (şimdiki hâl). B) Boş arazi daha koyu, çıplak toprak rengine yakın olsun (şehir zeminine yaklaşır, öneri sanat direktöründen). Çatı için: gri-bej kalsın / daha sıcak ya da daha açık olsun.
+- Recommendation: B tadında bir deneme: karşılaştırma karelerine bakıp seçmeniz en sağlıklısı; kareleri gönderirim.
+- Meanwhile: Şimdiki renkler kalır; yalnız çizim kusurları (leke kenarı, çatı beyaz çizgisi, yuvarlak leke sınırı) düzeltiliyor.
