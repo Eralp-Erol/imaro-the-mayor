@@ -5,7 +5,7 @@ Durum: **KISMİ.** VSync'li DÖRT geçerli demo koşusu ölçüldü (a1, a2, a3-
 ## Koşul (doğrulanmış, JSON alanlarından)
 iPad14,5, iPadOS 26.5.2, release dışa aktarma (`debug_build` false; ham JSON `artifacts/perf/ipad-a*/`, git dışı), Godot Compatibility (`gl_compatibility`, Apple M2 GPU), 120 Hz (`refresh_hz`), `vsync_mode`=1 (VSync AÇIK), `--demo`, 6000 kare, ~50 sn. Kararlı pencere 30. sn'den sonra. Pencere 2732x2048.
 Yapı: HEAD 7b155b9 sonrası (B-042 dahil). Başlangıç zamanları (UTC, `started_unix`): a1 21:40, a3-eski 22:09 (önceki seri), a2 00:00, a3-yeni 00:04. İki "a3" dosyası farklı koşular: `artifacts/perf/ipad-a3/ipad-a3.json` (eski) ve `artifacts/perf/ipad-b1/ipad-a3.json` (yeni; pull betiği cihazdaki tüm dosyaları hedef dizine çekiyor). Seri betiği aynı ada sahip eski yerel dosyayı "tamam" saydığı için a3'ün 24 sn'de bittiği görünüyordu; veri yine de gerçek iki ayrı koşu.
-**Geçersiz:** a4 (`reason=pause`, 1121 kare, 11 sn) ve b1 (`reason=pause`, 587 kare; ayrıca `vsync_mode`=1, yani VSync'siz istek iOS'ta uygulanmadı). b1 cihaz konsolu: `Audio interruption began` ~30 sn sonra, süreç sonlandı (signal 15). Kesinti nedeni (ekran kilidi/otomatik kilit/bildirim) uzaktan doğrulanamadı.
+**Geçersiz:** a4 (`reason=pause`, 1121 kare, 11 sn) ve b1 (`reason=pause`, 587 kare; ayrıca `vsync_mode`=1, yani VSync'siz istek iOS'ta uygulanmadı). b1 cihaz konsolu: `Audio interruption began` ~30 sn sonra, süreç sonlandı (signal 15). Kesinti nedeni (ekran kilidi/otomatik kilit/bildirim) uzaktan doğrulanamadı. b1 ayrıca `refresh_hz`=60 (p50 16,68 ms) idi; a-serisi 120 Hz idi. Godot iOS'ta Düşük Güç Modu açıkken 60 döndürür: b1 büyük olasılıkla Düşük Güç Modu'nda koştu [TD çıkarımı, doğrulanmadı]. Sonraki koşular şarjda, Düşük Güç Modu kapalı olmalı.
 
 ## Sonuçlar (kararlı pencere, ms)
 | Koşu | ort | p50 | p95 | p99 | maks | >33 ms | >100 ms | çizim ort | üçgen ort |
@@ -30,7 +30,7 @@ Yapı: HEAD 7b155b9 sonrası (B-042 dahil). Başlangıç zamanları (UTC, `start
 | Isıl | son 2 dk p95 ≤ ilk 2 dk × 1,25 | YOK | ısınma koşusu bekliyor |
 
 ## Doğrulanmadı / eksik
-- VSync'siz seri (b1, b2): **ENGELLİ.** İstek (`--perf-log-novsync`) bu iOS yapısında uygulanmıyor (`vsync_mode` hep 1; kodda "iOS yok sayabilir" notu var) ve cihaz ~30 sn sonra "Audio interruption" ile uygulamayı kesiyor. Gerçek kare maliyeti için başka yol gerekir (örn. kare süresi yerine CPU/GPU zamanı), teknik karar.
+- VSync'siz seri (b1, b2): **İPTAL** (iOS'ta uygulanamaz; teknik direktör notu `production/log/2026-11-06-teknik-direktor-b027-vsync.md`). Önceki gerekçe: İstek (`--perf-log-novsync`) bu iOS yapısında uygulanmıyor (`vsync_mode` hep 1; kodda "iOS yok sayabilir" notu var) ve cihaz ~30 sn sonra "Audio interruption" ile uygulamayı kesiyor. Gerçek kare maliyeti için başka yol gerekir (örn. kare süresi yerine CPU/GPU zamanı), teknik karar.
 - 15 dk ısınma koşusu.
 - Etkileşim (yol onayı, pan/pinch) en kötü kare.
 - Soğuk açılış kronometre, Düşük Güç Modu / şarj durumu / pil kaydı (koşullar sahipten istenecek; JSON'da yok).
