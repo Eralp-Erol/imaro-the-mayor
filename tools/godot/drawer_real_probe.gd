@@ -259,6 +259,23 @@ func run() -> void:
 				String(hud.panel_id()), String(hud.toolbar.current_mode), String(hud.toolbar.current_tool)])
 		var tool_trace: Array[String] = []
 		hud.tool_selected.connect(func(t: StringName) -> void: tool_trace.append(String(t)))
+		var mvp := InputEventMouseMotion.new()
+		mvp.position = res.get_global_rect().get_center()
+		mvp.global_position = mvp.position
+		root.push_input(mvp)
+		await _frame()
+		var hov: Control = root.gui_get_hovered_control()
+		print("DPROBE_RESULTS_HOVER %s path=%s mouse_filter=%s disabled=%s visible=%s" % [str(hov),
+				str(hov.get_path()) if hov != null else "-", str(hov.mouse_filter) if hov != null else "-",
+				str(res.disabled), str(res.is_visible_in_tree())])
+		if hov is Button:
+			print("DPROBE_RESULTS_HOVER_BTN text=%s rect=%s" % [(hov as Button).text, str(hov.get_global_rect())])
+			var par: Control = hov.get_parent_control()
+			var depth := 0
+			while par != null and depth < 12:
+				print("DPROBE_RESULTS_ANC %s rect=%s" % [par.get_class(), str(par.get_global_rect())])
+				par = par.get_parent_control()
+				depth += 1
 		await _click(res.get_global_rect().get_center())
 		for _i in 8:
 			await _frame()
@@ -504,6 +521,12 @@ func _tap(pos: Vector2) -> void:
 
 
 func _click(pos: Vector2) -> void:
+	# B-122: gerçek farede basmadan önce hareket olur; sentetik tıklama bunu atlıyordu.
+	var mv := InputEventMouseMotion.new()
+	mv.position = pos
+	mv.global_position = pos
+	root.push_input(mv)
+	await _frame()
 	for pressed in [true, false]:
 		var e := InputEventMouseButton.new()
 		e.button_index = MOUSE_BUTTON_LEFT
