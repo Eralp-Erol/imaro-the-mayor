@@ -342,3 +342,9 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: A) Ölçütü şöyle oku: "konut arayanlar grup tepkisi + barınanlar mahalle gündemi/haber" = iki grup tepkisi (önerilen; yeni kod yok, gerçek oyunda ikisi de görünür). B) Barınanlar için de ayrı bir dilekçe/protesto sinyali eklensin (kod + yeni GOLDEN, daha büyük iş).
 - Recommendation: A (ikisi de gerçek nedenle ve karara bağlı çıkıyor; B ancak oynayınca eksik hissedilirse).
 - Meanwhile: M2 kapanışında bu ölçüt "KISMEN: konut arayanlar dilekçe, barınanlar gündem" yazılır.
+
+### Q-042 · iPad'de gündem kartında "Bu yanıtı ver" düğmesi nerede dursun? (status: open)
+- Context: B-123. iPad'de panel alttan yarı yükseklikte açılıyor. Gündem kartında (halk tepkisine yanıt) önce etkisi yazılıyor, altında "Bu yanıtı ver" düğmesi geliyor; yarı yükseklikte düğme ekranın altında kalıyor, kaydırınca ulaşılıyor (çalışıyor, ama "halk tepki versin" döngüsünün ana eylemi). Düğmeyi yukarı alırsak etki yazısı düğmenin ALTINA iniyor: etkiyi okumadan basılabilir, bu yüzden denemedik. Yol onay kartında (D-022) panelin daha yüksek açılması zaten kullanılıyor.
+- Options: A) Gündem paneli de yol onay kartı gibi daha yüksek açılsın; etki yazısı düğmenin üstünde kalır, kaydırma gerekmez; harita biraz daha çok örtülür (önerilen). B) Şimdiki hâl kalsın: kaydırınca ulaşılır, yarı yükseklikte harita açık kalır. C) Düğme yukarı, etki yazısı altında olsun (tek bakışta görünür, ama etkiyi görmeden basma riski).
+- Recommendation: A (mevcut mekanizma, yeni düzen riski yok; etki okunmadan basılamaz).
+- Meanwhile: şimdiki hâl (B) kalır; kaydırınca erişiliyor, test var.
