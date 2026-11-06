@@ -40,11 +40,12 @@ var map_region: Rect2 = Rect2()
 ## kadar yükselir (varsayılan %45 değişmez; şehri örtme kararı oyuncunundur).
 ## `drawer_state` (>= 0, DrawerModel.State) yalnız DOKUNMATİKTE ve açık panel çekmece ise verilir; `drawer_drag_h` >= 0
 ## parmak sürüklerken canlı yüksekliktir; `drawer_peek_h` kabuğun gerçek KAPALI yüksekliği (0 = formül);
-## `drawer_low` yarıyı alçak kesirle açar.
+## `drawer_low` yarıyı alçak kesirle açar; `drawer_min_h` panelin içeriğinden gelen asgari yüksekliktir (B-122: altlık
+## eylemleri sığmazsa panel araç çubuğuna taşmasın, YUKARI büyüsün; 0 = bilinmiyor).
 static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banner: bool,
 		top_min_height: float = 0.0, sheet_expanded: bool = false, strip_min_width: float = 0.0,
 		drawer_state: int = -1, drawer_drag_h: float = -1.0, drawer_peek_h: float = 0.0,
-		drawer_low: bool = false) -> HudLayout:
+		drawer_low: bool = false, drawer_min_h: float = 0.0) -> HudLayout:
 	var l := HudLayout.new()
 	var tk := ctx.tokens
 	var margin := ctx.edge_margin()
@@ -93,6 +94,7 @@ static func compute(ctx: UiContext, frame: Vector2, panel_open: bool, show_banne
 			var h := float(l.drawer_heights.get(drawer_state, 0.0))
 			if drawer_drag_h >= 0.0:
 				h = DrawerModel.clamp_height(drawer_drag_h, l.drawer_heights)
+			h = maxf(h, drawer_min_h)
 			l.panel = Rect2(0.0, l.toolbar.position.y - gap - h, frame.x, h)
 		else:
 			# Alt sayfa + araç çubuğu birlikte en çok %45 yükseklik: ekranın ortası hiçbir zaman örtülmez.

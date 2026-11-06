@@ -61,6 +61,21 @@ func test_touch_landscape_uses_side_panel_up_to_38_percent() -> void:
 		assert_float(l.center_visible_fraction(frame)).is_greater_equal(0.5)
 
 
+## B-122: çekmece içeriğinin asgari yüksekliği (altlıkta üç eylem düğmesi) ayrılan yükseklikten büyükse panel aşağı
+## taşıp araç çubuğunu örtmez; yukarı büyür.
+func test_drawer_grows_upward_when_content_minimum_exceeds_the_half_height() -> void:
+	var ctx := UiContext.for_profile_name(&"touch")
+	var frame := ctx.frame_size(Vector2(1024, 768))
+	var plain := HudLayout.compute(ctx, frame, true, false, 0.0, false, 0.0, DrawerModel.State.HALF)
+	assert_that(plain.panel_mode).is_equal(HudLayout.MODE_DRAWER)
+	var min_h := plain.panel.size.y + 90.0
+	var tall := HudLayout.compute(ctx, frame, true, false, 0.0, false, 0.0, DrawerModel.State.HALF, -1.0, 0.0, false,
+			min_h)
+	assert_float(tall.panel.size.y).is_greater_equal(min_h)
+	assert_float(tall.panel.end.y).is_less_equal(tall.toolbar.position.y)
+	assert_float(plain.panel.end.y).is_less_equal(plain.toolbar.position.y)
+
+
 func test_touch_portrait_uses_bottom_sheet_and_two_toolbar_rows() -> void:
 	var ctx := UiContext.for_profile_name(&"touch")
 	for window: Vector2 in TOUCH_PORTRAIT:

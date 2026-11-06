@@ -393,7 +393,8 @@ func _relayout() -> void:
 	layout = HudLayout.compute(ctx, frame_size, is_panel_open(), banner.visible,
 		top_bar.get_combined_minimum_size().y, sheet_expanded, strip.get_combined_minimum_size().x,
 		drawer_state if drawer else -1, _drag_h, panel.drawer_peek_height() if drawer else 0.0,
-		DRAWER_LOW_PANELS.has(_panel_id) and not drawer_tall)
+		DRAWER_LOW_PANELS.has(_panel_id) and not drawer_tall,
+		panel.get_combined_minimum_size().y if drawer and drawer_state != DrawerModel.State.CLOSED else 0.0)
 	toolbar.set_rows(layout.toolbar_rows)
 	_place(top_bar, layout.top)
 	if banner.visible:
