@@ -16,7 +16,7 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - [ ] 3. `verify full` (HEAD `cec0b32` B-122 + sonrası), PASS ise `git-wt done` kuyruğuna ekle (exit 141 geçici çözümü: dal adını `$(git rev-parse --git-common-dir)/wt/queue` dosyasına ekle) -> `~/.local/bin/git-wt integrate` -> `ship`.
 - [ ] 4. Ölçüm tablosu: T-076 Kanıt bölümü, `production/log/2026-11-06-ipad-olcum.md`, ADR-0010 iPad satırları (hedef vs ölçüm; hedefi geçenle geçmeyeni açık yaz). Sahip gerektiren adımlar (soğuk açılış kronometre, yol onayı etkileşim oturumu, el ile ısınma hissi) "SAHİP BEKLİYOR" diye kalır.
 - [ ] 5. GOLDEN_X durum farkını çıkar (B-130 öncesi/sonrası hangi aktör alanı değişti) ve `production/log/`'a yaz.
-- [ ] 6. Bayat masaüstü perf kayıtlarını (M2-CLOSURE.md, 2026-11-05-perf-serisi) iPad sayılarıyla çapraz not et (yeniden ölçüm gerekmiyorsa yalnız not).
+- [x] 6. Bayat masaüstü perf kayıtlarını (M2-CLOSURE.md, 2026-11-05-perf-serisi) iPad sayılarıyla çapraz not et (yeniden ölçüm gerekmiyorsa yalnız not).
 - [ ] 7. M2-CLOSURE.md durum başlığını güncelle (verify full tarihi/sayısı, B-122 çözüldü, iPad sonuçları, kalan sahip maddeleri: Q-041, soğuk açılış, etkileşim, ısınma hissi).
 
 ## Kuyruk tükendiğinde (durmak yok)
@@ -29,3 +29,4 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - 2026-11-06 01:2x: B-122 çözüldü (`cec0b32`): çekmece içerik asgarisi araç çubuğunu örtüyordu. verify quick PASS (964), gerçek sahne testleri PASS, pencereli prob PASS. verify full henüz yok.
 - Q-041 sahipte (A önerilen).
 - 01:4x: madde 4 TASLAK yazıldı (`2026-11-06-ipad-olcum.md`, a1-a3 + ADR karşılaştırması). Eksik: b serisi, ısınma, etkileşim, soğuk açılış. a4 geçersiz (pause). verify full 01:3x başladı (`/private/tmp/claude-501/vf.log`).
+- 01:4x: madde 6 yapıldı (M2-CLOSURE iPad çapraz notu). Q-042 (B-123 gündem düğmesi konumu) sahibe hazır. Bekleyen: b1 (01:33 başladı), verify full.
