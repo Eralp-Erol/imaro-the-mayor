@@ -287,6 +287,31 @@ func test_half_leaves_a_real_part_of_the_city_visible() -> void:
 		assert_float(hud.free_map_rect().size.y).is_greater(window.y * 0.55)
 
 
+## B-122: altlığı (yapışık eylem alanı) ayrılan yarı yükseklikten uzun çekmece araç çubuğuna TAŞMAZ; yukarı büyür.
+## Kapatılınca asgari uygulanmaz (harita boşluğu geri gelir).
+func test_drawer_with_a_tall_footer_grows_upward_and_never_covers_the_toolbar() -> void:
+	var hud := await _hud(&"touch", IPAD_SMALL_LANDSCAPE, 6)
+	var tall := Control.new()
+	tall.custom_minimum_size = Vector2(0.0, 420.0)
+	hud.panel.adopt_footer(tall)
+	for _i in 4:
+		await await_idle_frame()
+	var half_h := float(hud.layout.drawer_heights.get(DrawerModel.State.HALF, 0.0))
+	var pr := hud.panel.get_global_rect()
+	assert_float(pr.size.y).override_failure_message(
+			"önkoşul: panel asgarisi yarı yüksekliği aşmalı (panel %.0f, yarı %.0f)" % [pr.size.y, half_h]) \
+			.is_greater(half_h + 1.0)
+	assert_float(pr.end.y).override_failure_message(
+			"B-122: çekmece araç çubuğunu örtüyor (panel=%s araç çubuğu=%s)" % [
+			str(pr), str(hud.toolbar.get_global_rect())]) \
+			.is_less_equal(hud.toolbar.get_global_rect().position.y + 1.0)
+	hud.set_drawer_state(DrawerModel.State.CLOSED)
+	for _i in 3:
+		await await_idle_frame()
+	assert_float(hud.free_map_rect().size.y).override_failure_message("kapalıyken harita boşluğu dar kaldı") \
+			.is_greater(IPAD_SMALL_LANDSCAPE.y * 0.55)
+
+
 func test_safe_area_is_respected_in_every_position() -> void:
 	var safe := Vector4(20.0, 24.0, 20.0, 34.0)
 	for state in [DrawerModel.State.CLOSED, DrawerModel.State.HALF, DrawerModel.State.FULL]:

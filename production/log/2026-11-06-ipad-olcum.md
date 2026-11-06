@@ -1,25 +1,26 @@
 # iPad Pro 12,9" (6. nesil) ölçüm kaydı — T-076 (TASLAK, seri sürüyor)
 
-Durum: **KISMİ.** VSync'li üç demo koşusu ölçüldü (a1, a2, a3). VSync'siz seri (b1, b2), ısınma, etkileşim ve soğuk açılış HENÜZ YOK. Hedefler `docs/adr/ADR-0010-kare-butcesi-hedefleri-m2.md` Karar 3 (ön hedef).
+Durum: **KISMİ.** VSync'li DÖRT geçerli demo koşusu ölçüldü (a1, a2, a3-eski, a3-yeni). VSync'siz seri (b1, b2), ısınma, etkileşim ve soğuk açılış HENÜZ YOK. Hedefler `docs/adr/ADR-0010-kare-butcesi-hedefleri-m2.md` Karar 3 (ön hedef).
 
 ## Koşul (doğrulanmış, JSON alanlarından)
 iPad14,5, iPadOS 26.5.2, release dışa aktarma (`debug_build` false; ham JSON `artifacts/perf/ipad-a*/`, git dışı), Godot Compatibility (`gl_compatibility`, Apple M2 GPU), 120 Hz (`refresh_hz`), `vsync_mode`=1 (VSync AÇIK), `--demo`, 6000 kare, ~50 sn. Kararlı pencere 30. sn'den sonra. Pencere 2732x2048.
-Yapı: HEAD 7b155b9 sonrası (B-042 dahil); a1/a3 daha erken seriden, a2 bu gecenin yeniden başlatmasından (a3 farklı zamanda koştu: 22:09 UTC, a2: 00:00 UTC, a1: 21:40 UTC).
-**Geçersiz:** a4 (`reason=pause`, 1121 kare, 11 sn: oyun kesildi), sayılmaz.
+Yapı: HEAD 7b155b9 sonrası (B-042 dahil). Başlangıç zamanları (UTC, `started_unix`): a1 21:40, a3-eski 22:09 (önceki seri), a2 00:00, a3-yeni 00:04. İki "a3" dosyası farklı koşular: `artifacts/perf/ipad-a3/ipad-a3.json` (eski) ve `artifacts/perf/ipad-b1/ipad-a3.json` (yeni; pull betiği cihazdaki tüm dosyaları hedef dizine çekiyor). Seri betiği aynı ada sahip eski yerel dosyayı "tamam" saydığı için a3'ün 24 sn'de bittiği görünüyordu; veri yine de gerçek iki ayrı koşu.
+**Geçersiz:** a4 (`reason=pause`, 1121 kare, 11 sn) ve b1 (`reason=pause`, 587 kare; ayrıca `vsync_mode`=1, yani VSync'siz istek iOS'ta uygulanmadı). b1 cihaz konsolu: `Audio interruption began` ~30 sn sonra, süreç sonlandı (signal 15). Kesinti nedeni (ekran kilidi/otomatik kilit/bildirim) uzaktan doğrulanamadı.
 
 ## Sonuçlar (kararlı pencere, ms)
 | Koşu | ort | p50 | p95 | p99 | maks | >33 ms | >100 ms | çizim ort | üçgen ort |
 |---|---|---|---|---|---|---|---|---|---|
 | a1 | 8,33 | 8,34 | 8,62 | 14,18 | 17,39 | 1 | 0 | 302 | 398 288 |
 | a2 | 8,34 | 8,34 | 8,64 | 14,39 | 19,11 | 2 | 1 | 302 | 398 290 |
-| a3 | 8,33 | 8,34 | 8,64 | 13,91 | 18,84 | 1 | 1 | 302 | 398 291 |
+| a3-eski | 8,33 | 8,34 | 8,64 | 13,91 | 18,84 | 1 | 1 | 302 | 398 291 |
+| a3-yeni | 8,33 | 8,34 | 8,47 | 13,43 | 16,95 | 1 | 0 | 302 | 398 288 |
 
 >100 ms sayısı (a2, a3: 1) ilk kareyle uyumlu: ilk kare süresi a2 106,5 ms, a3 102,4 ms (`startup.first_frames_ms`); kararlı pencere değil, açılış karesi. [Bu eşleşme sayıdan çıkarım, tek tek kare doğrulaması yapılmadı.]
 
 ## ADR-0010 ön hedefleriyle karşılaştırma (yalnız demo bakışı)
 | Ölçü | Ön hedef | Ölçülen (a1-a3) | Durum |
 |---|---|---|---|
-| Kararlı ort | ≤ 8 ms (tavan 14) | 8,33-8,34 | VSync'li 120 Hz'de kare süresi 8,33 ms'ye kilitli: ort ≤ 8 bu modda **ölçülemez**; gerçek maliyet için VSync'siz seri (b) gerekir. Tavanın (14) içinde. |
+| Kararlı ort | ≤ 8 ms (tavan 14) | 8,33-8,34 (4 koşu) | VSync'li 120 Hz'de kare süresi 8,33 ms'ye kilitli: ort ≤ 8 bu modda **ölçülemez**; gerçek maliyet için VSync'siz seri (b) gerekir. Tavanın (14) içinde. |
 | p95 | ≤ 16,6 (tavan 20) | 8,62-8,64 | geçti (demo) |
 | p99 | ≤ 25 (tavan 33,3) | 13,9-14,4 | geçti (demo) |
 | En kötü etkileşim karesi | ≤ 50 (tavan 100) | demo maks 17,4-19,1 | **etkileşim ölçülmedi** (yol onayı oturumu sahip bekliyor) |
@@ -29,7 +30,7 @@ Yapı: HEAD 7b155b9 sonrası (B-042 dahil); a1/a3 daha erken seriden, a2 bu gece
 | Isıl | son 2 dk p95 ≤ ilk 2 dk × 1,25 | YOK | ısınma koşusu bekliyor |
 
 ## Doğrulanmadı / eksik
-- VSync'siz seri (b1, b2): gerçek kare maliyeti.
+- VSync'siz seri (b1, b2): **ENGELLİ.** İstek (`--perf-log-novsync`) bu iOS yapısında uygulanmıyor (`vsync_mode` hep 1; kodda "iOS yok sayabilir" notu var) ve cihaz ~30 sn sonra "Audio interruption" ile uygulamayı kesiyor. Gerçek kare maliyeti için başka yol gerekir (örn. kare süresi yerine CPU/GPU zamanı), teknik karar.
 - 15 dk ısınma koşusu.
 - Etkileşim (yol onayı, pan/pinch) en kötü kare.
 - Soğuk açılış kronometre, Düşük Güç Modu / şarj durumu / pil kaydı (koşullar sahipten istenecek; JSON'da yok).

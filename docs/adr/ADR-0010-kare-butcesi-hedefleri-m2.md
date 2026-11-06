@@ -20,7 +20,7 @@ Dayanak ölçüm: `production/log/2026-11-05-perf-serisi.md` (dev Mac i7-8850H /
 | Üçgen (`RENDER_TOTAL_PRIMITIVES_IN_FRAME`) ort / tek kare tepe | 431k / 1,00M (tepe karesinin nedeni bilinmiyor [ölçülmedi]) |
 | Açılış | sahne kurulumu 31-35 sn; kare 1: 3,9-4,1 sn; kare 6: 0,7 sn (ViewWarmup); kare 60: 1,6-1,8 sn (B-028, yalnız `--demo`) |
 | Bellek | RSS tepe 1463-1479 MB; static 532 MB |
-| iPad | **hiçbir sayı yok**; yalnız açıldı (sahip bildirimi, `production/log/2026-11-04-ipad-gercek-cihaz.md`) |
+| iPad | bu kayıt yazıldığında **hiçbir sayı yoktu**; 2026-11-06 gecesi KISMİ ölçüm alındı (bkz. Karar 3 altındaki "Ölçülen" notu, `production/log/2026-11-06-ipad-olcum.md`) |
 
 Yoğun çekirdek sokak bakışı (`street:20200,18700`, T-070, sim duraklatılmış): sayaç 2,87M üçgen, ort 10,99 / p95 13,15 ms [kayıt]; %76,6'sı hero LOD1 yuvası (yakın bina).
 
@@ -67,6 +67,7 @@ Cihaz: iPad Pro 12,9" (6. nesil; M2 yonga [genel bilgi]), iPadOS 26.5.2. Hiçbir
 | Bellek | masaüstü RSS'den kötü değil (≤ ~1,5 GB), bellek uyarısı/sonlandırma yok | sonlandırma = FAIL | masaüstü ölçümü; iOS uygulama bellek sınırı cihazda bilinmiyor [ölçülmedi] |
 | Isıl | 15 dk sürekli oyunda son 2 dk p95 ≤ ilk 2 dk p95 × 1,25 | — | mobil ısıl kısma [varsayım] |
 
+- **Ölçülen (2026-11-06, KISMİ; ön hedef etiketi technical-director kararına kadar KALIR):** release, 120 Hz, VSync'li `--demo`, 4 geçerli koşu (6000 kare): kararlı ort 8,33-8,34 ms (VSync'te 8,33'e kilitli; "ort ≤ 8" bu modda ölçülemez), p95 8,47-8,64 (hedef 16,6), p99 13,4-14,4 (hedef 25), demo maks 17-19 ms, çizim 302 (hedef 400), üçgen ~398k (hedef 900k), bellek tamponu 194-200 MB, sonlandırma yok. Bunlar demo bakışı içindir. **Ölçülmeyen:** etkileşim en kötü karesi, 15 dk ısıl, soğuk açılış süreleri, yoğun çekirdek bakışı, gerçek kare maliyeti (VSync'siz istek `--perf-log-novsync` iOS'ta UYGULANMADI: `vsync_mode` hep 1). Cihaz ~30 sn sonra "Audio interruption" ile uygulamayı kesince b1 ve ısıl koşular geçersiz kaldı. Ayrıntı: `production/log/2026-11-06-ipad-olcum.md`.
 - Ölçüm koşulu: release dışa aktarma (debug ayrı etiketlenir), Düşük Güç Modu kapalı, şarj durumu ve ekran yenileme hızı (60/120 Hz) kayda yazılır [Godot'un iOS'ta varsayılan kare tavanı doğrulanmadı]. GPU süresi Compatibility'de 0 dönüyor; cihazda Xcode Instruments ile ayrıca bakılır [varsayım: aracın GL/Compatibility yolunda anlamlı veri verdiği doğrulanmadı].
 - Beklenen gerilim [hesap + varsayım]: yoğun çekirdek sokak bakışı (2,87M) iPad'in 900k çizgisini aşar. ADR-0004 izin verir: iPad grafik profili yakın bina mesafesini kısaltabilir. **Ama bu K8'i (LOD geçiş sıçraması) geri getirir** (Karar 4). Bu takas iPad ölçümünden sonra art-director + sahibe gider; şimdi seçilmez.
 
