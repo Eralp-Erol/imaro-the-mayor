@@ -65,3 +65,34 @@ func test_the_line_disappears_once_the_trust_has_recovered() -> void:
 	strip.set_trust_notice(3)
 	strip.set_trust_notice(0)
 	assert_str(strip.trust_text()).is_equal("")
+
+
+func test_a_negative_member_count_is_treated_as_no_notice() -> void:
+	var strip := _strip()
+	strip.set_trust_notice(-1)
+	assert_bool(strip.visible).is_false()
+	assert_str(strip.trust_text()).is_equal("")
+	assert_int(CouncilTrustNotice.strip_text(-5).length()).is_equal(0)
+
+
+func test_a_changed_member_count_updates_the_one_line_in_place() -> void:
+	var strip := _strip()
+	strip.set_trust_notice(3)
+	var rows_before := strip.get_child_count()
+	assert_str(strip.trust_text()).contains("3 üye")
+	strip.set_trust_notice(1)
+	assert_str(strip.trust_text()).contains("1 üye")
+	assert_str(strip.trust_text()).not_contains("3 üye")
+	assert_bool(strip.visible).is_true()
+	assert_int(strip.get_child_count()).override_failure_message(
+		"sayı değişince satır çoğalmamalı, aynı satır güncellenmeli").is_equal(rows_before)
+
+
+func test_repeating_the_same_member_count_adds_no_row() -> void:
+	var strip := _strip()
+	strip.set_trust_notice(2)
+	var rows_before := strip.get_child_count()
+	for _i in 5:
+		strip.set_trust_notice(2)
+	assert_int(strip.get_child_count()).is_equal(rows_before)
+	assert_str(strip.trust_text()).contains("2 üye")
