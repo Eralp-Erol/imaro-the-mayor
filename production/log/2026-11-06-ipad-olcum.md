@@ -35,3 +35,13 @@ Yapı: HEAD 7b155b9 sonrası (B-042 dahil). Başlangıç zamanları (UTC, `start
 - Etkileşim (yol onayı, pan/pinch) en kötü kare.
 - Soğuk açılış kronometre, Düşük Güç Modu / şarj durumu / pil kaydı (koşullar sahipten istenecek; JSON'da yok).
 - Yoğun çekirdek bakışı üçgen sayısı.
+
+## busy_ms koşuları (2026-11-06 10:30-10:45, yeni release, `busy_ms` PerfLogger) — GEÇERSİZ (60 Hz)
+Bağlantı bulgusu (doğrulanmış): iPad `connected` yalnız bir `devicectl` komutu tüneli açtığı sürece görünüyor, sonra `available (paired)`e düşüyor (taşıma: localNetwork). Önceki otomasyon yalnız listeye baktığı için ekran açıkken bile hiç yakalayamadı; betik artık önce `devicectl device info details` ile cihazı uyandırıp sonra yokluyor.
+
+| Koşu | complete | refresh_hz | busy ort | busy p95 | busy p99 | kullanım | kare p50 / p95 |
+|---|---|---|---|---|---|---|---|
+| c1 | true (6000 kare) | **60** | 4,70 | 12,74 | 15,55 | 0,287 | 16,67 / 24,16 |
+| c2 | true (6000 kare) | **60** (değişmedi) | 4,81 | 14,01 | 15,41 | 0,292 | 16,68 / 24,58 |
+
+Geçerlilik: kural gereği `refresh_hz`=120 beklenir; 60 çıktığı için ADR-0010 hedefleriyle KARŞILAŞTIRILMADI. Neden: Düşük Güç Modu şüphesi (TD çıkarımı), cihazdan uzaktan okunamadı; DOĞRULANMADI. Sayılar yalnız gösterge (CPU meşgul ort ~4,7-4,8 ms, kullanım ~%29 bu modda). c3 (betik) ve 15 dk ısıl koşu 60 Hz'de çalıştırılmadı/iptal: mod düzelmeden anlamlı değil. Bekleyen: sahip iPad'de Düşük Güç Modu'nu kapatıp şarja takacak; sonra c1-c3 + ısıl yeniden.
