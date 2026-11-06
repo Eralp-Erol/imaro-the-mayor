@@ -43,6 +43,21 @@ extends Node
 ##                busy > kare süresi olabilir: `busy_over_frame` sayar). Yalnız bayrakla bağlanır; oturum bitince
 ##                sinyaller çözülür. Sinyal bağlantısı ve `viewport_set_measure_render_time` yalnız `_ready`de.
 ##   yenileme hz  `refresh_hz_start` + pencere başına `refresh_hz`; koşu içinde değişirse `refresh_hz_changed=true`.
+##   A1 döküm     (`EXTRAS_VERSION` 1; `format` alanı 2 KALIR: eski tüketiciler `format == 2` bekler) pencere başına,
+##                üst düzeyde ve `stable` içinde: `pre_draw_ms_mean`, `render_cpu_ms_mean`/`_p95`, `is_ms_mean`/`_p95`
+##                (is = çizim öncesi + render CPU; ortalama = iki ortalamanın toplamı, p95 = kare başına toplamın p95'i,
+##                render_cpu önceki çizilen kareye ait olduğundan YAKLAŞIK), `rest_ms_mean` (= busy - is),
+##                `busy_near_interval_frac` (busy >= 0,85 x aralık), `over_interval_frac` (kare > 1,5 x aralık);
+##                aralık = 1000 / `refresh_hz`. -1 = ölçülemedi / yenileme hızı bilinmiyor. `thermal` içinde
+##                `is_first_p95`, `is_last_p95`, `is_p95_ratio`.
+##   A2 kip       pencere başına `mode`: "A" (busy_near_interval_frac < 0,2 ve kullanım < 0,5), "B" (aksi), "?" (busy
+##                ölçülemedi); üst düzey `mode_windows` {A, B, unknown}. Eşikler `MODE_*` sabitleri.
+##   A3 CPU yok.  `cpu_probe` (varsayılan açık, `--perf-log-no-cpu-probe` kapatır): kare süresi toplamının her
+##                saniyesinde bir sabit GDScript döngüsü (`PROBE_ITERATIONS`) ana iş parçacığında zamanlanır;
+##                pencere başına `cpu_probe_us_min`/`_p50`/`cpu_probe_count`, üst düzey `cpu_probe_us` (tüm oturum).
+##                Yoklamanın içinde koştuğu karenin busy/pre_draw'ı özetten ATILIR ve kare süresine girmez.
+##                İki kipte yoklama aynıysa CPU saati sebep değildir.
+##                Yalnız bu düğüm varken (yani `--perf-log` altında) çalışır.
 ## Tamamlanan oturumda (`complete`) ölçüm donar: sonraki kareler eklenmez, sonraki yazımlar dosyayı değiştirmez.
 
 const FORMAT_VERSION := 2
@@ -64,6 +79,17 @@ const DEFAULT_MEMORY_EVERY := 120
 const MEMORY_SERIES_MAX := 120
 const FIRST_FRAMES_COUNT := 10
 const MB := 1048576.0
+## Rapor eklentileri sürümü (A1-A3). `format` (FORMAT_VERSION) eski tüketiciler için sabit tutuldu.
+const EXTRAS_VERSION := 1
+## A1: busy >= bu oran x kare aralığı => "aralığa yakın"; kare > bu oran x aralık => "aralığı aştı".
+const NEAR_INTERVAL_RATIO := 0.85
+const OVER_INTERVAL_RATIO := 1.5
+## A2: kip A = aralığa yakın kare oranı < 0,2 VE kullanım < 0,5; aksi kip B.
+const MODE_NEAR_FRAC_MAX := 0.2
+const MODE_UTILIZATION_MAX := 0.5
+## A3: yoklama döngüsü (sabit, deterministik) ve aralığı (kare süresi toplamının ms'si).
+const PROBE_ITERATIONS := 5000
+const PROBE_EVERY_MS := 1000.0
 
 ## Kayıt aralıklı yazılır: iOS uygulamayı haber vermeden sonlandırabilir. 0 = aralıklı yazım yok.
 var write_every: int = DEFAULT_WRITE_EVERY
@@ -81,6 +107,8 @@ var memory_every: int = DEFAULT_MEMORY_EVERY
 var novsync: bool = false
 ## `--perf-log-no-render-measure`: render süresi ölçümü AÇILMAZ (araç yükü A/B; `render_cpu_ms` boş kalır).
 var measure_render: bool = true
+## A3: saniyede bir CPU hız yoklaması (`--perf-log-no-cpu-probe` ile kapanır).
+var cpu_probe: bool = true
 var out_path: String = ""
 ## Son yazım denemesinin hatası (OK = sorun yok). Test ve tanı için.
 var last_error: Error = OK
@@ -120,6 +148,9 @@ var _refresh_start: float = -1.0
 var _refresh_now: float = -1.0
 var _refresh_changed: bool = false
 var _refresh_seen: Array[float] = []
+var _probe_window: PackedFloat32Array = PackedFloat32Array()
+var _probe_all: PackedFloat32Array = PackedFloat32Array()
+var _next_probe_ms: float = PROBE_EVERY_MS
 
 
 ## İstek var mı? `args`: world_preview'in ayrıştırdığı `--anahtar[=değer]` sözlüğü.
@@ -147,6 +178,7 @@ static func attach_if_requested(host: Node, args: Dictionary) -> PerfLogger:
 	logger.memory_every = _arg_int(args, "perf-log-mem-every", DEFAULT_MEMORY_EVERY)
 	logger.novsync = args.has("perf-log-novsync")
 	logger.measure_render = not args.has("perf-log-no-render-measure")
+	logger.cpu_probe = not args.has("perf-log-no-cpu-probe")
 	var thermal_s := _thermal_seconds(args)
 	if thermal_s > 0.0:
 		logger.complete_at_s = thermal_s
@@ -246,11 +278,95 @@ static func busy_over_frame(busy: PackedFloat32Array, ms: PackedFloat32Array) ->
 	return count
 
 
-## busy/pre_draw/render_cpu özet alanları (`prefix` yok: aynı anahtarlar üst düzeyde ve `stable` içinde).
+## Ortalama (snap 0,01); boşsa -1.
+static func _mean_or_unknown(values: PackedFloat32Array) -> float:
+	if values.is_empty():
+		return -1.0
+	var total := 0.0
+	for v in values:
+		total += v
+	return snappedf(total / values.size(), 0.01)
+
+
+## Kare başına "is" (işlem + render CPU) = pre_draw + render_cpu; ikisinden biri ölçülemediyse -1.
+static func is_series(pre_draw: PackedFloat32Array, render_cpu: PackedFloat32Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	for k in mini(pre_draw.size(), render_cpu.size()):
+		out.append(pre_draw[k] + render_cpu[k] if pre_draw[k] >= 0.0 and render_cpu[k] >= 0.0 else -1.0)
+	return out
+
+
+## A1: pre_draw/render_cpu/is/rest ve aralık oranları. `refresh_hz` <= 0 ise oranlar -1. Boş/ölçülemeyen -> -1.
+static func interval_block(busy: PackedFloat32Array, pre_draw: PackedFloat32Array, render_cpu: PackedFloat32Array,
+		ms: PackedFloat32Array, refresh_hz: float) -> Dictionary:
+	var pre_mean := _mean_or_unknown(valid_only(pre_draw))
+	var rcpu_valid := valid_only(render_cpu)
+	var rcpu_mean := _mean_or_unknown(rcpu_valid)
+	var is_mean := snappedf(pre_mean + rcpu_mean, 0.01) if pre_mean >= 0.0 and rcpu_mean >= 0.0 else -1.0
+	var is_p95 := float(stats(valid_only(is_series(pre_draw, render_cpu))).get("p95", -1.0))
+	var busy_mean := _mean_or_unknown(valid_only(busy))
+	var near := -1.0
+	var over := -1.0
+	if refresh_hz > 0.0:
+		var interval_ms := 1000.0 / refresh_hz
+		var measured := 0
+		var near_count := 0
+		for v in busy:
+			if v >= 0.0:
+				measured += 1
+				near_count += 1 if v >= NEAR_INTERVAL_RATIO * interval_ms else 0
+		near = snappedf(float(near_count) / measured, 0.001) if measured > 0 else -1.0
+		var over_count := 0
+		for v in ms:
+			over_count += 1 if v > OVER_INTERVAL_RATIO * interval_ms else 0
+		over = snappedf(float(over_count) / ms.size(), 0.001) if ms.size() > 0 else -1.0
+	return {"pre_draw_ms_mean": pre_mean, "render_cpu_ms_mean": rcpu_mean,
+			"render_cpu_ms_p95": float(stats(rcpu_valid).get("p95", -1.0)),
+			"is_ms_mean": is_mean, "is_ms_p95": is_p95,
+			"rest_ms_mean": snappedf(busy_mean - is_mean, 0.01) if busy_mean >= 0.0 and is_mean >= 0.0 else -1.0,
+			"busy_near_interval_frac": near, "over_interval_frac": over}
+
+
+## A2: pencere kipi. "A": near < MODE_NEAR_FRAC_MAX ve utilization < MODE_UTILIZATION_MAX; "B": aksi; "?": ölçülemedi.
+static func window_mode(near_frac: float, util: float) -> String:
+	if near_frac < 0.0 or util < 0.0:
+		return "?"
+	return "A" if near_frac < MODE_NEAR_FRAC_MAX and util < MODE_UTILIZATION_MAX else "B"
+
+
+## A2: pencere girdilerindeki `mode` sayımı ("?" ve bilinmeyen -> unknown).
+static func mode_counts(windows: Array) -> Dictionary:
+	var out := {"A": 0, "B": 0, "unknown": 0}
+	for w in windows:
+		var mode := str(w.get("mode", "?"))
+		var key := mode if mode == "A" or mode == "B" else "unknown"
+		out[key] = int(out[key]) + 1
+	return out
+
+
+## A3: sabit, deterministik yoklama döngüsü; sonuç (sabit sağlama değeri) test için döner.
+static func cpu_probe_loop() -> int:
+	var acc := 0
+	for i in PROBE_ITERATIONS:
+		acc = (acc * 31 + i) & 0xFFFFF
+	return acc
+
+
+## A3: döngünün süresi (us).
+static func measure_cpu_probe_us() -> int:
+	var t0 := Time.get_ticks_usec()
+	cpu_probe_loop()
+	return Time.get_ticks_usec() - t0
+
+
+## busy/pre_draw/render_cpu özet alanları (`prefix` yok: aynı anahtarlar üst düzeyde ve `stable` içinde). A1 alanları
+## (`interval_block`) eklenir.
 static func busy_block(busy: PackedFloat32Array, pre_draw: PackedFloat32Array, render_cpu: PackedFloat32Array,
-		ms: PackedFloat32Array) -> Dictionary:
-	return {"busy_ms": stats(valid_only(busy)), "pre_draw_ms": stats(valid_only(pre_draw)),
+		ms: PackedFloat32Array, refresh_hz: float = -1.0) -> Dictionary:
+	var out := {"busy_ms": stats(valid_only(busy)), "pre_draw_ms": stats(valid_only(pre_draw)),
 			"render_cpu_ms": stats(valid_only(render_cpu)), "utilization": utilization(busy, ms)}
+	out.merge(interval_block(busy, pre_draw, render_cpu, ms, refresh_hz))
+	return out
 
 
 ## Rapor sözlüğü (saf: oyun düğümüne bağlı değil; test bunu doğrudan çağırır). Günler: kare başına sim günü,
@@ -260,7 +376,7 @@ static func busy_block(busy: PackedFloat32Array, pre_draw: PackedFloat32Array, r
 static func summarize(ms: PackedFloat32Array, draws: PackedFloat32Array, prims: PackedFloat32Array,
 		days: PackedInt32Array, stable_start: int = -1, busy: PackedFloat32Array = PackedFloat32Array(),
 		pre_draw: PackedFloat32Array = PackedFloat32Array(),
-		render_cpu: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
+		render_cpu: PackedFloat32Array = PackedFloat32Array(), refresh_hz: float = -1.0) -> Dictionary:
 	var tick_ms := PackedFloat32Array()
 	var idle_ms := PackedFloat32Array()
 	var over_33 := 0
@@ -287,13 +403,13 @@ static func summarize(ms: PackedFloat32Array, draws: PackedFloat32Array, prims: 
 		"triangle_peak_frame": peak_frame + 1 if prims.size() > 0 else 0,
 		"worst_frames": worst_frames(ms, draws, prims, days),
 	}
-	report.merge(busy_block(busy, pre_draw, render_cpu, ms))
+	report.merge(busy_block(busy, pre_draw, render_cpu, ms, refresh_hz))
 	report["busy_over_frame"] = busy_over_frame(busy, ms)
 	if stable_start >= 0 and stable_start < ms.size():
 		var stable := {"from_frame": stable_start + 1, "frame_ms": stats(ms.slice(stable_start)),
 				"draw_calls": stats(draws.slice(stable_start)), "triangles": stats(prims.slice(stable_start))}
 		stable.merge(busy_block(_tail(busy, stable_start), _tail(pre_draw, stable_start),
-				_tail(render_cpu, stable_start), ms.slice(stable_start)))
+				_tail(render_cpu, stable_start), ms.slice(stable_start), refresh_hz))
 		report["stable"] = stable
 	else:
 		report["stable"] = {"reached": false}
@@ -380,7 +496,8 @@ static func memory_summary(samples: Array, peak_bytes: float) -> Dictionary:
 ## `busy` (kare başına, ms ile aynı uzunlukta) verilirse aynı uçlar için `busy_ms` p95 oranı da yazılır (ADR-0010 Karar
 ## 3a: ısıl kapı busy p95'e bağlanır); `busy_reached` false = uçlarda ölçülmüş busy yok.
 static func thermal_summary(ms: PackedFloat32Array, edge_s: float = THERMAL_EDGE_S,
-		busy: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
+		busy: PackedFloat32Array = PackedFloat32Array(), pre_draw: PackedFloat32Array = PackedFloat32Array(),
+		render_cpu: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
 	var total := 0.0
 	for v in ms:
 		total += v
@@ -414,6 +531,16 @@ static func thermal_summary(ms: PackedFloat32Array, edge_s: float = THERMAL_EDGE
 			out["busy_last_p95"] = busy_last["p95"]
 			out["busy_p95_ratio"] = busy_ratio
 			out["busy_within_limit"] = busy_ratio <= THERMAL_LIMIT_RATIO
+	if pre_draw.size() == ms.size() and render_cpu.size() == ms.size():
+		var is_all := is_series(pre_draw, render_cpu)
+		var is_first := stats(valid_only(is_all.slice(0, head)))
+		var is_last := stats(valid_only(is_all.slice(tail)))
+		var have_is := int(is_first["count"]) > 0 and int(is_last["count"]) > 0 and float(is_first["p95"]) > 0.0
+		out["is_reached"] = have_is
+		if have_is:
+			out["is_first_p95"] = is_first["p95"]
+			out["is_last_p95"] = is_last["p95"]
+			out["is_p95_ratio"] = snappedf(float(is_last["p95"]) / float(is_first["p95"]), 0.001)
 	return out
 
 
@@ -462,11 +589,15 @@ func _process(_delta: float) -> void:
 		mark_complete()
 		set_process(false)  # ölçüm bitti: sonraki kareler için maliyet yok
 		return
+	var probed := maybe_probe()
 	if write_every > 0 and frames % write_every == 0:
 		flush("periodic")
 		# Yazım süresi bir sonraki karenin süresine girmesin; bu döngünün meşgul süresi yazımı içerir, atılır.
 		_last_us = Time.get_ticks_usec()
 		_discard_cycle = true
+	elif probed:
+		# Yoklama süresi kare süresine girmesin; bu döngünün busy'si `maybe_probe` ile atıldı.
+		_last_us = Time.get_ticks_usec()
 	else:
 		_last_us = now
 
@@ -492,6 +623,23 @@ func record_frame(dt_ms: float, draw_calls: float, triangles: float, day: int, b
 		_stable_start = _ms.size()
 	if window_s > 0.0 and _elapsed_ms - _win_start_ms >= window_s * 1000.0 - 0.001:
 		_close_window()
+
+
+## A3: kare süresi toplamı bir sonraki saniye eşiğini geçtiyse yoklamayı koşturur, kaydeder ve içinde koştuğu
+## döngünün busy/pre_draw'ını atar (`_discard_cycle`). Yoklama yapıldıysa true. Kapalı/bitmiş oturumda no-op.
+func maybe_probe() -> bool:
+	if not cpu_probe or _finished or _elapsed_ms < _next_probe_ms:
+		return false
+	_next_probe_ms = (floorf(_elapsed_ms / PROBE_EVERY_MS) + 1.0) * PROBE_EVERY_MS
+	record_probe(float(measure_cpu_probe_us()))
+	_discard_cycle = true
+	return true
+
+
+## Yoklama sonucu (us) ekler; test sentetik değer verir.
+func record_probe(us: float) -> void:
+	_probe_window.append(us)
+	_probe_all.append(us)
 
 
 func frame_count() -> int:
@@ -551,6 +699,19 @@ func _close_window() -> void:
 	if is_inside_tree():
 		note_refresh_hz(DisplayServer.screen_get_refresh_rate())
 	entry["refresh_hz"] = _refresh_now
+	var win_ms := _ms.slice(_win_start_idx)
+	var win_busy_all := _tail(_busy, _win_start_idx)
+	var interval := interval_block(win_busy_all, _tail(_pre_draw, _win_start_idx), _tail(_render_cpu, _win_start_idx),
+			win_ms, _refresh_now)
+	entry.merge(interval)
+	var win_util := utilization(win_busy_all, win_ms)
+	entry["utilization"] = win_util
+	entry["mode"] = window_mode(float(interval["busy_near_interval_frac"]), win_util)
+	var probe := stats(_probe_window)
+	entry["cpu_probe_us_min"] = float(probe.get("min", -1.0))
+	entry["cpu_probe_us_p50"] = float(probe.get("p50", -1.0))
+	entry["cpu_probe_count"] = _probe_window.size()
+	_probe_window = PackedFloat32Array()
 	if not _mem.is_empty():
 		var last_mem: Dictionary = _mem[_mem.size() - 1]
 		entry["static_mb"] = snappedf(float(last_mem["static"]) / MB, 0.1)
@@ -569,13 +730,18 @@ func flush(reason: String) -> Error:
 	if _finished and reason != "complete" and last_error == OK:
 		return OK
 	var why := "complete" if _finished else reason
-	var report := summarize(_ms, _draws, _prims, _days, _stable_start, _busy, _pre_draw, _render_cpu)
+	var report := summarize(_ms, _draws, _prims, _days, _stable_start, _busy, _pre_draw, _render_cpu,
+			_refresh_start)
 	report.merge(_environment_info())
 	if is_inside_tree():
 		note_refresh_hz(DisplayServer.screen_get_refresh_rate())
 	report["refresh_hz_start"] = _refresh_start
 	report["refresh_hz_seen"] = _refresh_seen
 	report["refresh_hz_changed"] = _refresh_changed
+	report["extras_version"] = EXTRAS_VERSION
+	report["cpu_probe_enabled"] = cpu_probe
+	report["cpu_probe_iterations"] = PROBE_ITERATIONS
+	report["cpu_probe_us"] = stats(_probe_all)
 	report["busy_source"] = "first physics_frame|process_frame -> frame_post_draw"
 	report["busy_signals_connected"] = _signals_connected
 	report["reason"] = why
@@ -589,7 +755,8 @@ func flush(reason: String) -> Error:
 	if window_s > 0.0 or complete_at_s > 0.0:
 		report["window_s"] = window_s
 		report["windows"] = _windows
-		report["thermal"] = thermal_summary(_ms, THERMAL_EDGE_S, _busy)
+		report["mode_windows"] = mode_counts(_windows)
+		report["thermal"] = thermal_summary(_ms, THERMAL_EDGE_S, _busy, _pre_draw, _render_cpu)
 	last_error = write_report(out_path, report)
 	if last_error != OK and not _warned:
 		_warned = true
