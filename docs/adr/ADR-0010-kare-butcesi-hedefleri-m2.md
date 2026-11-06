@@ -67,7 +67,25 @@ Cihaz: iPad Pro 12,9" (6. nesil; M2 yonga [genel bilgi]), iPadOS 26.5.2. Hiçbir
 | Bellek | masaüstü RSS'den kötü değil (≤ ~1,5 GB), bellek uyarısı/sonlandırma yok | sonlandırma = FAIL | masaüstü ölçümü; iOS uygulama bellek sınırı cihazda bilinmiyor [ölçülmedi] |
 | Isıl | 15 dk sürekli oyunda son 2 dk p95 ≤ ilk 2 dk p95 × 1,25 | — | mobil ısıl kısma [varsayım] |
 
-- **Ölçülen (2026-11-06, KISMİ; ön hedef etiketi technical-director kararına kadar KALIR):** release, 120 Hz, VSync'li `--demo`, 4 geçerli koşu (6000 kare): kararlı ort 8,33-8,34 ms (VSync'te 8,33'e kilitli; "ort ≤ 8" bu modda ölçülemez), p95 8,47-8,64 (hedef 16,6), p99 13,4-14,4 (hedef 25), demo maks 17-19 ms, çizim 302 (hedef 400), üçgen ~398k (hedef 900k), bellek tamponu 194-200 MB, sonlandırma yok. Bunlar demo bakışı içindir. **Ölçülmeyen:** etkileşim en kötü karesi, 15 dk ısıl, soğuk açılış süreleri, yoğun çekirdek bakışı, gerçek kare maliyeti (VSync'siz istek `--perf-log-novsync` iOS'ta UYGULANMADI: `vsync_mode` hep 1). Cihaz ~30 sn sonra "Audio interruption" ile uygulamayı kesince b1 ve ısıl koşular geçersiz kaldı. Ayrıntı: `production/log/2026-11-06-ipad-olcum.md`.
+- **Ölçülen (2026-11-06, KISMİ; ön hedef etiketi technical-director kararına kadar KALIR):** release, 120 Hz, VSync'li `--demo`, 4 geçerli koşu (6000 kare): kararlı ort 8,33-8,34 ms (VSync'te 8,33'e kilitli; "ort ≤ 8" bu modda ölçülemez), p95 8,47-8,64 (hedef 16,6), p99 13,4-14,4 (hedef 25), demo maks 17-19 ms, çizim 302 (hedef 400), üçgen ~398k (hedef 900k), bellek tamponu 194-200 MB, sonlandırma yok. Bunlar demo bakışı içindir. **Ölçülmeyen:** etkileşim en kötü karesi, 15 dk ısıl, soğuk açılış süreleri, yoğun çekirdek bakışı, gerçek kare maliyeti (VSync'siz istek `--perf-log-novsync` iOS'ta UYGULANAMAZ, Godot 4.7.2 iOS/Compatibility: `vsync_mode` hep 1; bkz. Karar 3a). Cihaz ~30 sn sonra "Audio interruption" ile uygulamayı kesince b1 ve ısıl koşular geçersiz kaldı. Ayrıntı: `production/log/2026-11-06-ipad-olcum.md`.
+
+#### Karar 3a · iPad ölçüm tanımı (2026-11-06, technical-director; Karar 1'e iPad eki)
+- iOS + Compatibility'de V-Sync kapatılamaz: Godot 4.7.2 Compatibility'de `window_set_vsync_mode` iOS'ta etkisizdir, kare temposu CADisplayLink'tir (`display/window/ios/allow_high_refresh_rate`: 120/60). Duvar saatiyle ölçülen kare süresi yenileme aralığına kilitlenir. Bu yüzden iPad'de kare süresi satırları (p95, p99, maks, etkileşim karesi) **akıcılık** ölçüsüdür, **maliyet** ölçüsü değildir. `--perf-log-novsync` iOS'ta etkisizdir; rapor alanı (`vsync_mode`) kanıt olarak kalır.
+- **CPU meşgul süresi** (`busy_ms`): her karede, o karenin ilk `SceneTree.physics_frame`/`process_frame` sinyalinden `RenderingServer.frame_post_draw` sinyaline kadar geçen süre. Döküm: `pre_draw_ms` (kare başı → `frame_pre_draw`), `render_cpu_ms` (`viewport_get_measured_render_time_cpu` + `get_frame_setup_time_cpu`). **Kullanım** = Σ`busy_ms` / Σkare süresi, koşunun yenileme hızında. GPU süresi Compatibility/GLES'te Godot'tan okunamaz; gerektiğinde Instruments ile ayrıca bakılır ve ayrı etiketlenir.
+- Koşu koşulu (eksikse koşu geçersizdir): release, şarjda, Düşük Güç Modu kapalı, otomatik kilit "asla". `refresh_hz` başta ve her pencerede yazılır (Godot iOS'ta Düşük Güç Modu açıkken 60 döndürür). Koşu içinde `refresh_hz` değişirse koşu geçersizdir.
+
+| Ölçü (iPad) | Ön hedef | Tavan | Not |
+|---|---|---|---|
+| Kararlı CPU meşgul ort (`busy_ms`) | ≤ 8 ms | 14 ms | Önceki "Kararlı ort" satırının yerine. Niyet aynı (60 Hz bütçesinin yarısı); ölçülen şey bekleme hariç iş |
+| Kararlı CPU meşgul p95 | ≤ 16,6 ms | 20 ms | Kare süresi p95'i ile aynı sayılar; iş ölçüsü |
+| Kullanım (oynanan yenileme hızında) | ≤ %50 | — | 60 Hz'de `busy` ≤ 8,33 ms'ye, 120 Hz'de ≤ 4,17 ms'ye denk gelir. 120 Hz'de tutmazsa iPad profili için 60/120 seçimi sahibe gider (ürün ayarı, ADR-0004 profili) |
+| Kare süresi p95 / p99 / maks, aralığı aşan kare oranı (> 1,5 × aralık) | p95/p99 satırları aynen | aynen | Akıcılık tanısı; aralığı aşan oran kapı değil, yazılır |
+| Isıl | 15 dk'da son 2 dk `busy_ms` p95 ≤ ilk 2 dk `busy_ms` p95 × 1,25 | — | Kare süresi p95'i VSync'te kısılmayı geç gösterir; meşgul süre CPU saat düşüşünü kareler kaçmadan gösterir |
+
+- Masaüstü (Karar 2) değişmez: V-Sync kapalı kare süresi orada maliyeti zaten ölçer. `busy_ms` masaüstünde de yazılır ve iki platformu aynı birimle karşılaştırır.
+
+_Kaynak/gerekçe/riskler: `production/log/2026-11-06-teknik-direktor-b027-vsync.md` (Konu 2). Durum: ÖNERİ, `busy_ms` ölçümü masaüstünde kalibre edilene dek ön hedef olarak kalır; kalibrasyon ölçütü o notta._
+
 - Ölçüm koşulu: release dışa aktarma (debug ayrı etiketlenir), Düşük Güç Modu kapalı, şarj durumu ve ekran yenileme hızı (60/120 Hz) kayda yazılır [Godot'un iOS'ta varsayılan kare tavanı doğrulanmadı]. GPU süresi Compatibility'de 0 dönüyor; cihazda Xcode Instruments ile ayrıca bakılır [varsayım: aracın GL/Compatibility yolunda anlamlı veri verdiği doğrulanmadı].
 - Beklenen gerilim [hesap + varsayım]: yoğun çekirdek sokak bakışı (2,87M) iPad'in 900k çizgisini aşar. ADR-0004 izin verir: iPad grafik profili yakın bina mesafesini kısaltabilir. **Ama bu K8'i (LOD geçiş sıçraması) geri getirir** (Karar 4). Bu takas iPad ölçümünden sonra art-director + sahibe gider; şimdi seçilmez.
 

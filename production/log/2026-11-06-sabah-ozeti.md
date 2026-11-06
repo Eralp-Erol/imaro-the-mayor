@@ -9,7 +9,8 @@
 1. **Q-041:** "iki grup tepkisi" ölçütü, A (önerim) mı B mi?
 2. **Q-042:** iPad'de gündem kartında "Bu yanıtı ver" nerede dursun? A (önerim): panel daha yüksek açılsın.
 3. **iPad:** uygulama ~30 sn sonra "Audio interruption" ile kesiliyor (ekran kilidi/otomatik kilit/Rahatsız Etme şüphesi). Ekran açık ve kilitsiz, Rahatsız Etme kapalı olmalı; sonra ısınma koşusu ve sizin adımlarınız (yol onayı oturumu, soğuk açılış kronometresi) yapılabilir.
-4. **VSync'siz ölçüm:** iOS bayrağı uygulamıyor; gerçek kare maliyeti için ayrı bir teknik karar gerekiyor (teknik direktör).
+4. **VSync'siz ölçüm:** iOS'ta yapılamıyor (Godot sınırı). Teknik direktör ölçütü değiştirdi: kare süresi yerine CPU meşgul süresi (`busy_ms`). ADR-0010 Karar 3a (ön hedef). Uygulama gece sürüyor.
+5. **iPad şarjda ve Düşük Güç Modu KAPALI olmalı:** bir koşu 60 Hz çıktı (Düşük Güç Modu şüphesi).
 
 ## Henüz yapılmayan / doğrulanmayan
 - iPad: ısıl (15 dk), etkileşim en kötü kare, soğuk açılış süreleri YOK.
