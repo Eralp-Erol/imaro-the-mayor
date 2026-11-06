@@ -15,7 +15,7 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - [~] 2. (ENGELLİ: cihaz uygulamayı ~30 sn sonra kesiyor) Isınma koşusu (sahipsiz yapılabilir): `--demo --perf-log=ipad-isil.json --perf-log-thermal` ~15 dk; ekran açık kalmalı. Pause/kilitlenirse geçersiz yaz.
 - [x] 3. `verify full` (HEAD `cec0b32` B-122 + sonrası), PASS ise `git-wt done` kuyruğuna ekle (exit 141 geçici çözümü: dal adını `$(git rev-parse --git-common-dir)/wt/queue` dosyasına ekle) -> `~/.local/bin/git-wt integrate` -> `ship`.
 - [ ] 4. Ölçüm tablosu: T-076 Kanıt bölümü, `production/log/2026-11-06-ipad-olcum.md`, ADR-0010 iPad satırları (hedef vs ölçüm; hedefi geçenle geçmeyeni açık yaz). Sahip gerektiren adımlar (soğuk açılış kronometre, yol onayı etkileşim oturumu, el ile ısınma hissi) "SAHİP BEKLİYOR" diye kalır.
-- [ ] 5. GOLDEN_X durum farkını çıkar (B-130 öncesi/sonrası hangi aktör alanı değişti) ve `production/log/`'a yaz.
+- [~] 5. (KISMİ, aşağıya bak) GOLDEN_X durum farkını çıkar (B-130 öncesi/sonrası hangi aktör alanı değişti) ve `production/log/`'a yaz.
 - [x] 6. Bayat masaüstü perf kayıtlarını (M2-CLOSURE.md, 2026-11-05-perf-serisi) iPad sayılarıyla çapraz not et (yeniden ölçüm gerekmiyorsa yalnız not).
 - [ ] 7. M2-CLOSURE.md durum başlığını güncelle (verify full tarihi/sayısı, B-122 çözüldü, iPad sonuçları, kalan sahip maddeleri: Q-041, soğuk açılış, etkileşim, ısınma hissi).
 
@@ -32,3 +32,4 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - 01:4x: madde 6 yapıldı (M2-CLOSURE iPad çapraz notu). Q-042 (B-123 gündem düğmesi konumu) sahibe hazır. Bekleyen: b1 (01:33 başladı), verify full.
 - 02:0x: madde 3 yapıldı: verify full PASS (3140, 0 hata), integrate+ship (yerel main, push yok).
 - 02:05: iPad engeli: b1 `reason=pause`, `vsync_mode`=1 (VSync'siz bayrak iOS'ta uygulanmıyor), cihaz konsolu `Audio interruption began` ~30 sn sonra + SIGTERM. Geçerli VSync'li 4 koşu var (a1, a3-eski, a2, a3-yeni). Isınma koşusu (15 dk) aynı kesintiye takılır: sahip iPad'i uyanıkken izleyemeden DENEME (kör yeniden başlatma yok). Sahip sabah: ekranı açık tut/Otomatik Kilit/Rahatsız Etme kontrolü. Madde 4 tablosu güncellendi.
+- 02:2x: madde 5 (GOLDEN_X farkı) KISMİ: geçici prob ile B-130 koşusunda eşik değeri (190/250) `game_state.systems` ve `config` içinde ÇIKMADI (bulunan tek 250: council.3 volatility/stance, ilgisiz). Yani hash farkı `ReasonLog` nesnesindeki karar kayıtlarından (theta) geliyor olmalı; bu doğrudan doğrulanmadı (ReasonLog nesne olduğu için aranmadı). Test yorumu (golden_x_council_trust_test.gd) ile tutarlı: kural kapalı referansı yalnız bloc.react eşiğine göre yeniden alındı. Geçici prob silindi, repo temiz.
