@@ -11,8 +11,8 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - iPad: `IPAD=00008112-001120801A45401E`, `IMARO_IOS_TEAM_ID=UX3VF7M5XM` yalnız ortam değişkeni (repoya yazma). Koşu kitabı: `production/tasks/T-076.md`.
 
 ## Sıra
-- [ ] 1. iPad VSync serisi: geçerli koşular a1, a2, a3. a4 11 sn'de `pause` ile kesildi (geçersiz). Seri betiği `/private/tmp/claude-501/ipad-series2.sh` b1, b2 (`--perf-log-novsync`, `vsync_mode`==0 değilse GEÇERSİZ) koşuyor. a4'ü bir kez yeniden dene. Kesilen koşuyu sayma.
-- [ ] 2. Isınma koşusu (sahipsiz yapılabilir): `--demo --perf-log=ipad-isil.json --perf-log-thermal` ~15 dk; ekran açık kalmalı. Pause/kilitlenirse geçersiz yaz.
+- [~] 1. (ENGELLİ, aşağıya bak) iPad VSync serisi: geçerli koşular a1, a2, a3. a4 11 sn'de `pause` ile kesildi (geçersiz). Seri betiği `/private/tmp/claude-501/ipad-series2.sh` b1, b2 (`--perf-log-novsync`, `vsync_mode`==0 değilse GEÇERSİZ) koşuyor. a4'ü bir kez yeniden dene. Kesilen koşuyu sayma.
+- [~] 2. (ENGELLİ: cihaz uygulamayı ~30 sn sonra kesiyor) Isınma koşusu (sahipsiz yapılabilir): `--demo --perf-log=ipad-isil.json --perf-log-thermal` ~15 dk; ekran açık kalmalı. Pause/kilitlenirse geçersiz yaz.
 - [x] 3. `verify full` (HEAD `cec0b32` B-122 + sonrası), PASS ise `git-wt done` kuyruğuna ekle (exit 141 geçici çözümü: dal adını `$(git rev-parse --git-common-dir)/wt/queue` dosyasına ekle) -> `~/.local/bin/git-wt integrate` -> `ship`.
 - [ ] 4. Ölçüm tablosu: T-076 Kanıt bölümü, `production/log/2026-11-06-ipad-olcum.md`, ADR-0010 iPad satırları (hedef vs ölçüm; hedefi geçenle geçmeyeni açık yaz). Sahip gerektiren adımlar (soğuk açılış kronometre, yol onayı etkileşim oturumu, el ile ısınma hissi) "SAHİP BEKLİYOR" diye kalır.
 - [ ] 5. GOLDEN_X durum farkını çıkar (B-130 öncesi/sonrası hangi aktör alanı değişti) ve `production/log/`'a yaz.
@@ -31,3 +31,4 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - 01:4x: madde 4 TASLAK yazıldı (`2026-11-06-ipad-olcum.md`, a1-a3 + ADR karşılaştırması). Eksik: b serisi, ısınma, etkileşim, soğuk açılış. a4 geçersiz (pause). verify full 01:3x başladı (`/private/tmp/claude-501/vf.log`).
 - 01:4x: madde 6 yapıldı (M2-CLOSURE iPad çapraz notu). Q-042 (B-123 gündem düğmesi konumu) sahibe hazır. Bekleyen: b1 (01:33 başladı), verify full.
 - 02:0x: madde 3 yapıldı: verify full PASS (3140, 0 hata), integrate+ship (yerel main, push yok).
+- 02:05: iPad engeli: b1 `reason=pause`, `vsync_mode`=1 (VSync'siz bayrak iOS'ta uygulanmıyor), cihaz konsolu `Audio interruption began` ~30 sn sonra + SIGTERM. Geçerli VSync'li 4 koşu var (a1, a3-eski, a2, a3-yeni). Isınma koşusu (15 dk) aynı kesintiye takılır: sahip iPad'i uyanıkken izleyemeden DENEME (kör yeniden başlatma yok). Sahip sabah: ekranı açık tut/Otomatik Kilit/Rahatsız Etme kontrolü. Madde 4 tablosu güncellendi.
