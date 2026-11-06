@@ -28,3 +28,4 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 ## Notlar
 - 2026-11-06 01:2x: B-122 çözüldü (`cec0b32`): çekmece içerik asgarisi araç çubuğunu örtüyordu. verify quick PASS (964), gerçek sahne testleri PASS, pencereli prob PASS. verify full henüz yok.
 - Q-041 sahipte (A önerilen).
+- 01:4x: madde 4 TASLAK yazıldı (`2026-11-06-ipad-olcum.md`, a1-a3 + ADR karşılaştırması). Eksik: b serisi, ısınma, etkileşim, soğuk açılış. a4 geçersiz (pause). verify full 01:3x başladı (`/private/tmp/claude-501/vf.log`).
