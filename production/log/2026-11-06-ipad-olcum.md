@@ -67,3 +67,12 @@ Doğrulanmış:
 Doğrulanmadı (HİPOTEZ): iPad'in güç/ısıl politikası ya da çekirdek planlaması (şarj ısınması, arka plan etkinliği) CPU hızını koşular arasında değiştiriyor. Isıl durum JSON'a yazılmıyor; ayrım yapılamıyor.
 Sonuç: tek bir "iPad maliyeti" sayısı vermek DOĞRU OLMAZ. Hedef karşılaştırması (ADR-0010 Karar 3a) için koşulların cihaz durumuyla (ısıl durum, şarj, soğuk/sıcak) etiketlenmesi ya da çoklu koşuda en kötü durumun raporlanması gerekir; teknik direktör kararı.
 Isıl (15 dk) koşu: ilk deneme 144 sn'de `reason=pause` ile kesildi (cihaz uygulamayı durdurdu; Otomatik Kilit "Hiçbir Zaman" değilse bu beklenir, doğrulanmadı) -> GEÇERSİZ. Tüm pencereler "kötü" durumdaydı (p95 16,8).
+
+## 15 dk ısıl koşu (g2, 2026-11-06 16:54-17:09) — GEÇERLİ
+Koşu koşulu: release, `--demo --perf-log-thermal` (900 sn), `complete=true`, `reason=complete`, 107 783 kare, `refresh_hz` 120 sabit (`seen`=[120.0], `changed`=false). (İlk iki ısıl deneme geçersizdi: 144 sn'de `pause`; sonra cihaz kilitliydi, başlatma reddedildi. Betik kilit açılınca 16:54'te başlattı.)
+| Ölçü | İlk 2 dk | Son 2 dk | Oran | Sınır | Sonuç |
+|---|---|---|---|---|---|
+| Kare p95 (ms) | 8,65 | 8,78 | 1,015 | ≤ 1,25 | GEÇTİ (`within_limit` true) |
+| `busy_ms` p95 (ms) | 7,98 | 8,66 | 1,085 | ≤ 1,25 | GEÇTİ (`busy_within_limit` true) |
+Toplam: kare ort 8,35 / p95 8,66 / p99 13,36 / maks 24,16 ms; >33 ms: 1, >100 ms: 1 (açılış karesi, ilk pencerede maks 106,6); `busy_ms` ort 2,15 / p95 8,24; kullanım 0,261; bellek tamponu 186,2 -> 194,5 MB (büyüme 8,2 MB), düğüm 5540 -> 5645, sonlandırma yok.
+Notlar [doğrulanmış sayılar, yorum hipotez]: Bu uzun koşu bütünüyle önceki "iyi" durumdaydı (kullanım ~%26; e1 ile aynı), 12:42-13:32 koşularındaki "kötü" durum (kullanım %87-93) görülmedi; bimodallik açıklanmadı. Isıl kısma bu demo bakışında ve bu koşulda (şarjda varsayılır, ölçülmedi) GÖRÜLMEDİ. Yoğun çekirdek bakışı ve etkileşim yükünde ısıl ölçülmedi.
