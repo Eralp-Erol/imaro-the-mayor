@@ -32,6 +32,17 @@ extends Node
 ##                ve `refresh_hz` alanlarını geri okuyarak yazar.
 ##   başlangıç    `startup`: motor başlangıcından logger'ın eklenmesine ve ilk işlenen kareye geçen süre (soğuk açılış
 ##                için; süreç başlatma/dyld süresini içermez) ve ilk 10 karenin süresi.
+##   CPU meşgul   `busy_ms` (ADR-0010 Karar 3a): her karede, o karenin İLK `physics_frame`/`process_frame` sinyalinden
+##                `RenderingServer.frame_post_draw`a geçen süre; VSync/kare tavanı bekleme dışarıda KALMALIDIR [masaüstü
+##                kalibrasyonuyla doğrulanır: production/log/2026-11-06-busy-ms-kalibrasyon.md]. Döküm: `pre_draw_ms`
+##                (kare başı -> `frame_pre_draw`: fizik + işlem + betik) ve `render_cpu_ms` (kök viewport
+##                `viewport_get_measured_render_time_cpu` + `get_frame_setup_time_cpu`; önceki çizilen kare). Rapor:
+##                üst düzey `busy_ms`/`pre_draw_ms`/`render_cpu_ms` (tüm oturum), `stable.*` (kararlı evre) ve
+##                `utilization` = Σbusy / Σkare süresi (-1 = bilinmiyor). Ölçülemeyen kare (-1) özetlere girmez.
+##                `busy_ms` karesi k, k'nın kendi kare süresiyle eşlenir (fizik adımları kare başında olduğundan nadiren
+##                busy > kare süresi olabilir: `busy_over_frame` sayar). Yalnız bayrakla bağlanır; oturum bitince
+##                sinyaller çözülür. Sinyal bağlantısı ve `viewport_set_measure_render_time` yalnız `_ready`de.
+##   yenileme hz  `refresh_hz_start` + pencere başına `refresh_hz`; koşu içinde değişirse `refresh_hz_changed=true`.
 ## Tamamlanan oturumda (`complete`) ölçüm donar: sonraki kareler eklenmez, sonraki yazımlar dosyayı değiştirmez.
 
 const FORMAT_VERSION := 2
@@ -76,6 +87,9 @@ var _ms: PackedFloat32Array = PackedFloat32Array()
 var _draws: PackedFloat32Array = PackedFloat32Array()
 var _prims: PackedFloat32Array = PackedFloat32Array()
 var _days: PackedInt32Array = PackedInt32Array()
+var _busy: PackedFloat32Array = PackedFloat32Array()
+var _pre_draw: PackedFloat32Array = PackedFloat32Array()
+var _render_cpu: PackedFloat32Array = PackedFloat32Array()
 var _host: Node = null
 var _last_us: int = -1
 var _elapsed_ms: float = 0.0
@@ -91,6 +105,19 @@ var _win_start_ms: float = 0.0
 var _finished: bool = false
 var _ready_ticks_ms: int = -1
 var _first_process_ticks_ms: int = -1
+## Kare başına meşgul süre ölçümü (yalnız `_ready`de bağlanır). `_cycle_open`: bu karenin başlangıç sinyali görüldü.
+var _cycle_open: bool = false
+var _cycle_start_us: int = 0
+var _cycle_pre_us: int = -1
+var _busy_done: float = -1.0
+var _pre_done: float = -1.0
+var _discard_cycle: bool = false
+var _signals_connected: bool = false
+var _viewport_rid: RID = RID()
+var _refresh_start: float = -1.0
+var _refresh_now: float = -1.0
+var _refresh_changed: bool = false
+var _refresh_seen: Array[float] = []
 
 
 ## İstek var mı? `args`: world_preview'in ayrıştırdığı `--anahtar[=değer]` sözlüğü.
@@ -182,10 +209,55 @@ static func worst_frames(ms: PackedFloat32Array, draws: PackedFloat32Array, prim
 	return out
 
 
+## Ölçülemeyen (< 0) değerleri atar (busy/pre_draw/render_cpu: -1 = bilinmiyor).
+static func valid_only(values: PackedFloat32Array) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	for v in values:
+		if v >= 0.0:
+			out.append(v)
+	return out
+
+
+## `from`dan sonrası; dizi daha kısaysa (eski çağıranlar busy vermez) boş.
+static func _tail(values: PackedFloat32Array, from: int) -> PackedFloat32Array:
+	return values.slice(from) if from < values.size() else PackedFloat32Array()
+
+
+## Kullanım = Σbusy / Σkare süresi, yalnız busy'si ölçülmüş karelerde. Ölçülmüş kare yoksa -1.
+static func utilization(busy: PackedFloat32Array, ms: PackedFloat32Array) -> float:
+	var sum_busy := 0.0
+	var sum_ms := 0.0
+	for k in mini(busy.size(), ms.size()):
+		if busy[k] >= 0.0:
+			sum_busy += busy[k]
+			sum_ms += ms[k]
+	return snappedf(sum_busy / sum_ms, 0.001) if sum_ms > 0.0 else -1.0
+
+
+## busy'si kare süresini aşan kare sayısı (fizik adımı kare başında olduğundan eşleme payı: 0,05 ms hoşgörü).
+static func busy_over_frame(busy: PackedFloat32Array, ms: PackedFloat32Array) -> int:
+	var count := 0
+	for k in mini(busy.size(), ms.size()):
+		if busy[k] >= 0.0 and busy[k] > ms[k] + 0.05:
+			count += 1
+	return count
+
+
+## busy/pre_draw/render_cpu özet alanları (`prefix` yok: aynı anahtarlar üst düzeyde ve `stable` içinde).
+static func busy_block(busy: PackedFloat32Array, pre_draw: PackedFloat32Array, render_cpu: PackedFloat32Array,
+		ms: PackedFloat32Array) -> Dictionary:
+	return {"busy_ms": stats(valid_only(busy)), "pre_draw_ms": stats(valid_only(pre_draw)),
+			"render_cpu_ms": stats(valid_only(render_cpu)), "utilization": utilization(busy, ms)}
+
+
 ## Rapor sözlüğü (saf: oyun düğümüne bağlı değil; test bunu doğrudan çağırır). Günler: kare başına sim günü,
 ## -1 = bilinmiyor. "Tick'li kare": gün bir önceki kareden farklı olan kare (perf_probe `tick_correlation` gibi).
+## `busy`/`pre_draw`/`render_cpu` (isteğe bağlı, kare başına, -1 = ölçülemedi) üst düzeye ve `stable` içine
+## `busy_ms`, `pre_draw_ms`, `render_cpu_ms`, `utilization` ekler.
 static func summarize(ms: PackedFloat32Array, draws: PackedFloat32Array, prims: PackedFloat32Array,
-		days: PackedInt32Array, stable_start: int = -1) -> Dictionary:
+		days: PackedInt32Array, stable_start: int = -1, busy: PackedFloat32Array = PackedFloat32Array(),
+		pre_draw: PackedFloat32Array = PackedFloat32Array(),
+		render_cpu: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
 	var tick_ms := PackedFloat32Array()
 	var idle_ms := PackedFloat32Array()
 	var over_33 := 0
@@ -212,9 +284,14 @@ static func summarize(ms: PackedFloat32Array, draws: PackedFloat32Array, prims: 
 		"triangle_peak_frame": peak_frame + 1 if prims.size() > 0 else 0,
 		"worst_frames": worst_frames(ms, draws, prims, days),
 	}
+	report.merge(busy_block(busy, pre_draw, render_cpu, ms))
+	report["busy_over_frame"] = busy_over_frame(busy, ms)
 	if stable_start >= 0 and stable_start < ms.size():
-		report["stable"] = {"from_frame": stable_start + 1, "frame_ms": stats(ms.slice(stable_start)),
+		var stable := {"from_frame": stable_start + 1, "frame_ms": stats(ms.slice(stable_start)),
 				"draw_calls": stats(draws.slice(stable_start)), "triangles": stats(prims.slice(stable_start))}
+		stable.merge(busy_block(_tail(busy, stable_start), _tail(pre_draw, stable_start),
+				_tail(render_cpu, stable_start), ms.slice(stable_start)))
+		report["stable"] = stable
 	else:
 		report["stable"] = {"reached": false}
 	return report
@@ -297,7 +374,10 @@ static func memory_summary(samples: Array, peak_bytes: float) -> Dictionary:
 
 ## Isıl kayma: toplam kare süresinin ilk ve son `edge_s` saniyesindeki p95 oranı. İki ucu da kapsayacak kadar uzun
 ## oturum yoksa `reached: false` (geçti DEĞİL; ADR-0010: 15 dk oturumda son 2 dk p95 <= ilk 2 dk p95 x 1,25).
-static func thermal_summary(ms: PackedFloat32Array, edge_s: float = THERMAL_EDGE_S) -> Dictionary:
+## `busy` (kare başına, ms ile aynı uzunlukta) verilirse aynı uçlar için `busy_ms` p95 oranı da yazılır (ADR-0010 Karar
+## 3a: ısıl kapı busy p95'e bağlanır); `busy_reached` false = uçlarda ölçülmüş busy yok.
+static func thermal_summary(ms: PackedFloat32Array, edge_s: float = THERMAL_EDGE_S,
+		busy: PackedFloat32Array = PackedFloat32Array()) -> Dictionary:
 	var total := 0.0
 	for v in ms:
 		total += v
@@ -317,9 +397,21 @@ static func thermal_summary(ms: PackedFloat32Array, edge_s: float = THERMAL_EDGE
 	var first := stats(ms.slice(0, head))
 	var last := stats(ms.slice(tail))
 	var ratio := snappedf(float(last["p95"]) / float(first["p95"]), 0.001) if float(first["p95"]) > 0.0 else 0.0
-	return {"reached": true, "edge_s": edge_s, "session_s": snappedf(total / 1000.0, 0.1), "first": first,
+	var out := {"reached": true, "edge_s": edge_s, "session_s": snappedf(total / 1000.0, 0.1), "first": first,
 			"last": last, "p95_ratio": ratio, "limit_ratio": THERMAL_LIMIT_RATIO,
 			"within_limit": ratio <= THERMAL_LIMIT_RATIO and ratio > 0.0}
+	if busy.size() == ms.size():
+		var busy_first := stats(valid_only(busy.slice(0, head)))
+		var busy_last := stats(valid_only(busy.slice(tail)))
+		var have := int(busy_first["count"]) > 0 and int(busy_last["count"]) > 0 and float(busy_first["p95"]) > 0.0
+		out["busy_reached"] = have
+		if have:
+			var busy_ratio := snappedf(float(busy_last["p95"]) / float(busy_first["p95"]), 0.001)
+			out["busy_first_p95"] = busy_first["p95"]
+			out["busy_last_p95"] = busy_last["p95"]
+			out["busy_p95_ratio"] = busy_ratio
+			out["busy_within_limit"] = busy_ratio <= THERMAL_LIMIT_RATIO
+	return out
 
 
 func _ready() -> void:
@@ -330,6 +422,8 @@ func _ready() -> void:
 		Engine.max_fps = 0
 	if out_path == "":
 		out_path = resolve_path("")
+	_connect_busy_signals()
+	note_refresh_hz(DisplayServer.screen_get_refresh_rate())
 	print("PERF_LOG on path=%s (%s)" % [out_path, ProjectSettings.globalize_path(out_path)])
 
 
@@ -337,6 +431,8 @@ func _process(_delta: float) -> void:
 	var now := Time.get_ticks_usec()
 	if _last_us < 0:
 		_last_us = now
+		_busy_done = -1.0  # taban karesi: önceki döngünün meşgul süresi bu ölçüme ait değil
+		_pre_done = -1.0
 		if _first_process_ticks_ms < 0:
 			_first_process_ticks_ms = Time.get_ticks_msec()
 		return
@@ -344,11 +440,20 @@ func _process(_delta: float) -> void:
 	var day := -1
 	if _host != null and is_instance_valid(_host) and _host.has_method(&"perf_tick"):
 		day = int(_host.call(&"perf_tick"))
+	var busy := _busy_done
+	var pre_draw := _pre_done
+	var render_cpu := -1.0
+	if busy >= 0.0 and _viewport_rid.is_valid():
+		render_cpu = (RenderingServer.viewport_get_measured_render_time_cpu(_viewport_rid)
+				+ RenderingServer.get_frame_setup_time_cpu())
+	_busy_done = -1.0
+	_pre_done = -1.0
 	record_frame(dt_ms, Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME),
-			Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME), day)
+			Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME), day, busy, pre_draw, render_cpu)
 	var frames := _ms.size()
 	if memory_every > 0 and (frames == 1 or frames % memory_every == 0):
 		sample_memory()
+		note_refresh_hz(DisplayServer.screen_get_refresh_rate())
 	if target_reached():
 		sample_memory()
 		mark_complete()
@@ -356,14 +461,17 @@ func _process(_delta: float) -> void:
 		return
 	if write_every > 0 and frames % write_every == 0:
 		flush("periodic")
-		# Yazım süresi bir sonraki karenin süresine girmesin.
+		# Yazım süresi bir sonraki karenin süresine girmesin; bu döngünün meşgul süresi yazımı içerir, atılır.
 		_last_us = Time.get_ticks_usec()
+		_discard_cycle = true
 	else:
 		_last_us = now
 
 
 ## Bir karenin ölçümünü ekler (`_process` çağırır; test sentetik seriyi doğrudan besler). Tamamlanmış oturumda no-op.
-func record_frame(dt_ms: float, draw_calls: float, triangles: float, day: int) -> void:
+## `busy_ms`/`pre_draw_ms`/`render_cpu_ms`: -1 = ölçülemedi (özetlere girmez).
+func record_frame(dt_ms: float, draw_calls: float, triangles: float, day: int, busy_ms: float = -1.0,
+		pre_draw_ms: float = -1.0, render_cpu_ms: float = -1.0) -> void:
 	if _finished:
 		return
 	if _ms.size() >= MAX_FRAMES:
@@ -373,6 +481,9 @@ func record_frame(dt_ms: float, draw_calls: float, triangles: float, day: int) -
 	_draws.append(draw_calls)
 	_prims.append(triangles)
 	_days.append(day)
+	_busy.append(busy_ms)
+	_pre_draw.append(pre_draw_ms)
+	_render_cpu.append(render_cpu_ms)
 	_elapsed_ms += dt_ms
 	if _stable_start < 0 and _elapsed_ms >= stable_after_s * 1000.0:
 		_stable_start = _ms.size()
@@ -424,13 +535,19 @@ func sample_memory() -> Dictionary:
 ## çıkış/arka plan yazımları aynı raporu yeniden dener.
 func mark_complete() -> Error:
 	_finished = true
+	_disconnect_busy_signals()  # ölçüm donar: kare başına sinyal maliyeti de biter
 	return flush("complete")
 
 
 func _close_window() -> void:
 	var count := _ms.size() - _win_start_idx
+	var win_busy := stats(valid_only(_tail(_busy, _win_start_idx)))
 	var entry := {"t_s": snappedf(_elapsed_ms / 1000.0, 0.01), "frames": count,
-			"frame_ms": stats(_ms.slice(_win_start_idx)), "draw_calls_mean": stats(_draws.slice(_win_start_idx))["mean"]}
+			"frame_ms": stats(_ms.slice(_win_start_idx)), "draw_calls_mean": stats(_draws.slice(_win_start_idx))["mean"],
+			"busy_ms_p95": win_busy.get("p95", -1.0), "busy_ms_mean": win_busy.get("mean", -1.0)}
+	if is_inside_tree():
+		note_refresh_hz(DisplayServer.screen_get_refresh_rate())
+	entry["refresh_hz"] = _refresh_now
 	if not _mem.is_empty():
 		var last_mem: Dictionary = _mem[_mem.size() - 1]
 		entry["static_mb"] = snappedf(float(last_mem["static"]) / MB, 0.1)
@@ -449,8 +566,15 @@ func flush(reason: String) -> Error:
 	if _finished and reason != "complete" and last_error == OK:
 		return OK
 	var why := "complete" if _finished else reason
-	var report := summarize(_ms, _draws, _prims, _days, _stable_start)
+	var report := summarize(_ms, _draws, _prims, _days, _stable_start, _busy, _pre_draw, _render_cpu)
 	report.merge(_environment_info())
+	if is_inside_tree():
+		note_refresh_hz(DisplayServer.screen_get_refresh_rate())
+	report["refresh_hz_start"] = _refresh_start
+	report["refresh_hz_seen"] = _refresh_seen
+	report["refresh_hz_changed"] = _refresh_changed
+	report["busy_source"] = "first physics_frame|process_frame -> frame_post_draw"
+	report["busy_signals_connected"] = _signals_connected
 	report["reason"] = why
 	report["complete"] = why == "complete" or why == "exit"
 	report["truncated"] = _truncated
@@ -462,13 +586,58 @@ func flush(reason: String) -> Error:
 	if window_s > 0.0 or complete_at_s > 0.0:
 		report["window_s"] = window_s
 		report["windows"] = _windows
-		report["thermal"] = thermal_summary(_ms)
+		report["thermal"] = thermal_summary(_ms, THERMAL_EDGE_S, _busy)
 	last_error = write_report(out_path, report)
 	if last_error != OK and not _warned:
 		_warned = true
 		push_warning("PerfLogger: ölçüm dosyası yazılamadı (%s): %s. Oyun devam ediyor, ölçüm bellekte tutulur."
 				% [out_path, error_string(last_error)])
 	return last_error
+
+
+## Yenileme hızı gözlemi (başta, pencere başlarında, bellek örneğinde, yazımda). İlk değerden > 0,5 Hz sapma
+## `refresh_hz_changed` yapar (ADR-0010 Karar 3a: koşu içinde değişirse koşu geçersiz).
+func note_refresh_hz(hz: float) -> void:
+	var value := snappedf(hz, 0.1)
+	_refresh_now = value
+	if _refresh_start < 0.0:
+		_refresh_start = value
+	elif absf(value - _refresh_start) > 0.5:
+		_refresh_changed = true
+	if not _refresh_seen.has(value):
+		_refresh_seen.append(value)
+
+
+## Kare başı / çizim öncesi / çizim sonrası sinyallerini bağlar (yalnız bu düğüm varken; düğüm yoksa hiçbiri yok).
+func _connect_busy_signals() -> void:
+	if _signals_connected or not is_inside_tree():
+		return
+	var tree := get_tree()
+	tree.physics_frame.connect(_on_cycle_start)
+	tree.process_frame.connect(_on_cycle_start)
+	RenderingServer.frame_pre_draw.connect(_on_pre_draw)
+	RenderingServer.frame_post_draw.connect(_on_post_draw)
+	_viewport_rid = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(_viewport_rid, true)
+	_signals_connected = true
+
+
+func _disconnect_busy_signals() -> void:
+	if not _signals_connected:
+		return
+	_signals_connected = false
+	var tree := get_tree()
+	if tree != null:
+		if tree.physics_frame.is_connected(_on_cycle_start):
+			tree.physics_frame.disconnect(_on_cycle_start)
+		if tree.process_frame.is_connected(_on_cycle_start):
+			tree.process_frame.disconnect(_on_cycle_start)
+	if RenderingServer.frame_pre_draw.is_connected(_on_pre_draw):
+		RenderingServer.frame_pre_draw.disconnect(_on_pre_draw)
+	if RenderingServer.frame_post_draw.is_connected(_on_post_draw):
+		RenderingServer.frame_post_draw.disconnect(_on_post_draw)
+	if _viewport_rid.is_valid():
+		RenderingServer.viewport_set_measure_render_time(_viewport_rid, false)
 
 
 func _memory_block() -> Dictionary:
@@ -516,6 +685,34 @@ func _environment_info() -> Dictionary:
 	}
 
 
+## Karenin İLK başlangıç sinyali (physics_frame ya da process_frame, hangisi önce) süreyi başlatır; ikincisi no-op.
+func _on_cycle_start() -> void:
+	if _cycle_open:
+		return
+	_cycle_open = true
+	_cycle_start_us = Time.get_ticks_usec()
+	_cycle_pre_us = -1
+
+
+func _on_pre_draw() -> void:
+	if _cycle_open and _cycle_pre_us < 0:
+		_cycle_pre_us = Time.get_ticks_usec()
+
+
+func _on_post_draw() -> void:
+	if not _cycle_open:
+		return  # başlangıcı görülmeyen döngü (düğüm döngü ortasında eklendi): ölçülmez
+	var end_us := Time.get_ticks_usec()
+	_cycle_open = false
+	if _discard_cycle:
+		_discard_cycle = false
+		_busy_done = -1.0
+		_pre_done = -1.0
+		return
+	_busy_done = (end_us - _cycle_start_us) / 1000.0
+	_pre_done = (_cycle_pre_us - _cycle_start_us) / 1000.0 if _cycle_pre_us >= 0 else -1.0
+
+
 func _notification(what: int) -> void:
 	match what:
 		NOTIFICATION_APPLICATION_PAUSED, NOTIFICATION_APPLICATION_FOCUS_OUT:
@@ -525,3 +722,5 @@ func _notification(what: int) -> void:
 			_last_us = -1
 		NOTIFICATION_WM_CLOSE_REQUEST, NOTIFICATION_EXIT_TREE:
 			flush("exit")
+			if what == NOTIFICATION_EXIT_TREE:
+				_disconnect_busy_signals()
