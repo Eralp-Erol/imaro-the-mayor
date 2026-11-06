@@ -35,3 +35,35 @@ Yapı: HEAD 7b155b9 sonrası (B-042 dahil). Başlangıç zamanları (UTC, `start
 - Etkileşim (yol onayı, pan/pinch) en kötü kare.
 - Soğuk açılış kronometre, Düşük Güç Modu / şarj durumu / pil kaydı (koşullar sahipten istenecek; JSON'da yok).
 - Yoğun çekirdek bakışı üçgen sayısı.
+
+## busy_ms koşuları (2026-11-06 10:30-10:45, yeni release, `busy_ms` PerfLogger) — GEÇERSİZ (60 Hz)
+Bağlantı bulgusu (doğrulanmış): iPad `connected` yalnız bir `devicectl` komutu tüneli açtığı sürece görünüyor, sonra `available (paired)`e düşüyor (taşıma: localNetwork). Önceki otomasyon yalnız listeye baktığı için ekran açıkken bile hiç yakalayamadı; betik artık önce `devicectl device info details` ile cihazı uyandırıp sonra yokluyor.
+
+| Koşu | complete | refresh_hz | busy ort | busy p95 | busy p99 | kullanım | kare p50 / p95 |
+|---|---|---|---|---|---|---|---|
+| c1 | true (6000 kare) | **60** | 4,70 | 12,74 | 15,55 | 0,287 | 16,67 / 24,16 |
+| c2 | true (6000 kare) | **60** (değişmedi) | 4,81 | 14,01 | 15,41 | 0,292 | 16,68 / 24,58 |
+
+Geçerlilik: kural gereği `refresh_hz`=120 beklenir; 60 çıktığı için ADR-0010 hedefleriyle KARŞILAŞTIRILMADI. Neden: Düşük Güç Modu şüphesi (TD çıkarımı), cihazdan uzaktan okunamadı; DOĞRULANMADI. Sayılar yalnız gösterge (CPU meşgul ort ~4,7-4,8 ms, kullanım ~%29 bu modda). c3 (betik) ve 15 dk ısıl koşu 60 Hz'de çalıştırılmadı/iptal: mod düzelmeden anlamlı değil. Bekleyen: sahip iPad'de Düşük Güç Modu'nu kapatıp şarja takacak; sonra c1-c3 + ısıl yeniden.
+
+## 120 Hz'li busy_ms koşuları ve A/B (2026-11-06 12:42-13:32) — GEÇERLİ koşu koşulu (120 Hz sabit, complete), SONUÇ BİMODAL
+Sahip Düşük Güç Modu'nu kapattı (12:40; 60 Hz nedeni buydu, doğrulandı: kapanınca ilk yoklama 120.0). Not: seri betiği cihazdaki eski aynı-ad dosyayı "bitti" saydı (c1 18 sn'de, 60 Hz değerleriyle); bu koşu GEÇERSİZ, silindi/sayılmadı; yeni koşulara benzersiz ad (d1-d3, e/f) verildi.
+
+| Koşu | Saat | render ölçümü | kare ort | kare p95 | busy ort | busy p50 | busy p95 | kullanım |
+|---|---|---|---|---|---|---|---|---|
+| d1 | 12:42 | açık | 10,60 | 16,82 | 10,29 | 8,06 | 16,45 | 0,933 |
+| d2 | 12:45 | açık | 10,57 | 16,83 | 10,24 | 8,06 | 16,45 | 0,933 |
+| d3 | 12:48 | açık | (d1-d2 ile tutarlı) | | 10,25 | | | 0,932 |
+| e1 | 13:25 | açık | **8,34** | 8,53 | **1,99** | 1,51 | 3,48 | **0,244** |
+| f1 | 13:28 | KAPALI | 9,13 | 16,70 | 8,81 | 8,03 | 16,38 | 0,868 |
+| e2 | 13:30 | açık | 10,26 | 16,70 | 9,91 | 8,03 | 16,39 | 0,919 |
+| f2 | 13:32 | KAPALI | 10,16 | 16,81 | 9,84 | 8,06 | 16,44 | 0,922 |
+Hepsi: 120 Hz sabit (`refresh_hz_changed` false), 6000 kare, çizim 302, üçgen ~398k (sahne aynı).
+
+Doğrulanmış:
+- Ölçüm aracının render süresi ölçümü (`viewport_set_measure_render_time`) yükü NEDEN DEĞİL: kapalı (f) ve açık (e) koşular aynı bozuk değerlere de aynı iyi değere de düşüyor (e1 iyi, e2 kötü). Bayrak: `--perf-log-no-render-measure` (commit 3572092, testli).
+- Oyun kodu a-serisinden bu yana fonksiyonel olarak aynı (yalnız HUD çekmece düzeni 9 satır + perf_logger). Çizim/üçgen sayıları aynı.
+- Aynı yapı, aynı sahne: CPU meşgul süresi koşudan koşuya ~2 ms (e1) ile ~10 ms (diğerleri) arasında; "iyi" durumda kare 8,34 ms'de kilitli (kullanım %24), "kötü" durumda kare süresi 16,7 ms'ye düşen kareler (p95) ve kullanım %87-93.
+Doğrulanmadı (HİPOTEZ): iPad'in güç/ısıl politikası ya da çekirdek planlaması (şarj ısınması, arka plan etkinliği) CPU hızını koşular arasında değiştiriyor. Isıl durum JSON'a yazılmıyor; ayrım yapılamıyor.
+Sonuç: tek bir "iPad maliyeti" sayısı vermek DOĞRU OLMAZ. Hedef karşılaştırması (ADR-0010 Karar 3a) için koşulların cihaz durumuyla (ısıl durum, şarj, soğuk/sıcak) etiketlenmesi ya da çoklu koşuda en kötü durumun raporlanması gerekir; teknik direktör kararı.
+Isıl (15 dk) koşu: ilk deneme 144 sn'de `reason=pause` ile kesildi (cihaz uygulamayı durdurdu; Otomatik Kilit "Hiçbir Zaman" değilse bu beklenir, doğrulanmadı) -> GEÇERSİZ. Tüm pencereler "kötü" durumdaydı (p95 16,8).

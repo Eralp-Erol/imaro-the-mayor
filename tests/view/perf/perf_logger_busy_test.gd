@@ -237,3 +237,18 @@ func test_signals_are_disconnected_on_complete_and_only_exist_while_logger_lives
 	assert_bool(logger._signals_connected).is_false()
 	assert_int(RenderingServer.frame_post_draw.get_connections().size()).is_equal(before)
 	assert_bool(get_tree().process_frame.is_connected(logger._on_cycle_start)).is_false()
+
+
+func test_render_measure_is_on_by_default_and_the_flag_turns_it_off_and_is_reported() -> void:
+	var on := PerfLogger.attach_if_requested(self, {"perf-log": TMP_DIR + "on.json"})
+	assert_object(on).is_not_null()
+	assert_bool(on.measure_render).is_true()
+	var off := PerfLogger.attach_if_requested(self, {
+			"perf-log": TMP_DIR + "off.json", "perf-log-no-render-measure": ""})
+	assert_object(off).is_not_null()
+	assert_bool(off.measure_render).is_false()
+	off.stable_after_s = 0.5
+	_feed(off, 120)
+	assert_int(off.flush("complete")).is_equal(OK)
+	var rep: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(off.out_path))
+	assert_bool(bool(rep["render_measure"])).is_false()

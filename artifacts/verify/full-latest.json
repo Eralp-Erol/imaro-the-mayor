@@ -1,8 +1,8 @@
 {
   "mode": "full",
-  "started_at": "2026-11-06T03:18:54Z",
-  "git_head": "0d8d6b73cff363fd78cbc7687e9f98e8ad32ea4a",
-  "fingerprint": "cf2de53f944153d56ceecef777c13a798758ead37b1dd5d7133f0edd47474db3",
+  "started_at": "2026-11-06T12:33:54Z",
+  "git_head": "433949c4dac9dc18a3b07b51c23484fd9047b791",
+  "fingerprint": "5cc4790fd26d276838d202245aa2bfdd18ec371928282755687c7baa0afd7c4c",
   "steps": [
     {
       "name": "canon-check",
@@ -19,26 +19,26 @@
     {
       "name": "area-map",
       "status": "pass",
-      "seconds": 4,
+      "seconds": 3,
       "summary": "area-map: 67 kural, 19 çekirdek belirteci, src dizinlerinin hepsi eşli"
     },
     {
       "name": "gdlint",
       "status": "pass",
-      "seconds": 44,
+      "seconds": 46,
       "summary": "Success: no problems found"
     },
     {
       "name": "import",
       "status": "pass",
-      "seconds": 10,
+      "seconds": 12,
       "summary": "içe aktarma temiz"
     },
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 1722,
-      "summary": "3152 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 2061,
+      "summary": "3153 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",

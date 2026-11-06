@@ -79,6 +79,8 @@ var memory_every: int = DEFAULT_MEMORY_EVERY
 ## true: `_ready`de VSync kapatılır, kare tavanı kalkar (`--perf-log-novsync`; masaüstü perf_probe koşulu).
 ## Platform yok sayabilir (iOS): rapordaki `vsync_mode` GERİ OKUNAN değerdir.
 var novsync: bool = false
+## `--perf-log-no-render-measure`: render süresi ölçümü AÇILMAZ (araç yükü A/B; `render_cpu_ms` boş kalır).
+var measure_render: bool = true
 var out_path: String = ""
 ## Son yazım denemesinin hatası (OK = sorun yok). Test ve tanı için.
 var last_error: Error = OK
@@ -144,6 +146,7 @@ static func attach_if_requested(host: Node, args: Dictionary) -> PerfLogger:
 	logger.stable_after_s = float(str(args.get("perf-log-stable", DEFAULT_STABLE_AFTER_S)))
 	logger.memory_every = _arg_int(args, "perf-log-mem-every", DEFAULT_MEMORY_EVERY)
 	logger.novsync = args.has("perf-log-novsync")
+	logger.measure_render = not args.has("perf-log-no-render-measure")
 	var thermal_s := _thermal_seconds(args)
 	if thermal_s > 0.0:
 		logger.complete_at_s = thermal_s
@@ -443,7 +446,7 @@ func _process(_delta: float) -> void:
 	var busy := _busy_done
 	var pre_draw := _pre_done
 	var render_cpu := -1.0
-	if busy >= 0.0 and _viewport_rid.is_valid():
+	if measure_render and busy >= 0.0 and _viewport_rid.is_valid():
 		render_cpu = (RenderingServer.viewport_get_measured_render_time_cpu(_viewport_rid)
 				+ RenderingServer.get_frame_setup_time_cpu())
 	_busy_done = -1.0
@@ -618,7 +621,8 @@ func _connect_busy_signals() -> void:
 	RenderingServer.frame_pre_draw.connect(_on_pre_draw)
 	RenderingServer.frame_post_draw.connect(_on_post_draw)
 	_viewport_rid = get_viewport().get_viewport_rid()
-	RenderingServer.viewport_set_measure_render_time(_viewport_rid, true)
+	if measure_render:
+		RenderingServer.viewport_set_measure_render_time(_viewport_rid, true)
 	_signals_connected = true
 
 
@@ -678,6 +682,7 @@ func _environment_info() -> Dictionary:
 		"refresh_hz": snappedf(DisplayServer.screen_get_refresh_rate(), 0.1),
 		"vsync_mode": int(DisplayServer.window_get_vsync_mode()), "max_fps": Engine.max_fps,
 		"novsync_requested": novsync,
+		"render_measure": measure_render,
 		"window": [window_size.x, window_size.y],
 		"args": OS.get_cmdline_user_args(), "cmdline_args": OS.get_cmdline_args(),
 		"started_unix": snappedf(_started_unix, 1.0), "path": out_path,
