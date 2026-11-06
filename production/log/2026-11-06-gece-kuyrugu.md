@@ -15,7 +15,7 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - [x] 2. (TAMAM 17:09: g2 ısıl koşusu geçerli ve geçti) (eski not: ENGELLİ: cihaz uygulamayı ~30 sn sonra kesiyor) Isınma koşusu (sahipsiz yapılabilir): `--demo --perf-log=ipad-isil.json --perf-log-thermal` ~15 dk; ekran açık kalmalı. Pause/kilitlenirse geçersiz yaz.
 - [x] 3. `verify full` (HEAD `cec0b32` B-122 + sonrası), PASS ise `git-wt done` kuyruğuna ekle (exit 141 geçici çözümü: dal adını `$(git rev-parse --git-common-dir)/wt/queue` dosyasına ekle) -> `~/.local/bin/git-wt integrate` -> `ship`.
 - [x] 4. Ölçüm tablosu: T-076 Kanıt bölümü, `production/log/2026-11-06-ipad-olcum.md`, ADR-0010 iPad satırları (hedef vs ölçüm; hedefi geçenle geçmeyeni açık yaz). Sahip gerektiren adımlar (soğuk açılış kronometre, yol onayı etkileşim oturumu, el ile ısınma hissi) "SAHİP BEKLİYOR" diye kalır.
-- [~] 5. (KISMİ, aşağıya bak) GOLDEN_X durum farkını çıkar (B-130 öncesi/sonrası hangi aktör alanı değişti) ve `production/log/`'a yaz.
+- [x] 5. (TAMAM 17:5x: `2026-11-06-golden-x-fark.md`: hash'e `_notes` metni de giriyor; TD'ye öneri) (eski: KISMİ, aşağıya bak) GOLDEN_X durum farkını çıkar (B-130 öncesi/sonrası hangi aktör alanı değişti) ve `production/log/`'a yaz.
 - [x] 6. Bayat masaüstü perf kayıtlarını (M2-CLOSURE.md, 2026-11-05-perf-serisi) iPad sayılarıyla çapraz not et (yeniden ölçüm gerekmiyorsa yalnız not).
 - [x] 7. M2-CLOSURE.md durum başlığını güncelle (verify full tarihi/sayısı, B-122 çözüldü, iPad sonuçları, kalan sahip maddeleri: Q-041, soğuk açılış, etkileşim, ısınma hissi).
 
@@ -50,3 +50,4 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - 14:3x: verify full PASS (3153, 0 hata, kapsam tam @433949c). integrate+ship: yerel main 4f19286 (origin/main'den 10 commit önde; PUSH YOK, onay bekliyor). Bekleyen: iPad Otomatik Kilit 'Hiçbir Zaman' sonrası 15 dk ısıl koşu; TD'ye bimodal CPU notu.
 - 15:4x: ısıl koşu denemesi: iPad KİLİTLİ (FBSOpenApplicationErrorDomain 7, Locked); başlatılamadı, ölçüm yok. /private/tmp/claude-501/ipad-therm2.sh 10 dk'da bir başlatmayı dener, açılınca 15 dk ısıl koşar (log ipad-therm2.log, dosya ipad-g2). Sahip: ekran kilitsiz + Otomatik Kilit 'Hiçbir Zaman' gerekli.
 - 17:2x: ısıl koşu g2 GEÇERLİ ve GEÇTİ (kare p95 oranı 1,015; busy 1,085). ipad-olcum.md, ADR-0010, T-076, M2-CLOSURE, STATE güncellendi. Kalan iPad: etkileşim + soğuk açılış (sahip). TD'ye bimodal busy_ms sorusu açık.
+- 17:5x: madde 5 kapandı: GOLDEN_X farkı = eşik 250->190 + data dosyasındaki `_notes` METNİ (yorum cümlesi hash'e giriyor). Deneyle doğrulandı. TD'ye öneri: `_notes`'u hash dışı bırak (ayrı commit + GOLDEN yenileme).
