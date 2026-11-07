@@ -61,3 +61,19 @@ Gerçek `WorldData` koordinatına bağlı işler yalnız: T-003, T-005, T-011, T
 ### M1 kapısı (T-006) için taşınan AÇIK kabul koşulları (commit ≠ kabul)
 - T-012: K8 LOD0↔LOD1 ≤%5 (2026-10-25 kaydı %2,6; ADR-0010); yerel evrede yapı üçgeni ≤900k (ADR-0010: ertelendi, tanı ölçüsü); low-key ışık onayı (arazi V bandı); HLOD2/HLOD1 kararları; gerçek T0 verisiyle görsel kapı (VIS-04).
 - T-001: yaratıcı coğrafya onayı (Q-015, kullanıcı). T-007: Windows çalıştırma + iPad zinciri cihazda (T-008). T-011: bellek (+~95 MB), üretim süresi sessiz makinede. T-009/T-010 henüz yok.
+
+## M3 görevleri (2026-11-07 planı; D-029; tasarım kapsamı ve TD mimarisi `production/log/2026-11-07-*m3*`)
+Dilim: "Beş yıl sonra komşuna bak". Önerilen sıra: ölçüm → yeniden düzenleme → ADR/tohum → paralel kulvarlar → ayrışma/GOLDEN → perf + sahip kabulü.
+| ID | Başlık | Sahip | Bağımlı | Paralel |
+|---|---|---|---|---|
+| T-077 | Taban ölçümü: D2 dışı donuk mu + güncel tick maliyeti | qa-engineer | — | A |
+| T-078 | Sim yeniden düzenleme (davranış değişmez, GOLDEN bit-bit) | simulation-engineer | T-077 | B |
+| T-079 | ADR-0012/13/14 + kampanya tohumu | technical-director + simulation-engineer | T-078 | C |
+| T-080 | Komşu belediye aktörü + ilçe özeti (Q-043 A varsayımı) | simulation-engineer + ui-engineer | T-079 | D |
+| T-081 | Makro ekonomi (3 değişken) + diğer metropoller soyut | simulation-engineer | T-079 | D |
+| T-082 | Trafik yükü modeli + sıkışma görünürlüğü | simulation-engineer + godot-engineer | T-079 | E |
+| T-083 | Altyapı bakım gideri (Q-044 C varsayımı) | simulation-engineer | T-082 | E |
+| T-084 | Yağmur + ortam sesi (dalda, sahip onayı) | technical-artist + godot-engineer | T-079 | F |
+| T-085 | SIM-10/11 ayrışma testi + GOLDEN_M | qa-engineer + simulation-engineer | T-080..T-083 | G |
+| T-086 | Performans (masaüstü + iPad) + sahip demo kabulü | qa-engineer + godot-engineer | T-085, T-084 | H |
+Aynı anda iki yazıcı OLMAYAN dosyalar: `game_state.gd`, `sim_facade_impl.gd`, `economy_system.gd` (+config/json), `sim_contract.gd`, `playable.gd`, `tick_driver.gd`, `platform_profile.gd`, `politics_config.gd`, GOLDEN testleri, `tools/verify-areas.tsv`. T-075 (yol onayı takılması) paralel yürür.
