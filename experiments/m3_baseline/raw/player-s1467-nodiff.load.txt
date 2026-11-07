@@ -1,0 +1,6 @@
+ad: player-s1467-nodiff
+başlangıç: 2026-11-07 20:00:29
+uptime önce: 20:00  up 4 days,  1:55, 1 user, load averages: 4.85 4.01 3.60
+bitiş: 2026-11-07 20:01:16
+uptime sonra: 20:01  up 4 days,  1:56, 1 user, load averages: 5.57 4.30 3.73
+godot çıkış kodu: 0

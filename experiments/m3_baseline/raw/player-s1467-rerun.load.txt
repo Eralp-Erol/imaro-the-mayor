@@ -1,0 +1,6 @@
+ad: player-s1467-rerun
+başlangıç: 2026-11-07 20:03:39
+uptime önce: 20:03  up 4 days,  1:58, 1 user, load averages: 4.58 4.70 3.99
+bitiş: 2026-11-07 20:04:28
+uptime sonra: 20:04  up 4 days,  1:59, 1 user, load averages: 4.96 4.80 4.07
+godot çıkış kodu: 0

@@ -1,0 +1,753 @@
+{
+  "authority_probe": {
+    "road_d3": {
+      "draft_check_ok": false,
+      "draft_reason": "crosses_parcels",
+      "reason": "public_work.reject.crosses_parcels",
+      "status": "rejected"
+    },
+    "zoning_d3": {
+      "parcels": 8,
+      "reason": "",
+      "status": "valid"
+    }
+  },
+  "budget": {
+    "cap": 8,
+    "configured_scan_budget_per_tick": 4050,
+    "days": 1799,
+    "days_at_cap": 1799,
+    "days_at_cap_pct": 100.0,
+    "days_over_cap": 0,
+    "days_zero_evals": 0,
+    "evaluations_per_day_mean": 8.0,
+    "evaluations_total": 14392,
+    "histogram": {
+      "8": 1799
+    },
+    "implied_full_scan_cycle_days": 1857.4,
+    "review_cursor_adv_per_day_mean": 22.0,
+    "usage_pct_of_cap": 100.0
+  },
+  "census_end": {
+    "D1": {
+      "built": 6929,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1418
+    },
+    "D2": {
+      "built": 1927,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 2595
+    },
+    "D3": {
+      "built": 2542,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1724
+    },
+    "D4": {
+      "built": 2379,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 5981
+    },
+    "D5": {
+      "built": 2496,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 3178
+    },
+    "D6": {
+      "built": 8051,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1273
+    }
+  },
+  "census_start": {
+    "D1": {
+      "built": 6929,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1418
+    },
+    "D2": {
+      "built": 1927,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 2595
+    },
+    "D3": {
+      "built": 2522,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1744
+    },
+    "D4": {
+      "built": 2379,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 5981
+    },
+    "D5": {
+      "built": 2496,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 3178
+    },
+    "D6": {
+      "built": 8051,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1273
+    }
+  },
+  "commands": [
+    {
+      "kind": "road",
+      "len_m": 152.0,
+      "reason": "",
+      "status": "queued",
+      "tick": 30,
+      "vacant_near": 44
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 31
+    },
+    {
+      "kind": "road",
+      "len_m": 103.8,
+      "reason": "",
+      "status": "queued",
+      "tick": 32,
+      "vacant_near": 42
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 33
+    },
+    {
+      "kind": "road",
+      "len_m": 112.6,
+      "reason": "",
+      "status": "queued",
+      "tick": 34,
+      "vacant_near": 30
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 35
+    },
+    {
+      "kind": "road",
+      "len_m": 151.9,
+      "reason": "",
+      "status": "queued",
+      "tick": 390,
+      "vacant_near": 40
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 391
+    },
+    {
+      "kind": "road",
+      "len_m": 160.4,
+      "reason": "",
+      "status": "queued",
+      "tick": 750,
+      "vacant_near": 37
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 751
+    },
+    {
+      "kind": "road",
+      "len_m": 139.5,
+      "reason": "",
+      "status": "queued",
+      "tick": 1110,
+      "vacant_near": 35
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 1111
+    },
+    {
+      "kind": "road",
+      "len_m": 149.8,
+      "reason": "",
+      "status": "queued",
+      "tick": 1470,
+      "vacant_near": 39
+    },
+    {
+      "kind": "zoning",
+      "parcels": 8,
+      "reason": "",
+      "status": "queued",
+      "tick": 1471
+    }
+  ],
+  "decline_backoff_days": 30,
+  "declined_evals_by_year": {
+    "y1": {
+      "D1": 1418,
+      "D2": 42,
+      "D3": 131,
+      "D6": 1273
+    },
+    "y2": {
+      "D2": 2553,
+      "D3": 324
+    },
+    "y3": {
+      "D3": 285,
+      "D4": 2592
+    },
+    "y4": {
+      "D3": 5,
+      "D4": 2735,
+      "D5": 137
+    },
+    "y5": {
+      "D3": 5,
+      "D5": 2872
+    }
+  },
+  "economy_parcels": 40493,
+  "end_tick": 1800,
+  "events_by_year": {
+    "y1": {
+      "event.construction.completed": {
+        "D3": 8
+      },
+      "event.construction.started": {
+        "D3": 8
+      },
+      "event.investor.declined": {
+        "D1": 1418,
+        "D2": 42,
+        "D3": 139,
+        "D6": 1273
+      },
+      "event.investor.develop": {
+        "D3": 8
+      },
+      "event.road.built": {
+        "?": 3
+      },
+      "event.zoning.applied": {
+        "D3": 24
+      }
+    },
+    "y2": {
+      "event.construction.completed": {
+        "D3": 3
+      },
+      "event.construction.started": {
+        "D3": 3
+      },
+      "event.investor.declined": {
+        "D2": 2553,
+        "D3": 316
+      },
+      "event.investor.develop": {
+        "D3": 3
+      },
+      "event.road.built": {
+        "?": 1
+      },
+      "event.zoning.applied": {
+        "D3": 8
+      }
+    },
+    "y3": {
+      "event.construction.completed": {
+        "D3": 3
+      },
+      "event.construction.started": {
+        "D3": 3
+      },
+      "event.investor.declined": {
+        "D3": 285,
+        "D4": 2592
+      },
+      "event.investor.develop": {
+        "D3": 3
+      },
+      "event.road.built": {
+        "?": 1
+      },
+      "event.zoning.applied": {
+        "D3": 8
+      }
+    },
+    "y4": {
+      "event.construction.completed": {
+        "D3": 3
+      },
+      "event.construction.started": {
+        "D3": 3
+      },
+      "event.investor.declined": {
+        "D3": 5,
+        "D4": 2727,
+        "D5": 137
+      },
+      "event.investor.develop": {
+        "D3": 3
+      },
+      "event.road.built": {
+        "?": 1
+      },
+      "event.zoning.applied": {
+        "D3": 8
+      }
+    },
+    "y5": {
+      "event.construction.completed": {
+        "D3": 3
+      },
+      "event.construction.started": {
+        "D3": 3
+      },
+      "event.investor.declined": {
+        "D3": 5,
+        "D5": 2856
+      },
+      "event.investor.develop": {
+        "D3": 3
+      },
+      "event.road.built": {
+        "?": 1
+      },
+      "event.zoning.applied": {
+        "D3": 8
+      }
+    }
+  },
+  "godot": "4.7.2-stable (official)",
+  "jurisdiction_all": true,
+  "max_reviews_per_tick": 8,
+  "max_starts_per_region_per_day": 2,
+  "mode": "player",
+  "parcels_by_region": {
+    "D1": 8347,
+    "D2": 4522,
+    "D3": 4266,
+    "D4": 8360,
+    "D5": 5674,
+    "D6": 9324
+  },
+  "player_region": "D3",
+  "prescreen_demand_pm": 520,
+  "priority_review_enabled": 1,
+  "profile": false,
+  "region_stats_end": {
+    "D1": {
+      "access_pm": 600,
+      "com_built": 7659,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 31500,
+      "infra_bonus": 0,
+      "infra_cap": 39160,
+      "infra_load": 39159,
+      "latent_hh": 92841,
+      "res_built": 31500,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D2": {
+      "access_pm": 600,
+      "com_built": 2350,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 6966,
+      "infra_bonus": 0,
+      "infra_cap": 9317,
+      "infra_load": 9316,
+      "latent_hh": 20908,
+      "res_built": 6966,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D3": {
+      "access_pm": 600,
+      "com_built": 3119,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 7278,
+      "infra_bonus": 94,
+      "infra_cap": 10398,
+      "infra_load": 10397,
+      "latent_hh": 21548,
+      "res_built": 7278,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D4": {
+      "access_pm": 600,
+      "com_built": 1387,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 5317,
+      "infra_bonus": 0,
+      "infra_cap": 6705,
+      "infra_load": 6704,
+      "latent_hh": 16075,
+      "res_built": 5317,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D5": {
+      "access_pm": 600,
+      "com_built": 2971,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 6754,
+      "infra_bonus": 0,
+      "infra_cap": 9726,
+      "infra_load": 9725,
+      "latent_hh": 20287,
+      "res_built": 6754,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D6": {
+      "access_pm": 600,
+      "com_built": 7285,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 40919,
+      "infra_bonus": 0,
+      "infra_cap": 48205,
+      "infra_load": 48204,
+      "latent_hh": 120454,
+      "res_built": 40919,
+      "res_pipe": 0,
+      "service_pm": 600
+    }
+  },
+  "region_stats_start": {
+    "D1": {
+      "access_pm": 600,
+      "com_built": 7659,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 671,
+      "housed_hh": 31500,
+      "infra_bonus": 0,
+      "infra_cap": 39160,
+      "infra_load": 39159,
+      "latent_hh": 38000,
+      "res_built": 31500,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D2": {
+      "access_pm": 600,
+      "com_built": 2350,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 686,
+      "housed_hh": 6966,
+      "infra_bonus": 0,
+      "infra_cap": 9317,
+      "infra_load": 9316,
+      "latent_hh": 8558,
+      "res_built": 6966,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D3": {
+      "access_pm": 600,
+      "com_built": 3119,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 685,
+      "housed_hh": 7184,
+      "infra_bonus": 0,
+      "infra_cap": 10304,
+      "infra_load": 10303,
+      "latent_hh": 8820,
+      "res_built": 7184,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D4": {
+      "access_pm": 600,
+      "com_built": 1387,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 691,
+      "housed_hh": 5317,
+      "infra_bonus": 0,
+      "infra_cap": 6705,
+      "infra_load": 6704,
+      "latent_hh": 6580,
+      "res_built": 5317,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D5": {
+      "access_pm": 600,
+      "com_built": 2971,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 686,
+      "housed_hh": 6754,
+      "infra_bonus": 0,
+      "infra_cap": 9726,
+      "infra_load": 9725,
+      "latent_hh": 8304,
+      "res_built": 6754,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D6": {
+      "access_pm": 600,
+      "com_built": 7285,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 670,
+      "housed_hh": 40919,
+      "infra_bonus": 0,
+      "infra_cap": 48205,
+      "infra_load": 48204,
+      "latent_hh": 49302,
+      "res_built": 40919,
+      "res_pipe": 0,
+      "service_pm": 600
+    }
+  },
+  "regions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6"
+  ],
+  "review_period_days": 10,
+  "setup_s": 33.0,
+  "sim_parcels": 40493,
+  "sim_seed": 1467,
+  "state_hash": "0a35a1c10f11cbb4d57c69f72ce0eb38fce5e0d26ec1a7503153c4c92eff30c2",
+  "task": "T-077",
+  "timing_ms": {
+    "all_excl_first": {
+      "max": 15.212,
+      "mean": 3.374,
+      "median": 2.579,
+      "n": 1799,
+      "p95": 7.346,
+      "p99": 9.982
+    },
+    "first_tick_ms": 4.23,
+    "month_end_excl_quarter": {
+      "max": 11.548,
+      "mean": 7.887,
+      "median": 7.264,
+      "n": 40,
+      "p95": 10.24,
+      "p99": 11.548
+    },
+    "per_year": {
+      "y1": {
+        "max": 13.678,
+        "mean": 3.274,
+        "median": 2.518,
+        "n": 359,
+        "p95": 6.69,
+        "p99": 10.24
+      },
+      "y2": {
+        "max": 10.097,
+        "mean": 3.409,
+        "median": 2.58,
+        "n": 360,
+        "p95": 7.69,
+        "p99": 9.648
+      },
+      "y3": {
+        "max": 15.212,
+        "mean": 3.336,
+        "median": 2.505,
+        "n": 360,
+        "p95": 7.127,
+        "p99": 9.856
+      },
+      "y4": {
+        "max": 14.932,
+        "mean": 3.567,
+        "median": 2.599,
+        "n": 360,
+        "p95": 8.008,
+        "p99": 10.438
+      },
+      "y5": {
+        "max": 11.221,
+        "mean": 3.284,
+        "median": 2.695,
+        "n": 360,
+        "p95": 7.555,
+        "p99": 9.464
+      }
+    },
+    "plain_day": {
+      "max": 15.212,
+      "mean": 3.222,
+      "median": 2.565,
+      "n": 1739,
+      "p95": 5.949,
+      "p99": 9.548
+    },
+    "quarter_end": {
+      "max": 9.574,
+      "mean": 7.522,
+      "median": 7.437,
+      "n": 20,
+      "p95": 9.574,
+      "p99": 9.574
+    },
+    "slowest10": [
+      {
+        "ms": 15.21,
+        "tick": 751
+      },
+      {
+        "ms": 14.93,
+        "tick": 1120
+      },
+      {
+        "ms": 13.68,
+        "tick": 35
+      },
+      {
+        "ms": 12.16,
+        "tick": 1309
+      },
+      {
+        "ms": 11.55,
+        "tick": 1050
+      },
+      {
+        "ms": 11.47,
+        "tick": 1111
+      },
+      {
+        "ms": 11.22,
+        "tick": 1505
+      },
+      {
+        "ms": 11.09,
+        "tick": 31
+      },
+      {
+        "ms": 10.81,
+        "tick": 33
+      },
+      {
+        "ms": 10.44,
+        "tick": 1225
+      }
+    ],
+    "ticks_over_16_6ms": 0,
+    "ticks_over_8_33ms": 60
+  },
+  "totals": {
+    "approvals": 20,
+    "capital_inflow": 1440000,
+    "completions": 20,
+    "construction_spend": 94000,
+    "declines": 14380,
+    "declines_recorded": 14372,
+    "evaluations": 14400,
+    "land_sales": 0,
+    "rent_income": 39316,
+    "stalls": 0
+  },
+  "unplanned_land_enabled": 1,
+  "use_diff": true,
+  "vacant_last_code_end": {
+    "D1": {
+      "zoning_unplanned": 1418
+    },
+    "D2": {
+      "zoning_unplanned": 2595
+    },
+    "D3": {
+      "(hiç karar yok)": 990,
+      "infrastructure_exhausted": 36,
+      "zoning_unplanned": 698
+    },
+    "D4": {
+      "(hiç karar yok)": 654,
+      "zoning_unplanned": 5327
+    },
+    "D5": {
+      "(hiç karar yok)": 169,
+      "zoning_unplanned": 3009
+    },
+    "D6": {
+      "zoning_unplanned": 1273
+    }
+  },
+  "world_seed": 1467,
+  "years": 5
+}

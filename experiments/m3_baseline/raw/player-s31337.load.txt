@@ -1,0 +1,6 @@
+ad: player-s31337
+başlangıç: 2026-11-07 19:58:54
+uptime önce: 19:58  up 4 days,  1:53, 1 user, load averages: 4.91 3.80 3.50
+bitiş: 2026-11-07 19:59:43
+uptime sonra: 19:59  up 4 days,  1:54, 1 user, load averages: 4.48 3.83 3.52
+godot çıkış kodu: 0

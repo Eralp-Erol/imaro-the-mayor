@@ -1,0 +1,551 @@
+{
+  "budget": {
+    "cap": 8,
+    "configured_scan_budget_per_tick": 4050,
+    "days": 1799,
+    "days_at_cap": 1799,
+    "days_at_cap_pct": 100.0,
+    "days_over_cap": 0,
+    "days_zero_evals": 0,
+    "evaluations_per_day_mean": 8.0,
+    "evaluations_total": 14392,
+    "histogram": {
+      "8": 1799
+    },
+    "implied_full_scan_cycle_days": 1925.1,
+    "review_cursor_adv_per_day_mean": 21.0,
+    "usage_pct_of_cap": 100.0
+  },
+  "census_end": {
+    "D1": {
+      "built": 6929,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1418
+    },
+    "D2": {
+      "built": 1927,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 2595
+    },
+    "D3": {
+      "built": 2522,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1744
+    },
+    "D4": {
+      "built": 2379,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 5981
+    },
+    "D5": {
+      "built": 2496,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 3178
+    },
+    "D6": {
+      "built": 8051,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1273
+    }
+  },
+  "census_start": {
+    "D1": {
+      "built": 6929,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1418
+    },
+    "D2": {
+      "built": 1927,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 2595
+    },
+    "D3": {
+      "built": 2522,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1744
+    },
+    "D4": {
+      "built": 2379,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 5981
+    },
+    "D5": {
+      "built": 2496,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 3178
+    },
+    "D6": {
+      "built": 8051,
+      "planned": 0,
+      "stalled": 0,
+      "taken": 0,
+      "under_construction": 0,
+      "vacant": 1273
+    }
+  },
+  "commands": [],
+  "decline_backoff_days": 30,
+  "declined_evals_by_year": {
+    "y1": {
+      "D1": 1418,
+      "D2": 66,
+      "D3": 115,
+      "D6": 1273
+    },
+    "y2": {
+      "D2": 2529,
+      "D3": 351
+    },
+    "y3": {
+      "D3": 1270,
+      "D4": 1610
+    },
+    "y4": {
+      "D4": 2880
+    },
+    "y5": {
+      "D4": 837,
+      "D5": 2043
+    }
+  },
+  "economy_parcels": 40493,
+  "end_tick": 1800,
+  "events_by_year": {
+    "y1": {
+      "event.investor.declined": {
+        "D1": 1418,
+        "D2": 66,
+        "D3": 123,
+        "D6": 1273
+      }
+    },
+    "y2": {
+      "event.investor.declined": {
+        "D2": 2529,
+        "D3": 351
+      }
+    },
+    "y3": {
+      "event.investor.declined": {
+        "D3": 1270,
+        "D4": 1602
+      }
+    },
+    "y4": {
+      "event.investor.declined": {
+        "D4": 2872
+      }
+    },
+    "y5": {
+      "event.investor.declined": {
+        "D4": 829,
+        "D5": 2043
+      }
+    }
+  },
+  "godot": "4.7.2-stable (official)",
+  "max_reviews_per_tick": 8,
+  "max_starts_per_region_per_day": 2,
+  "mode": "none",
+  "parcels_by_region": {
+    "D1": 8347,
+    "D2": 4522,
+    "D3": 4266,
+    "D4": 8360,
+    "D5": 5674,
+    "D6": 9324
+  },
+  "prescreen_demand_pm": 520,
+  "priority_review_enabled": 1,
+  "profile": false,
+  "region_stats_end": {
+    "D1": {
+      "access_pm": 600,
+      "com_built": 7659,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 31500,
+      "infra_bonus": 0,
+      "infra_cap": 39160,
+      "infra_load": 39159,
+      "latent_hh": 92841,
+      "res_built": 31500,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D2": {
+      "access_pm": 600,
+      "com_built": 2350,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 6966,
+      "infra_bonus": 0,
+      "infra_cap": 9317,
+      "infra_load": 9316,
+      "latent_hh": 20908,
+      "res_built": 6966,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D3": {
+      "access_pm": 600,
+      "com_built": 3119,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 7184,
+      "infra_bonus": 0,
+      "infra_cap": 10304,
+      "infra_load": 10303,
+      "latent_hh": 21548,
+      "res_built": 7184,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D4": {
+      "access_pm": 600,
+      "com_built": 1387,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 5317,
+      "infra_bonus": 0,
+      "infra_cap": 6705,
+      "infra_load": 6704,
+      "latent_hh": 16075,
+      "res_built": 5317,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D5": {
+      "access_pm": 600,
+      "com_built": 2971,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 6754,
+      "infra_bonus": 0,
+      "infra_cap": 9726,
+      "infra_load": 9725,
+      "latent_hh": 20287,
+      "res_built": 6754,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D6": {
+      "access_pm": 600,
+      "com_built": 7285,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 1000,
+      "housed_hh": 40919,
+      "infra_bonus": 0,
+      "infra_cap": 48205,
+      "infra_load": 48204,
+      "latent_hh": 120454,
+      "res_built": 40919,
+      "res_pipe": 0,
+      "service_pm": 600
+    }
+  },
+  "region_stats_start": {
+    "D1": {
+      "access_pm": 600,
+      "com_built": 7659,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 671,
+      "housed_hh": 31500,
+      "infra_bonus": 0,
+      "infra_cap": 39160,
+      "infra_load": 39159,
+      "latent_hh": 38000,
+      "res_built": 31500,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D2": {
+      "access_pm": 600,
+      "com_built": 2350,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 686,
+      "housed_hh": 6966,
+      "infra_bonus": 0,
+      "infra_cap": 9317,
+      "infra_load": 9316,
+      "latent_hh": 8558,
+      "res_built": 6966,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D3": {
+      "access_pm": 600,
+      "com_built": 3119,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 685,
+      "housed_hh": 7184,
+      "infra_bonus": 0,
+      "infra_cap": 10304,
+      "infra_load": 10303,
+      "latent_hh": 8820,
+      "res_built": 7184,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D4": {
+      "access_pm": 600,
+      "com_built": 1387,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 691,
+      "housed_hh": 5317,
+      "infra_bonus": 0,
+      "infra_cap": 6705,
+      "infra_load": 6704,
+      "latent_hh": 6580,
+      "res_built": 5317,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D5": {
+      "access_pm": 600,
+      "com_built": 2971,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 686,
+      "housed_hh": 6754,
+      "infra_bonus": 0,
+      "infra_cap": 9726,
+      "infra_load": 9725,
+      "latent_hh": 8304,
+      "res_built": 6754,
+      "res_pipe": 0,
+      "service_pm": 600
+    },
+    "D6": {
+      "access_pm": 600,
+      "com_built": 7285,
+      "com_pipe": 0,
+      "demand_com_pm": 0,
+      "demand_res_pm": 670,
+      "housed_hh": 40919,
+      "infra_bonus": 0,
+      "infra_cap": 48205,
+      "infra_load": 48204,
+      "latent_hh": 49302,
+      "res_built": 40919,
+      "res_pipe": 0,
+      "service_pm": 600
+    }
+  },
+  "regions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5",
+    "D6"
+  ],
+  "review_period_days": 10,
+  "setup_s": 28.2,
+  "sim_parcels": 40493,
+  "sim_seed": 7,
+  "state_hash": "73368d45e0efd66d0baaeb56c57a9b719486d9e424ae1c69b73461ad1e11d3a1",
+  "task": "T-077",
+  "timing_ms": {
+    "all_excl_first": {
+      "max": 10.67,
+      "mean": 2.687,
+      "median": 2.192,
+      "n": 1799,
+      "p95": 6.091,
+      "p99": 7.894
+    },
+    "first_tick_ms": 2.5,
+    "month_end_excl_quarter": {
+      "max": 10.67,
+      "mean": 6.687,
+      "median": 6.357,
+      "n": 40,
+      "p95": 9.779,
+      "p99": 10.67
+    },
+    "per_year": {
+      "y1": {
+        "max": 7.345,
+        "mean": 2.415,
+        "median": 2.093,
+        "n": 359,
+        "p95": 4.351,
+        "p99": 6.388
+      },
+      "y2": {
+        "max": 8.294,
+        "mean": 2.659,
+        "median": 2.185,
+        "n": 360,
+        "p95": 6.216,
+        "p99": 7.788
+      },
+      "y3": {
+        "max": 9.616,
+        "mean": 2.623,
+        "median": 2.15,
+        "n": 360,
+        "p95": 6.36,
+        "p99": 7.716
+      },
+      "y4": {
+        "max": 10.67,
+        "mean": 2.802,
+        "median": 2.268,
+        "n": 360,
+        "p95": 6.42,
+        "p99": 8.098
+      },
+      "y5": {
+        "max": 9.779,
+        "mean": 2.937,
+        "median": 2.399,
+        "n": 360,
+        "p95": 6.628,
+        "p99": 8.365
+      }
+    },
+    "plain_day": {
+      "max": 9.616,
+      "mean": 2.555,
+      "median": 2.18,
+      "n": 1739,
+      "p95": 4.252,
+      "p99": 7.464
+    },
+    "quarter_end": {
+      "max": 8.294,
+      "mean": 6.175,
+      "median": 5.952,
+      "n": 20,
+      "p95": 8.294,
+      "p99": 8.294
+    },
+    "slowest10": [
+      {
+        "ms": 10.67,
+        "tick": 1410
+      },
+      {
+        "ms": 9.78,
+        "tick": 1680
+      },
+      {
+        "ms": 9.62,
+        "tick": 945
+      },
+      {
+        "ms": 9.5,
+        "tick": 1589
+      },
+      {
+        "ms": 9.32,
+        "tick": 1421
+      },
+      {
+        "ms": 8.66,
+        "tick": 1197
+      },
+      {
+        "ms": 8.49,
+        "tick": 1590
+      },
+      {
+        "ms": 8.37,
+        "tick": 1449
+      },
+      {
+        "ms": 8.29,
+        "tick": 630
+      },
+      {
+        "ms": 8.27,
+        "tick": 1701
+      }
+    ],
+    "ticks_over_16_6ms": 0,
+    "ticks_over_8_33ms": 8
+  },
+  "totals": {
+    "approvals": 0,
+    "capital_inflow": 1440000,
+    "completions": 0,
+    "construction_spend": 0,
+    "declines": 14400,
+    "declines_recorded": 14400,
+    "evaluations": 14400,
+    "land_sales": 0,
+    "rent_income": 0,
+    "stalls": 0
+  },
+  "unplanned_land_enabled": 1,
+  "use_diff": true,
+  "vacant_last_code_end": {
+    "D1": {
+      "zoning_unplanned": 1418
+    },
+    "D2": {
+      "zoning_unplanned": 2595
+    },
+    "D3": {
+      "zoning_unplanned": 1744
+    },
+    "D4": {
+      "(hiç karar yok)": 654,
+      "zoning_unplanned": 5327
+    },
+    "D5": {
+      "(hiç karar yok)": 1135,
+      "zoning_unplanned": 2043
+    },
+    "D6": {
+      "zoning_unplanned": 1273
+    }
+  },
+  "world_seed": 1467,
+  "years": 5
+}

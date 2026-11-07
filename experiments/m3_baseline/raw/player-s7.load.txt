@@ -1,0 +1,6 @@
+ad: player-s7
+başlangıç: 2026-11-07 19:57:19
+uptime önce: 19:57  up 4 days,  1:52, 1 user, load averages: 3.90 3.30 3.31
+bitiş: 2026-11-07 19:58:07
+uptime sonra: 19:58  up 4 days,  1:53, 1 user, load averages: 4.75 3.59 3.41
+godot çıkış kodu: 0
