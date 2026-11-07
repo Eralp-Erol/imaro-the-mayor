@@ -58,3 +58,5 @@ Sahip talimatı: "Ben sana dur diyene kadar duraklamaman gerekiyor." Her uyanı�
 - 09:2x: SAHIP 'Beni bekleyenlerin hepsini onayliyorum': D-027 (Q-041 A), D-028 (Q-042 A), iPad serisi basladi (09:08, ipad-series.sh, ~40 dk; on kosullari cihazda dogrulayamiyorum, koşular hz/kip ile okunur), push onayi, OUTLIER skill depoya eklendi. Sira: push, sonra Q-042 A uygulamasi (ui-engineer).
 - 09:5x: seri S1,S2 geçerli (iyi kip, is_ms ort 1,2-1,7), S3-S5 kesildi (pause/dosya yok), seri durduruldu. Q-042 A uygulandı (ui-engineer), verify full koşuyor.
 - 10:4x: SAHIP: 'soru sorma, devam et, paralel isleri calistir'. verify full PASS (3172) -> ship -> push (main f43902e, dal f27129e). iPad kilitli: ipad-series2.sh kilit acilinca kurup S3-S9+U1 kosar. QA ajani gundem TAM kareleri aliyor. Bundan sonra SORU YOK; karar gerektiren konuda guvenli varsayilan sec, D-NNN'e yazma, kayda ajan notu dus.
+
+- 11:4x: iPad serisi (ipad-series2.sh) BİTTİ: 8 geçerli koşu kayda işlendi (ipad-olcum.md, ADR-0010, T-076, M2-CLOSURE, STATE). B-131 (yatay gündem düğmesi kesik) QA bulgusu düzeltildi, verify quick PASS 972. Push yok (izin reddi).
