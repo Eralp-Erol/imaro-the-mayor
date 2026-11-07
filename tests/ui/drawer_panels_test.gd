@@ -58,7 +58,12 @@ func test_every_city_covering_panel_is_a_drawer_on_touch_and_closed_leaves_the_c
 			var tag := "%s %s" % [which, window]
 			assert_bool(hud.is_drawer_active()).override_failure_message("çekmece değil: " + tag).is_true()
 			assert_str(String(hud.layout.panel_mode)).is_equal("drawer")
-			assert_int(hud.drawer_state).is_equal(DrawerModel.State.HALF)
+			# D-028: gündem yüksek (TAM) açılır, diğerleri yarı; karşılaştırma için hep yarıdan ölçülür.
+			assert_int(hud.drawer_state).is_equal(DrawerModel.State.FULL if HudRoot.DRAWER_OPEN_TALL_PANELS.has(which)
+					else DrawerModel.State.HALF)
+			hud.set_drawer_state(DrawerModel.State.HALF)
+			await await_idle_frame()
+			await await_idle_frame()
 			var half_h := hud.panel.size.y
 			hud.set_drawer_state(DrawerModel.State.CLOSED)
 			await await_idle_frame()
