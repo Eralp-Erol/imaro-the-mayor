@@ -348,3 +348,22 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Options: A) Gündem paneli de yol onay kartı gibi daha yüksek açılsın; etki yazısı düğmenin üstünde kalır, kaydırma gerekmez; harita biraz daha çok örtülür (önerilen). B) Şimdiki hâl kalsın: kaydırınca ulaşılır, yarı yükseklikte harita açık kalır. C) Düğme yukarı, etki yazısı altında olsun (tek bakışta görünür, ama etkiyi görmeden basma riski).
 - Recommendation: A (mevcut mekanizma, yeni düzen riski yok; etki okunmadan basılamaz).
 - Meanwhile: şimdiki hâl (B) kalır; kaydırınca erişiliyor, test var.
+
+## M3 soruları (2026-11-07; design-director kapsam notu; hiçbiri engellemez, güvenli varsayılanla ilerlenir)
+### Q-043 · Komşu ilçeler siz bakmıyorken nasıl değişsin?  (status: open)
+- Context: M3 / WLD-11. Bugün D2 dışındaki boş araziler fiilen donuk (imar planını yalnız siz açıyorsunuz).
+- Options: A) **(Önerilen)** Komşu belediyeler de sizin gibi imar planı açar, yatırımcılar karar verip bina yapar; siz dönüp bakınca yeni binaları ve "neden"ini görürsünüz, onların kararları sizin ilçenize de dokunur (işe gidiş, trafik, ev talebi). Adları/partileri yok. B) Komşular yalnız sessizce büyür (bina çıkar), belediye kararı ve size etkisi yok. C) A + komşu belediye haber/rakip gibi konuşur (ad/parti sonra karar).
+- Recommendation: A — kanondaki "komşu belediye farklı kararlar verip dengeyi değiştirebilir" vaadini isim uydurmadan karşılar.
+- Meanwhile: A veriyle kurulur, komşu karar sıklığı bir sayı; B'ye dönüş tek bayrak.
+
+### Q-044 · Yol bakımı kasadan düşsün mü?  (status: open)
+- Context: SIM-04 bakım maliyeti; D-010 bütçe bugün yalnız gösterge.
+- Options: A) **(Önerilen)** Bakım her ay gerçek gider olarak düşer; kasa eksiye inebilir ama yol yapmanız engellenmez; eksi kasa meclis/gündemde konu olur. B) Kasa gerçek sınır: para yoksa yeni yol yok. C) Bakım yalnız gösterilir, kasa gösterge kalır.
+- Recommendation: A — maliyeti hissettirir, inşa akışını kesmez (F03 "bürokrasi inşayı boğmaz").
+- Meanwhile: C gibi davranır (gösterilir, kasa gösterge) ta ki yanıt gelene dek; geçiş tek ayar.
+
+### Q-045 · Yağmur ve ortam sesi ne yapsın?  (status: open)
+- Context: ROADMAP M3; Q-018 §7 (mevsim/hava) açık; görünüm sahibin zevkidir (D-029).
+- Options: A) **(Önerilen)** Yağmur yalnız görünür ve duyulur, oyunu etkilemez; mevsim yok. Ses: kent uğultusu, deniz, yağmur; müzik yok. Önce/sonra karesi ve kısa ses örneği size gelir. B) A + yağmur trafiği yavaşlatır (oyuna etkisi var). C) Yağmur ve ses M3'ten çıkarılsın.
+- Recommendation: A — en küçük, geri alınır adım; B sonra tek veri değişikliğiyle eklenebilir.
+- Meanwhile: hiçbir görünüm/ses sizin onayınız olmadan ana dala girmez; iş dalda hazırlanır.
