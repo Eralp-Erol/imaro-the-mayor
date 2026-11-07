@@ -46,6 +46,21 @@ func test_real_pe01_item_is_listed_in_the_panel_with_the_why_button() -> void:
 	assert_object(panel.button_with_text("Nedenini gör")).is_not_null()
 
 
+func test_why_button_comes_after_the_answer_buttons_so_the_first_answer_stays_in_view() -> void:
+	# B-131: 1024x768 yatayda "Nedenini gör" seçeneklerin üstünde "Bu yanıtı ver"i panelin altına itiyordu.
+	var h: PoliticsHandle = _world()["handle"]
+	h.facade.advance(14)
+	var panel := _panel_for(h)
+	var why := panel.button_with_text("Nedenini gör")
+	var answer := panel.button_with_text(UiText.t(&"agenda.choose"))
+	assert_object(why).is_not_null()
+	assert_object(answer).is_not_null()
+	await await_idle_frame()
+	await await_idle_frame()
+	assert_float(why.get_global_rect().position.y).override_failure_message(
+			"'Nedenini gör' seçeneklerden ÖNCE").is_greater(answer.get_global_rect().end.y - 1.0)
+
+
 func _panel_for(h: PoliticsHandle) -> AgendaPanel:
 	var ctx := UiContext.for_profile_name(&"desktop")
 	var holder := Control.new()

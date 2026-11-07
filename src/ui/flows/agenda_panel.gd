@@ -101,6 +101,7 @@ func _item_card(it: AgendaModel.Item) -> Control:
 	_add_response_state(inner, it)
 	for o in it.options:
 		inner.add_child(_option_card(it, o))
+	_add_displacement_why(inner, it)   # B-131: "Nedenini gör" seçeneklerin ALTINDA ("Bu yanıtı ver" kesilmesin)
 	# D-028: tür/konu satırları seçeneklerin ALTINDA (yalnız sıra; "Bu yanıtı ver" kaydırmasız görünsün).
 	var kind_key := StringName("agenda.kind.%s" % it.kind)
 	if UiText.has(kind_key):
@@ -132,6 +133,12 @@ func _add_displacement_cause(inner: VBoxContainer, it: AgendaModel.Item) -> void
 					{"count": UiText.number(unplaced)}), UiTheme.V_LABEL_DANGER, true)
 			_tag(no_home, "resettlement_unplaced")
 			inner.add_child(no_home)
+
+
+## "Nedenini gör" düğmesi: yalnız yerinden edilme nedeni kayıtta bulunduysa (B-131: seçeneklerden sonra eklenir).
+func _add_displacement_why(inner: VBoxContainer, it: AgendaModel.Item) -> void:
+	if it.reason_ids.is_empty() or not bool(AgendaModel.displaced_cause(_facade, it.reason_ids)["found"]):
+		return
 	var ids := it.reason_ids
 	var why := UiFactory.button(_ctx, UiText.t(&"agenda.displacement.why"), false)
 	_tag(why, "why_%s" % it.id)
