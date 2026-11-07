@@ -89,3 +89,24 @@ Yapı: PerfLogger A1-A3 (commit 7e586c4) release. Sahip toplu onay verdi ("hepsi
 S6, U1, S7-S9 çalışmadı: seri 09:46'da durduruldu (cihazı gereksiz rahatsız etmesin).
 Okuma [doğrulanmış sayılar]: iki geçerli koşu da iyi kipte (A: busy ort ≤ 1,9 ms, `busy_near_interval_frac` ≤ 0,016, kullanım ~%20); `is_ms` ort 1,2-1,7 / p95 ≤ 2,95 ms ön hedefin (≤ 8 / 16,6) çok içinde. KÖTÜ kip bu seride GÖRÜLMEDİ ama yalnız 2 koşu var: kip sıklığı (k/N) hakkında hüküm verilemez. Pencere dökümü (`mode_windows`) kısa koşularda yok (pencere yok), kip tanısı için U1 (300 sn) gerek.
 Kesintiler: S3/S4 `pause` ve S5 dosya gelmedi. Neden uzaktan belirlenemedi (olası: ekrana dokunma/bildirim/kilit; sabah saati). Yan kayıt `devicectl info lockState` yalnız `passcodeRequired=false`, `unlockedSinceBoot=true` döndü; kilit anı bilgisi yok. Tekrar için sahip ön koşulları gerçekten kuracak ve cihaza ~40 dk dokunmayacak.
+
+
+## TD koşu kitabı serisi, İKİNCİ DENEME (2026-11-07 10:58-11:18, `ipad-series2.sh`, `tools/ipad-series.sh` mantığı) — 8 GEÇERLİ koşu
+Koşu koşulu [doğrulanan]: release (PerfLogger A1-A3), `--demo`, 6000 kare (U1: 300 sn), taze dosya (`started_unix` ≥ başlatma), `complete=true`, `refresh_hz` 120 sabit (hepsinde `hzc=false`). Cihazdaki şarj/Düşük Güç/Otomatik Kilit [doğrulanamadı; cihaz önceki gün 120 Hz'e dönmüştü]. Koşular arası dinlenme ~45 sn; ilk koşu cihaz kilidi açılınca kuruluşun hemen ardından (soğutma yok).
+| Koşu | kare ort / p95 / p99 (ms) | is_ms ort / p95 | busy ort / p95 | kullanım (busy) | aralığı aşan kare oranı | CPU sondası p50 (µs) | render ölçümü |
+|---|---|---|---|---|---|---|---|
+| S3 | 8,37 / 8,63 / 13,55 | 2,04 / 3,18 | 2,35 / 3,88 | ~0,2 | 0,019 | 198 | açık |
+| S4 | 8,70 / 13,75 / 16,97 | 2,43 / 3,26 | 7,43 / 9,21 | — | 0,068 | 191 | açık |
+| S5 | 8,35 / 8,65 / 13,52 | 1,98 / 2,99 | 2,25 / 3,18 | ~0,2 | 0,019 | 191 | açık |
+| S6 | 9,26 / 16,56 / 16,72 | (kapalı) | 7,44 / 16,24 | — | 0,131 | 68 | KAPALI |
+| S7 | 9,33 / 16,58 / 16,77 | 0,71 / 1,09 | 7,49 / 16,26 | 0,80 | 0,135 | 79 | açık |
+| S8 | 9,28 / 16,54 / 16,72 | 0,70 / 1,06 | 7,43 / 16,21 | — | 0,134 | 68 | açık |
+| S9 | 9,56 / 16,66 / 19,02 | 0,72 / 1,25 | 7,91 / 16,35 | — | 0,164 | 68 | açık |
+| U1 (300 sn) | 9,36 / 16,58 / 16,77 | 0,65 / 0,93 | 7,79 / 16,25 | — | 0,139 | 67 | açık |
+Her koşuda üçgen ~399,9 bin, çizim ~306, `frames_over_33ms` ≤ 2. U1 ısıl (kısa, 300 sn; 15 dk g2 koşusunun yerine geçmez): `is_ms` p95 ilk/son 0,94/0,92 → oran 0,979; kare p95 oranı 0,999; `busy` oranı 0,999 (sınır 1,25) → GEÇTİ. Kip pencereleri: A=0, B=9/9.
+Okuma [doğrulanmış sayılar]:
+- İKİ KİP açıkça görüldü ve koşular kipe göre ayrıldı: **İyi kip** (S3, S5; S4 karışık): kare p95 8,6 ms (120 Hz kilitli), aralığı aşan kare %2; **bekleme kipi** (S6-S9, U1): kare p95 16,6 ms (kareler 60 Hz aralığına düşüyor), aralığı aşan kare %13-16, `busy` p50 ~8,2 / p95 ~16,3 ms aralığa kilitli (BEKLEME imzası, TD'nin tanımı).
+- **MALİYET (TD ölçütü `is_ms`, en kötü koşu = S4):** ort 2,43 ms, p95 3,26 ms (ön hedef ≤ 8 / ≤ 16,6 ms; çok içinde). Bekleme kipinde `is_ms` ort ≤ 0,72 ms: CPU işi ÇOK az, kare süresini CPU değil bekleme belirliyor.
+- Kip sıklığı bu seride: iyi 2/8, karışık 1/8, bekleme 5/8 (öncekiler dahil: S1, S2, g2 iyi; bekleme kipi 12:42-13:32 ve bu seri). Kip, S5 -> S6 arasında (~11:05) bir kez değişti ve bir daha dönmedi.
+- Beklenmeyen: bekleme kipinde CPU sondası 3 kat DAHA HIZLI (p50 ~68 µs, iyi kipte ~190-198 µs). Yani bekleme kipi "CPU kısıldı" DEĞİL; cihaz CPU'su o kipte daha hızlı. Render ölçümü kapalı (S6) açık koşularla (S7-S9) aynı kipte: ölçüm aracı neden değil (ikinci kez doğrulandı).
+Doğrulanmadı (HİPOTEZ): bekleme kipi GPU/ekran sunum zamanlaması (ProMotion/yenileme politikası ya da GPU saati) ya da iOS güç yönetimi; Godot'tan GPU süresi/ısıl durum okunamaz. Neden belirlenmedi; Instruments gerekir. Oyuncunun yaşadığı: bekleme kipinde 120 Hz yerine ~60 kare/sn'lik akıcılık (p99 ≤ 19 ms), takılma yok (>33 ms ≤ 2/6000).
