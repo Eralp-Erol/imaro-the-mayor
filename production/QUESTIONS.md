@@ -337,13 +337,13 @@ Beklerken stüdyo ne yapar: hiçbir yıkım/yeniden yapılaşma mekaniği kurulm
 - Meanwhile: veri değişmez; M2 kapanışında bu ölçüt "KISMEN (1 grup)" yazılır.
 - Uygulama notu (simulation-engineer, 2026-11-05, dal `work/b130`; sahip cevabı A -> D-026): konut arayanlar için petition eşiği 250 -> 190 (veri, ölçümle seçildi). Sonuç: yoğun yol yapımında (6 yol, ~300 hane) konut arayanlar 360 günde 4/4 koşuda, 200 günde 2/4 koşuda dilekçe veriyor (gerekçe kaydı var); taban ve tek yol 16/16 koşuda tepkisiz. **Açık kalan:** barınanlar (`actor.bloc.1`) hâlâ grup tepkisi üretmiyor (puan 8-73), eşikle ayrılamıyor; yani "iki grup `group.reacted`" HENÜZ yok: barınanların karara bağlı tepkisi yalnız mahalle gündem öğesi PE-01 + haber. İki yol (sahip kararı gerekir): (1) M2 ölçütünü "konut arayanlar grup tepkisi + barınanlar mahalle gündemi" diye oku, (2) barınanlar için mahalle ölçekli kesim sinyali (kod + `blocs.json`, yeni GOLDEN). Ayrıntı ve GOLDEN eski/yeni hash'ler: `production/bugs/B-130.md`.
 
-### Q-041 · "İki grup tepkisi" ölçütünü nasıl okuyalım? (status: open)
+### Q-041 · "İki grup tepkisi" ölçütünü nasıl okuyalım? (status: answered → D-027 (A))
 - Context: Q-040 "A" uygulandı (D-026): konut arayanlar artık yoğun yol yapımından sonra dilekçe veriyor (doz testi 360 günde 4/4, tek yolda ve karar yokken yok). Ama barınan mahalle grubunun puanı tabanla örtüşüyor (doz 31-73, taban 8-42), yalnız eşiği düşürerek tepki vermiyor. Barınanlar zaten kamulaştırmalı her yolda mahalle gündem maddesi (PE-01) ve haber üretiyor.
 - Options: A) Ölçütü şöyle oku: "konut arayanlar grup tepkisi + barınanlar mahalle gündemi/haber" = iki grup tepkisi (önerilen; yeni kod yok, gerçek oyunda ikisi de görünür). B) Barınanlar için de ayrı bir dilekçe/protesto sinyali eklensin (kod + yeni GOLDEN, daha büyük iş).
 - Recommendation: A (ikisi de gerçek nedenle ve karara bağlı çıkıyor; B ancak oynayınca eksik hissedilirse).
 - Meanwhile: M2 kapanışında bu ölçüt "KISMEN: konut arayanlar dilekçe, barınanlar gündem" yazılır.
 
-### Q-042 · iPad'de gündem kartında "Bu yanıtı ver" düğmesi nerede dursun? (status: open)
+### Q-042 · iPad'de gündem kartında "Bu yanıtı ver" düğmesi nerede dursun? (status: answered → D-028 (A); uygulanacak)
 - Context: B-123. iPad'de panel alttan yarı yükseklikte açılıyor. Gündem kartında (halk tepkisine yanıt) önce etkisi yazılıyor, altında "Bu yanıtı ver" düğmesi geliyor; yarı yükseklikte düğme ekranın altında kalıyor, kaydırınca ulaşılıyor (çalışıyor, ama "halk tepki versin" döngüsünün ana eylemi). Düğmeyi yukarı alırsak etki yazısı düğmenin ALTINA iniyor: etkiyi okumadan basılabilir, bu yüzden denemedik. Yol onay kartında (D-022) panelin daha yüksek açılması zaten kullanılıyor.
 - Options: A) Gündem paneli de yol onay kartı gibi daha yüksek açılsın; etki yazısı düğmenin üstünde kalır, kaydırma gerekmez; harita biraz daha çok örtülür (önerilen). B) Şimdiki hâl kalsın: kaydırınca ulaşılır, yarı yükseklikte harita açık kalır. C) Düğme yukarı, etki yazısı altında olsun (tek bakışta görünür, ama etkiyi görmeden basma riski).
 - Recommendation: A (mevcut mekanizma, yeni düzen riski yok; etki okunmadan basılamaz).
