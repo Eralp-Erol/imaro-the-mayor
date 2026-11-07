@@ -18,8 +18,14 @@ const E := preload("res://tests/sim/economy/economy_test_support.gd")
 # B-130/D-026: decision_tables.json (bloc.react petition 250 -> 190) tüm dosya olarak aktör özetine, o da durum
 # hash'ine girer; baz çizgisi bu yüzden değişti (eski: d66d81a9…). Teknik direktör onayı:
 # production/log/2026-11-05-teknik-direktor-b130-golden.md
-const GOLDEN_A := "ffbaf113645896e9d60c5c8eeba0ef6b8df5f54df8326b31b7bcbfd7678ae2e6"
-const GOLDEN_B := "42abd619af18f2a9fb64298aa89bbe0d62a14db9d5af3f9c91cb715ffb27df9a"
+# 2026-11-07 meta-anahtar özeti (TD kararı, production/log/2026-11-07-teknik-direktor-notes-hash.md):
+# üst düzey `_notes` artık aktör yapılandırma özetine girmez.
+# A: eski ffbaf113645896e9d60c5c8eeba0ef6b8df5f54df8326b31b7bcbfd7678ae2e6 -> yeni;
+# B: eski 42abd619af18f2a9fb64298aa89bbe0d62a14db9d5af3f9c91cb715ffb27df9a -> yeni.
+# Sim gidişatı aynı: yeni durumda `config_digest` eski özetle değiştirilince eski GOLDEN bit-bit çıkar
+# (maske kanıtı: experiments/notes_hash_mask/).
+const GOLDEN_A := "74e0177ff4f2a3a1f6f1dff62b9c3f76e0baa92106631d65ef0b5723bca00c5c"
+const GOLDEN_B := "c0ea03dadc310383f2c2c447b240f4da7dc0a5c41d14a996548c82efe030bf33"
 
 
 func _view(f: SimFacade, id: int) -> ParcelView:

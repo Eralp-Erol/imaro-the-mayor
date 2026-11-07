@@ -99,6 +99,46 @@ func test_integral_floats_from_json_become_ints_and_digest_is_stable() -> void:
 	assert_str(changed.digest).override_failure_message("sayı değişince özet değişmeli").is_not_equal(a.digest)
 
 
+## Üst düzey `_` anahtarlar (ör. `_notes`) belgedir: özete GİRMEZ. Yorum cümlesi düzeltmek determinizm GOLDEN'larını
+## kırmamalı (yanlış alarm "hash yenile" alışkanlığı üretir).
+## TD kararı: production/log/2026-11-07-teknik-direktor-notes-hash.md
+func test_top_level_meta_keys_do_not_change_the_config_digest() -> void:
+	var base := ActorConfig.from_files(raw_files())
+	assert_bool(base.is_valid()).override_failure_message(base.error).is_true()
+	for file_name in FILE_NAMES:
+		assert_bool(raw_files()[file_name].has("_notes")) \
+			.override_failure_message("%s: _notes yok (test varsayımı)" % file_name).is_true()
+		var reworded := mutated(func(f: Dictionary) -> void: f[file_name]["_notes"] = "tamamen farkli bir not metni")
+		assert_str(reworded.digest) \
+			.override_failure_message("%s: _notes metni özete giriyor" % file_name).is_equal(base.digest)
+		var removed := mutated(func(f: Dictionary) -> void: f[file_name].erase("_notes"))
+		assert_str(removed.digest) \
+			.override_failure_message("%s: _notes silinince özet değişti" % file_name).is_equal(base.digest)
+		var extra := mutated(func(f: Dictionary) -> void: f[file_name]["_yeni_meta"] = {"a": [1, 2]})
+		assert_str(extra.digest) \
+			.override_failure_message("%s: yeni _ anahtarı özete giriyor" % file_name).is_equal(base.digest)
+
+
+## Olumsuz kontrol: `_` önekli OLMAYAN anahtar/sayı özeti değiştirmeye devam eder (ayar değişikliği görünür kalır).
+func test_non_meta_keys_still_change_the_config_digest() -> void:
+	var base := ActorConfig.from_files(raw_files())
+	var number := mutated(func(f: Dictionary) -> void: f["memory_params"]["k_gain"] = 401)
+	assert_str(number.digest).is_not_equal(base.digest)
+	var threshold := mutated(func(f: Dictionary) -> void: f["decision_tables"]["decisions"]["council.vote"]["theta"] = 5)
+	assert_str(threshold.digest).override_failure_message("eşik değişikliği özete girmeli").is_not_equal(base.digest)
+	# `_` yalnız ÜST DÜZEYDE meta sayılır; iç içe `_` anahtarı veridir (özyinelemeli silme yok, TD kararı).
+	var nested := mutated(func(f: Dictionary) -> void: f["memory_params"]["half_life_days"]["_x"] = 1)
+	assert_bool(nested.is_valid()).is_false()
+
+
+func test_without_meta_drops_only_top_level_underscore_keys_and_copies_the_rest() -> void:
+	var raw := {"_notes": "x", "_a": 1, "schema": 1, "kinds": {"_inner": 2, "k": [1, 2]}}
+	var out := ActorSchema.without_meta(raw)
+	assert_array(out.keys()).is_equal(["schema", "kinds"])
+	assert_dict(out["kinds"]).is_equal({"_inner": 2, "k": [1, 2]})
+	assert_bool(raw.has("_notes")).override_failure_message("girdi değiştirilmemeli").is_true()
+
+
 ## [etiket, düzenleme, hata metninde aranacak parça]. Her biri bozuk veri için ANLAŞILIR (yol + kimlik) hata verir.
 func _broken_cases() -> Array:
 	return [

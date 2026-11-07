@@ -125,18 +125,9 @@ func _build(files: Dictionary) -> void:
 
 func _prepare(raw: Dictionary, file_name: String) -> Dictionary:
 	ActorSchema.float_problems(raw, file_name, errors)
-	var out: Dictionary = _without_notes(ActorSchema.to_ints(raw))
+	var out: Dictionary = ActorSchema.without_meta(ActorSchema.to_ints(raw))
 	if out.get("schema", null) != ActorSchema.VERSION:
 		errors.append("%s.schema: %d bekleniyor" % [file_name, ActorSchema.VERSION])
-	return out
-
-
-## Üst düzey `_` ile başlayan anahtarlar belgedir (yok sayılır).
-static func _without_notes(raw: Dictionary) -> Dictionary:
-	var out := {}
-	for key: Variant in raw:
-		if not str(key).begins_with("_"):
-			out[key] = raw[key]
 	return out
 
 
@@ -674,7 +665,7 @@ func _parse_templates(raw_templates: Variant, index: Dictionary) -> void:
 		if not (raw is Dictionary):
 			errors.append("events/%s: dosya yok veya JSON nesnesi değil" % str(template_id))
 			continue
-		var parsed := _parse_template(_without_notes(ActorSchema.to_ints(raw)), "events/%s" % str(template_id))
+		var parsed := _parse_template(ActorSchema.without_meta(ActorSchema.to_ints(raw)), "events/%s" % str(template_id))
 		if parsed.is_empty():
 			continue
 		if seen.has(parsed["id"]):
