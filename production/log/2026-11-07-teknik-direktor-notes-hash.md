@@ -67,3 +67,7 @@ Uygulayıcı: `simulation-engineer` (sonnet) veya ana oturum. REQ: TEK-01 (deter
 - Yalnız alan EKLEME -> `EXTRAS_VERSION` +1. Mevcut alanı silme/yeniden adlandırma, birimini veya tanımını değiştirme (ör. `busy_ms` ölçüm noktası) -> `format` 3 olur ve `perf_logger_env_test.gd:47` ile `perf_logger_modes_test.gd:126` aynı commit'te güncellenir.
 - `perf_logger_env_test.gd:47`deki sabit `2` bilinçli kilittir (kazara artışı yakalar); `FORMAT_VERSION`a bağlanmasın.
 - İsteğe bağlı küçük iş (ana oturum, tek satır): bu kuralı `perf_logger.gd:82` belge satırına ekle.
+
+
+## Uygulandı (2026-11-07)
+dd1405b: `ActorSchema.without_meta`, 4 GOLDEN yenilendi (sim gidişatı aynı; maske kanıtı 4 senaryoda bit-bit, `experiments/notes_hash_mask/`), `OLD_CODE_STATE_HASH` değişmedi. `verify full` PASS (3184 test, 0 hata, kapsam tam @dd1405b). PerfLogger `format` 2 kaldı.
