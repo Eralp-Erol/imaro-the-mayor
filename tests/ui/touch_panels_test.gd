@@ -293,7 +293,10 @@ func _assert_world_does_not_hear_panel(f: SimFacade, opener: Callable, window: V
 	var points: Array[Vector2] = [panel_rect.position + Vector2(panel_rect.size.x * 0.5, 6.0),
 			panel_rect.get_center(), panel_rect.end - Vector2(6.0, 6.0)]
 	for b in UiTestSupport.visible_buttons(hud.panel):
-		if panel_rect.encloses(b.get_global_rect()) and b != hud.panel.close_button():
+		# Çekmece ok düğmeleri paneli yeniden boyutlar (basış dizisi ortasında panel çekilir); girdi sızıntısı sınamasının
+		# konusu değil. Tam açılan gündemde (D-028) "aşağı" oku panelin altını açardı.
+		if panel_rect.encloses(b.get_global_rect()) and b != hud.panel.close_button() \
+				and b != hud.panel.drawer_up and b != hud.panel.drawer_down:
 			points.append(b.get_global_rect().get_center())
 	for p in points:
 		sub.push_input(_touch(true, p))

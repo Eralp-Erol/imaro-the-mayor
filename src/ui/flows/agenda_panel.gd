@@ -91,11 +91,6 @@ func _item_card(it: AgendaModel.Item) -> Control:
 	var inner: VBoxContainer = parts[1]
 	var title := UiText.t(it.title_key) if UiText.has(it.title_key) else UiText.t(&"agenda.item_new")
 	inner.add_child(UiFactory.label(title, UiTheme.V_LABEL_TITLE, true))
-	var kind_key := StringName("agenda.kind.%s" % it.kind)
-	if UiText.has(kind_key):
-		inner.add_child(_muted(UiText.t(kind_key)))
-	if it.subject_ref != &"":
-		inner.add_child(_pair(UiText.t(&"council.subject"), UiText.humanize(String(it.subject_ref))))
 	inner.add_child(UiFactory.label(_time_text(it), &"", true))
 	_add_displacement_cause(inner, it)
 	if it.kind == AgendaModel.KIND_COUNCIL_VOTE:
@@ -106,6 +101,12 @@ func _item_card(it: AgendaModel.Item) -> Control:
 	_add_response_state(inner, it)
 	for o in it.options:
 		inner.add_child(_option_card(it, o))
+	# D-028: tür/konu satırları seçeneklerin ALTINDA (yalnız sıra; "Bu yanıtı ver" kaydırmasız görünsün).
+	var kind_key := StringName("agenda.kind.%s" % it.kind)
+	if UiText.has(kind_key):
+		inner.add_child(_muted(UiText.t(kind_key)))
+	if it.subject_ref != &"":
+		inner.add_child(_pair(UiText.t(&"council.subject"), UiText.humanize(String(it.subject_ref))))
 	return parts[0]
 
 

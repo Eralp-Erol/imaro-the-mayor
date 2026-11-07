@@ -41,6 +41,10 @@ signal map_highlight_changed(parcel_ids: PackedInt64Array)
 ## D-022: haritada iş yapılan paneller çekmecede alçak yarı kesirle açılır (`drawer_frac_half_low`).
 const DRAWER_LOW_PANELS: Array[StringName] = [&"road_draw", &"inspector"]
 
+## D-028 (B-123): bu paneller çekmecede TAM yükseklikte açılır (yol onay kartı gibi yüksek): gündemde etki önizlemesi
+## "Bu yanıtı ver" düğmesinin üstünde kalır ve düğme kaydırmasız görünür. Oyuncu yine ok/sürükleme ile indirebilir.
+const DRAWER_OPEN_TALL_PANELS: Array[StringName] = [&"agenda"]
+
 ## Çekmece bu genişlikten (px) geniş olunca iki sütunlu içerik (alan | kullanım) düzenine geçer.
 const WIDE_DRAWER_PT := 600.0
 
@@ -197,7 +201,8 @@ func open_panel(panel_id_in: StringName, title_key: StringName, builder: Callabl
 		set_map_highlight(_panel_id, PackedInt64Array())
 		drawer_tall = false
 	if panel_id_in != _panel_id or not is_panel_open():
-		drawer_state = DrawerModel.State.HALF
+		drawer_state = DrawerModel.State.FULL if DRAWER_OPEN_TALL_PANELS.has(panel_id_in) \
+				else DrawerModel.State.HALF
 		_drag_h = -1.0
 	_panel_id = panel_id_in
 	_panel_title_key = title_key

@@ -1,8 +1,8 @@
 {
   "mode": "full",
-  "started_at": "2026-11-06T18:31:21Z",
-  "git_head": "1d7e5e1db91aad96dde033b817e3e726a8a6efae",
-  "fingerprint": "bc65176f3f12b86acdad32d7915ede3dfe6dab7ecfc406596d11f1300ecb9602",
+  "started_at": "2026-11-07T08:56:10Z",
+  "git_head": "a65f06ddde43af70af5fcef864c455e47e466581",
+  "fingerprint": "ae03bbea13d82dd670fbaa1e761eefc97e387cb9bd0d4508150f3f041a44a95f",
   "steps": [
     {
       "name": "canon-check",
@@ -13,32 +13,32 @@
     {
       "name": "studio-check",
       "status": "pass",
-      "seconds": 0,
-      "summary": "studio-check: 12 ajan, 17 skill, kurallar/hook/MCP sağlam "
+      "seconds": 1,
+      "summary": "studio-check: 12 ajan, 18 skill, kurallar/hook/MCP sağlam "
     },
     {
       "name": "area-map",
       "status": "pass",
-      "seconds": 4,
+      "seconds": 7,
       "summary": "area-map: 67 kural, 19 çekirdek belirteci, src dizinlerinin hepsi eşli"
     },
     {
       "name": "gdlint",
       "status": "pass",
-      "seconds": 43,
+      "seconds": 60,
       "summary": "Success: no problems found"
     },
     {
       "name": "import",
       "status": "pass",
-      "seconds": 12,
+      "seconds": 14,
       "summary": "içe aktarma temiz"
     },
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 1670,
-      "summary": "3169 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 2266,
+      "summary": "3172 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",

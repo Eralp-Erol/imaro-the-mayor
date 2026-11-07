@@ -413,14 +413,18 @@ func test_trust_notice_after_demolition_stays_visible_among_other_strip_rows_b12
 func _assert_drawer_ok(tag: String, win: Vector2) -> void:
 	var hud := _hud()
 	assert_bool(hud.is_drawer_active()).override_failure_message("%s: çekmece değil" % tag).is_true()
-	assert_int(hud.drawer_state).override_failure_message("%s: YARI açılmadı" % tag).is_equal(DrawerModel.State.HALF)
+	# D-028: gündem TAM açılır (yol onay kartından yüksek), diğer çekmeceler YARI.
+	var opens_full := HudRoot.DRAWER_OPEN_TALL_PANELS.has(hud.panel_id())
+	var want := DrawerModel.State.FULL if opens_full else DrawerModel.State.HALF
+	assert_int(hud.drawer_state).override_failure_message("%s: beklenen açılış durumu değil" % tag).is_equal(want)
 	var pr := hud.panel.get_global_rect()
 	assert_bool(Rect2(Vector2.ZERO, win).encloses(pr)) \
 			.override_failure_message("%s: pencere dışı %s" % [tag, str(pr)]).is_true()
 	assert_float(pr.end.y).override_failure_message("%s: araç çubuğunu örtüyor" % tag) \
 			.is_less_equal(hud.toolbar.get_global_rect().position.y + 1.0)
-	assert_float(_free_frac(hud, win)).override_failure_message(
-			"%s: harita boşluğu %.2f" % [tag, _free_frac(hud, win)]).is_greater(MIN_FREE_FRAC)
+	if not opens_full:
+		assert_float(_free_frac(hud, win)).override_failure_message(
+				"%s: harita boşluğu %.2f" % [tag, _free_frac(hud, win)]).is_greater(MIN_FREE_FRAC)
 	assert_float(hud.free_map_rect().end.y).is_less_equal(pr.position.y + 0.5)
 	for state in [DrawerModel.State.CLOSED, DrawerModel.State.FULL, DrawerModel.State.HALF]:
 		hud.set_drawer_state(state)
@@ -565,6 +569,10 @@ func test_grip_drag_and_arrow_buttons_move_the_real_drawer_and_closed_state_retu
 	await _frames(3)
 	hud.agenda_requested.emit()
 	await _frames(8)
+	assert_int(hud.drawer_state).override_failure_message("gündem TAM açılmalı (D-028)") \
+			.is_equal(DrawerModel.State.FULL)
+	hud.set_drawer_state(DrawerModel.State.HALF)
+	await _frames(4)
 	assert_int(hud.drawer_state).is_equal(DrawerModel.State.HALF)
 	# parmakla tutamaç sürükleme (Godot dokunmayı fareye çevirir) -> TAM
 	var grip := hud.panel.grip.get_global_rect().get_center()
@@ -623,7 +631,9 @@ func test_b124_manage_mode_registers_council_budget_agenda_tools_and_they_open_i
 		btn.pressed.emit()
 		await _frames(4)
 		assert_str(String(hud.panel_id())).is_equal(String(expected[tid]))
-		assert_int(hud.drawer_state).is_equal(DrawerModel.State.HALF)
+		var want := DrawerModel.State.FULL if HudRoot.DRAWER_OPEN_TALL_PANELS.has(expected[tid]) \
+				else DrawerModel.State.HALF
+		assert_int(hud.drawer_state).is_equal(want)
 	hud.close_panel_hard()
 	await _frames(2)
 	assert_object(hud.toolbar.tool_button(ModeToolbar.TOOL_POLICY)).is_not_null()

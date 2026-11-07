@@ -76,3 +76,16 @@ Koşu koşulu: release, `--demo --perf-log-thermal` (900 sn), `complete=true`, `
 | `busy_ms` p95 (ms) | 7,98 | 8,66 | 1,085 | ≤ 1,25 | GEÇTİ (`busy_within_limit` true) |
 Toplam: kare ort 8,35 / p95 8,66 / p99 13,36 / maks 24,16 ms; >33 ms: 1, >100 ms: 1 (açılış karesi, ilk pencerede maks 106,6); `busy_ms` ort 2,15 / p95 8,24; kullanım 0,261; bellek tamponu 186,2 -> 194,5 MB (büyüme 8,2 MB), düğüm 5540 -> 5645, sonlandırma yok.
 Notlar [doğrulanmış sayılar, yorum hipotez]: Bu uzun koşu bütünüyle önceki "iyi" durumdaydı (kullanım ~%26; e1 ile aynı), 12:42-13:32 koşularındaki "kötü" durum (kullanım %87-93) görülmedi; bimodallik açıklanmadı. Isıl kısma bu demo bakışında ve bu koşulda (şarjda varsayılır, ölçülmedi) GÖRÜLMEDİ. Yoğun çekirdek bakışı ve etkileşim yükünde ısıl ölçülmedi.
+
+## TD koşu kitabı serisi, İLK DENEME (2026-11-07 09:08-09:46, `tools/ipad-series.sh` ön hâli) — KISMİ, 2 geçerli koşu
+Yapı: PerfLogger A1-A3 (commit 7e586c4) release. Sahip toplu onay verdi ("hepsini onaylıyorum"); cihazdaki ön koşulları (şarj, Düşük Güç Modu, Otomatik Kilit, Rahatsız Etme, arka plan) uzaktan DOĞRULAYAMADIM. 15 dk soğutma sonrası:
+| Koşu | Durum | refresh_hz | kare ort / p95 / p99 | is_ms ort / p95 | rest_ms ort | busy ort / p50 / p95 | kullanım | aralığı aşan kare oranı |
+|---|---|---|---|---|---|---|---|---|
+| S1 | geçerli (6000 kare, taze dosya) | 120 sabit | 8,35 / 8,60 / 13,8 | 1,69 / 2,95 | 0,22 | 1,91 / 1,42 / 3,30 | 0,206 | 0,019 |
+| S2 | geçerli | 120 sabit | 8,33 / 8,44 / 12,46 | 1,19 / 1,82 | 0,14 | 1,33 / 1,14 / 1,97 | 0,190 | 0,009 |
+| S3 | GEÇERSİZ (`pause`, 1,5 sn) | | | | | | | |
+| S4 | GEÇERSİZ (`pause`, 20,5 sn, 2447 kare) | | | | | | | |
+| S5 | GEÇERSİZ (dosya gelmedi; başlatma/bağlantı) | | | | | | | |
+S6, U1, S7-S9 çalışmadı: seri 09:46'da durduruldu (cihazı gereksiz rahatsız etmesin).
+Okuma [doğrulanmış sayılar]: iki geçerli koşu da iyi kipte (A: busy ort ≤ 1,9 ms, `busy_near_interval_frac` ≤ 0,016, kullanım ~%20); `is_ms` ort 1,2-1,7 / p95 ≤ 2,95 ms ön hedefin (≤ 8 / 16,6) çok içinde. KÖTÜ kip bu seride GÖRÜLMEDİ ama yalnız 2 koşu var: kip sıklığı (k/N) hakkında hüküm verilemez. Pencere dökümü (`mode_windows`) kısa koşularda yok (pencere yok), kip tanısı için U1 (300 sn) gerek.
+Kesintiler: S3/S4 `pause` ve S5 dosya gelmedi. Neden uzaktan belirlenemedi (olası: ekrana dokunma/bildirim/kilit; sabah saati). Yan kayıt `devicectl info lockState` yalnız `passcodeRequired=false`, `unlockedSinceBoot=true` döndü; kilit anı bilgisi yok. Tekrar için sahip ön koşulları gerçekten kuracak ve cihaza ~40 dk dokunmayacak.
