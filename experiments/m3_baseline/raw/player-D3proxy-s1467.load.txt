@@ -1,0 +1,6 @@
+ad: player-D3proxy-s1467
+başlangıç: 2026-11-07 20:04:28
+uptime önce: 20:04  up 4 days,  1:59, 1 user, load averages: 4.96 4.80 4.07
+bitiş: 2026-11-07 20:05:25
+uptime sonra: 20:05  up 4 days, 2 hrs, 1 user, load averages: 4.98 4.86 4.14
+godot çıkış kodu: 0

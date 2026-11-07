@@ -1,0 +1,6 @@
+ad: none-s31337
+başlangıç: 2026-11-07 19:59:43
+uptime önce: 19:59  up 4 days,  1:54, 1 user, load averages: 4.48 3.83 3.52
+bitiş: 2026-11-07 20:00:29
+uptime sonra: 20:00  up 4 days,  1:55, 1 user, load averages: 4.85 4.01 3.60
+godot çıkış kodu: 0

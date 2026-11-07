@@ -1,8 +1,8 @@
 {
   "mode": "full",
-  "started_at": "2026-11-07T12:34:26Z",
-  "git_head": "dd1405be89d5bce50da11fc973d4f512dcc5bfc6",
-  "fingerprint": "b6c614b827aa9e245ae92ef0f4733075d8e1452b38b5f59dcce9f35fe7dae29b",
+  "started_at": "2026-11-07T19:57:03Z",
+  "git_head": "ae78bd7cbbcf38392cd226e218fa61963c730299",
+  "fingerprint": "af3ed6f517fffa8f6d317947c6e21cf068ed8d3b1926b00bd9b776c102616223",
   "steps": [
     {
       "name": "canon-check",
@@ -13,7 +13,7 @@
     {
       "name": "studio-check",
       "status": "pass",
-      "seconds": 0,
+      "seconds": 1,
       "summary": "studio-check: 12 ajan, 18 skill, kurallar/hook/MCP sağlam "
     },
     {
@@ -25,31 +25,31 @@
     {
       "name": "gdlint",
       "status": "pass",
-      "seconds": 44,
+      "seconds": 57,
       "summary": "Success: no problems found"
     },
     {
       "name": "import",
       "status": "pass",
-      "seconds": 11,
+      "seconds": 12,
       "summary": "içe aktarma temiz"
     },
     {
       "name": "unit-gdunit",
       "status": "pass",
-      "seconds": 2646,
-      "summary": "3184 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
+      "seconds": 2141,
+      "summary": "3207 test cases | 0 errors | 0 failures | 0 flaky | 0 skipped | 0 orphans |"
     },
     {
       "name": "canon-guard",
       "status": "pass",
-      "seconds": 105,
+      "seconds": 41,
       "summary": "  PASS  CLAUDE_PROJECT_DIR ana checkout'u gösterse bile oturum cwd'si kullanılıyor  canon-guard testi: 105 PASS, 0 FAIL "
     },
     {
       "name": "runtime-smoke",
       "status": "pass",
-      "seconds": 8,
+      "seconds": 3,
       "summary": "180 kare hatasız"
     }
   ],

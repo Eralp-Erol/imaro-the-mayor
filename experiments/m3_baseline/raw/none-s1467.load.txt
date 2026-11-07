@@ -1,0 +1,6 @@
+ad: none-s1467
+başlangıç: 2026-11-07 19:56:32
+uptime önce: 19:56  up 4 days,  1:51, 1 user, load averages: 3.22 3.15 3.26
+bitiş: 2026-11-07 19:57:18
+uptime sonra: 19:57  up 4 days,  1:52, 1 user, load averages: 3.90 3.30 3.31
+godot çıkış kodu: 0

@@ -1,0 +1,6 @@
+ad: none-s7
+başlangıç: 2026-11-07 19:58:07
+uptime önce: 19:58  up 4 days,  1:53, 1 user, load averages: 4.75 3.59 3.41
+bitiş: 2026-11-07 19:58:54
+uptime sonra: 19:58  up 4 days,  1:53, 1 user, load averages: 4.91 3.80 3.50
+godot çıkış kodu: 0

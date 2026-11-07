@@ -1,0 +1,6 @@
+ad: player-s1467
+başlangıç: 2026-11-07 19:55:42
+uptime önce: 19:55  up 4 days,  1:50, 1 user, load averages: 2.96 3.12 3.26
+bitiş: 2026-11-07 19:56:32
+uptime sonra: 19:56  up 4 days,  1:51, 1 user, load averages: 3.22 3.15 3.26
+godot çıkış kodu: 0
