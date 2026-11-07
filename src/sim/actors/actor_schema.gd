@@ -41,6 +41,16 @@ static func to_ints(value: Variant) -> Variant:
 	return value if as_whole == null else as_whole
 
 
+## Üst düzey `_` ile başlayan meta anahtarlar (ör. `_notes`) belgedir: yok sayılır ve yapılandırma özetine girmez.
+## Yalnız ÜST düzey atılır (iç içe `_` anahtar veridir); girdi değiştirilmez, kalan değerler olduğu gibi aktarılır.
+static func without_meta(raw: Dictionary) -> Dictionary:
+	var out := {}
+	for key: Variant in raw:
+		if not str(key).begins_with("_"):
+			out[key] = raw[key]
+	return out
+
+
 ## Kesirli/sonlu olmayan sayıları bulur (kalıcı durumda float yok: permille tamsayı).
 static func float_problems(value: Variant, path: String, errors: PackedStringArray) -> void:
 	if value is Dictionary:

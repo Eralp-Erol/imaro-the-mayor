@@ -12,7 +12,11 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 # B-130/D-026 ile yenilendi: eski c987fb3d9d6e338e2318902f8e5d73bdbeffb2f318442e1cfa07824193cd4094 (D-021 öncesi). Kural
 # kapalıyken bile `bloc.react` petition eşiği 250 -> 190 kayıt eşiğini (hash'e girer) değiştirdi; bu sabit hâlâ "yalnız
 # council_trust kuralı kapalı" referansıdır, yalnız bloc.react eşiğine göre yeniden alındı.
-const GOLDEN_X_BEFORE_D021 := "92d1a99e9ef9b491683d790a7e8b5ca2f39510ba7114f1c2fde7e324e22c1ef6"
+# 2026-11-07 meta-anahtar özeti (TD kararı, production/log/2026-11-07-teknik-direktor-notes-hash.md):
+# c987fb3d -> 92d1a99e -> yeni (eski 92d1a99e9ef9b491683d790a7e8b5ca2f39510ba7114f1c2fde7e324e22c1ef6 -> yeni);
+# sim gidişatı aynı (maske kanıtı: experiments/notes_hash_mask/). Bu sabit hâlâ "kural kapalı referans"
+# (yalnız council_trust kuralı kapalı) anlamındadır.
+const GOLDEN_X_BEFORE_D021 := "e7517af44534aaae22cbce7986a1f2a865e2f36193966bd54149d54dda7842da"
 const FINAL_TICK := 60
 const SCAN_DAYS := 7
 

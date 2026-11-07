@@ -20,7 +20,10 @@ extends "res://tests/sim/politics/reaction_world_base.gd"
 # d28d563334c8c8c2f5e83b102de4896825c1b7c6eb71655171dfcb0c6d22869c
 # Neden: `bloc.react` petition eşiği 250 -> 190 (`data/actors/decision_tables.json`); kesim tepki gerekçe kayıtları
 # eşiği taşır ve ReasonLog hash'e girer. Kural kapalı referansı (`golden_x_council_trust_test.gd`) da yenilendi.
-const GOLDEN_X := "cd738f30bb347a65e89004744f5628edf126fd5587a58d805bfc1a1b1c49dbf8"
+# 2026-11-07 meta-anahtar özeti (TD kararı, production/log/2026-11-07-teknik-direktor-notes-hash.md):
+# eski cd738f30bb347a65e89004744f5628edf126fd5587a58d805bfc1a1b1c49dbf8 -> yeni; sim gidişatı aynı
+# (maske kanıtı: experiments/notes_hash_mask/; tek fark `systems.actors.config_digest` dizgisi).
+const GOLDEN_X := "c4035cd1a3be05928467e787cb3b4fb02792e1055cc57516cc1e9cd779d264af"
 const FINAL_TICK := 60
 const SAVE_TICK := 30
 const SCAN_DAYS := 7

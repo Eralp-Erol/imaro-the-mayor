@@ -17,3 +17,6 @@ Soru: B-130 (`ff15a0d`) sonrası `GOLDEN_X_BEFORE_D021` (kural kapalı referans)
 
 ## Öneri (teknik direktöre)
 `_notes` (ve `_` ile başlayan meta anahtarlar) state hash girdisinden çıkarılsın; sonra tüm GOLDEN'lar tek ayrı commit'te bir kez yenilensin. Bu bir mimari/determinizm kararıdır; sahip kararı gerekmez.
+
+
+**KAPANDI (2026-11-07):** düzeltme dd1405b (`_` önekli meta anahtarlar hash dışı; 4 GOLDEN yenilendi). Bkz. `2026-11-07-teknik-direktor-notes-hash.md`.

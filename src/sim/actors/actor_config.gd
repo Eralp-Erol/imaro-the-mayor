@@ -7,7 +7,8 @@ extends RefCounted
 ## Dosyalar: traits, axes, topics, kinds, roster_m2, relations_init, memory_params, decision_tables, cadence.
 ## `load_default()` Godot kaynak yükleyicisiyle (`load`, JSON kaynağı) okur; `from_files` ham sözlükleri doğrular
 ## (testler bozuk veri verebilir). JSON sayıları float gelir: tam sayı değerli olanlar int'e çevrilir, kesirli olanlar
-## reddedilir. Geçersiz yapılandırmada `errors` dolu, kadro/tablolar BOŞTUR (kısmi yapılandırma sızmaz).
+## reddedilir. Üst düzey `_` anahtarlar (`_notes`) belgedir; ayrıştırmaya ve `digest`e girmez
+## (bkz. `ActorSchema.without_meta`). Geçersiz yapılandırmada `errors` dolu, kadro/tablolar BOŞTUR (kısmi sızmaz).
 
 const DIR := "res://data/actors/"
 const FILE_NAMES: Array[String] = [
@@ -134,7 +135,7 @@ func _load_sections(files: Dictionary) -> Dictionary:
 			errors.append("%s: dosya yok veya JSON nesnesi değil" % file_name)
 			continue
 		ActorSchema.float_problems(raw, file_name, errors)
-		data[file_name] = ActorSchema.to_ints(raw)
+		data[file_name] = ActorSchema.without_meta(ActorSchema.to_ints(raw))
 		if (data[file_name] as Dictionary).get("schema", null) != ActorSchema.VERSION:
 			errors.append("%s.schema: %d bekleniyor" % [file_name, ActorSchema.VERSION])
 	return data

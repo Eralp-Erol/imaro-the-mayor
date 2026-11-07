@@ -31,6 +31,19 @@ func test_council_size_and_procedure_are_data_not_code() -> void:
 	assert_str(tweaked.council["tie_result"]).is_equal("pass")
 
 
+## Kilit (TD kararı 2026-11-07): üst düzey `_notes` metni siyaset özetine girmez (olay şablonları dahil); sayı girer.
+func test_notes_text_does_not_change_the_politics_digest_but_numbers_do() -> void:
+	var base := politics_config()
+	var reworded := pol_valid(func(f: Dictionary) -> void:
+		for file_name: String in POLITICS_FILES:
+			f[file_name]["_notes"] = "baska metin"
+		for template_id: String in f["templates"]:
+			f["templates"][template_id]["_notes"] = "baska metin")
+	assert_str(reworded.digest).is_equal(base.digest)
+	var changed := pol_valid(func(f: Dictionary) -> void: f["council"]["session_days"] = 30)
+	assert_str(changed.digest).is_not_equal(base.digest)
+
+
 func _with_extra_members(extra: int) -> Dictionary:
 	var files := raw_files()
 	var roster: Array = files["roster_m2"]["actors"]
