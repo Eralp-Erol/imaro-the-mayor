@@ -158,22 +158,9 @@ static func validate_dict(data: Variant) -> String:
 		return reasons_error
 	if not (data.get("systems", null) is Dictionary):
 		return "durum.systems sözlük değil"
-	var events_error := SimEventLog.validate_data(data["systems"].get(SimEventLog.SYSTEM_KEY, null))
-	if not events_error.is_empty():
-		return events_error
-	# T-017: aktör ve siyaset bölümleri (yoksa geçerli) biçim denetiminden geçer; bozuk kayıt yüklenmez
-	var actors_error := ActorStore.validate_data(data["systems"].get(ActorStore.SYSTEM_KEY, null))
-	if not actors_error.is_empty():
-		return actors_error
-	var politics_error := PoliticsState.validate_data(data["systems"].get(PoliticsState.KEY, null))
-	if not politics_error.is_empty():
-		return politics_error
-	var works_error := PublicWorksState.validate_data(data["systems"].get(PublicWorksState.KEY, null))
-	if not works_error.is_empty():  # T-042: oyuncu yolu bölümü (yoksa geçerli)
-		return works_error
-	var policy_error := PolicyState.validate_data(data["systems"].get(PolicyState.KEY, null))
-	if not policy_error.is_empty():  # T-065: kalıcı politika bölümü (yoksa geçerli = kapalı)
-		return policy_error
+	var sections_error := SectionValidators.validate_systems(data["systems"])  # T-078: bölüm doğrulayıcı kaydı
+	if not sections_error.is_empty():
+		return sections_error
 	for key in ["pending_commands", "command_log"]:
 		var entries: Variant = data.get(key, null)
 		if not (entries is Array):

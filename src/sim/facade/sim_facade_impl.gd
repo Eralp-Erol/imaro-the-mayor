@@ -134,10 +134,46 @@ func attach_budget(cfg: BudgetConfig) -> bool:
 		push_error("SimFacadeImpl: bütçe takılamadı (zaten takılı, ekonomi yok ya da tick ilerlemiş)")
 		return false
 	var system := BudgetSystem.create(cfg, _economy.config())
-	if system == null or not _sim.add_system(system):
+	if system == null or not attach_system(system):
 		return false
 	_budget = system
 	return true
+
+
+## T-078 · GENEL takma kapısı: isteğe bağlı bir sistemi (ve varsa komut işleyicilerini) tick 0'da, çalışma sırasının
+## SONUNA takar. ATOMİK: önce sistem kimliği ve işleyici türleri denetlenir; biri geçersizse (null, tekrar, tick
+## ilerlemiş) hiçbir şey takılmaz, push_error + false. Takılmazsa durum/hash değişmez ("takılmazsa sıfır bayt");
+## takılan sistem kendi `state.systems` bölümünü yazar ve doğrulayıcısını `SectionValidators`a ekler. Sistem türüne özgü
+## bağlar (ör. `attach_budget`'ın `_budget` alanı) çağıranın işidir; bu kapı yalnız takma ve denetimdir.
+func attach_system(system: SimSystem, handlers: Array[CommandHandler] = []) -> bool:
+	var problem := _attach_problem(system, handlers)
+	if not problem.is_empty():
+		push_error("SimFacadeImpl: attach_system: %s" % problem)
+		return false
+	if not _sim.add_system(system):
+		return false
+	for handler in handlers:
+		if not _sim.add_handler(handler):
+			return false
+	return true
+
+
+## `attach_system` ön denetimi: sorun metni ya da "" (hiçbir şey değiştirmez).
+func _attach_problem(system: SimSystem, handlers: Array[CommandHandler]) -> String:
+	if system == null:
+		return "sistem yok"
+	if _state.tick != 0:
+		return "tick ilerlemiş (sistemler yalnız tick 0'da takılır)"
+	var id := system.system_id()
+	if id == &"" or _sim.has_system(id):
+		return "'%s' sistemi zaten takılı ya da kimliği geçersiz" % id
+	var kinds := {}
+	for handler in handlers:
+		var kind := handler.command_type() if handler != null else &""
+		if kind == &"" or kinds.has(kind) or _sim.handler_for(kind) != null:
+			return "'%s' komut türü zaten kayıtlı ya da geçersiz" % kind
+		kinds[kind] = true
+	return ""
 
 
 ## Takılı oyuncu yolu bağlamı (yoksa null). YALNIZ app katmanı/testler.

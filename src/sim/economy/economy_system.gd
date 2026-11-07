@@ -39,6 +39,9 @@ var _priority_max_parcels: int = 0
 var _center_x_cm: PackedInt64Array = PackedInt64Array()  # parsel indeksi -> merkez x (cm), kaynak şablonundan
 var _center_z_cm: PackedInt64Array = PackedInt64Array()
 var _stock_cols: Dictionary = {}  # T-050: T0 stok sütunları (EconomyStockColumns); stok statik, kurulumda türetilir
+## T-078: yan sınıflar (`_cache_static`ten sonra kurulur): proje yaşam döngüsü ve aylık akış. Durum tutmazlar.
+var _projects: EconomyProjects
+var _monthly: EconomyMonthly
 
 
 ## Kurulum sorunu (Türkçe metin) ya da "". Kaynak, yapılandırma ve stok tutarlılığı.
@@ -79,6 +82,9 @@ static func create(parcels: ParcelSource, cfg: EconomyConfig, stock: ExistingSto
 	system._cache_static(parcels)
 	system._stock_cols = EconomyStockColumns.build(system._ids, system._region_of, system._region_codes.size(),
 			system._stock)
+	system._projects = EconomyProjects.new(cfg, system._ids, system._region_codes, system._region_of, system._changes)
+	system._monthly = EconomyMonthly.new(cfg, system._ids, system._region_of, system._region_codes, system._base_land,
+			system._base_zone, system._unplanned_on)
 	return system
 
 
@@ -94,6 +100,13 @@ func change_log() -> ParcelChangeLog:
 ## T-042b · Statik parsel sütunları (kaynaktan türer, durum DEĞİL; salt okunur): kamulaştırma etkisi ve yakınlık için.
 func static_columns() -> Dictionary:
 	return {"region_of": _region_of, "center_x": _center_x_cm, "center_z": _center_z_cm, "codes": _region_codes}
+
+
+## T-078 · Bölge değiştirici kapısı: dış sistemlerin (komşu belediyeler, makro; M3) ekonomi bölge sütunlarına
+## girdiği TEK nokta (`EconomyRegionGate`). Başarıda "", aksi halde ret kodu (durum DEĞİŞMEZ). Çağıran gerekçesini
+## kendi kaydeder.
+func apply_region_modifier(state: GameState, region_code: StringName, column: StringName, amount: int) -> StringName:
+	return EconomyRegionGate.apply(EconomyState.data(state), region_code, column, amount)
 
 
 ## T-045 · Kayıt yüklendi: halkanın geçmişi bilinmiyor; `tick` yüklenen durumun tick'idir.
@@ -194,7 +207,7 @@ func plan_preview(state: GameState, parcel_ids: PackedInt64Array, land_use: Stri
 	var touched: Array = added_units.keys()
 	touched.sort()
 	for r: int in touched:
-		var capacity := _effective_cap(state, regions, r)
+		var capacity := _projects.effective_cap(state, regions, r)
 		var load := EconomyMath.infra_load(_cfg, regions, r)
 		(out["regions"] as Array).append({"code": StringName(_region_codes[r]), "added_units": added_units[r],
 			"added_infra_units": added_infra[r], "capacity_units": capacity, "load_units": load,
@@ -208,7 +221,7 @@ func on_daily(state: GameState) -> void:
 	var d := _ensure_state(state)
 	var starts_today := PackedInt32Array()
 	starts_today.resize(_region_codes.size())
-	_progress_projects(state, d)  # önce ilerlet: bugün onaylanan proje yarın saymaya başlar
+	_projects.progress(state, d)  # önce ilerlet: bugün onaylanan proje yarın saymaya başlar
 	_scan_zone_changes(state, d)
 	_scan_road_triggers(state, d)
 	_run_attention(state, d, starts_today)
@@ -217,11 +230,7 @@ func on_daily(state: GameState) -> void:
 
 
 func on_monthly(state: GameState) -> void:
-	var d := _ensure_state(state)
-	_update_cohorts(d)
-	_update_land_values(d)
-	_collect_rents(d)
-	_inject_capital(d)
+	_monthly.run(_ensure_state(state))  # kohort -> arsa değeri -> kira -> sermaye girdisi (`EconomyMonthly`)
 
 
 ## Parsel boş mu? Ekonomi durumu kuruluysa aşamaya, kurulmadıysa T0 stoğuna bakar.
@@ -359,34 +368,6 @@ func _apply_stock(d: Dictionary) -> void:
 	var occupancy := _cfg.p("initial_occupancy_pm")
 	for r in _region_codes.size():
 		latent[r] += res_built[r] * occupancy / 1000
-
-
-# --- Aylık kohort akışı (SIM-01) ---
-
-## Hane kohortu: çekim (erişim/hizmet/iş dengesi) -> işaretli aylık büyüme; kesir `growth_frac`'ta birikir.
-@warning_ignore("integer_division")
-func _update_cohorts(d: Dictionary) -> void:
-	var regions: Dictionary = d["regions"]
-	var latent: PackedInt64Array = regions["latent_hh"]
-	var frac: PackedInt64Array = regions["growth_frac"]
-	var res_built: PackedInt64Array = regions["res_built"]
-	var com_built: PackedInt64Array = regions["com_built"]
-	var access: PackedInt64Array = regions["access_pm"]
-	var service: PackedInt64Array = regions["service_pm"]
-	var w_access := _cfg.p("w_access")
-	var w_service := _cfg.p("w_service")
-	var w_jobs := _cfg.p("w_jobs")
-	var w_sum := w_access + w_service + w_jobs
-	for r in latent.size():
-		var housed := mini(latent[r], res_built[r])
-		var jobs := com_built[r] * _cfg.p("jobs_per_commercial_unit")
-		var needed := housed * _cfg.p("jobs_needed_per_household_pm") / 1000
-		var job_balance := 500 if needed <= 0 else mini(1000, EconomyMath.ratio_pm(jobs, needed))
-		var pull := (access[r] * w_access + service[r] * w_service + job_balance * w_jobs) / w_sum
-		var growth_pm := _cfg.p("growth_base_pm") * (pull - 500) / 500
-		var step := EconomyMath.accumulate_pm(latent[r], growth_pm, frac[r])
-		latent[r] = maxi(0, latent[r] + step[0])
-		frac[r] = step[1]
 
 
 # --- Değerlendirme zamanlaması (SIM-08) ---
@@ -625,10 +606,9 @@ func _effective_zone(overlay: Dictionary, i: int) -> StringName:
 	return StringName(_base_zone[i])
 
 
-## Parselin görülen imarı (`zone_seen`; yoksa başlangıç): plansız modda başlangıç "imar yok" (&""), böylece plan ne
-## olursa olsun (placeholder ile aynı olsa bile) ilk yürürlük yatırımcı dikkatini tetikler.
+## Parselin görülen imarı (`zone_seen`; kural `EconomyState.seen_zone`).
 func _seen_zone(zone_seen: Dictionary, i: int) -> StringName:
-	return StringName(zone_seen.get(i, "" if _unplanned_on else _base_zone[i]))
+	return EconomyState.seen_zone(zone_seen, i, _unplanned_on, _base_zone)
 
 
 # --- Yatırımcı kararı (SIM-02) ---
@@ -664,7 +644,7 @@ func _evaluate(state: GameState, d: Dictionary, i: int, command_id: int, starts_
 		"use": use, "zone_ok": not allowed.is_empty(), "units": units,
 		"land_value": (d["land_value"] as PackedInt64Array)[i],
 		"capital": (investors["capital"] as PackedInt64Array)[investor],
-		"infra_cap": _effective_cap(state, regions, r),
+		"infra_cap": _projects.effective_cap(state, regions, r),
 		"infra_source": PublicWorksState.infra_source(state, _region_codes[r]),
 		"infra_load": EconomyMath.infra_load(_cfg, regions, r),
 		"demand_after_pm": EconomyMath.region_demand_pm(_cfg, regions, r, use, units),
@@ -768,231 +748,3 @@ func _decline(state: GameState, d: Dictionary, i: int, investor: int, use: int, 
 		PackedStringArray([String(SimContract.parcel_ref(_ids[i]))]),
 		{"code": String(EconomyState.CODE_NAMES[code]), "use": String(EconomyState.use_name(use)), "units": units},
 		PackedInt64Array([reason_id]), command_id, StringName("actor.investor.%d" % (investor + 1)))
-
-
-# --- Kademeli gelişme (SIM-03/08) ---
-
-## `planned` -> `under_construction` -> `built`; her aşama `days_left` gün sürer. İnşaatta bölge altyapı yükü kapasiteyi
-## aşarsa (kapasite düşünce; T-014) proje `stalled` olur, süre işlemez; kapasite dönünce sürer. Sıralı indeks
-## iterasyonu.
-func _progress_projects(state: GameState, d: Dictionary) -> void:
-	var active: Dictionary = d["active"]
-	if active.is_empty():
-		return
-	var keys: Array = active.keys()
-	keys.sort()
-	for i: int in keys:
-		match (d["stage"] as PackedByteArray)[i]:
-			EconomyState.STAGE_PLANNED:
-				_tick_planned(state, d, i)
-			EconomyState.STAGE_UNDER_CONSTRUCTION:
-				_tick_construction(state, d, i)
-			EconomyState.STAGE_STALLED:
-				_tick_stalled(state, d, i)
-
-
-## Bölgenin ETKİN altyapı kapasitesi: taban sütunu (`regions.infra_cap`) + oyuncu yollarının eklediği (T-042,
-## `PublicWorksState.infra_bonus`; yol yoksa 0 => eski davranış). Sütuna YAZILMAZ: geri alma bonusu kendiliğinden
-## düşürür.
-func _effective_cap(state: GameState, regions: Dictionary, r: int) -> int:
-	return int((regions["infra_cap"] as PackedInt64Array)[r]) + PublicWorksState.infra_bonus(state, _region_codes[r])
-
-
-func _headroom(state: GameState, d: Dictionary, i: int) -> int:
-	var regions: Dictionary = d["regions"]
-	var r := _region_of[i]
-	return _effective_cap(state, regions, r) - EconomyMath.infra_load(_cfg, regions, r)
-
-
-func _tick_planned(state: GameState, d: Dictionary, i: int) -> void:
-	var days_left: PackedInt32Array = d["days_left"]
-	days_left[i] -= 1
-	if days_left[i] > 0:
-		return
-	var use: int = (d["use"] as PackedByteArray)[i]
-	var stage: PackedByteArray = d["stage"]
-	stage[i] = EconomyState.STAGE_UNDER_CONSTRUCTION
-	days_left[i] = EconomyMath.construction_days(_cfg, use, (d["units"] as PackedInt32Array)[i])
-	_changes.note(_ids[i])
-	_emit_parcel_event(state, d, i, &"event.construction.started", int((d["reason_id"] as PackedInt64Array)[i]))
-
-
-func _tick_construction(state: GameState, d: Dictionary, i: int) -> void:
-	if _headroom(state, d, i) < 0:
-		_change_construction(state, d, i, EconomyState.STAGE_STALLED, &"construction_stalled",
-			&"event.construction.stalled", -1000)
-		return
-	var days_left: PackedInt32Array = d["days_left"]
-	days_left[i] -= 1
-	if days_left[i] > 0:
-		return
-	var regions: Dictionary = d["regions"]
-	var use: int = (d["use"] as PackedByteArray)[i]
-	var units: int = (d["units"] as PackedInt32Array)[i]
-	var r := _region_of[i]
-	var pipe: PackedInt64Array = regions["res_pipe"] if use == EconomyConfig.USE_RESIDENTIAL else regions["com_pipe"]
-	var built: PackedInt64Array = regions["res_built"] if use == EconomyConfig.USE_RESIDENTIAL else regions["com_built"]
-	pipe[r] -= units
-	built[r] += units
-	var stage: PackedByteArray = d["stage"]
-	stage[i] = EconomyState.STAGE_BUILT
-	(d["active"] as Dictionary).erase(i)
-	(d["totals"] as Dictionary)["completions"] += 1
-	_changes.note(_ids[i])
-	_emit_parcel_event(state, d, i, &"event.construction.completed", int((d["reason_id"] as PackedInt64Array)[i]))
-
-
-func _tick_stalled(state: GameState, d: Dictionary, i: int) -> void:
-	var headroom := _headroom(state, d, i)
-	if headroom < 0:
-		return
-	var cap := _effective_cap(state, d["regions"], _region_of[i])
-	var value := mini(_cfg.p("infra_bonus_max"), EconomyMath.ratio_pm(headroom, cap))
-	_change_construction(state, d, i, EconomyState.STAGE_UNDER_CONSTRUCTION, &"construction_resumed",
-		&"event.construction.resumed", value)
-
-
-## Durma/devam kararı: sahibi yatırımcının gerekçeli kararı (eşik 0: altyapı etkeni negatifse devam etmez).
-func _change_construction(state: GameState, d: Dictionary, i: int, new_stage: int, code: StringName,
-		message_key: StringName, infra_value: int) -> void:
-	var reason_col: PackedInt64Array = d["reason_id"]
-	var owner_id: int = (d["owner_id"] as PackedInt32Array)[i]
-	var parents := PackedInt64Array()
-	if reason_col[i] > 0:
-		parents.append(reason_col[i])
-	var reason_id := state.record_reason(StringName("actor.investor.%d" % owner_id), &"decision.investor.continue",
-		[_continue_infra_factor(state, i, infra_value)], 0, code,
-		PackedStringArray([String(SimContract.parcel_ref(_ids[i]))]), parents)
-	reason_col[i] = reason_id
-	var stage: PackedByteArray = d["stage"]
-	stage[i] = new_stage
-	if new_stage == EconomyState.STAGE_STALLED:
-		(d["totals"] as Dictionary)["stalls"] += 1
-	_changes.note(_ids[i])
-	_emit_parcel_event(state, d, i, message_key, reason_id)
-
-
-## Durma/devam gerekçesinin altyapı etkeni; kapasiteyi en son oyuncu yolu artırdıysa `source_ref` o yoldur (SIM-12).
-func _continue_infra_factor(state: GameState, i: int, infra_value: int) -> Dictionary:
-	var factor := {"name": InvestorDecision.F_INFRA, "value": infra_value, "weight": _cfg.p("w_infrastructure")}
-	var source := PublicWorksState.infra_source(state, _region_codes[_region_of[i]])
-	if source != &"":
-		factor["source_ref"] = source
-	return factor
-
-
-func _emit_parcel_event(state: GameState, d: Dictionary, i: int, message_key: StringName, reason_id: int) -> void:
-	var owner_id: int = (d["owner_id"] as PackedInt32Array)[i]
-	var args := {
-		"use": String(EconomyState.use_name((d["use"] as PackedByteArray)[i])),
-		"units": (d["units"] as PackedInt32Array)[i],
-	}
-	SimEventLog.emit(state, &"parcel.changed", message_key,
-		PackedStringArray([String(SimContract.parcel_ref(_ids[i]))]), args, PackedInt64Array([reason_id]), 0,
-		StringName("actor.investor.%d" % owner_id))
-
-
-# --- Arsa değeri (SIM-07 aşırı talep -> spekülasyon, kısmi) ve kira geliri ---
-
-## Boş yapılabilir parsellerde aylık: izinli kullanımların en yüksek talebi `speculation_demand_pm` üstündeyse arsa
-## değeri
-## `speculation_rate_pm` kadar artar (tavan: taban x max_multiplier_pm); `relax_demand_pm` altındaysa taban değere doğru
-## `relax_rate_pm` kadar geri çekilir. Yapılı/yapılmakta olan ve yapılanmaya kapalı imarlı parsellere dokunulmaz.
-@warning_ignore("integer_division")
-func _update_land_values(d: Dictionary) -> void:
-	var regions: Dictionary = d["regions"]
-	var rn := _region_codes.size()
-	var demand_by_use: Array = [PackedInt32Array(), PackedInt32Array(), PackedInt32Array()]
-	for use in [EconomyConfig.USE_RESIDENTIAL, EconomyConfig.USE_COMMERCIAL]:
-		var col := PackedInt32Array()
-		col.resize(rn)
-		for r in rn:
-			col[r] = EconomyMath.region_demand_pm(_cfg, regions, r, use, 0)
-		demand_by_use[use] = col
-	var zone_demand := {}  # imar (String) -> bölge başına izinli kullanımların en yüksek talebi (-1 = yapılanmaya kapalı)
-	var zone_seen: Dictionary = d["zone_seen"]
-	var stage: PackedByteArray = d["stage"]
-	var land: PackedInt64Array = d["land_value"]
-	var spec_demand := _cfg.p("speculation_demand_pm")
-	var spec_rate := _cfg.p("speculation_rate_pm")
-	var relax_demand := _cfg.p("relax_demand_pm")
-	var relax_rate := _cfg.p("relax_rate_pm")
-	var max_mult := _cfg.p("max_multiplier_pm")
-	# T-049: plansız modda görülen imarı olmayan parselin imarı "" ve "" imarın izinli kullanımı yoksa (talep -1) hiçbiri
-	# yapılanmaya açık değildir: tam tarama (40 k parsel, ~19 ms) yerine yalnız `zone_seen` parselleri bakılır. Güncelleme
-	# parsel başına bağımsızdır, sonuç tam tarama ile aynıdır (tests/sim/economy/economy_land_values_unplanned_test.gd).
-	var only_seen := _unplanned_on and _all_closed(_zone_demand_by_region("", demand_by_use, rn))
-	var scan: Array = zone_seen.keys() if only_seen else []
-	for k in (scan.size() if only_seen else _ids.size()):
-		var i: int = scan[k] if only_seen else k
-		if stage[i] != EconomyState.STAGE_VACANT:
-			continue
-		var zone: String = String(_seen_zone(zone_seen, i))
-		if not zone_demand.has(zone):
-			zone_demand[zone] = _zone_demand_by_region(zone, demand_by_use, rn)
-		var demand: int = (zone_demand[zone] as PackedInt32Array)[_region_of[i]]
-		if demand < 0:
-			continue
-		var base: int = _base_land[i]
-		if demand >= spec_demand:
-			land[i] = mini(land[i] + land[i] * spec_rate / 1000, base * max_mult / 1000)
-		elif demand <= relax_demand and land[i] > base:
-			land[i] -= maxi(1, (land[i] - base) * relax_rate / 1000)
-
-
-## Bölge başına talep sütununun hepsi yapılanmaya kapalı (-1) mı?
-func _all_closed(demand: PackedInt32Array) -> bool:
-	for value in demand:
-		if value >= 0:
-			return false
-	return true
-
-
-func _zone_demand_by_region(zone: String, demand_by_use: Array, rn: int) -> PackedInt32Array:
-	var out := PackedInt32Array()
-	out.resize(rn)
-	var uses: Array = _cfg.zone_profile(StringName(zone)).get("uses", [])
-	for r in rn:
-		var demand := -1 if uses.is_empty() else 0
-		for use: int in uses:
-			demand = maxi(demand, (demand_by_use[use] as PackedInt32Array)[r])
-		out[r] = demand
-	return out
-
-
-## Aylık dış sermaye girdisi (kredi/diğer gelir): her yatırımcının sermayesine `monthly_inflow` eklenir.
-func _inject_capital(d: Dictionary) -> void:
-	var investors: Dictionary = d["investors"]
-	var capital: PackedInt64Array = investors["capital"]
-	var inflow: PackedInt64Array = investors["monthly_inflow"]
-	var totals: Dictionary = d["totals"]
-	for k in capital.size():
-		capital[k] += inflow[k]
-		totals["capital_inflow"] += inflow[k]
-
-
-## Yatırımcıya ait yapılı parsellerin aylık kirası: birim x birim kirası x talep kira çarpanı. Finansman geri bildirimi:
-## sermaye artar, yeni yatırımlar mümkün olur. Arsa sahibine ait T0 stoku yatırımcı geliri üretmez.
-@warning_ignore("integer_division")
-func _collect_rents(d: Dictionary) -> void:
-	var regions: Dictionary = d["regions"]
-	var stage: PackedByteArray = d["stage"]
-	var use_col: PackedByteArray = d["use"]
-	var units_col: PackedInt32Array = d["units"]
-	var owner_col: PackedInt32Array = d["owner_id"]
-	var capital: PackedInt64Array = (d["investors"] as Dictionary)["capital"]
-	var totals: Dictionary = d["totals"]
-	var rent_floor := _cfg.p("rent_floor_pm")
-	var rent_cap := _cfg.p("rent_cap_pm")
-	var demand_cache := {}
-	for i in _ids.size():
-		if stage[i] != EconomyState.STAGE_BUILT or owner_col[i] <= 0:
-			continue
-		var use: int = use_col[i]
-		var key := _region_of[i] * 4 + use
-		if not demand_cache.has(key):
-			demand_cache[key] = EconomyMath.region_demand_pm(_cfg, regions, _region_of[i], use, 0)
-		var income: int = units_col[i] * _cfg.use_param(use, "rent_per_unit_month") \
-			* EconomyMath.rent_mult_pm(demand_cache[key], rent_floor, rent_cap) / 1000
-		capital[owner_col[i] - 1] += income
-		totals["rent_income"] += income

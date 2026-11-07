@@ -36,6 +36,11 @@ func add_handler(handler: CommandHandler) -> bool:
 	return true
 
 
+## Sistem kimliği kayıtlı mı? (genel takma kapısının atomik ön denetimi için)
+func has_system(id: StringName) -> bool:
+	return _system_ids.has(String(id))
+
+
 func system_count() -> int:
 	return _systems.size()
 

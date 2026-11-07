@@ -212,6 +212,12 @@ static func progress_pm(stage: int, use: int, units: int, days_left: int, cfg: E
 	return 0
 
 
+## Parselin görülen imarı (`zone_seen`; yoksa başlangıç): plansız modda başlangıç "imar yok" (&""), böylece plan ne
+## olursa olsun (placeholder ile aynı olsa bile) ilk yürürlük yatırımcı dikkatini tetikler.
+static func seen_zone(zone_seen: Dictionary, i: int, unplanned_on: bool, base_zone: PackedStringArray) -> StringName:
+	return StringName(zone_seen.get(i, "" if unplanned_on else base_zone[i]))
+
+
 ## Kayıtlı ekonomi verisinin biçim hatası (Türkçe metin); yoksa/geçerliyse "". `d` = `systems["economy"]`;
 ## `expected_parcels` >= 0 ise parsel sayısı dünyayla karşılaştırılır.
 static func validate_data(d: Variant, expected_parcels: int = -1) -> String:
